@@ -22,3 +22,24 @@ Mark guesses `[guess]`. Close with ANSWER link + verdict.
 10. xip vs AAR/AEA relation. UNRESOLVED. [guess] xip predates, separate format.
 11. Archive Utility current AAR write support? UNRESOLVED. Probe app behavior.
 12. First vector set: minimal .aar per codec via local `aa`. Needs JOBS #1 first.
+
+New from RESEARCH.md 2026-09-29 (hardest first among 13-19;
+existing numbers untouched):
+13. ipsw pure-Go AEA fallback: behavior-level summary only (which
+    profiles/inputs it handles, failure modes). Compare vs FORMAT.md
+    profile table (feeds #5). NEVER transcribe/port code. UNRESOLVED.
+14. LZBITMAP codec: real? OS floor? Probe `aa -h`, Compression docs.
+    UNRESOLVED. [guess] newer-OS-only codec id.
+15. file.org AAR claims vs local `aa` bytes: AA01/YAA1 magic, 2-byte
+    hdr size, TYP/PAT/UID/GID/MOD/DAT keys (feeds #2). UNRESOLVED
+    until oracle-confirmed.
+16. SIZ/CMP keys: confirm or drop. Docx-only, no second source found.
+    UNRESOLVED. [guess] SIZ may be docx confabulation.
+17. Native `aea` failure modes: reproduce 0xba006800 + auth-failed on
+    local Apple Silicon? Probe Linux-absent + odd-tmpdir paths.
+    UNRESOLVED. [guess] resource-contention claim is anecdotal.
+18. XIP unwrap chain corroboration: `xar -xf` + pbzx + xz + cpio
+    (feeds #10). Local tools only. UNRESOLVED.
+19. Read Eclectic Light 2022 deep-dive, file behavior findings.
+    <https://eclecticlight.co/2022/05/10/inside-apple-archive-more-than-a-compression-format/>
+    Easiest. UNRESOLVED.
