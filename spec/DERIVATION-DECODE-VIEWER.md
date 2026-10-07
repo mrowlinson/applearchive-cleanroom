@@ -311,4 +311,18 @@ findings:
 - VERIFY 43 PASS 0 FLAG current; Q/A 18/18; joint DONE still open (writer1/sweep DONEs pending; claim HELD)
 pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:fe92a6ac710587feb46302ed0727545103bd81c6e90f869d0c99065d905e7d91 bytes:25229
 pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:8d5afa9ba9716572aa801d00c64568d7c2065333e2b5e7cdde3fadaaecc76c3c bytes:28949
+post-edit: (recorded at commit b6a9155; 2 files, +15/-1)
+
+## 2026-10-07 decode-viewer lanes/decode-viewer (entry 17: CR-024 oracle stderr race)
+inputs:
+- quiz-decode writer1 NOTE-034 (bad2/S2 oracle self-race report: 2/5-vs-3/5 orders, deterministic-reverse valid) (read first-hand; mutual-CONFIRM target)
+- own-gen orace/: race.aar/race2s.aar (2-file raw + 2x F->S TYP flips) + race20.aar/race20s.aar (20-file + 20x flips) + 10 + 10 + 3 extract runs (md5/sorted-md5 matrices) + aa archive -h (dir needs -d) (WS tmp/decode-viewer-probes/orace; macOS 27.0.1)
+not-consulted: patent contents, encode-side lanes, reference/port sources,
+  decompiler output (none), writer worktree files (git-show only + black-box runs), liblzraven src/*.c internals
+outputs: +1 clause (CR-024 MEASURED), tag mix total MEASURED 19 / SYMBOL 3 / INFERRED 2; NOTE-41
+findings:
+- oracle stderr order-race confirmed first-hand (10/10 distinct raw, 10/10 identical sorted; -wt 1 pins 3/3); battery rule: sort-or-pin multi-failure stderr, byte-pin exits + count line
+- VERIFY 43 PASS 0 FLAG current; Q/A 18/18; joint DONE still open (writer1/sweep DONEs pending; claim HELD)
+pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:23acc68cd484b2504ea796e1127bf7c0cc4499aaf0b32c186e005970842f1d62 bytes:25403
+pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:52ac0e0efdcd3dc0f794690703b2751904e6dfe8554de50ba714d5e101a887a4 bytes:30191
 post-edit: (recorded at commit; see commit 2nd line stats)
