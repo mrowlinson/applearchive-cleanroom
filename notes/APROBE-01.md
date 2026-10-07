@@ -32,6 +32,7 @@ Notation: P# = probe id. Passwords/keys: `testpw32....` (38ch), `test-password-f
 - -b {64k,1m} no size effect @300KB. -a {zlib,lzma,lzfse} on 100B rnd: IN+18620 (stored).
 - padding @16B: none 18636 / adaptive 19456 (=default) / 16->18640 / 4096->20480 / 65536->65536.
 - append: +N bytes for N appended (19B->+19, 1MB->+1000000, 0 table growth); decrypt = concat.
+- raw cat(a.aea+b.aea): decrypt = FIRST archive only (trailing bytes ignored); proto agrees. Raw cat != append.
 - `aea sign` on p5: `This archive profile can't be signed`.
 
 ## Determinism / id

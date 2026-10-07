@@ -169,6 +169,13 @@ if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --key "$WORK/key32nl.bin" -i "$WORK/
 aea encrypt -profile 1 -key "$WORK/genkey.txt" -key-gen -a none -padding none -i "$WORK/msg.txt" -o "$WORK/gen.aea" 2>/dev/null
 cell keygen-file --key "$WORK/genkey.txt" -i "$WORK/gen.aea"
 
+# 9b. block-size flag indifference (same bytes as default @small input)
+for b in 64k 1m; do
+  aea encrypt -profile 5 -password-value "$PW" -a zlib -b $b -padding none -i "$WORK/msg.txt" -o "$WORK/blk-$b.aea" 2>/dev/null
+  EXP=$WORK/msg.txt
+  cell block-$b --password "$PW" -i "$WORK/blk-$b.aea"
+done
+
 # 10. append
 printf 'APPENDED-DATA-BLOCK' > "$WORK/app-in.bin"
 cp "$WORK/p5.aea" "$WORK/app.aea"
@@ -176,6 +183,13 @@ aea append -password-value "$PW" -i "$WORK/app-in.bin" -o "$WORK/app.aea" 2>/dev
 cat "$WORK/msg.txt" "$WORK/app-in.bin" > "$WORK/app-exp.bin"
 EXP=$WORK/app-exp.bin
 cell append --password "$PW" -i "$WORK/app.aea"
+
+# 10b. raw concat: oracle decrypts FIRST archive only (unlike append); proto agrees
+printf 'second message\n' > "$WORK/msg2.txt"
+aea encrypt -profile 5 -password-value "$PW" -a none -padding none -i "$WORK/msg2.txt" -o "$WORK/b.aea" 2>/dev/null
+cat "$WORK/p5.aea" "$WORK/b.aea" > "$WORK/cat.aea"
+EXP=$WORK/msg.txt
+cell concat-first-only --password "$PW" -i "$WORK/cat.aea"
 
 echo "PASS=$PASS FAIL=$FAIL"
 [ "$FAIL" -eq 0 ]
