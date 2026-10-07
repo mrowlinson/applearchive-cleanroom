@@ -39,6 +39,16 @@ class Units(unittest.TestCase):
         blob2 = b"AEA1" + bytes([1, 0, 0, 0]) + struct.pack("<I", 4) + b"ABCD" + bytes(144)
         self.assertEqual(aead.archive_id(blob2), hashlib.sha256(blob2[:160]).digest())
 
+    def test_id_trunc_boundary(self):
+        full = b"AEA1" + bytes([5, 0, 0, 0]) + struct.pack("<I", 0) + bytes(144)
+        with self.assertRaises(aead.FmtErr):
+            aead.archive_id(full[:155])
+        self.assertEqual(aead.archive_id(full[:156]), hashlib.sha256(full[:156]).digest())
+        withauth = b"AEA1" + bytes([5, 0, 0, 0]) + struct.pack("<I", 12) + bytes(12 + 144)
+        with self.assertRaises(aead.FmtErr):
+            aead.archive_id(withauth[:167])
+        self.assertEqual(aead.archive_id(withauth[:168]), hashlib.sha256(withauth[:168]).digest())
+
     def test_rejects(self):
         with self.assertRaises(aead.FmtErr):
             aead.decrypt_aea(b"XXXX" + bytes(200))
