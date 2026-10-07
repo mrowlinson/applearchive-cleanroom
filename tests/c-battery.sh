@@ -52,6 +52,27 @@ sys.exit(0 if sig(sys.argv[1]) == sig(sys.argv[2]) else 1)
 EOF
 done
 
+echo "== cell wide-names (3 algs) =="
+mkdir -p "$WORK/wsrc"
+python3 -c "
+import os
+d = '$WORK/wsrc'
+open(d + '/empty.bin', 'wb').close()
+open(d + '/uni-h\xe9llo-\U0001f5dc.txt', 'w').write('unicode\n')
+p = d
+for i in range(20):
+  p += '/nest%d' % i; os.makedirs(p, exist_ok=True)
+open(p + '/deep.txt', 'w').write('deep\n')
+open(d + '/odd name;with&chars().txt', 'w').write('odd\n')
+open(d + '/big.bin', 'wb').write(os.urandom(2000000))
+"
+for a in lzfse zlib raw; do
+  sh "$ADAPTER" aar-encode --alg "$a" --threads 1 "$WORK/wsrc" "$WORK/w-$a.aar" >/dev/null 2>&1 || { fail "wenc-$a"; continue; }
+  sh "$ADAPTER" aar-decode "$WORK/w-$a.aar" "$WORK/wo-$a" >/dev/null 2>&1 || { fail "wodec-$a"; continue; }
+  "$AAD" "$WORK/w-$a.aar" "$WORK/wc-$a" 2>/dev/null || { fail "wcdec-$a"; continue; }
+  diff -r "$WORK/wo-$a" "$WORK/wc-$a" >/dev/null 2>&1 && pass "wide-$a" || fail "wide-$a"
+done
+
 echo "== cell multiblock =="
 python3 -c "open('$WORK/big.bin','wb').write(b'Q'*300000)"
 mkdir -p "$WORK/bsrc"; mv "$WORK/big.bin" "$WORK/bsrc/"
