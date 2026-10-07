@@ -250,125 +250,283 @@ def apply_xattr_blob(target, blob, islink):
         if r != 0:
             raise FmtErr("setxattr %r failed" % name)
         pos += size
+    if pos != len(blob):
+        raise FmtErr("xattr trailing bytes")
 
 
-def apply_meta(target, entries, blobs, islink):
+def apply_xattr_only(target, entries, blobs, islink):
+    xat = blobs.get(b"XAT")
+    if xat:
+        apply_xattr_blob(target, xat, islink)
+
+
+def apply_rest(target, entries, blobs, islink):
     _, mod = _get(entries, b"MOD")
     _, uid = _get(entries, b"UID")
     _, gid = _get(entries, b"GID")
     _, mtm = _get(entries, b"MTM")
-    xat = blobs.get(b"XAT")
-    if xat:
-        apply_xattr_blob(target, xat, islink)
     if not islink:
         if mod is not None:
-            os.chmod(target, mod & 0o7777)
+            try:
+                os.chmod(target, mod & 0o7777)
+            except OSError:
+                pass
         if uid is not None or gid is not None:
             try:
                 os.chown(target, -1 if uid is None else uid,
                          -1 if gid is None else gid)
-            except PermissionError:
+            except OSError:
                 pass
     if mtm is not None:
-        ns = _ts_ns(mtm)
-        os.utime(target, ns=(ns, ns), follow_symlinks=False)
+        try:
+            ns = _ts_ns(mtm)
+            os.utime(target, ns=(ns, ns), follow_symlinks=False)
+        except OSError:
+            pass
 
 
 def _show(bs):
     return bs.decode("utf-8", "surrogateescape")
 
 
-def _unimpl(pat):
-    print("Error 0xc8055000\nnot implemented yet\ncreating fs object: %s"
-          % _show(pat), file=sys.stderr)
+def print_hdr(done, code):
+    if not done[0]:
+        print("Error 0x%08x" % code, file=sys.stderr)
+        done[0] = True
+
+
+def eisdir_err(done, path):
+    s = path.rstrip("/") or "/"
+    b = os.path.basename(s) or s
+    a = s if os.path.isabs(s) else os.path.join(os.getcwd(), s)
+    print_hdr(done, 0xc305ac15)
+    print("Is a directory: %s\nIs a directory: %s\nopening output file: %s"
+          % (b, a, a), file=sys.stderr)
 
 
 def extract(items, root):
     os.makedirs(root, exist_ok=True)
-    deferred = []
+    files = []
+    dirs = []
+    scols = []
+    fsts = []
     hlc_first = {}
     hlinks = []
     failed = 0
     scount = 0
+    hdr = [False]
+    dirfail = False
+    aborted = False
+
+    def abort(msg):
+        if msg:
+            print(msg, file=sys.stderr)
+        return True
+
+    # phase 1: create everything, forward. aborts stop creation only.
     for entries, blobs in items:
+        if aborted:
+            break
         _, typ = _get(entries, b"TYP")
-        _, pat = _get(entries, b"PAT")
+        pst, pat = _get(entries, b"PAT")
         if typ is None:
-            raise FmtErr("Invalid entry: no TYP field")
-        if pat is None or len(pat) == 0:
+            print("Extraction failed\nextract failedError 0xbd03ac00\n"
+                  "Invalid entry: no TYP field\n"
+                  "archive stream read error (header)\nstream cancelled",
+                  file=sys.stderr)
+            failed += 1
+            hdr[0] = True
+            aborted = True
+            break
+        if pat is None or pst != ord("P"):
             continue
-        target = safe_join(root, pat)
+        if len(pat) == 0:
+            if typ == ord("D"):
+                dirs.append((root, entries, blobs))
+            elif typ == ord("F"):
+                eisdir_err(hdr, root)
+                failed += 1
+                scount += 1
+            continue
+        try:
+            target = safe_join(root, pat)
+        except FmtErr:
+            aborted = abort("aad: bad path")
+            failed += 1
+            hdr[0] = True
+            break
         if typ == ord("D"):
-            os.makedirs(target, exist_ok=True)
-            deferred.append((target, entries, blobs))
+            try:
+                os.makedirs(target, exist_ok=True)
+            except OSError:
+                aborted = abort("aad: mkdir %s" % target)
+                failed += 1
+                hdr[0] = True
+                break
+            dirs.append((target, entries, blobs))
         elif typ == ord("F"):
             parent = os.path.dirname(target)
             if parent:
-                os.makedirs(parent, exist_ok=True)
+                try:
+                    os.makedirs(parent, exist_ok=True)
+                except OSError:
+                    aborted = abort("aad: mkdir %s" % target)
+                    failed += 1
+                    hdr[0] = True
+                    break
             _, hlc = _get(entries, b"HLC")
             if hlc is not None and hlc in hlc_first:
-                if os.path.lexists(target):
-                    os.remove(target)
-                os.link(hlc_first[hlc], target)
+                try:
+                    if os.path.lexists(target):
+                        os.remove(target)
+                    os.link(hlc_first[hlc], target)
+                except OSError:
+                    aborted = abort("aad: link %s" % target)
+                    failed += 1
+                    hdr[0] = True
+                    break
+            elif b"DAT" not in blobs:
+                fsts.append(entries)
+                failed += 1
+                continue
             else:
-                with open(target, "wb") as f:
-                    f.write(blobs.get(b"DAT", b""))
+                try:
+                    with open(target, "wb") as f:
+                        f.write(blobs[b"DAT"])
+                except IsADirectoryError:
+                    eisdir_err(hdr, target)
+                    failed += 1
+                    scount += 1
+                    continue
+                except OSError:
+                    aborted = abort("aad: open %s" % target)
+                    failed += 1
+                    hdr[0] = True
+                    break
                 if hlc is not None:
                     hlc_first[hlc] = target
-            apply_meta(target, entries, blobs, False)
+            files.append((target, entries, blobs, False))
         elif typ == ord("L"):
             _, lnk = _get(entries, b"LNK")
             if lnk is None:
-                raise FmtErr("YAA link entry has no LNK field: %r" % pat)
+                aborted = abort("YAA link entry has no LNK field: %s"
+                                % _show(pat))
+                failed += 1
+                hdr[0] = True
+                break
             parent = os.path.dirname(target)
             if parent:
-                os.makedirs(parent, exist_ok=True)
-            if os.path.lexists(target):
-                os.remove(target)
-            os.symlink(lnk.decode("utf-8", "surrogateescape"), target)
-            apply_meta(target, entries, blobs, True)
+                try:
+                    os.makedirs(parent, exist_ok=True)
+                except OSError:
+                    aborted = abort("aad: mkdir %s" % target)
+                    failed += 1
+                    hdr[0] = True
+                    break
+            try:
+                if os.path.lexists(target):
+                    os.remove(target)
+                os.symlink(lnk.decode("utf-8", "surrogateescape"), target)
+            except OSError:
+                aborted = abort("aad: symlink %s" % target)
+                failed += 1
+                hdr[0] = True
+                break
+            files.append((target, entries, blobs, True))
         elif typ == ord("P"):
             parent = os.path.dirname(target)
             if parent:
-                os.makedirs(parent, exist_ok=True)
-            if os.path.lexists(target):
-                os.remove(target)
-            os.mkfifo(target, 0o600)
-            apply_meta(target, entries, blobs, False)
+                try:
+                    os.makedirs(parent, exist_ok=True)
+                except OSError:
+                    aborted = abort("aad: mkdir %s" % target)
+                    failed += 1
+                    hdr[0] = True
+                    break
+            try:
+                if os.path.lexists(target):
+                    os.remove(target)
+                os.mkfifo(target, 0o600)
+            except OSError:
+                aborted = abort("aad: mkfifo %s" % target)
+                failed += 1
+                hdr[0] = True
+                break
+            files.append((target, entries, blobs, False))
         elif typ == ord("S"):
-            _unimpl(pat)
+            scols.append(entries)
             failed += 1
             scount += 1
         elif typ == ord("H"):
             _, lnk = _get(entries, b"LNK")
             if lnk is None:
-                raise FmtErr("YAA link entry has no LNK field: %r" % pat)
+                aborted = abort("YAA link entry has no LNK field: %s"
+                                % _show(pat))
+                failed += 1
+                hdr[0] = True
+                break
             hlinks.append((target, lnk))
         elif typ == ord("B") or typ == ord("C"):
             _, dev = _get(entries, b"DEV")
             if dev is None:
-                raise FmtErr("YAA device entry has no DEV field: %r" % pat)
-            _unimpl(pat)
+                aborted = abort("YAA device entry has no DEV field: %s"
+                                % _show(pat))
+                failed += 1
+                hdr[0] = True
+                break
+            scols.append(entries)
             failed += 1
             scount += 1
         else:
             pass  # unknown TYP: silent skip (oracle parity, measured)
+    # phase 2: files meta, strict reverse
+    for target, entries, blobs, islink in reversed(files):
+        try:
+            apply_xattr_only(target, entries, blobs, islink)
+        except FmtErr:
+            _, pat = _get(entries, b"PAT")
+            print_hdr(hdr, 0xe8012000)
+            print("invalid XAT blob\ninvalid XAT blob", file=sys.stderr)
+            print("applyEntryAttributes failed: %s" % _show(pat),
+                  file=sys.stderr)
+            failed += 1
+            scount += 1
+        else:
+            apply_rest(target, entries, blobs, islink)
+    # S-flush, forward
+    for entries in scols:
+        _, pat = _get(entries, b"PAT")
+        print_hdr(hdr, 0xc8055000)
+        print("not implemented yet\ncreating fs object: %s" % _show(pat),
+              file=sys.stderr)
+    # F-no-DAT flush, forward
+    for entries in fsts:
+        _, pat = _get(entries, b"PAT")
+        print_hdr(hdr, 0xc8039000)
+        print("invalid entry final state 0: %s" % _show(pat),
+              file=sys.stderr)
+    # H pass (runs even on abort; trailer iff failure)
+    hfailed = False
     for target, lnk in hlinks:
         try:
             src = safe_join(root, lnk)
         except FmtErr:
+            print_hdr(hdr, 0xc8104800)
             print("invalid path: %s\ninvalid 'H' LNK" % _show(lnk),
                   file=sys.stderr)
             failed += 1
+            hfailed = True
             continue
         try:
             st = os.lstat(src)
         except FileNotFoundError:
             st = None
         if st is None or not stat.S_ISREG(st.st_mode):
+            print_hdr(hdr, 0xc8104800)
             print("'H' LNK not a regular file: %s" % _show(lnk),
                   file=sys.stderr)
             failed += 1
+            hfailed = True
             continue
         parent = os.path.dirname(target)
         if parent:
@@ -377,12 +535,28 @@ def extract(items, root):
             os.remove(target)
         try:
             os.link(src, target)
-        except OSError as e:
-            print("link %r failed: %s" % (target, e), file=sys.stderr)
+        except OSError:
+            print_hdr(hdr, 0xc8104800)
+            print("aad: link %s" % target, file=sys.stderr)
             failed += 1
+            hfailed = True
             continue
-    for target, entries, blobs in reversed(deferred):
-        apply_meta(target, entries, blobs, False)
+    if hfailed:
+        print("process hlinks", file=sys.stderr)
+    # phase 3: dirs meta, reverse (children-first); root=outdir in place
+    for target, entries, blobs in reversed(dirs):
+        try:
+            apply_xattr_only(target, entries, blobs, False)
+        except FmtErr:
+            print_hdr(hdr, 0xe8012000)
+            print("invalid XAT blob\ninvalid XAT blob", file=sys.stderr)
+            print("applyEntryAttributes failed", file=sys.stderr)
+            failed += 1
+            dirfail = True
+        else:
+            apply_rest(target, entries, blobs, False)
+    if dirfail:
+        print("process dirs", file=sys.stderr)
     if scount:
         print("%d entries failed to extract" % scount, file=sys.stderr)
     return 1 if failed else 0
