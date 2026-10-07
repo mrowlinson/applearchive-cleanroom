@@ -70,11 +70,29 @@ static int decode_block(const unsigned char magic[4],
     if (!memcmp(magic, "pbzz", 4)) {
         unsigned char *d = malloc(unc ? unc : 1);
         uLongf dl = unc;
-        if (uncompress(d, &dl, pay, comp) != Z_OK || dl != unc) {
-            free(d); FAIL("zlib decode\n"); return -1;
+        if (uncompress(d, &dl, pay, comp) == Z_OK && dl == unc) {
+            out->data = d; out->len = dl;
+            return 0;
         }
-        out->data = d; out->len = dl;
-        return 0;
+        /* oracle decodes adler-broken streams (case188): raw fallback */
+        if (comp > 2) {
+            z_stream zs;
+            memset(&zs, 0, sizeof zs);
+            if (inflateInit2(&zs, -MAX_WBITS) == Z_OK) {
+                zs.next_in = (Bytef *)(pay + 2);
+                zs.avail_in = (uInt)(comp - 2);
+                zs.next_out = d;
+                zs.avail_out = unc;
+                int r = inflate(&zs, Z_FINISH);
+                int ok = (r == Z_STREAM_END && zs.total_out == unc);
+                inflateEnd(&zs);
+                if (ok) {
+                    out->data = d; out->len = unc;
+                    return 0;
+                }
+            }
+        }
+        free(d); FAIL("zlib decode\n"); return -1;
     }
     /* Whole-frame decode via public <compression.h> buffer API (v0.2).
      * Verified black-box per codec: output == oracle inner, byte-exact. */
@@ -314,6 +332,11 @@ static int apply_xattr_blob(const char *target, const unsigned char *blob,
 
 static int apply_meta(const char *target, const Item *it, int islink) {
     const Entry *e;
+    /* XAT FIRST: chmod may strip +x/write needed for xattr (case110:
+     * MOD 566 dir rejects setxattr EPERM; oracle has xattr + 566). */
+    size_t xl0 = 0;
+    const unsigned char *xb0 = blob_for(it, "XAT", &xl0);
+    if (xb0 && xl0 && apply_xattr_blob(target, xb0, xl0, islink)) return -1;
     if (!islink) {
         e = find_ent(it, "MOD");
         if (e && (e->st == '1' || e->st == '2' || e->st == '4' || e->st == '8'))
@@ -345,9 +368,6 @@ static int apply_meta(const char *target, const Item *it, int islink) {
         ts_from_raw(e->raw, e->rawlen, &ts);
         set_one_time(target, 0, ATTR_CMN_CRTIME, &ts, islink); /* best-effort */
     }
-    size_t xl = 0;
-    const unsigned char *xb = blob_for(it, "XAT", &xl);
-    if (xb && xl && apply_xattr_blob(target, xb, xl, islink)) return -1;
     return 0;
 }
 
@@ -411,7 +431,12 @@ static int extract(const Item *items, size_t nitems, const char *root) {
     for (size_t k = 0; k < nitems; k++) {
         const Item *it = &items[k];
         const Entry *t = find_ent(it, "TYP"), *p = find_ent(it, "PAT");
-        if (!t || !p || p->st != 'P' || !p->rawlen) continue; /* root desc */
+        /* oracle requires TYP on EVERY item incl PAT-empty root (case175) */
+        if (!t) {
+            fprintf(stderr, "Invalid entry: no TYP field\n");
+            fails++; goto out;
+        }
+        if (!p || p->st != 'P' || !p->rawlen) continue; /* root desc */
         char target[4096];
         if (safe_join(root, p->raw, p->rawlen, target)) {
             FAIL("bad path\n"); goto out;

@@ -206,6 +206,63 @@ while [ "$N" -le "$SZ" ]; do
 done
 [ "$BAD" -eq 0 ] && pass "trunc-sweep" || fail "trunc-sweep"
 
+echo "== cell no-typ (TYP required on every item incl root) =="
+python3 - "$V/aar/hello-raw.aar" "$WORK" <<'EOF' >/dev/null 2>&1 || die "craft-notyp"
+import sys
+data = open(sys.argv[1], "rb").read()
+offs, i = [], 0
+while True:
+    i = data.find(b"TYP", i)
+    if i < 0:
+        break
+    offs.append(i)
+    i += 1
+assert len(offs) == 3, offs
+for j, o in enumerate(offs):
+    b = bytearray(data)
+    b[o:o + 3] = b"XXX"
+    open("%s/notyp%d.aar" % (sys.argv[2], j), "wb").write(bytes(b))
+EOF
+for j in 0 1 2; do
+  ORC=0; sh "$ADAPTER" aar-decode "$WORK/notyp$j.aar" "$WORK/o-nt$j" >/dev/null 2>&1 || ORC=$?
+  CRC=0; "$AAD" "$WORK/notyp$j.aar" "$WORK/c-nt$j" 2>/dev/null || CRC=$?
+  [ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "nt-exit$j" || fail "nt-exit$j"
+  diff -r "$WORK/o-nt$j" "$WORK/c-nt$j" >/dev/null 2>&1 && pass "nt-tree$j" || fail "nt-tree$j"
+done
+"$AAD" "$WORK/notyp1.aar" "$WORK/c-ntx" 2>"$WORK/ntx.err" || true
+grep -q "no TYP field" "$WORK/ntx.err" && pass "nt-stderr" || fail "nt-stderr"
+
+echo "== cell xattr-order (XAT applies before chmod) =="
+python3 - "$V/aar/hello-raw.aar" "$WORK/mod566.aar" <<'EOF' >/dev/null 2>&1 || die "craft-566"
+import sys
+d = bytearray(open(sys.argv[1], "rb").read())
+i = d.find(b"MOD2\xed\x01")
+assert i >= 0
+d[i + 4:i + 6] = b"\x76\x01"  # dir hello 0755 -> 0566 (+x stripped)
+open(sys.argv[2], "wb").write(bytes(d))
+EOF
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/mod566.aar" "$WORK/o-xo" >/dev/null 2>&1 || ORC=$?
+CRC=0; "$AAD" "$WORK/mod566.aar" "$WORK/c-xo" 2>/dev/null || CRC=$?
+[ "$ORC" -eq 0 ] && [ "$CRC" -eq 0 ] && pass "xo-exit" || fail "xo-exit"
+diff -r "$WORK/o-xo" "$WORK/c-xo" >/dev/null 2>&1 && pass "xo-tree" || fail "xo-tree"
+OM=$(stat -f %p "$WORK/o-xo/hello"); CM=$(stat -f %p "$WORK/c-xo/hello")
+OX=0; xattr -p com.apple.provenance "$WORK/o-xo/hello" >/dev/null 2>&1 || OX=$?
+CX=0; xattr -p com.apple.provenance "$WORK/c-xo/hello" >/dev/null 2>&1 || CX=$?
+[ "$OM" = "$CM" ] && [ "$OX" -eq 0 ] && [ "$CX" -eq 0 ] && pass "xo-metax" || fail "xo-metax"
+
+echo "== cell adler (oracle decodes adler-broken zlib) =="
+python3 - "$V/aar/hello-zlib.aar" "$WORK/adler.aar" <<'EOF' >/dev/null 2>&1 || die "craft-adler"
+import sys
+d = bytearray(open(sys.argv[1], "rb").read())
+assert d[201] == 0xac  # pinned flip site (mid-stream, stream-valid)
+d[201] = 0xf3          # breaks adler only
+open(sys.argv[2], "wb").write(bytes(d))
+EOF
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/adler.aar" "$WORK/o-ad" >/dev/null 2>&1 || ORC=$?
+CRC=0; "$AAD" "$WORK/adler.aar" "$WORK/c-ad" 2>/dev/null || CRC=$?
+[ "$ORC" -eq 0 ] && [ "$CRC" -eq 0 ] && pass "ad-exit" || fail "ad-exit"
+diff -r "$WORK/o-ad" "$WORK/c-ad" >/dev/null 2>&1 && pass "ad-tree" || fail "ad-tree"
+
 echo "== $WORK =="
 [ "$FAIL" -eq 0 ] && echo CBATTERY-GREEN || echo CBATTERY-RED
 exit "$FAIL"
