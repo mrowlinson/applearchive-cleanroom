@@ -52,8 +52,12 @@ entries, before deferred dir-meta (dir mtime = archived MTM).
 H-no-LNK: loud ABORT exit 1, stop (like B). H failures in post-pass:
 exit 1, others already extracted. LNK must be archive-relative +
 existing REGULAR file, else exit 1 ("invalid 'H' LNK" for abs/escape;
-"'H' LNK not a regular file" for missing/dir). No natural H vector
-observed (encoder emits HLC groups); all H evidence crafted.
+"'H' LNK not a regular file" for missing/dir). H-target matrix
+closed: reg ok; symlink rejected (lstat-based, exit 1, tree MATCH);
+fifo: oracle hangs (Q1) with h-to-fifo ABSENT at kill = consistent
+with reg-only rule. Minimal TYP/PAT/LNK-only items parse + extract
+on oracle (L verified). No natural H vector observed (encoder emits
+HLC groups); all H evidence crafted.
 
 ## PAT escape parity
 
