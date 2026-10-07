@@ -150,6 +150,15 @@ f-z1000,sha,578586dcb2cf9fe31ad7a6fb1820c5683653d746f10e94a488eb4a4a12602bc2,64,
 f-z100000-closed,str,CLOSED,100,test_ravframe.sh,27.0.1,ct-lzraven
 f-z100000-f2,str,0c000000,100,test_ravframe.sh,27.0.1,ct-lzraven
 f-z100000,sha,9eaa4514c25bb222e3f46ace4b8e51446fb38832923e11778e81a0a26df9535a,100,test_ravframe.sh,27.0.1,ct-lzraven
+f-z524289-closed,str,CLOSED,121,test_ravframe.sh,27.0.1,ct-lzraven
+f-z524289-f2,str,34000000,121,test_ravframe.sh,27.0.1,ct-lzraven
+f-z524289,sha,520ea9507c3cdc7d19fee23c4d0649d6f62e0a26530951cf3863a15c8faefde8,121,test_ravframe.sh,27.0.1,ct-lzraven
+f-z600000-closed,str,CLOSED,184,test_ravframe.sh,27.0.1,ct-lzraven
+f-z600000-f2,str,34000000,184,test_ravframe.sh,27.0.1,ct-lzraven
+f-z600000,sha,146d705b693a6d7f521776b512c19222aa2be9d806b308cad709d42803bea76c,184,test_ravframe.sh,27.0.1,ct-lzraven
+f-z1000000-closed,str,CLOSED,196,test_ravframe.sh,27.0.1,ct-lzraven
+f-z1000000-f2,str,40000000,196,test_ravframe.sh,27.0.1,ct-lzraven
+f-z1000000,sha,85905224f60ffe0de74615a25e6fe8126cb17b284e41d28734eb55d8828d64b8,196,test_ravframe.sh,27.0.1,ct-lzraven
 f-p64-closed,str,CLOSED,68,test_ravframe.sh,27.0.1,ct-lzraven
 f-p64-f2,str,00000000,68,test_ravframe.sh,27.0.1,ct-lzraven
 f-p64,sha,a08a4cbdff3fc2d5e0edfc941d65534825c79af9bd8118016450158a87c8de75,68,test_ravframe.sh,27.0.1,ct-lzraven
