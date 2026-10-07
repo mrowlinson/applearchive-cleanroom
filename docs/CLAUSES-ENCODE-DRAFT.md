@@ -328,3 +328,38 @@ not-consulted: decompiler output (none produced; no disassembly run), port/refer
 outputs: 1 clause draft (CR-122 MEASURED), 0 promoted (parent renumbers)
 findings: lz4-table-eviction-curve, tail-zone-confirm, future-independence-bound, metadata-none-found
 base: lane commit bda1f61
+
+```
+CR-123 [MEASURED] lz4 match decisions are past-local (one-pass): HOLE1 "future flip" resolved as
+reference-gram 4-verify; flip byte sits INSIDE the reference, 1B before the match start
+stage: probe
+artifact: WS scratch-viewer3/bed4.py (sha 4330dd3d...) + hole1/ archives; exhibits HOLE1-pair-A/B.bin
+  (quiz, sha 85223cfe/a8e34cea); oracle aa -a lz4 -t 1 (full path incl framing)
+numbers: pair = 1024B, EXACTLY 1 diff @file607 (e0/76). mapping anchors (2): file[600:608]@inner781 +
+  file[568:576]@inner749 -> shift 181 BOTH (writer-claimed 217 REFUTED: their anchor bytes c9c1b417/
+  f7bb7c2a cannot host the observed (4,4)). A: hole@789 (covering=None); B: match@789=(4,4).
+  flip-value sweep: CHECK for EXACTLY 1/256 (0x76), always (4,4) — decision = pure function of
+  inner[788]==0x76 (reference[785:789]==candidate[789:793]). spot re-run (bed4.py): 8/8 same.
+verdict: CORRECTS w1 NOTE-21 HOLE1 future-dependence (coordinate artifact, +36 slip) and EXTENDS CR-122
+  one-pass bound to HOLE1-proper (marginal-lookahead unsupported HERE; L-sweep/hybr claims need re-audit
+  with correct anchoring — same suspicion applies). X=0 withdrawal (NOTE-21) independently CONCURRED
+  (viewer 9/9 CHECK on post-match tripwires, A-17 beds)
+body: at decision 789 the table slot for c7f79376 holds pos 785 in B (4-verify PASSES) but a stale/
+  failing entry in A (pos 785 holds c7f793e0 there). No gate, no lookahead, no second pass involved.
+```
+
+## Derivation appendix (this file, session 2026-10-07 attempt#3 entry-5)
+
+inputs (fresh sha256 where file):
+- exhibits HOLE1-pair-A/B.bin (quiz coordination files): 1024B each, sha 85223cfe.../a8e34cea... (own);
+  1-byte diff verified first-hand (own byte-compare) + context hex MATCHES NOTE-21
+- own beds: WS scratch-viewer3/bed4.py (sha 4330dd3dc58fded6; spot re-run 8/8 same) + full 256-sweep
+  (inline, this shift: 1/256 CHECK) + mapping anchors (2, both shift-181)
+- oracle /usr/bin/aa (sha prefix 823df81f, re-MATCHES CR-119 entry) via full aa-archive path
+- writer exhibits as CONFIRM/CORRECT targets only (NOTE-21 HOLE1 pair + chunk-verdict-death CONCURRED,
+  future-dependence CORRECTED to coordinate artifact; X=0 withdrawal CONCURRED), never as evidence
+not-consulted: decompiler output (none produced; no disassembly run), port/reference sources, vendor
+  framework implementations, decode-side answers, other-lane branches beyond intake + writer lanes (verify duty)
+outputs: 1 clause draft (CR-123 MEASURED), 0 promoted (parent renumbers)
+findings: hole1-coordinate-resolution, one-pass-extension, 4-verify-purity
+base: lane commit 0d9f4fe
