@@ -383,4 +383,18 @@ findings:
 - VERIFY 43 PASS 1 FLAG (open); Q/A 18/18; joint DONE still open (writer1 S-fix + sweep DONEs pending; claim HELD)
 pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:e2edca03c401bc0cf27223658ea2208acfcb82c41f11a3bf7acd5e3230c463b7 bytes:27203
 pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:b0eb899a208fe5ec5c5e7c2715985076dcd7069d291c696fb5af5b77284acc62 bytes:35818
+post-edit: (recorded at commit 098baf9; 2 files, +17/-2)
+
+## 2026-10-07 decode-viewer lanes/decode-viewer (entry 22: CR-024 correction + FLAG withdrawal)
+inputs:
+- own-gen orace re-proof: race2s +20 runs (fwd 6/20; combined 7/37) + mixSFS +20 runs (fwd 3/20; combined 3/32) + -wt 1 pair 3/3 fwd + -wt 1 20-fail PAT-order 3/3 + archive PAT-order check (lexicographic == pinned order) (WS tmp/decode-viewer-probes/orace; macOS 27.0.1, load ~19)
+- quiz-decode PV-012 (viewer@e779bdd merged 340f226) + writer2 NOTE-080 (re-proof, FLAG read) (read first-hand)
+not-consulted: patent contents, encode-side lanes, reference/port sources,
+  decompiler output (none), writer worktree files (git-show only + black-box runs), liblzraven src/*.c internals
+outputs: 0 new clauses (CR-024 CORRECTED: race @>=2 all classes, canonical archive order, S-reverse + threshold-3 RETRACTED); FLAG withdrawal + VERIFY-ba293f1 re-PASS + NOTE-49
+findings:
+- viewer S-reverse was 14/14 small-sample luck; writer1 forward vindicated via -wt 1 pin; method fix (n>=20 + canonical pin before FLAG) recorded in clause body
+- VERIFY 44 PASS 0 open FLAG; Q/A 18/18; joint DONE still open (writer1/sweep DONEs pending; claim HELD)
+pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:c9ffd7b362f0cf2055e4d071d5686ef05c877328215ed51778e9ccde058952e4 bytes:27283
+pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:847198f69eee4bd863e5184f2609f77b50af109fc3c2fced04b2fe189de0b69a bytes:37229
 post-edit: (recorded at commit; see commit 2nd line stats)
