@@ -45,6 +45,8 @@ Notation: P# = probe id. Passwords/keys: `testpw32....` (38ch), `test-password-f
 
 - wrong-pw / prologue-corrupt(8..155): `Failed to unlock container / Error 0xde108400 / HMAC / unlock container`.
 - seg-corrupt(>=156): `Decryption failed / Authentication failed / Error 0xde108400 / HMAC / decrypting cluster / unlocking next cluster / Segment load / byte stream read error / Stream processing cancelled`.
+- PAD-AUTH own (padded files): flips in [18620+IN, EOF) -> `0x9e041c00 / authenticating padding / Padding authentication` exit 1. padstart EXACT = 18620+IN (16B->18636, 18B->18638, 3MB->3018620). Proto GAP: accepts (exit 0) — Q-016 open for rule bed.
+- SEG-N own (multi-seg): segment-data flips -> `0x9e05cc00 / Multi-thread read / HMAC / decrypting segment / decrypting segment N` (N = 1MB-seg index from file off 18620). Proto parity OK (exit 1).
 - magic-corrupt: `Context creation failed / Error 0xcf00d800 / Invalid magic bytes / Invalid magic`.
 - trunc keep<12: `Context creation failed / 0xb9041c00 / reading magic`; keep 12..155: `0xb9045000 / reading prologue`. Boundary EXACT @12.
 - trunc keep>=156: `Decryption failed / Authentication failed / Error 0x9e015800 / loading cluster header / unlocking next cluster / Segment load / byte stream read error / Stream processing cancelled`.
