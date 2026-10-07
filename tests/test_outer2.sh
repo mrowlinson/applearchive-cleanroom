@@ -140,6 +140,31 @@ print(':'.join(str(t-s) for s,t in zip(o,e)))")
 }
 FRAMES fr-rav100k 100000 lzraven 2b00caec 10000
 FRAMES fr-bm100k 100000 lzbitmap 5a424d 10000
+UNC() { # tag nbytes alg block : unc-sum/chain verdict + sha (NOTE-w2s2-6 layout)
+  tag=$1; n=$2; alg=$3; blk=$4
+  mk1file "un$n$blk" "$n" z
+  set -- $(AAR "m-$tag-raw" "un$n$blk" raw)
+  set -- $(AAR "m-$tag" "un$n$blk" "$alg" "$blk"); s=$2 h=$3
+  v=$(python3 -c "
+import struct
+b = open('$WORK/m-$tag.aar','rb').read()
+r = open('$WORK/m-$tag-raw.aar','rb').read()
+inner = len(r) - 28
+p = 12; su = 0; nb = 0
+while p < len(b):
+  z1, u, z2, c = struct.unpack('>IIII', b[p:p+16])
+  assert z1 == 0 and z2 == 0, (nb, z1, z2)
+  su += u; nb += 1; p += 16 + c
+iv = 'INNER-EQ' if su - 28 == inner else f'INNER-DIFF-{su}-{inner}'
+cv = 'CHAIN-EQ' if p == len(b) else f'CHAIN-DIFF-{p}-{len(b)}'
+print(f'{iv}-{cv}-NB{nb}')")
+  chk "m-$tag-unc" str "$v" "$s"
+  chk "m-$tag" sha "$h" "$s"
+}
+UNC un-rav100k-b10k 100000 lzraven 10000
+UNC un-bm100k-b10k 100000 lzbitmap 10000
+UNC un-rav200k-1 200000 lzraven ""
+UNC un-bm200k-1 200000 lzbitmap ""
 echo "== AEA =="
 AEA=${AEA:-/usr/bin/aea}
 PW="0123456789abcdef0123456789abcdef"
