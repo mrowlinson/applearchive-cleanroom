@@ -73,6 +73,12 @@ m-un-rav200k-1-unc,str,INNER-EQ-CHAIN-EQ-NB1,260,test_outer2.sh,27.0.1,oracle-ad
 m-un-rav200k-1,sha,9cd8a6b218f32e4fcad9471dfea8826f5c1b3b6a27be378a1745b0e7c5266254,260,test_outer2.sh,27.0.1,oracle-adapter.sh
 m-un-bm200k-1-unc,str,INNER-EQ-CHAIN-EQ-NB1,1276,test_outer2.sh,27.0.1,oracle-adapter.sh
 m-un-bm200k-1,sha,58159e0d9bd76a0e4fc522d79ec739a19f7e2bde032cc2bc549b7a6d48240da5,1276,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-mix-rav-pat,str,CCCCCSSSSSS,50931,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-mix-rav,sha,bb70e6c9684a72853e65de8b95ffa984698ca054f3cf3ee381d60fa402991cf1,50931,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-mix-bm-pat,str,CCCCCSSSSSS,51005,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-mix-bm,sha,6eeb2baf3c5ff141381dc6d878f8ea65f1b68dbb8c13ca812edce3c57c317538,51005,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-mix-lz-pat,str,CCCCCSSSSSS,51319,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-mix-lz,sha,e56d4b285a19d63a9e9ef95fbb20e95b08bc0b730efcd9ec4ffb7521940ea09f,51319,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-size-p1-0,size,160,160,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-size-p5-0,size,160,160,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-size-p1-1,size,19456,19456,test_outer2.sh,27.0.1,oracle-adapter.sh

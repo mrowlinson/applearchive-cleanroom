@@ -165,6 +165,27 @@ UNC un-rav100k-b10k 100000 lzraven 10000
 UNC un-bm100k-b10k 100000 lzbitmap 10000
 UNC un-rav200k-1 200000 lzraven ""
 UNC un-bm200k-1 200000 lzbitmap ""
+MIX() { # tag alg : per-block S/C pattern + sha (50k zeros + 50k seed11 random, -b 10000)
+  tag=$1; alg=$2
+  rm -rf "$IN/mix"; mkdir -p "$IN/mix"
+  python3 -c "import random; open('$IN/mix/f.bin','wb').write(bytes(50000)+random.Random(11).randbytes(50000))"
+  touch -t 202001010000 "$IN/mix/f.bin" "$IN/mix"
+  set -- $(AAR "m-$tag" mix "$alg" 10000); s=$2 h=$3
+  pat=$(python3 -c "
+import struct
+b = open('$WORK/m-$tag.aar','rb').read()
+p = 12; o = ''
+while p < len(b):
+  z1, u, z2, c = struct.unpack('>IIII', b[p:p+16])
+  assert z1 == 0 and z2 == 0
+  o += 'S' if u == c else 'C'
+  p += 16 + c
+assert p == len(b)
+print(o)")
+  chk "m-$tag-pat" str "$pat" "$s"
+  chk "m-$tag" sha "$h" "$s"
+}
+MIX mix-rav lzraven; MIX mix-bm lzbitmap; MIX mix-lz lzfse
 echo "== AEA =="
 AEA=${AEA:-/usr/bin/aea}
 PW="0123456789abcdef0123456789abcdef"
