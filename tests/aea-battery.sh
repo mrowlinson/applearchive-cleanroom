@@ -245,6 +245,8 @@ cell mixed-p5-keyextra --password "$PW" --key "$WORK/key32.bin" -i "$WORK/p5.aea
 if "$AEAD_PY" "$REPO/proto/aead.py" decrypt -i "$WORK/p5.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-no-creds"; else ok "err-no-creds"; fi
 if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/p1.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-wrong-credtype"; else ok "err-wrong-credtype"; fi
 if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --key "$WORK/key33.bin" -i "$WORK/p1.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-key33"; else ok "err-key33"; fi
+# NOTE: seek=7 is the profile-u32 HIGH byte, not a strength field (APROBE-01
+# byte map); err-strength* names kept for history. Oracle: exit 1 unlock-class.
 cp "$WORK/p5.aea" "$WORK/ss3.aea" && printf '\003' | dd of="$WORK/ss3.aea" bs=1 seek=7 conv=notrunc 2>/dev/null
 if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/ss3.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-strength3"; else ok "err-strength3"; fi
 cp "$WORK/p5.aea" "$WORK/ss9.aea" && printf '\011' | dd of="$WORK/ss9.aea" bs=1 seek=7 conv=notrunc 2>/dev/null
