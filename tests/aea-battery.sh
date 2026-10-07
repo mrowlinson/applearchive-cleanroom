@@ -62,7 +62,12 @@ aea encrypt -profile 5 -password-value "$PW" -a none -padding none -checksum non
 EXP=$WORK/msg.txt
 cell cksum-none --password "$PW" -i "$WORK/k-none.aea"
 aea encrypt -profile 5 -password-value "$PW" -a none -padding none -checksum murmur64 -i "$WORK/msg.txt" -o "$WORK/k-mur.aea" 2>/dev/null
-if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/k-mur.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "cksum-murmur-failclosed"; else ok "cksum-murmur-failclosed"; fi
+EXP=$WORK/msg.txt
+cell cksum-murmur --password "$PW" -i "$WORK/k-mur.aea"
+python3 -c "open('$WORK/bigtext2.bin','wb').write(b'Murmur over many segments: the quick brown fox. '*30000)"
+aea encrypt -profile 1 -key "$WORK/key32.bin" -a zlib -padding none -checksum murmur64 -i "$WORK/bigtext2.bin" -o "$WORK/k-mur-big.aea" 2>/dev/null
+EXP=$WORK/bigtext2.bin
+cell cksum-murmur-big --key "$WORK/key32.bin" -i "$WORK/k-mur-big.aea"
 
 # 5b. auth-data forms
 aea encrypt -profile 5 -password-value "$PW" -a none -padding none -auth-data-value hex:deadbeef -auth-data-value hex:0102030405060708 -i "$WORK/msg.txt" -o "$WORK/auth2.aea" 2>/dev/null
@@ -106,6 +111,21 @@ cp "$WORK/p5.aea" "$WORK/ss3.aea" && printf '\003' | dd of="$WORK/ss3.aea" bs=1 
 if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/ss3.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-strength3"; else ok "err-strength3"; fi
 cp "$WORK/p5.aea" "$WORK/ss9.aea" && printf '\011' | dd of="$WORK/ss9.aea" bs=1 seek=7 conv=notrunc 2>/dev/null
 if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/ss9.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-strength9"; else ok "err-strength9"; fi
+printf '%s' "$PW" > "$WORK/pw-exact.txt"; printf '%s\n' "$PW" > "$WORK/pw-nl.txt"
+EXP=$WORK/msg.txt
+cell pwfile-exact --password-file "$WORK/pw-exact.txt" -i "$WORK/p5.aea"
+cell pwfile-nl --password-file "$WORK/pw-nl.txt" -i "$WORK/p5.aea"
+SPW='  spaced-battery-password-32ch-abcd  '
+aea encrypt -profile 5 -password-value "$SPW" -a none -padding none -i "$WORK/msg.txt" -o "$WORK/sp.aea" 2>/dev/null
+printf '%s' "$SPW" > "$WORK/sp-exact.txt"; printf '%s\n' "$SPW" > "$WORK/sp-nl.txt"; printf 'spaced-battery-password-32ch-abcd' > "$WORK/sp-strip.txt"
+cell pwspace-value --password "$SPW" -i "$WORK/sp.aea"
+cell pwspace-file --password-file "$WORK/sp-exact.txt" -i "$WORK/sp.aea"
+cell pwspace-nl --password-file "$WORK/sp-nl.txt" -i "$WORK/sp.aea"
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password-file "$WORK/sp-strip.txt" -i "$WORK/sp.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-pwspace-strip"; else ok "err-pwspace-strip"; fi
+cp "$WORK/key32.bin" "$WORK/key32nl.bin" && printf '\n' >> "$WORK/key32nl.bin"
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --key "$WORK/key32nl.bin" -i "$WORK/p1.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-key32nl"; else ok "err-key32nl"; fi
+aea encrypt -profile 1 -key "$WORK/genkey.txt" -key-gen -a none -padding none -i "$WORK/msg.txt" -o "$WORK/gen.aea" 2>/dev/null
+cell keygen-file --key "$WORK/genkey.txt" -i "$WORK/gen.aea"
 
 # 10. append
 printf 'APPENDED-DATA-BLOCK' > "$WORK/app-in.bin"

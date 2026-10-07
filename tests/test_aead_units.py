@@ -61,9 +61,12 @@ class Units(unittest.TestCase):
         self.assertEqual(aead.decomp("z", zlib.compress(b"hi"), 2), b"hi")
         with self.assertRaises(aead.FmtErr):
             aead.decomp("Q", b"q", 1)
-        with self.assertRaises(aead.FmtErr):
-            aead.cksum(1, b"q")
         self.assertEqual(aead.cksum(0, b"q"), b"")
+        m1 = aead.cksum(1, b"q")
+        self.assertEqual(len(m1), 8)
+        self.assertEqual(m1, aead.cksum(1, b"q"))
+        self.assertNotEqual(m1, aead.cksum(1, b"qq"))
+        self.assertEqual(aead.murmur64a(b""), aead.murmur64a(b""))
 
 
 if __name__ == "__main__":

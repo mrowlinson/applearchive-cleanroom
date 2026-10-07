@@ -149,9 +149,38 @@ def decomp(alg, data, size):
     raise FmtErr("codec %r unsupported in v1" % alg)
 
 
+M64 = (1 << 64) - 1
+MUR_SEED = 0xE2236FDC26A5F6D2
+
+
+def murmur64a(data, seed=MUR_SEED):
+    m, r = 0xC6A4A7935BD1E995, 47
+    h = (seed ^ ((len(data) * m) & M64)) & M64
+    nblk = len(data) & ~7
+    for i in range(0, nblk, 8):
+        (k,) = struct.unpack_from("<Q", data, i)
+        k = (k * m) & M64
+        k ^= k >> r
+        k = (k * m) & M64
+        h ^= k
+        h = (h * m) & M64
+    tail = len(data) - nblk
+    if tail:
+        t = 0
+        for j in range(tail):
+            t |= data[nblk + j] << (8 * j)
+        h = (((h ^ t) & M64) * m) & M64
+    h ^= h >> r
+    h = (h * m) & M64
+    h ^= h >> r
+    return struct.pack("<Q", h)
+
+
 def cksum(alg, data):
     if alg == 0:
         return b""
+    if alg == 1:
+        return murmur64a(data)
     if alg == 2:
         return hashlib.sha256(data).digest()
     raise FmtErr("checksum %d unsupported in v1" % alg)
@@ -235,8 +264,6 @@ def decrypt_aea(blob, symkey=None, recip_priv=None, password=None, sign_pub=None
     if orig == 0:
         return b""
     shsz = 8 + CKSUM_SIZE[ckalg]
-    if ckalg == 1:
-        raise FmtErr("checksum murmur unsupported in v1")
 
     out = io.BytesIO()
     ci = 0
@@ -286,16 +313,15 @@ def read_key_file(path):
     with open(path, "rb") as fh:
         raw = fh.read()
     try:
-        txt = raw.decode("ascii").strip()
+        t = raw.decode("ascii")
     except UnicodeDecodeError:
-        txt = None
-    if txt is not None and txt.startswith("hex:"):
-        return bytes.fromhex(txt[4:])
-    if txt is not None and txt.startswith("base64:"):
+        return raw
+    c = t.rstrip("\r\n")
+    if c.startswith("hex:"):
+        return bytes.fromhex(c[4:])
+    if c.startswith("base64:"):
         import base64
-        return base64.b64decode(txt[7:])
-    if raw[:4] == b"hex:":
-        return bytes.fromhex(raw[4:].decode("ascii").strip())
+        return base64.b64decode(c[7:])
     return raw
 
 
@@ -340,7 +366,11 @@ def main(argv):
             pw = a.password
         if a.password_file:
             with open(a.password_file, "rb") as fh:
-                pw = fh.read().decode().strip()
+                praw = fh.read()
+            try:
+                pw = praw.decode().rstrip("\r\n")
+            except UnicodeDecodeError:
+                raise FmtErr("password file not text")
         if a.recipient_priv:
             with open(a.recipient_priv, "rb") as fh:
                 recip = fh.read()

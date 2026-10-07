@@ -16,7 +16,8 @@ Notation: P# = probe id. Passwords/keys: `testpw32....` (38ch), `test-password-f
 | 5 scrypt | -password-value/-password-file | same | 18636 |
 
 - -key-gen file = ASCII `hex:<64hex>\n` (69B). bare64hex/0x/base64-bare all rejected.
-- pwfile: exact bytes CLEAN; trailing `\n` also CLEAN (NL-tolerant).
+- pwfile rule EXACT own: bytes verbatim + chomp trailing [\r\n]+ only (exact/NL/CRLF/2NL CLEAN; spaces significant — stripped variant REJECTED; sweep NOTE-006 observation confirmed + fixed in proto).
+- keyfile rule EXACT own: `hex:`/`base64:` text (trailing NL ok) parsed; else RAW byte-exact (32B+\n=33B REJECTED 0xcf058400; 31/33B same class).
 - Magic: `AEA1` + u24LE profile @4 + u8 scrypt @7 (always 0 own) + u32LE auth-size @8.
 
 ## Size rules (own, -a none unless noted)
@@ -58,7 +59,8 @@ Encrypt adds `padding:` line. Encrypt to /dev/null fails (temp+rename).
 
 ## Gaps (Q or v2)
 
-- murmur64a vectors (Q-010 open). lzraven seg codec id `m` (Q-011 bed open; compression_tool cross-check MATCH, proto fail-closed by design).
+- murmur64a DONE (A-010 path-line; own routine, cksum-murmur + big MATCH).
+- lzraven seg codec id `m` (Q-011 bed open; compression_tool cross-check MATCH, proto fail-closed by design).
 - auth-data>0 MAPPED own: prologue = 156+authsize (2-blob auth12B flips unlock/decrypt @167/168); kv-form = u32LE pair + key\0+value (own-confirm FORMAT.md); both MATCH in proto.
 - `-keychain` flows (OUT of scope, touches system store). lzvn `f` (no oracle -a flag; skip).
 
