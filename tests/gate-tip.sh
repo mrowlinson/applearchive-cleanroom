@@ -3,7 +3,7 @@
 # legs: HYGIENE (PARENT-002 artifacts) / BATTERIES (rawenc/pbze/units/smoke
 # as present in tip) / SMOKE-IMPL* (smoke via committed impl adapters) /
 # PINS (vectors/*-PINS.csv vs fresh got.aar, stale-name detection) /
-# CONTAM (vendor/disasm grep + Mach-O scan) / OSS (PARENT-003 new-dep scan)
+# CONTAM (vendor/disasm grep + Mach-O scan) / OSS (PARENT-003 new-dep scan; A-20 liblzma recognized)
 # / ADOPT (A-1 harness pins vs lanes/harness-oracle, best-effort).
 # exit 0 GATE-PASS / 1 GATE-FAIL. all work under /Volumes/NVME only.
 # v2: PIN-STALE-NAME + UNPINNED-AAR, SMOKE-IMPL/IMPL2, committed-.aea WARN,
@@ -11,7 +11,8 @@
 # C-BUILD + RAWENC-C/PBZE-C + PINS-*-C (ENC_BIN parity), HYGIENE tmp/scratch- (PARENT-005),
 # RUN_BIG rawenc legs + PIN-ATTESTED log cross-check, LIBCOMPRESSION deny (PARENT-007),
 # RB2 battery + PINS-RB2 setdiff leg (w2 frame IMPL),
-# RAVFRAME battery + PINS-RAVFRAME setdiff leg (w2 raven IMPL).
+# RAVFRAME battery + PINS-RAVFRAME setdiff leg (w2 raven IMPL),
+# LZMA/LZMA-C batteries (w1 lzma IMPL, no pins csv yet).
 set -u
 REV=${1:?usage: gate-tip.sh <rev> <ws-outdir>}
 OUT=${2:?usage: gate-tip.sh <rev> <ws-outdir>}
@@ -62,6 +63,7 @@ if [ -e "$OUT/tree/src/c/Makefile" ]; then
 else say C-BUILD "SKIP no-c-port"; fi
 runb RAWENC tests/test_rawenc.sh env RUN_BIG=1 sh "$OUT/tree/tests/test_rawenc.sh" "$OUT/work/rawenc"
 runb PBZE tests/test_pbze.sh sh "$OUT/tree/tests/test_pbze.sh" "$OUT/work/pbze"
+runb LZMA tests/test_lzma.sh sh "$OUT/tree/tests/test_lzma.sh" "$OUT/work/lzma"
 runb SMOKE tests/smoke.sh sh "$OUT/tree/tests/smoke.sh" "$OUT/work/smoke"
 runb OUTER2 tests/test_outer2.sh sh "$OUT/tree/tests/test_outer2.sh" "$OUT/work/outer2"
 runb RB2 tests/test_rb2.sh sh "$OUT/tree/tests/test_rb2.sh" "$OUT/work/rb2"
@@ -74,6 +76,7 @@ if [ -e "$OUT/tree/src/c/aae.c" ]; then
   if [ -x "$OUT/build/aae" ]; then
     runb RAWENC-C tests/test_rawenc.sh env RUN_BIG=1 ENC_BIN="$OUT/build/aae" sh "$OUT/tree/tests/test_rawenc.sh" "$OUT/work/rawenc-c"
     runb PBZE-C tests/test_pbze.sh env ENC_BIN="$OUT/build/aae" sh "$OUT/tree/tests/test_pbze.sh" "$OUT/work/pbze-c"
+    runb LZMA-C tests/test_lzma.sh env ENC_BIN="$OUT/build/aae" sh "$OUT/tree/tests/test_lzma.sh" "$OUT/work/lzma-c"
   else fail=1; say RAWENC-C "FAIL no-c-binary"; say PBZE-C "FAIL no-c-binary"; fi
 else say RAWENC-C "SKIP no-c-port"; say PBZE-C "SKIP no-c-port"; fi
 
@@ -148,15 +151,18 @@ pinsetleg vectors/ravframe-PINS.csv "$OUT/work-RAVFRAME.log" PINS-RAVFRAME
 
 # 5. OSS: third-party lib loads in src+harness (PARENT-003 gate 3).
 # system libc (/usr/lib, /System) + bare ctypes stdlib use are NOT deps.
-# a loading file is clean iff it names an already-nominated lib (lzfse, NOTE-013).
+# a loading file is clean iff it names an already-nominated lib (lzfse, NOTE-013;
+# liblzma iff A-20 pin markers present: 5.8.4 + (1b2e12cc sha | A-20 cite)).
 OHIT=$(grep -rniE -I 'CDLL\(|cdll\.LoadLibrary|\.dylib|\.so\b|git submodule|add_subdirectory' "$OUT/tree/src" "$OUT/tree/harness" 2>/dev/null | grep -v '/usr/lib/' | grep -v '/System/' || true)
 ONEW=""
 for _f in $(echo "$OHIT" | cut -d: -f1 | sort -u); do
   [ -z "$_f" ] && continue
-  grep -qi 'lzfse' "$_f" || ONEW="$ONEW $_f"
+  if grep -qi 'lzfse' "$_f"; then continue; fi
+  if grep -qi 'lzma' "$_f" && grep -q '5\.8\.4' "$_f" && { grep -q '1b2e12cc' "$_f" || grep -q 'A-20' "$_f"; }; then continue; fi
+  ONEW="$ONEW $_f"
 done
 if [ -n "$ONEW" ]; then fail=1; say OSS "FAIL new-oss:$ONEW"; echo "$OHIT" | sed 's/^/  /';
-elif [ -n "$OHIT" ]; then say OSS "PASS lzfse-only"; else say OSS "PASS none"; fi
+elif [ -n "$OHIT" ]; then say OSS "PASS nominated-only"; else say OSS "PASS none"; fi
 
 # 5b. LIBCOMPRESSION (A-12 REFUSE, PARENT-007-confirmed: beds-OK green,
 # src-use denied in src/harness unless a grant lands in quiz).
