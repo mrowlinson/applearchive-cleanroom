@@ -14,9 +14,14 @@ set -u
 REV=${1:?usage: gate-tip.sh <rev> <ws-outdir>}
 OUT=${2:?usage: gate-tip.sh <rev> <ws-outdir>}
 case "$OUT" in /Volumes/NVME/*) ;; *) echo "GATE-FAIL $REV outdir-not-nvme"; exit 1;; esac
-REPO=$(git rev-parse --show-toplevel)
+SELFDIR=$(cd "$(dirname "$0")" && pwd)
+REPO=$(git -C "$SELFDIR" rev-parse --show-toplevel 2>/dev/null || git rev-parse --show-toplevel 2>/dev/null || true)
+[ -n "$REPO" ] || { echo "GATE-FAIL $REV no-repo-resolved"; exit 1; }
+git -C "$REPO" cat-file -e "$REV^{commit}" 2>/dev/null || { echo "GATE-FAIL $REV no-such-rev"; exit 1; }
 rm -rf "$OUT"; mkdir -p "$OUT/tree" "$OUT/work"
-git -C "$REPO" archive "$REV" | tar -x -C "$OUT/tree" || { echo "GATE-FAIL $REV archive"; exit 1; }
+git -C "$REPO" archive "$REV" >"$OUT/tree.tar" || { echo "GATE-FAIL $REV archive"; exit 1; }
+tar -x -C "$OUT/tree" -f "$OUT/tree.tar" || { echo "GATE-FAIL $REV extract"; exit 1; }
+[ -n "$(ls -A "$OUT/tree")" ] || { echo "GATE-FAIL $REV empty-tree"; exit 1; }
 find "$OUT/tree" -name __pycache__ -type d -prune -exec rm -rf {} + 2>/dev/null
 fail=0
 say() { echo "GATELEG $1 $2"; }
