@@ -71,7 +71,30 @@ PAT `../evil-...`: oracle exit 1 "Invalid entry path...stream
 cancelled", aborts (later entries skipped), no escape artifact.
 Decoder safe_join abort exit 1, same partial tree. MATCH.
 
-## Open (viewer Q-012/Q-013)
+## A-012/A-013 applied (B/C-with-DEV continue + count model + stderr)
 
-B/C-with-DEV shape + behavior (needs root); whiteout kind (if any);
-device-restore parity. Decoder fail-closed on DEV-present (exit 1).
+- DEV = `DEV4` + u32LE st_rdev (major<<24|minor); parser handles by
+  construction (UINT-width family). B/C-with-DEV: loud-skip +
+  CONTINUE exit 1 (== S policy; verified first-hand on crafted
+  B+DEV: repeat extracted). B/C-no-DEV: loud ABORT exit 1 (kept).
+- "N entries failed" counts S-class ONLY (S + B/C-with-DEV); H
+  failures print detail lines but are NOT counted (mixed S+H ->
+  "1 entries failed", measured). H-only failure -> NO count line.
+- stderr stance (measured core lines, no fragile wrappers): S-class
+  stanza verbatim ("Error 0xc8055000 / not implemented yet /
+  creating fs object: <pat>") + verbatim count line (incl
+  ungrammatical "1 entries"); H core lines verbatim; aborts carry
+  "YAA ..." prefix. Skipped: order-fragile "Error 0x..." headers on
+  H-chains (first-failure code shared), "process hlinks" trailer,
+  abort trailers. Bytes out-of-contract; exit+tree parity is the bar.
+- W/R/T DISPUTE (recorded): A-013 recommends loud for known-but-
+  uncreatable; writer KEEPS silent-skip per 256-TYP shipping-binary
+  census (W=87/R=82/T=84 all silent exit-0 first-hand). Tiebreaker:
+  observable oracle behavior wins. Revisit iff a loud W/R/T vector
+  fires. M: silent-skip == skip-by-design ✓ (A-013 agrees).
+- MTM/S 8B short form: handled (nsec=0) in C + proto, no change.
+
+## Open (none blocking)
+
+Whiteout: negative bed per A-012 (fail-closed == silent-skip ✓).
+B/C restore: never (user AND root per A-013) — parity complete.

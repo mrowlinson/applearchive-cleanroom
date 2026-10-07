@@ -267,12 +267,22 @@ def apply_meta(target, entries, blobs, islink):
         apply_xattr_blob(target, xat, islink)
 
 
+def _show(bs):
+    return bs.decode("utf-8", "surrogateescape")
+
+
+def _unimpl(pat):
+    print("Error 0xc8055000\nnot implemented yet\ncreating fs object: %s"
+          % _show(pat), file=sys.stderr)
+
+
 def extract(items, root):
     os.makedirs(root, exist_ok=True)
     deferred = []
     hlc_first = {}
     hlinks = []
     failed = 0
+    scount = 0
     for entries, blobs in items:
         _, typ = _get(entries, b"TYP")
         _, pat = _get(entries, b"PAT")
@@ -299,6 +309,8 @@ def extract(items, root):
             apply_meta(target, entries, blobs, False)
         elif typ == ord("L"):
             _, lnk = _get(entries, b"LNK")
+            if lnk is None:
+                raise FmtErr("YAA link entry has no LNK field: %r" % pat)
             parent = os.path.dirname(target)
             if parent:
                 os.makedirs(parent, exist_ok=True)
@@ -315,26 +327,29 @@ def extract(items, root):
             os.mkfifo(target, 0o600)
             apply_meta(target, entries, blobs, False)
         elif typ == ord("S"):
-            print("aad: skipping socket %r (not implemented)" % pat,
-                  file=sys.stderr)
+            _unimpl(pat)
             failed += 1
+            scount += 1
         elif typ == ord("H"):
             _, lnk = _get(entries, b"LNK")
             if lnk is None:
-                raise FmtErr("link entry has no LNK field: %r" % pat)
+                raise FmtErr("YAA link entry has no LNK field: %r" % pat)
             hlinks.append((target, lnk))
         elif typ == ord("B") or typ == ord("C"):
             _, dev = _get(entries, b"DEV")
             if dev is None:
-                raise FmtErr("device entry has no DEV field: %r" % pat)
-            raise FmtErr("device entry with DEV (unprobed, needs root)")
+                raise FmtErr("YAA device entry has no DEV field: %r" % pat)
+            _unimpl(pat)
+            failed += 1
+            scount += 1
         else:
             pass  # unknown TYP: silent skip (oracle parity, measured)
     for target, lnk in hlinks:
         try:
             src = safe_join(root, lnk)
         except FmtErr:
-            print("aad: invalid 'H' LNK: %r" % lnk, file=sys.stderr)
+            print("invalid path: %s\ninvalid 'H' LNK" % _show(lnk),
+                  file=sys.stderr)
             failed += 1
             continue
         try:
@@ -342,7 +357,7 @@ def extract(items, root):
         except FileNotFoundError:
             st = None
         if st is None or not stat.S_ISREG(st.st_mode):
-            print("aad: 'H' LNK not a regular file: %r" % lnk,
+            print("'H' LNK not a regular file: %s" % _show(lnk),
                   file=sys.stderr)
             failed += 1
             continue
@@ -354,11 +369,13 @@ def extract(items, root):
         try:
             os.link(src, target)
         except OSError as e:
-            print("aad: link %r failed: %s" % (target, e), file=sys.stderr)
+            print("link %r failed: %s" % (target, e), file=sys.stderr)
             failed += 1
             continue
     for target, entries, blobs in reversed(deferred):
         apply_meta(target, entries, blobs, False)
+    if scount:
+        print("%d entries failed to extract" % scount, file=sys.stderr)
     return 1 if failed else 0
 
 
@@ -374,7 +391,7 @@ def main(argv):
               file=sys.stderr)
         return extract(parse_inner(inner), argv[2])
     except FmtErr as e:
-        print("aad: %s" % e, file=sys.stderr)
+        print("%s" % e, file=sys.stderr)
         return 1
 
 

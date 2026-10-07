@@ -406,7 +406,7 @@ static int extract(const Item *items, size_t nitems, const char *root) {
     typedef struct { char path[4096]; size_t idx; } Hln;
     Hln *hlns = malloc(nitems * sizeof *hlns);
     size_t nhlns = 0;
-    unsigned fails = 0;
+    unsigned fails = 0, sfails = 0;
     int rc = -1;
     for (size_t k = 0; k < nitems; k++) {
         const Item *it = &items[k];
@@ -451,7 +451,11 @@ static int extract(const Item *items, size_t nitems, const char *root) {
             if (apply_meta(target, it, 0)) goto out;
         } else if (t->num == 'L') {
             const Entry *l = find_ent(it, "LNK");
-            if (!l || l->st != 'P') { FAIL("link w/o target\n"); goto out; }
+            if (!l || l->st != 'P') {
+                fprintf(stderr, "YAA link entry has no LNK field: %.*s\n",
+                        (int)p->rawlen, p->raw);
+                goto out;
+            }
             char *sl = strrchr(target, '/');
             if (sl) { *sl = 0; if (mkdirs(target)) goto out; *sl = '/'; }
             char lbuf[4096];
@@ -465,7 +469,9 @@ static int extract(const Item *items, size_t nitems, const char *root) {
         } else if (t->num == 'H') {
             const Entry *l = find_ent(it, "LNK");
             if (!l || l->st != 'P') {
-                FAIL("link entry has no LNK field\n"); goto out;
+                fprintf(stderr, "YAA link entry has no LNK field: %.*s\n",
+                        (int)p->rawlen, p->raw);
+                goto out;
             }
             memcpy(hlns[nhlns].path, target, strlen(target) + 1);
             hlns[nhlns++].idx = k;
@@ -478,15 +484,20 @@ static int extract(const Item *items, size_t nitems, const char *root) {
             }
             if (apply_meta(target, it, 0)) goto out;
         } else if (t->num == 'S') {
-            FAIL("skipping socket %s (not implemented)\n", target);
-            fails++;
+            fprintf(stderr, "Error 0xc8055000\nnot implemented yet\n"
+                    "creating fs object: %.*s\n",
+                    (int)p->rawlen, p->raw);
+            fails++; sfails++;
         } else if (t->num == 'B' || t->num == 'C') {
             if (!find_ent(it, "DEV")) {
-                FAIL("device entry has no DEV field: %s\n", target);
+                fprintf(stderr, "YAA device entry has no DEV field: %.*s\n",
+                        (int)p->rawlen, p->raw);
                 goto out;
             }
-            FAIL("device entry with DEV (unprobed)\n");
-            goto out;
+            fprintf(stderr, "Error 0xc8055000\nnot implemented yet\n"
+                    "creating fs object: %.*s\n",
+                    (int)p->rawlen, p->raw);
+            fails++; sfails++;
         } else {
             /* unknown TYP: silent skip (oracle parity, measured) */
         }
@@ -496,11 +507,15 @@ static int extract(const Item *items, size_t nitems, const char *root) {
         const Entry *l = find_ent(&items[hlns[i].idx], "LNK");
         char src[4096];
         if (safe_join(root, l->raw, l->rawlen, src)) {
-            FAIL("invalid 'H' LNK\n"); fails++; continue;
+            fprintf(stderr, "invalid path: %.*s\ninvalid 'H' LNK\n",
+                    (int)l->rawlen, l->raw);
+            fails++; continue;
         }
         struct stat sb;
         if (lstat(src, &sb) || !S_ISREG(sb.st_mode)) {
-            FAIL("'H' LNK not a regular file\n"); fails++; continue;
+            fprintf(stderr, "'H' LNK not a regular file: %.*s\n",
+                    (int)l->rawlen, l->raw);
+            fails++; continue;
         }
         char *sl = strrchr(hlns[i].path, '/');
         if (sl) {
@@ -516,6 +531,8 @@ static int extract(const Item *items, size_t nitems, const char *root) {
     }
     for (size_t i = ndefs; i-- > 0;)
         if (apply_meta(defs[i].path, &items[defs[i].idx], 0)) goto out;
+    if (sfails)
+        fprintf(stderr, "%u entries failed to extract\n", sfails);
     rc = fails ? 1 : 0;
 out:
     free(defs);

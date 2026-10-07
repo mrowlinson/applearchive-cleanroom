@@ -180,6 +180,14 @@ CRC=0; "$AAD" "$WORK/evil.aar" "$WORK/c-px" 2>/dev/null || CRC=$?
 [ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "px-exit" || fail "px-exit"
 diff -r "$WORK/o-px" "$WORK/c-px" >/dev/null 2>&1 && pass "px-tree" || fail "px-tree"
 
+echo "== cell device-fail =="
+ORC=0; sh "$ADAPTER" aar-decode "$V/aar/bdev-basic.aar" "$WORK/o-bd" >/dev/null 2>&1 || ORC=$?
+CRC=0; "$AAD" "$V/aar/bdev-basic.aar" "$WORK/c-bd" 2>/dev/null || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "bd-exit" || fail "bd-exit"
+diff -r "$WORK/o-bd" "$WORK/c-bd" >/dev/null 2>&1 && pass "bd-tree" || fail "bd-tree"
+"$AAD" "$V/aar/mix-fail.aar" "$WORK/c-sx" 2>"$WORK/sx.err" || true
+grep -q "not implemented yet" "$WORK/sx.err" && grep -q "1 entries failed to extract" "$WORK/sx.err" && pass "sx-tokens" || fail "sx-tokens"
+
 echo "== cell errors =="
 head -c 100 /dev/urandom > "$WORK/corrupt.aar"
 "$AAD" "$WORK/corrupt.aar" "$WORK/c-cor" 2>/dev/null && fail "corrupt-exit" || pass "corrupt-exit"
