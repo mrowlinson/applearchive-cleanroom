@@ -325,6 +325,15 @@ head -c $(($(wc -c < "$WORK/e-pad.aea")-2)) "$WORK/e-pad.aea" > "$WORK/e-short2.
 if aea decrypt -password-value "$PW" -i "$WORK/e-short2.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
 if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/e-short2.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
 if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-pad-short-empty"; else bad "err-pad-short-empty"; fi
+# 9d. A-017 R1/R2 regression bed (8 tag/data flips; both sides reject via real HMAC checks)
+aea encrypt -profile 5 -password-value "$PW" -a none -padding none -checksum sha256 -i "$WORK/msg.txt" -o "$WORK/a17.aea" 2>/dev/null
+for off in 50 80 130 200 10396 10428 10460 18620; do
+  cp "$WORK/a17.aea" "$WORK/a17f.aea"
+  python3 -c "import sys;p=sys.argv[1];o=int(sys.argv[2]);b=bytearray(open(p,'rb').read());b[o]^=0x01;open(p,'wb').write(bytes(b))" "$WORK/a17f.aea" "$off"
+  if aea decrypt -password-value "$PW" -i "$WORK/a17f.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
+  if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/a17f.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
+  if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-a17-$off"; else bad "err-a17-$off"; fi
+done
 KHEX=$(python3 -c "import sys;print(sys.stdin.buffer.read().hex())" < "$WORK/key32.bin")
 KB64=$(python3 -c "import sys,base64;print(base64.b64encode(sys.stdin.buffer.read()).decode())" < "$WORK/key32.bin")
 EXP=$WORK/msg.txt
