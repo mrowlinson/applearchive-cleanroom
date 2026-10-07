@@ -310,6 +310,21 @@ for coff in 50 200 1000; do
   if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/padc-$coff.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
   if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-padcorr-$coff"; else bad "err-padcorr-$coff"; fi
 done
+# 9c. pad edges: verified range [padstart,arc); trailing bytes ignored; short pad rejected
+cp "$WORK/pad-def.aea" "$WORK/pad-plus1.aea" && printf 'Z' >> "$WORK/pad-plus1.aea"
+EXP=$WORK/msg.txt
+cell pad-plus1 --password "$PW" -i "$WORK/pad-plus1.aea"
+oracmp pad-plus1 -password-value "$PW" -i "$WORK/pad-plus1.aea"
+head -c $(($(wc -c < "$WORK/pad-def.aea")-100)) "$WORK/pad-def.aea" > "$WORK/pad-short.aea"
+if aea decrypt -password-value "$PW" -i "$WORK/pad-short.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/pad-short.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
+if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-pad-short"; else bad "err-pad-short"; fi
+: > "$WORK/empty.bin"
+aea encrypt -profile 5 -password-value "$PW" -a none -i "$WORK/empty.bin" -o "$WORK/e-pad.aea" 2>/dev/null
+head -c $(($(wc -c < "$WORK/e-pad.aea")-2)) "$WORK/e-pad.aea" > "$WORK/e-short2.aea"
+if aea decrypt -password-value "$PW" -i "$WORK/e-short2.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/e-short2.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
+if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-pad-short-empty"; else bad "err-pad-short-empty"; fi
 KHEX=$(python3 -c "import sys;print(sys.stdin.buffer.read().hex())" < "$WORK/key32.bin")
 KB64=$(python3 -c "import sys,base64;print(base64.b64encode(sys.stdin.buffer.read()).decode())" < "$WORK/key32.bin")
 EXP=$WORK/msg.txt
