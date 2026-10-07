@@ -29,7 +29,7 @@ cell() { # tag input alg [block]
   pay=$(dd if="$f" bs=1 skip=28 count=32 2>/dev/null | xxd -p | tr -d '\n')
   say "$tag size=$sz magic16=$magic blkhdr16=$bh pay32=$pay"
 }
-for a in lzraven lzbitmap; do
+for a in ${ALGS:-lzraven lzbitmap}; do
   cell "empty-$a" empty "$a"
   for n in 100 1000 10000 100000; do
     cell "z$n-$a" "z$n" "$a"
