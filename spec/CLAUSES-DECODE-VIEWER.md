@@ -119,7 +119,9 @@ body: lzfse frame = magic + uncLE32 + (n: XLE32=comp-16 5/5 | 2: stream bytes) +
 | CR-011 | MEASURED | sub-frame rules (4096/64K/stored) | CONFIRM + 4 OPENs |
 | CR-012 | MEASURED | lzraven stream framing (hdr/blocks/params/terminator) | CONFIRM + 2 OPENs |
 | CR-013 | MEASURED | AAR outer magic per codec (pbz* table) | CONFIRM |
-| CR-014 | MEASURED | entry-kind census (11 TYPs + behaviors) | CONFIRM + 3 OPENs |
+| CR-014 | MEASURED | entry-kind census (11 TYPs + behaviors) | CORRECTED by CR-015 (was 11, is 12) |
+| CR-015 | MEASURED | TYP H hardlink-by-path (12th kind) | CORRECT vs CR-014 |
+| CR-016 | MEASURED | lzraven bit0 raw emission rule | CONFIRM vs CR-012 |
 
 ```
 CR-012 [MEASURED] lzraven stream framing (8B hdr + u32 block-hdrs + u32-0 terminator)
@@ -146,6 +148,24 @@ artifact: own-gen kindbed (reg/symlink/hardlink/fifo/socket/xattr/sub, feeder-gu
 numbers: TYP bytes: F/D/L/P/S/C/B sampled (record hex + list-json + extract); H = F+HLC:0 (same-ino nlink=2 post-extract); fifo archive-hang w/o feeder + extract-hang post-create (25s+ timeout); socket/device extract exit-1 0xc8055000 "not implemented yet"; device archive 6/6 FAIL "Archive encoding failed"; /dev scan aborts (fd); M trigger 0/5 probes; whiteout 0 vendor mentions outside header enum
 verdict: CONFIRM vs CR-008 (TLV shape; entry u16 = keys-region offset, value blobs appended); CONFIRM vs VENDOR-DOCS-L2 types (CORRECTED: 11 not 8 — h is HLC pseudo-filter, W/R/T exist in enum); CONFIRM vs writer HLC semantics (NOTE-015, exact agreement); OPEN: W/R/T/M triggers + samples (parse rule safe-by-construction: TYP always 1-char UINT)
 body: TYP1<char> for all kinds; LNK/P+u16; HLC1/u8 group; DAT/A+u16 reg-only; DEV4/u32LE st_rdev (3,2/1,0 exact); XAT blob u32-records; MTM S-short(8B)/T-long(12B). xattr-only is NOT a kind (field on F). R/T unreachable on macOS (Solaris bits). M = parse + skip (no fs object).
+```
+
+```
+CR-015 [MEASURED] TYP H hardlink-by-path: 12th on-disk kind (decode-side real, encode-side unobserved)
+stage: probe
+artifact: writer1 fixture hlink-basic.aar (99db53e, pin 46239d23... verified own) + `aa list` parse + DPROBE-04 rules
+numbers: TYP1'H' + LNK/P ("hello/repeat.txt") + DAT:58 + XAT:36 parsed by oracle JSON; H behaviors writer-measured (LNK-path link, no-LNK abort, LNK-must-be-regular, forward refs, symlink-reject, fifo-hang-consistent)
+verdict: CORRECT vs CR-014 (census was 11, is 12: F D L P C B S H W R T M); CORRECT vs A-012/A-013 (CLI 'h' = TYP H filter, not HLC pseudo-filter); SDK header enum (11, no H) covers encoder-produced types only
+body: H entries carry LNK path + full DAT; extract links by path (deferred pass). no natural encode vector (encoder emits HLC groups); evidence writer-crafted + oracle-measured. census: 9 known-behavior (F D L P S C B H + M-skip) + 3 open (W/R/T).
+```
+
+```
+CR-016 [MEASURED] lzraven bit0 raw emission rule (incompressible block -> verbatim payload)
+stage: bitstream
+artifact: own-gen bit0/ (zr/rz/r600k/r2m aa -a lzraven + ct2-r/ct2-zr/ct2-r10k pure-stream; seeded) (WS tmp/decode-viewer-probes/bit0)
+numbers: 6 raw blocks: rz-blk0 524288, zr-blk1 90351 (== last-out EXACT), ct2-r 524288+90112, ct2-zr-blk1 90112, ct2-r10k 10240 (single-block); raw size == block output 6/6; roundtrips MATCH 5/5; pure-random aa inners OUTER-stored 2/2 (no stream); mixed aa inners per-block raw 2/2
+verdict: CONFIRM vs CR-012 (extends: raw-flag semantics + emission conditions); mutual-CONFIRM vs writer2 e7a9249 (independently derived same rule + AEA-seg firing); OPEN: raw+BCJ combos (0x003) unobserved
+body: rule: block incompressible -> flags bit0, payload = verbatim block bytes. aa path absorbs fully-random inners at outer level; pure-stream path has no outer so random always goes raw per-block. decoder: bit0 -> memcpy size bytes, skip entropy decode (SPEC §2.3 driver rule, behavior-confirmed).
 ```
 
 Status of every clause: UNPROVEN until an implementation written ONLY from
