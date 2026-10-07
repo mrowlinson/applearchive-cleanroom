@@ -128,6 +128,7 @@ body: lzfse frame = magic + uncLE32 + (n: XLE32=comp-16 5/5 | 2: stream bytes) +
 | CR-020 | MEASURED | AEA pad-tag = last-nmac HMAC rule | CONFIRM (closes CR-018 OPEN) |
 | CR-021 | SYMBOL | libAppleArchive public-export inventory (232) | CONFIRM vs CR-002/003 + vendor list |
 | CR-022 | MEASURED | AEA empty-archive shape (156B bare / cmac pad-tag) | CONFIRM vs writer2 empty rows |
+| CR-023 | MEASURED | lzraven flag alphabet + raw exclusivity (0x3 negative) | CONFIRM alphabet; OPEN narrowed |
 
 ```
 CR-012 [MEASURED] lzraven stream framing (8B hdr + u32 block-hdrs + u32-0 terminator)
@@ -226,6 +227,15 @@ artifact: own-gen e-nopad.aea (156B) + e-pad2.aea (160B, p5/-a none) + flip + HM
 numbers: empty/-padding none = 156B exactly (prologue, zero cluster headers), decrypt exit 0, 0 bytes out; empty/default-pad = 160B (156 + 4 pad, arc 160), pad flip -> 0x9e041c00 exit 1, HMAC(padkey,[156,160)) == cmac True
 verdict: CONFIRM vs writer2 empty rows (size + decrypt); cmac-slot rule mutual-CONFIRM (writer2 found, viewer independently confirmed)
 body: orig==0 short-circuits cluster parsing entirely; pad (if any) starts at prologue_end and verifies against the cmac slot (no nmac exists). extends CR-020 with the degenerate case.
+```
+
+```
+CR-023 [MEASURED] lzraven block-flag alphabet {0,1,2,4,6} + raw-bit exclusivity (0x3/5/7 unobserved)
+stage: probe
+artifact: 7 own compression_tool -encode -a lzraven inputs (Mach-O /bin/ls, true-random 600K, code+random mix, /bin/zsh 2MB, 64K-alternating, BCJ-bait sea, xz-output) + block-flag walks (WS tmp/decode-viewer-probes/lrv003)
+numbers: 11 blocks: 0x0 x2, 0x1 x4, 0x2 x3, 0x4 x1 (zsh blk0, NEW bit2), 0x6 x2; raw (0x1) blocks 4/4 carry no other bits; combos 0x3/0x5/0x7 0/11 blocks 0/7 inputs incl targeted BCJ-bait + alternation mixes
+verdict: CONFIRM alphabet {0,1,2,4,6}; CR-012/016 raw+BCJ OPEN narrowed to bounded negative (encoder not observed emitting raw+transform after targeted hunt; decoder fail-closed on unseen combos stands)
+body: bit0 = raw verbatim (incompressible/high-entropy chunks); bit1/bit2 = transform variants (fire on code-like chunks, incl 0x6 joint); bit0 never co-occurs with transform bits in 11/11 blocks. bit2 meaning unassigned (decoder-turf observation stands).
 ```
 
 Status of every clause: UNPROVEN until an implementation written ONLY from
