@@ -59,7 +59,7 @@ Encrypt adds `padding:` line. Encrypt to /dev/null fails (temp+rename).
 ## Gaps (Q or v2)
 
 - murmur64a vectors (Q-010 open). lzraven seg codec id `m` (Q-011 bed open; compression_tool cross-check MATCH, proto fail-closed by design).
-- auth-data>0 prologue shift exactness (auth1.aea +4B decodes MATCH; boundary map for auth>0 unmapped).
+- auth-data>0 MAPPED own: prologue = 156+authsize (2-blob auth12B flips unlock/decrypt @167/168); kv-form = u32LE pair + key\0+value (own-confirm FORMAT.md); both MATCH in proto.
 - `-keychain` flows (OUT of scope, touches system store). lzvn `f` (no oracle -a flag; skip).
 
 ## Wide corpus (tests/aea-wide.sh v1)

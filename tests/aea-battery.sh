@@ -64,6 +64,13 @@ cell cksum-none --password "$PW" -i "$WORK/k-none.aea"
 aea encrypt -profile 5 -password-value "$PW" -a none -padding none -checksum murmur64 -i "$WORK/msg.txt" -o "$WORK/k-mur.aea" 2>/dev/null
 if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/k-mur.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "cksum-murmur-failclosed"; else ok "cksum-murmur-failclosed"; fi
 
+# 5b. auth-data forms
+aea encrypt -profile 5 -password-value "$PW" -a none -padding none -auth-data-value hex:deadbeef -auth-data-value hex:0102030405060708 -i "$WORK/msg.txt" -o "$WORK/auth2.aea" 2>/dev/null
+EXP=$WORK/msg.txt
+cell auth-raw2 --password "$PW" -i "$WORK/auth2.aea"
+aea encrypt -profile 5 -password-value "$PW" -a none -padding none -auth-data-key mykey -auth-data-value hex:deadbeef -i "$WORK/msg.txt" -o "$WORK/authkv.aea" 2>/dev/null
+cell auth-kv --password "$PW" -i "$WORK/authkv.aea"
+
 # 6. empty
 : > "$WORK/empty.bin"
 aea encrypt -profile 5 -password-value "$PW" -a none -padding none -i "$WORK/empty.bin" -o "$WORK/empty.aea" 2>/dev/null
