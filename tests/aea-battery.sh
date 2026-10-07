@@ -123,6 +123,14 @@ cell range-size0 --password "$PW" --range-offset 6 --range-size 0 -i "$WORK/p5.a
 OID=$(aea id -i "$WORK/p5.aea" 2>/dev/null)
 PID=$("$AEAD_PY" "$REPO/proto/aead.py" id -i "$WORK/p5.aea" 2>/dev/null)
 if [ "$OID" = "$PID" ] && [ -n "$OID" ]; then ok "id"; else bad "id"; fi
+OIDP=$(aea id -i "$WORK/pad-def.aea" 2>/dev/null)
+PIDP=$("$AEAD_PY" "$REPO/proto/aead.py" id -i "$WORK/pad-def.aea" 2>/dev/null)
+if [ "$OIDP" = "$PIDP" ] && [ -n "$OIDP" ]; then ok "id-pad"; else bad "id-pad"; fi
+
+# 8b. thread-count indifference (oracle -t 1 vs default; proto single-threaded)
+aea encrypt -profile 5 -password-value "$PW" -a lzma -t 1 -padding none -i "$WORK/bigtext.bin" -o "$WORK/thr1.aea" 2>/dev/null
+EXP=$WORK/bigtext.bin
+cell threads-t1 --password "$PW" -i "$WORK/thr1.aea"
 
 # 9. error-class parity (exit codes)
 if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password WRONG -i "$WORK/p5.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-wrongpw"; else ok "err-wrongpw"; fi
