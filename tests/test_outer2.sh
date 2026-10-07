@@ -121,6 +121,25 @@ FLIP fl-lzfse658 658 lzfse; FLIP fl-lzfse659 659 lzfse
 FLIP fl-rav287 287 lzraven; FLIP fl-rav288 288 lzraven
 FLIP fl-bm50 50 lzbitmap;  FLIP fl-bm51 51 lzbitmap
 FLIP fl-bm70 70 lzbitmap;  FLIP fl-bm71 71 lzbitmap
+FRAMES() { # tag nbytes alg magichex block : frame-lens csv + sha (NOTE-w2s2-5 beds)
+  tag=$1; n=$2; alg=$3; mg=$4; blk=$5
+  mk1file "fr$n" "$n" z
+  set -- $(AAR "m-$tag" "fr$n" "$alg" "$blk"); s=$2 h=$3
+  lens=$(python3 -c "
+import sys
+b=open('$WORK/m-$tag.aar','rb').read(); mg=bytes.fromhex('$mg')
+o=[]; i=28
+while True:
+  j=b.find(mg,i)
+  if j<0: break
+  o.append(j); i=j+1
+e=o[1:]+[len(b)]
+print(':'.join(str(t-s) for s,t in zip(o,e)))")
+  chk "m-$tag-lens" str "$lens" "$s"
+  chk "m-$tag" sha "$h" "$s"
+}
+FRAMES fr-rav100k 100000 lzraven 2b00caec 10000
+FRAMES fr-bm100k 100000 lzbitmap 5a424d 10000
 echo "== AEA =="
 AEA=${AEA:-/usr/bin/aea}
 PW="0123456789abcdef0123456789abcdef"
