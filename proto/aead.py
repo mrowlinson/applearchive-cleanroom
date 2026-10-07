@@ -295,6 +295,8 @@ def decrypt_aea(blob, symkey=None, recip_priv=None, password=None, sign_pub=None
     comp = comp.decode("ascii")
     if ckalg not in CKSUM_SIZE:
         raise FmtErr("bad checksum alg")
+    if len(blob) < arc:
+        raise FmtErr("truncated archive")
     if orig == 0:
         return b""
     shsz = 8 + CKSUM_SIZE[ckalg]
