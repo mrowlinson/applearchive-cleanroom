@@ -54,5 +54,12 @@ for sz in 100 70000 500000 1500000; do
   one "hold-$sz-5-lz4-none" 5 lz4 none "$WORK/h.bin"
 done
 
+# fresh: seed 1234, 4 sizes x 2 prof, lzfse+lzbitmap spots
+for sz in 500 90000 700000 2000000; do
+  mkdata "$sz" 1234 "$WORK/f.bin"
+  one "fresh-$sz-1-lzfse-sha" 1 lzfse sha256 "$WORK/f.bin"
+  one "fresh-$sz-5-lzbitmap-none" 5 lzbitmap none "$WORK/f.bin"
+done
+
 echo "PASS=$PASS FAIL=$FAIL"
 [ "$FAIL" -eq 0 ] && echo WIDE-GREEN
