@@ -71,6 +71,46 @@ python3 -c "import random;open('$WORK/mixtr.bin','wb').write(b'Mixed head text. 
 aea encrypt -profile 5 -password-value "$PW" -a lzraven -padding none -i "$WORK/mixtr.bin" -o "$WORK/c-lzraven-mixtr.aea" 2>/dev/null
 EXP=$WORK/mixtr.bin
 cell codec-lzraven-mixtr --password "$PW" -i "$WORK/c-lzraven-mixtr.aea"
+# 4b2. A-014 AEA-transfer: raw bit0 blocks present + verbatim in AEA segs;
+# mixtr tail stored at seg level (decomp uncalled -> 1 captured stream)
+if "$AEAD_PY" - "$REPO/proto" "$WORK/c-lzraven-mixrt.aea" "$WORK/mixrt.bin" "$WORK/c-lzraven-mixtr.aea" "$WORK/mixtr.bin" "$PW" <<'EOF' 2>/dev/null; then ok "lzraven-raw-verbatim"; else bad "lzraven-raw-verbatim"; fi
+import struct, sys
+sys.path.insert(0, sys.argv[1])
+import aead
+cap = []
+orig = aead.decomp
+def spy(alg, data, size):
+    if alg == "m":
+        cap.append(bytes(data))
+    return orig(alg, data, size)
+aead.decomp = spy
+def walk(s):
+    assert s[:4] == b"\x2b\x00\xca\xec"
+    off, out = 8, []
+    while True:
+        (bh,) = struct.unpack_from("<I", s, off)
+        if bh == 0:
+            assert off + 4 == len(s)
+            return out
+        out.append((bh & 0xFFF, s[off+4:off+4+(bh >> 12)]))
+        off += 4 + (bh >> 12)
+def check(aea_p, plain_p):
+    blob = open(plain_p, "rb").read()
+    del cap[:]
+    assert aead.decrypt_aea(open(aea_p, "rb").read(), password=sys.argv[6]) == blob
+    raw = 0
+    for d in cap:
+        assert d[:4] == b"\x2b\x00\xca\xec"
+        for flags, payload in walk(d):
+            if flags & 1:
+                assert payload in blob
+                raw += 1
+    return len(cap), raw
+n_rt, raw_rt = check(sys.argv[2], sys.argv[3])
+n_tr, raw_tr = check(sys.argv[4], sys.argv[5])
+assert (n_rt, raw_rt) == (2, 1), (n_rt, raw_rt)
+assert (n_tr, raw_tr) == (1, 0), (n_tr, raw_tr)
+EOF
 
 # 4c. padding modes (proto strips implicitly via segment structure; sizes APROBE-01)
 aea encrypt -profile 5 -password-value "$PW" -a none -i "$WORK/msg.txt" -o "$WORK/pad-def.aea" 2>/dev/null
