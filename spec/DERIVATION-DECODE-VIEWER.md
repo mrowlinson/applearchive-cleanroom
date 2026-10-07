@@ -267,4 +267,19 @@ findings:
 - VERIFY 42 PASS 0 FLAG current thru both tips; joint DONE still open (writer1 post-pass + sweep DONEs pending; claim HELD)
 pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:388e44b231e10c74f3affb1656db6c77c27a6d807aae820ea7fcf56630ef914e bytes:24236
 pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:b0006e71595f7948c0e7ad9c8b05752415c105c4cfcdbad769a1d08f2f6f049d bytes:24043
+post-edit: (recorded at commit 8c1b919; 2 files, +18/-2)
+
+## 2026-10-07 decode-viewer lanes/decode-viewer (entry 14: CR-023 trigger-map fold + VERIFY-1a83bfa)
+inputs:
+- quiz-decode writer2 NOTE-077 (p0-pad closed @1a83bfa, mutual vs NOTE-36) + NOTE-GATE-ee58b62 (sweep GREEN 131/131) (read first-hand)
+- own-gen pos/: 9 lzraven position/content vectors (A-codefirst/B-codesecond/C-codeboth/D-zerozero/E-lshomog/F-zshhomog/G-zsh252/H-lslo/I-lshi; 600KB zsh + 252512B ls + zeros) + oracle roundtrips 9/9 + flag walks 19 blocks + otool -l /bin/ls layout (__TEXT 32768B) (WS tmp/decode-viewer-probes/lrv003/pos; macOS 27.0.1)
+- writer commit verified first-hand (full diff + new-pattern wall grep 0/1): w2 1a83bfa (battery-only p0 cell + note fix)
+not-consulted: patent contents, encode-side lanes, reference/port sources,
+  decompiler output (none), writer worktree files (git-show only + black-box runs), liblzraven src/*.c internals
+outputs: 0 new clauses (CR-023 fold: trigger-map 19 blocks, nblocks 26/26); VERIFY-1a83bfa + NOTE-37
+findings:
+- flag triggers are content-driven + position/size-independent; bit1/bit2 independent features (zsh->0x4, ls->bit1, pure 0x2 on ls-hi); E single-block = input <512K, rule holds
+- VERIFY 43 PASS 0 FLAG current thru both tips; joint DONE still open (writer1 post-pass + sweep DONEs pending; claim HELD)
+pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:80b33ba0e44c69e22b7aa9765f074e913edde25109cce7ddf292040b94b68765 bytes:24391
+pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:87b5d9b3ea68bfb8c15e738bc45e8f5d7846bb1889c0335ba8c962232321c62a bytes:25751
 post-edit: (recorded at commit; see commit 2nd line stats)
