@@ -1,16 +1,19 @@
 /* aad.c — AppleArchive decode, cleanroom C port v0.1.
  *
- * Covers: outer chain walk (PRE-002) + inner TLV + raw/stored/zlib +
- * extract (bytes tree only). Codecs beyond zlib: TBD (v0.2).
+ * Covers: outer chain walk (PRE-002) + inner TLV + all 7 codecs +
+ * extract with metadata (MOD/UID/GID/XAT/MTM/CTM-best-effort).
  * Derived from: quiz answers (A-001/PRE-001/PRE-002/A-007/A-008),
  * allow-listed OSS craft (A-006), own oracle runs. No vendor material.
  */
+#include <compression.h>
 #include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/attr.h>
 #include <sys/stat.h>
+#include <sys/xattr.h>
 #include <unistd.h>
 #include <zlib.h>
 
@@ -20,6 +23,7 @@ static int fails = 0;
 static uint16_t rd16le(const unsigned char *p) {
     return (uint16_t)(p[0] | ((uint16_t)p[1] << 8));
 }
+static uint32_t rd32le(const unsigned char *p) __attribute__((unused));
 static uint32_t rd32le(const unsigned char *p) {
     return (uint32_t)p[0] | ((uint32_t)p[1] << 8) |
            ((uint32_t)p[2] << 16) | ((uint32_t)p[3] << 24);
@@ -28,6 +32,7 @@ static uint32_t rd32be(const unsigned char *p) {
     return ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16) |
            ((uint32_t)p[2] << 8) | (uint32_t)p[3];
 }
+static uint64_t rd64le(const unsigned char *p) __attribute__((unused));
 static uint64_t rd64le(const unsigned char *p) {
     uint64_t v = 0;
     for (int i = 7; i >= 0; i--) v = (v << 8) | p[i];
@@ -71,8 +76,22 @@ static int decode_block(const unsigned char magic[4],
         out->data = d; out->len = dl;
         return 0;
     }
-    FAIL("codec %.4s TBD in v0.1\n", magic);
-    return -1;
+    /* Whole-frame decode via public <compression.h> buffer API (v0.2).
+     * Verified black-box per codec: output == oracle inner, byte-exact. */
+    compression_algorithm alg = 0;
+    if (!memcmp(magic, "pbze", 4)) alg = COMPRESSION_LZFSE;
+    else if (!memcmp(magic, "pbz4", 4)) alg = COMPRESSION_LZ4;
+    else if (!memcmp(magic, "pbzm", 4)) alg = COMPRESSION_LZRAVEN;
+    else if (!memcmp(magic, "pbzb", 4)) alg = COMPRESSION_LZBITMAP;
+    else if (!memcmp(magic, "pbzx", 4)) alg = COMPRESSION_LZMA;
+    else { FAIL("unknown codec %.4s\n", magic); return -1; }
+    unsigned char *d = malloc(unc ? unc : 1);
+    void *scr = malloc(compression_decode_scratch_buffer_size(alg));
+    size_t got = compression_decode_buffer(d, unc, pay, comp, scr, alg);
+    free(scr);
+    if (!got || got != unc) { free(d); FAIL("codec %.4s decode\n", magic); return -1; }
+    out->data = d; out->len = got;
+    return 0;
 }
 
 /* ---- outer chain: 12B prefix + [16B hdr + comp]* (PRE-002) ---- */
@@ -253,7 +272,86 @@ static const unsigned char *blob_for(const Item *it, const char key[3],
     return NULL;
 }
 
-/* ---- extract (v0.1: bytes tree only) ---- */
+/* ---- metadata ---- */
+static void ts_from_raw(const unsigned char *raw, size_t len,
+                        struct timespec *ts) {
+    ts->tv_sec = (time_t)rd64le(raw);
+    ts->tv_nsec = len == 12 ? (long)rd32le(raw + 8) : 0;
+}
+
+/* set one commonattr timespec; options FSOPT_NOFOLLOW for links */
+static int set_one_time(const char *path, unsigned dirattr_unused,
+                        uint32_t which, const struct timespec *ts,
+                        int nofollow) {
+    (void)dirattr_unused;
+    struct attrlist al;
+    memset(&al, 0, sizeof al);
+    al.bitmapcount = ATTR_BIT_MAP_COUNT;
+    al.commonattr = which;
+    return setattrlist(path, &al, (void *)ts, sizeof *ts,
+                       nofollow ? FSOPT_NOFOLLOW : 0);
+}
+
+static int apply_xattr_blob(const char *target, const unsigned char *blob,
+                            size_t blen, int islink) {
+    size_t pos = 0;
+    while (pos + 4 <= blen) {
+        uint32_t size = rd32le(blob + pos);
+        if (size < 4 || pos + size > blen) { FAIL("bad xattr rec\n"); return -1; }
+        const unsigned char *rec = blob + pos + 4;
+        size_t remlen = size - 4, nl = 0;
+        while (nl < remlen && rec[nl]) nl++;
+        if (nl == remlen) { FAIL("xattr name unterminated\n"); return -1; }
+        if (setxattr(target, (const char *)rec, rec + nl + 1,
+                     remlen - nl - 1, 0,
+                     islink ? XATTR_NOFOLLOW : 0)) {
+            FAIL("setxattr %s\n", rec); return -1;
+        }
+        pos += size;
+    }
+    return 0;
+}
+
+static int apply_meta(const char *target, const Item *it, int islink) {
+    const Entry *e;
+    if (!islink) {
+        e = find_ent(it, "MOD");
+        if (e && (e->st == '1' || e->st == '2' || e->st == '4' || e->st == '8'))
+            chmod(target, (mode_t)(e->num & 07777));
+        e = find_ent(it, "UID");
+        uint64_t uid = e ? e->num : (uint64_t)-1;
+        e = find_ent(it, "GID");
+        uint64_t gid = e ? e->num : (uint64_t)-1;
+        if (uid != (uint64_t)-1 || gid != (uint64_t)-1)
+            chown(target, (uid_t)uid, (gid_t)gid); /* EPERM-tolerant */
+    } else {
+        e = find_ent(it, "UID");
+        uint64_t uid = e ? e->num : (uint64_t)-1;
+        e = find_ent(it, "GID");
+        uint64_t gid = e ? e->num : (uint64_t)-1;
+        if (uid != (uint64_t)-1 || gid != (uint64_t)-1)
+            lchown(target, (uid_t)uid, (gid_t)gid);
+    }
+    e = find_ent(it, "MTM");
+    if (e && (e->rawlen == 8 || e->rawlen == 12)) {
+        struct timespec ts;
+        ts_from_raw(e->raw, e->rawlen, &ts);
+        set_one_time(target, 0, ATTR_CMN_MODTIME, &ts, islink);
+        set_one_time(target, 0, ATTR_CMN_ACCTIME, &ts, islink);
+    }
+    e = find_ent(it, "CTM");
+    if (e && (e->rawlen == 8 || e->rawlen == 12)) {
+        struct timespec ts;
+        ts_from_raw(e->raw, e->rawlen, &ts);
+        set_one_time(target, 0, ATTR_CMN_CRTIME, &ts, islink); /* best-effort */
+    }
+    size_t xl = 0;
+    const unsigned char *xb = blob_for(it, "XAT", &xl);
+    if (xb && xl && apply_xattr_blob(target, xb, xl, islink)) return -1;
+    return 0;
+}
+
+/* ---- extract ---- */
 static int mkdirs(const char *path) {
     char tmp[4096];
     size_t i, n = strlen(path);
@@ -297,45 +395,59 @@ static int safe_join(const char *root, const unsigned char *rel, size_t rlen,
 
 static int extract(const Item *items, size_t nitems, const char *root) {
     if (mkdirs(root)) { FAIL("mkdir %s\n", root); return -1; }
+    /* deferred dir metadata (children bump dir mtime; apply last) */
+    typedef struct { char path[4096]; size_t idx; } Def;
+    Def *defs = malloc(nitems * sizeof *defs);
+    size_t ndefs = 0;
+    int rc = -1;
     for (size_t k = 0; k < nitems; k++) {
         const Item *it = &items[k];
         const Entry *t = find_ent(it, "TYP"), *p = find_ent(it, "PAT");
         if (!t || !p || p->st != 'P' || !p->rawlen) continue; /* root desc */
         char target[4096];
         if (safe_join(root, p->raw, p->rawlen, target)) {
-            FAIL("bad path\n"); return -1;
+            FAIL("bad path\n"); goto out;
         }
         if (t->num == 'D') {
-            if (mkdirs(target)) { FAIL("mkdir %s\n", target); return -1; }
+            if (mkdirs(target)) { FAIL("mkdir %s\n", target); goto out; }
+            memcpy(defs[ndefs].path, target, strlen(target) + 1);
+            defs[ndefs++].idx = k;
         } else if (t->num == 'F') {
             char *sl = strrchr(target, '/');
-            if (sl) { *sl = 0; if (mkdirs(target)) return -1; *sl = '/'; }
+            if (sl) { *sl = 0; if (mkdirs(target)) goto out; *sl = '/'; }
             size_t dl = 0;
             const unsigned char *dd = blob_for(it, "DAT", &dl);
             FILE *f = fopen(target, "wb");
-            if (!f) { FAIL("open %s\n", target); return -1; }
+            if (!f) { FAIL("open %s\n", target); goto out; }
             if (dl && fwrite(dd, 1, dl, f) != dl) {
-                fclose(f); FAIL("write %s\n", target); return -1;
+                fclose(f); FAIL("write %s\n", target); goto out;
             }
             fclose(f);
+            if (apply_meta(target, it, 0)) goto out;
         } else if (t->num == 'L') {
             const Entry *l = find_ent(it, "LNK");
-            if (!l || l->st != 'P') { FAIL("link w/o target\n"); return -1; }
+            if (!l || l->st != 'P') { FAIL("link w/o target\n"); goto out; }
             char *sl = strrchr(target, '/');
-            if (sl) { *sl = 0; if (mkdirs(target)) return -1; *sl = '/'; }
+            if (sl) { *sl = 0; if (mkdirs(target)) goto out; *sl = '/'; }
             char lbuf[4096];
-            if (l->rawlen >= sizeof lbuf) return -1;
+            if (l->rawlen >= sizeof lbuf) goto out;
             memcpy(lbuf, l->raw, l->rawlen); lbuf[l->rawlen] = 0;
             unlink(target);
             if (symlink(lbuf, target)) {
-                FAIL("symlink %s\n", target); return -1;
+                FAIL("symlink %s\n", target); goto out;
             }
+            if (apply_meta(target, it, 1)) goto out;
         } else {
             FAIL("entry type %llu\n", (unsigned long long)t->num);
-            return -1;
+            goto out;
         }
     }
-    return 0;
+    for (size_t i = ndefs; i-- > 0;)
+        if (apply_meta(defs[i].path, &items[defs[i].idx], 0)) goto out;
+    rc = 0;
+out:
+    free(defs);
+    return rc;
 }
 
 int main(int argc, char **argv) {
