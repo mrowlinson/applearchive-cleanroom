@@ -65,7 +65,14 @@ def decode_block(magic, payload, unc, comp):
     if comp == unc:
         return bytes(payload)
     if magic == b"pbzz":
-        raw = zlib.decompress(bytes(payload))
+        try:
+            raw = zlib.decompress(bytes(payload))
+        except zlib.error:
+            try:
+                # adler-broken streams decode (case188: oracle exit 0)
+                raw = zlib.decompress(bytes(payload[2:]), -15)
+            except zlib.error:
+                raise FmtErr("codec pbzz decode")
     elif magic == b"pbzx":
         raw = lzma.decompress(bytes(payload))
     elif magic in CTOOL_ALG:
@@ -250,6 +257,9 @@ def apply_meta(target, entries, blobs, islink):
     _, uid = _get(entries, b"UID")
     _, gid = _get(entries, b"GID")
     _, mtm = _get(entries, b"MTM")
+    xat = blobs.get(b"XAT")
+    if xat:
+        apply_xattr_blob(target, xat, islink)
     if not islink:
         if mod is not None:
             os.chmod(target, mod & 0o7777)
@@ -262,9 +272,6 @@ def apply_meta(target, entries, blobs, islink):
     if mtm is not None:
         ns = _ts_ns(mtm)
         os.utime(target, ns=(ns, ns), follow_symlinks=False)
-    xat = blobs.get(b"XAT")
-    if xat:
-        apply_xattr_blob(target, xat, islink)
 
 
 def _show(bs):
@@ -286,6 +293,8 @@ def extract(items, root):
     for entries, blobs in items:
         _, typ = _get(entries, b"TYP")
         _, pat = _get(entries, b"PAT")
+        if typ is None:
+            raise FmtErr("Invalid entry: no TYP field")
         if pat is None or len(pat) == 0:
             continue
         target = safe_join(root, pat)
