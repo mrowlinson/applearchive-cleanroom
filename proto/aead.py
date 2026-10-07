@@ -342,6 +342,8 @@ def archive_id(blob):
     prof = blob[4] | (blob[5] << 8) | (blob[6] << 16)
     (auth_sz,) = struct.unpack("<I", blob[8:12])
     n = 12 + auth_sz + SIG_SIZE[prof] + PUB_SIZE[prof] + 32 + 32 + 48 + 32
+    if len(blob) < n:  # oracle id requires FULL prologue (156+authsize; trunc FAILs)
+        raise FmtErr("truncated prologue")
     return hashlib.sha256(blob[:n]).digest()
 
 

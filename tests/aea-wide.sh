@@ -25,13 +25,17 @@ open(sys.argv[3],'wb').write(bytes(r.randrange(256) for _ in range(n)))
 " "$1" "$2" "$3"
 }
 
-one() { # tag profile alg cksum infile
-  tag=$1; prof=$2; alg=$3; ck=$4; in=$5
+one() { # tag profile alg cksum infile [pad: none|N|default]
+  tag=$1; prof=$2; alg=$3; ck=$4; in=$5; pad=${6:-none}
   case $prof in
     1) CRED="-key $WORK/key32.bin"; PCRED="--key $WORK/key32.bin";;
     5) CRED="-password-value $PW"; PCRED="--password $PW";;
   esac
-  if ! eval aea encrypt -profile "$prof" "$CRED" -a "$alg" -padding none -checksum "$ck" -i "$in" -o "$WORK/t.aea" 2>/dev/null; then
+  case $pad in
+    default) PADF="";; *) PADF="-padding $pad";;
+  esac
+  # shellcheck disable=SC2086
+  if ! eval aea encrypt -profile "$prof" "$CRED" -a "$alg" $PADF -checksum "$ck" -i "$in" -o "$WORK/t.aea" 2>/dev/null; then
     echo "FAIL $tag-enc"; FAIL=$((FAIL+1)); return
   fi
   # shellcheck disable=SC2086
@@ -71,6 +75,14 @@ for sz in 500 90000 700000 2000000; do
   one "fresh-$sz-1-lzfse-sha" 1 lzfse sha256 "$WORK/f.bin"
   one "fresh-$sz-5-lzbitmap-none" 5 lzbitmap none "$WORK/f.bin"
   one "fresh-$sz-5-lzraven-murmur" 5 lzraven murmur64 "$WORK/f.bin"
+done
+
+# padded: seed 7, 4 sizes x 2 prof x 2 alg(zlib,lzraven) x sha256, default pad = 16
+for sz in 1024 262144 1048577 3000000; do
+  mkdata "$sz" 7 "$WORK/p.bin"
+  for prof in 1 5; do for alg in zlib lzraven; do
+    one "pad-$sz-$prof-$alg-sha" "$prof" "$alg" sha256 "$WORK/p.bin" default
+  done; done
 done
 
 echo "PASS=$PASS FAIL=$FAIL"
