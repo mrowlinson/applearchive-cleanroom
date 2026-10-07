@@ -152,8 +152,8 @@ done
 if [ -n "$ONEW" ]; then fail=1; say OSS "FAIL new-oss:$ONEW"; echo "$OHIT" | sed 's/^/  /';
 elif [ -n "$OHIT" ]; then say OSS "PASS lzfse-only"; else say OSS "PASS none"; fi
 
-# 5b. LIBCOMPRESSION (A-12: beds-OK, src-use REFUSE-recommended, parent has
-# final call -> deny in src/harness until a grant lands in quiz).
+# 5b. LIBCOMPRESSION (A-12 REFUSE, PARENT-007-confirmed: beds-OK green,
+# src-use denied in src/harness unless a grant lands in quiz).
 LHIT=$(grep -rniE -I 'libcompression|COMPRESSION_LZMA|COMPRESSION_LZ4|compression_encode_buffer|compression_decode_buffer' "$OUT/tree/src" "$OUT/tree/harness" 2>/dev/null || true)
 if [ -n "$LHIT" ]; then fail=1; say LIBCOMPRESSION "FAIL ungranted-src-use:"; echo "$LHIT" | sed 's/^/  /';
 else say LIBCOMPRESSION "PASS zero-refs"; fi
