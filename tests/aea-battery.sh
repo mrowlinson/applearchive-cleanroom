@@ -171,6 +171,11 @@ EXP=$WORK/msg.txt
 cell sign-later --sign-pub "$WORK/ec-pub.pem" -i "$WORK/p0s.aea"
 head -c 31 /dev/urandom > "$WORK/key31.bin"; head -c 33 /dev/urandom > "$WORK/key33.bin"
 if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --key "$WORK/key31.bin" -i "$WORK/p1.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-key31"; else ok "err-key31"; fi
+EXP=$WORK/msg.txt
+cell mixed-p1-pwextra --key "$WORK/key32.bin" --password "$PW" -i "$WORK/p1.aea"
+cell mixed-p5-keyextra --password "$PW" --key "$WORK/key32.bin" -i "$WORK/p5.aea"
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt -i "$WORK/p5.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-no-creds"; else ok "err-no-creds"; fi
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/p1.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-wrong-credtype"; else ok "err-wrong-credtype"; fi
 if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --key "$WORK/key33.bin" -i "$WORK/p1.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-key33"; else ok "err-key33"; fi
 cp "$WORK/p5.aea" "$WORK/ss3.aea" && printf '\003' | dd of="$WORK/ss3.aea" bs=1 seek=7 conv=notrunc 2>/dev/null
 if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/ss3.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-strength3"; else ok "err-strength3"; fi
