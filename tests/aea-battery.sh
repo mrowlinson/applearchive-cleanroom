@@ -348,6 +348,7 @@ aea append -password-value "$PW" -i "$WORK/app-in.bin" -o "$WORK/app.aea" 2>/dev
 cat "$WORK/msg.txt" "$WORK/app-in.bin" > "$WORK/app-exp.bin"
 EXP=$WORK/app-exp.bin
 cell append --password "$PW" -i "$WORK/app.aea"
+oracmp append -password-value "$PW" -i "$WORK/app.aea"
 
 # 10b. raw concat: oracle decrypts FIRST archive only (unlike append); proto agrees
 printf 'second message\n' > "$WORK/msg2.txt"
@@ -355,6 +356,7 @@ aea encrypt -profile 5 -password-value "$PW" -a none -padding none -i "$WORK/msg
 cat "$WORK/p5.aea" "$WORK/b.aea" > "$WORK/cat.aea"
 EXP=$WORK/msg.txt
 cell concat-first-only --password "$PW" -i "$WORK/cat.aea"
+oracmp concat-first-only -password-value "$PW" -i "$WORK/cat.aea"
 
 # 10c. stdio paths (oracle: omit -i = stdin, omit -o = stdout, -o - = literal file `-`; APROBE-01/A-001)
 if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -o "$WORK/stdin.out" < "$WORK/p5.aea" 2>/dev/null \
@@ -363,6 +365,13 @@ if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/p5.aea" >
    && cmp -s "$WORK/stdout.out" "$WORK/msg.txt"; then ok "stdout"; else bad "stdout"; fi
 if (cd "$WORK" && "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/p5.aea" -o - 2>/dev/null) \
    && cmp -s "$WORK/-" "$WORK/msg.txt"; then ok "dash-o-literal"; else bad "dash-o-literal"; fi
+rm -f "$WORK/-"
+if aea decrypt -password-value "$PW" -o "$WORK/ostdin.out" < "$WORK/p5.aea" 2>/dev/null \
+   && cmp -s "$WORK/ostdin.out" "$WORK/msg.txt"; then ok "ora-stdin"; else bad "ora-stdin"; fi
+if aea decrypt -password-value "$PW" -i "$WORK/p5.aea" > "$WORK/ostdout.out" 2>/dev/null \
+   && cmp -s "$WORK/ostdout.out" "$WORK/msg.txt"; then ok "ora-stdout"; else bad "ora-stdout"; fi
+if (cd "$WORK" && aea decrypt -password-value "$PW" -i "$WORK/p5.aea" -o - 2>/dev/null) \
+   && cmp -s "$WORK/-" "$WORK/msg.txt"; then ok "ora-dash-o-literal"; else bad "ora-dash-o-literal"; fi
 rm -f "$WORK/-"
 
 echo "PASS=$PASS FAIL=$FAIL"
