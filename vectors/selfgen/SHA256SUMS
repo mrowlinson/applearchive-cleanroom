@@ -1,0 +1,13 @@
+7c6a950a700c7f1885972b98e77fe6a796484c14c08a03b8afaf4a4ce0e216d4  ./aar/empty-lzfse.aar
+a7746288cfa783838579be4c5db6bc41cf235a7b76ec2eb438c849962ad55ee9  ./aar/hello-lz4.aar
+cafad4cd8fa13c0216d2b8597442a0761f89902c1289bcaa1471597bad967928  ./aar/hello-lzbitmap.aar
+e5a281529961b850da989a8bf68ebb96b914abaa524e744e39c233b1556da826  ./aar/hello-lzfse.aar
+0f2ef68b4ba9ad6dd88a44d74d1ff0db522c8539a95b99c86e89ac3e4e463666  ./aar/hello-lzma.aar
+5bb2d974534a0ba34254fe92cdb2582124abd40122f17387b5081a96aa510a94  ./aar/hello-lzraven.aar
+30688224e72326117775ebb29b5839d84aeeb83eb62f8e671354e7e427a1c1e9  ./aar/hello-raw.aar
+3e2e6121c5e95d05dd6ba1ca58e55f42f8c50878ef875028e7d6caa1e4414e2d  ./aar/hello-zlib.aar
+9d2cd6297366ab232f629dcc98fba884fbed0c743c02367a90848fef0156f421  ./aea/hello-p1-nopad.aea
+1f8d28f0a008e34aecc9ae5fdea6c085ec4eb03cdd08360694c2a81ae50c7508  ./aea/hello-p5.aea
+630dcd2966c4336691125448bbb25b4ff412a49c732db2c8abc1b8581bd710dd  ./aea/testkey.bin
+73adf39150fced7d32afc50288b92a6386400a671fab8092e957d8e9f20cd2d6  ./input/hello/greet.txt
+ccca685709aa9e68d44ebb8e4aa02743fbf0c32b65ab5ac93ab6b1fd3d7ec7aa  ./input/hello/repeat.txt
