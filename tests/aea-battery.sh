@@ -166,6 +166,12 @@ if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --key "$WORK/key32.bin" --sign-pub "
 if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --recipient-priv "$WORK/ec-priv.pem" --sign-pub "$WORK/ec2-pub.pem" -i "$WORK/p4.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-p4wrongsign"; else ok "err-p4wrongsign"; fi
 aea encrypt -profile 0 -sign-pub "$WORK/ec-pub.pem" -a none -padding none -i "$WORK/msg.txt" -o "$WORK/p0u.aea" 2>/dev/null
 if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --sign-pub "$WORK/ec-pub.pem" -i "$WORK/p0u.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-unsigned"; else ok "err-unsigned"; fi
+OIDU=$(aea id -i "$WORK/p0u.aea" 2>/dev/null)
+PIDU=$("$AEAD_PY" "$REPO/proto/aead.py" id -i "$WORK/p0u.aea" 2>/dev/null)
+if [ "$OIDU" = "$PIDU" ] && [ -n "$OIDU" ]; then ok "id-unsigned"; else bad "id-unsigned"; fi
+aea decrypt -password-value "$PW" -range-offset 0 -range-size 5 -i "$WORK/auth2.aea" -o "$WORK/rg-auth.bin" 2>/dev/null
+EXP=$WORK/rg-auth.bin
+cell range-auth --password "$PW" --range-offset 0 --range-size 5 -i "$WORK/auth2.aea"
 cp "$WORK/p0u.aea" "$WORK/p0s.aea" && aea sign -sign-priv "$WORK/ec-priv.pem" -o "$WORK/p0s.aea" 2>/dev/null
 EXP=$WORK/msg.txt
 cell sign-later --sign-pub "$WORK/ec-pub.pem" -i "$WORK/p0s.aea"
@@ -191,7 +197,7 @@ printf '%s\n\n' "$PW" > "$WORK/pw-2nl.txt"
 cell pwfile-2nl --password-file "$WORK/pw-2nl.txt" -i "$WORK/p5.aea"
 for coff in 50 200 1000; do
   cp "$WORK/pad-def.aea" "$WORK/padc-$coff.aea"
-  printf 'Q' | dd of="$WORK/padc-$coff.aea" bs=1 seek=$coff conv=notrunc 2>/dev/null
+  python3 -c "import sys;p=sys.argv[1];o=int(sys.argv[2]);b=bytearray(open(p,'rb').read());b[o]^=0xFF;open(p,'wb').write(bytes(b))" "$WORK/padc-$coff.aea" "$coff"
   if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/padc-$coff.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-padcorr-$coff"; else ok "err-padcorr-$coff"; fi
 done
 KHEX=$(python3 -c "import sys;print(sys.stdin.buffer.read().hex())" < "$WORK/key32.bin")
