@@ -28,7 +28,7 @@ tier_oracle_health() { # oracle sanity: extract all AARs + decrypt both AEAs
   for a in "$CORPUS"/aar/*.aar; do
     total=$((total+1)); base=$(basename "$a" .aar); d="$SCRATCH/health/$base"
     mkdir -p "$d"
-    if "$ORACLE_AA" extract -i "$a" -d "$d" >/dev/null 2>&1; then
+    if "$ORACLE_AA" extract -t 1 -i "$a" -d "$d" >/dev/null 2>&1; then
       case "$base" in
         empty-*) [ -z "$(ls -A "$d")" ] && pass=$((pass+1)) || echo "  MISMATCH(empty-nonempty): $base" ;;
         *) diff -r "$d/hello" "$CORPUS/input/hello" >/dev/null 2>&1 && pass=$((pass+1)) || echo "  MISMATCH(content): $base" ;;
@@ -55,7 +55,7 @@ tier_compare() { # writer binary vs oracle, per AAR; $1=name $2...=aar files
     total=$((total+1)); base=$(basename "$a" .aar)
     od="$SCRATCH/$name/$base.oracle"; wd="$SCRATCH/$name/$base.writer"
     mkdir -p "$od" "$wd"
-    "$ORACLE_AA" extract -i "$a" -d "$od" >/dev/null 2>&1 || { echo "  MISMATCH(oracle-exit): $base"; continue; }
+    "$ORACLE_AA" extract -t 1 -i "$a" -d "$od" >/dev/null 2>&1 || { echo "  MISMATCH(oracle-exit): $base"; continue; }
     # Writer CLI convention: oracle-compatible `extract -i X -d DIR` (revisit on writer/viewer prescription).
     if "$WRITER_BIN" extract -i "$a" -d "$wd" >/dev/null 2>&1 && diff -r "$od" "$wd" >/dev/null 2>&1; then
       pass=$((pass+1))
@@ -70,11 +70,18 @@ tier_units() {
   if $WRITER_UNITS >/dev/null 2>&1; then echo "TIER units: PASS"; return 0; else echo "TIER units: FAIL"; return 1; fi
 }
 mkdir -p "$SCRATCH"
-TIERS="${*:-pins oracle-health decode-compare full holdout fresh units}"
+tier_smoke_xcheck() { # adopted T0 as cross-check signal (A-004 Q3 per-tip gate, oracle leg)
+  rm -rf "$SCRATCH/smoke-wd" && mkdir -p "$SCRATCH/smoke-wd"
+  if sh "$ROOT/tests/smoke.sh" "$SCRATCH/smoke-wd" 2>&1 | grep -q SMOKE-GREEN; then
+    echo "TIER smoke-xcheck: PASS (SMOKE-GREEN)"; return 0
+  else echo "TIER smoke-xcheck: FAIL"; return 1; fi
+}
+TIERS="${*:-pins oracle-health smoke-xcheck decode-compare full holdout fresh units}"
 for t in $TIERS; do
   case "$t" in
     pins) tier_pins || { FAIL=1; break; } ;;
     oracle-health) tier_oracle_health || FAIL=1 ;;
+    smoke-xcheck) tier_smoke_xcheck || FAIL=1 ;;
     decode-compare|full) tier_compare "$t" "$CORPUS"/aar/*.aar || FAIL=1 ;;
     holdout|fresh) echo "TIER $t: SKIP (no disjoint seeds yet)"; SKIPPED="$SKIPPED $t" ;;
     units) tier_units || FAIL=1 ;;
