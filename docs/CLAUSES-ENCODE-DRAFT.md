@@ -125,6 +125,36 @@ verdict: CONFIRM fixtures-lane AAR determinism; EXTEND thread-invariance (single
 body: fixed inputs+flags => identical bytes incl live-nsec stamps only when inputs fixed. Pins valid per DRIFT-FAIL.
 ```
 
+```
+CR-113 [MEASURED] Hardlink members (regular, nlink>1) carry trailing HLC'1' 00; DAT duplicated per member
+stage: probe
+artifact: hl/hl3 beds (2-link + 3-link + solo + dir controls)
+numbers: 5/5 members HLC-last; solo + dirs HLC-absent; payloads full-size each (18Bx2, 6Bx3)
+verdict: NEW (key unseen in prior surveys; convert NLINK/INO->HLC note now grounded)
+body: HLC field = last field, kind '1', value 0 constant. Rule: emit iff S_ISREG && st_nlink>1.
+  No encode-side dedup; link restoration is decode-side behavior.
+```
+
+```
+CR-114 [MEASURED] DAT lengths widen A(u16)->B(u32)->C(u64) minimal-width; 4.5GB bedded 'C'
+stage: probe
+artifact: big5 sparse bed (deleted post-measure; numbers = record)
+numbers: 4831838208 -> 'C' + u64le exact; total 4831838451; pbze 1153-block chain EXACT
+verdict: EXTEND CR-102 width rule to data lengths; CLOSE Q-9(c)
+body: same minimal-fit rule as int fields. pbze per-block u32 never stressed (blocks <= blocksize <= 128m).
+  XAT widening past 'A' OPEN micro.
+```
+
+```
+CR-115 [MEASURED] lzraven Apple-internal (no OSS; tool-bytes == block EXACT); lzbitmap OSS format-match, encode 10B off
+stage: probe
+artifact: zbm1 beds + libzbitmap @574abea black-box compare
+numbers: raven tool==block 3228B; bitmap OSS 3268 vs oracle 3228 (scattered chunk decisions); OSS-decodes-oracle EXACT 4737B
+verdict: NEW (hardest encode gaps scoped; writer1 path per A-9(a))
+body: raven: iteration oracle = compression_tool bytes; no third-party encoder exists. bitmap: OSS nominatable
+  for format/decode; byte-exact encode needs decision hunt. Both keep 15/16 store rule (NOTE-012).
+```
+
 ## Derivation appendix (this file, session 2026-10-07)
 
 inputs (fresh sha256 where file):
