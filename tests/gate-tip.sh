@@ -153,15 +153,20 @@ LHIT=$(grep -rniE -I 'libcompression|COMPRESSION_LZMA|COMPRESSION_LZ4|compressio
 if [ -n "$LHIT" ]; then fail=1; say LIBCOMPRESSION "FAIL ungranted-src-use:"; echo "$LHIT" | sed 's/^/  /';
 else say LIBCOMPRESSION "PASS zero-refs"; fi
 
-# 6. ADOPT: A-1 pins vs lanes/harness-oracle (best-effort)
+# 6. ADOPT: A-1 pins vs lanes/harness-oracle (impl lanes only — PV-001:
+# framework lanes adopting nothing SKIP instead of WARN).
 if git -C "$REPO" rev-parse -q --verify lanes/harness-oracle >/dev/null; then
-  ok=1
+  ok=1; adopted=0
   for p in harness/oracle-adapter.sh tests/smoke.sh; do
+    git -C "$REPO" cat-file -e "$REV:$p" 2>/dev/null || continue
+    adopted=1
     a=$(git -C "$REPO" show "lanes/harness-oracle:$p" 2>/dev/null | shasum -a 256 | cut -c1-8)
     b=$(git -C "$REPO" show "$REV:$p" 2>/dev/null | shasum -a 256 | cut -c1-8)
     [ -n "$a" ] && [ "$a" = "$b" ] || { ok=0; echo "  ADOPT-DIFF $p lane=$a tip=$b"; }
   done
-  [ "$ok" -eq 1 ] && say ADOPT "PASS match" || say ADOPT "WARN diff-or-absent"
+  if [ "$adopted" -eq 0 ]; then say ADOPT "SKIP nothing-adopted"
+  elif [ "$ok" -eq 1 ]; then say ADOPT "PASS match"
+  else say ADOPT "WARN diff"; fi
 else say ADOPT "SKIP no-harness-lane"; fi
 
 [ "$fail" -eq 0 ] && echo "GATE-PASS $REV" || echo "GATE-FAIL $REV"
