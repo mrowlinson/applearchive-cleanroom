@@ -338,4 +338,34 @@ findings:
 - VERIFY 43 PASS 0 FLAG current; Q/A 18/18; joint DONE still open (writer1/sweep DONEs pending; claim HELD)
 pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:761411739339887e44d7333b3a12312f4da91a2a03152a0c9c6aaa4173a0b0b7 bytes:26626
 pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:9f2594562e5ecf2726b4de38457f70d1962f5db565eb00ceb97c070f4eb5e217 bytes:31589
+post-edit: (recorded at commit 14d9882; 2 files, +17/-4)
+
+## 2026-10-07 decode-viewer lanes/decode-viewer (entry 19: CR-024 S-reverse + cross-phase + VERIFY-ba293f1 FLAG)
+inputs:
+- quiz-decode writer1 tip ba293f1 (post-pass C+proto 833+/133-, DPROBE-06, craft.py, battery; full diffs + wall grep 0 read first-hand)
+- own-gen orace extensions: mixSFS.aar ([S,F,S] -> m3,m1 5/5) + xs-xb1s2.aar ([XATbad,S] via craft.py killxat + TYP flip -> XAT-first 2/3, S-first 1/3, arrival-header) + proto@ba293f1 black-box runs (n=20 SORT-MATCH, n=2/mix DIVERGE forward) (WS tmp/decode-viewer-probes/orace; macOS 27.0.1)
+- writer1 tests/craft.py killxat (used as craft tool, viewer privilege) + notes/DPROBE-06.md S-flush-FORWARD claim (refuted)
+not-consulted: patent contents, encode-side lanes, reference/port sources,
+  decompiler output (none), writer worktree files (git-show only + black-box runs), liblzraven src/*.c internals
+outputs: 0 new clauses (CR-024 fold: S-reverse 19/19, cross-phase race, arrival-header, CORRECT vs DPROBE-06); VERIFY-ba293f1 (FLAG) + FLAG-ba293f1-viewer + NOTE-44
+findings:
+- S-flush is REVERSE (stable 19/19 <3); writer1 S2-fwd refuted; merge blocked on direction fix + re-gate; cross-phase prints race as units (any mix = sort-or-pin); first-header arrival-ordered
+- VERIFY 43 PASS 1 FLAG; Q/A 18/18; joint DONE still open (writer1 fix + sweep DONEs pending; claim HELD)
+pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:31f425875547336e7532b5414220ef5d2ffc8414393b0b84db97373ee97e9f88 bytes:26735
+pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:c775f73d053277a792a401ddaf2ff560a3c1d68f4b4a44fa6990b6c60a0c83dc bytes:32681
+post-edit: (recorded at commit 75135d7; 2 files, +18/-3)
+
+## 2026-10-07 decode-viewer lanes/decode-viewer (entry 20: CR-024 per-class table close)
+inputs:
+- quiz-decode writer1 NOTE-035/036 (ba293f1 green claims, P009 + race mutual-confirm) + PV-011 (viewer@14d9882 merged ed3ab58) + writer2 NOTE-078 (handoff, DONE filed) (read first-hand)
+- own-gen orace per-class: mix-nodat13.aar (2x blankdat via craft.py -> m1,m3 4/5 vs m3,m1 1/5) + xb-kk.aar (2x killxat via craft.py -> y1,y2 5/8 vs y2,y1 3/8) + exits/count stable (WS tmp/decode-viewer-probes/orace; macOS 27.0.1)
+- writer1 tests/craft.py blankdat/killxat (used as craft tools, viewer privilege)
+not-consulted: patent contents, encode-side lanes, reference/port sources,
+  decompiler output (none), writer worktree files (git-show only + black-box runs), liblzraven src/*.c internals
+outputs: 0 new clauses (CR-024 fold: per-class table CLOSED — S pinned <3, XAT/nodat/cross racy); NOTE-45/46/47
+findings:
+- nodat + XAT-file both racy at n=2 first-hand (bad2 mutual-CONFIRM); only S-class <3 is direction-pinned; writer1 bad2 handling already correct, S-FLAG stands
+- VERIFY 43 PASS 1 FLAG (open); Q/A 18/18; joint DONE still open (writer1 S-fix + sweep DONEs pending; claim HELD)
+pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:c98e17e08435f8830ab36033f0f99d542ce3676e5b32726b3fc6a290c371a3a2 bytes:27108
+pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:5a36ad1a29ef5bf44c409649e57a3dd75739c6740977e376f4b6a01e43a7eddf bytes:34326
 post-edit: (recorded at commit; see commit 2nd line stats)
