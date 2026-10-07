@@ -282,4 +282,19 @@ findings:
 - VERIFY 43 PASS 0 FLAG current thru both tips; joint DONE still open (writer1 post-pass + sweep DONEs pending; claim HELD)
 pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:80b33ba0e44c69e22b7aa9765f074e913edde25109cce7ddf292040b94b68765 bytes:24391
 pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:87b5d9b3ea68bfb8c15e738bc45e8f5d7846bb1889c0335ba8c962232321c62a bytes:25751
+post-edit: (recorded at commit 0d6c442; 2 files, +17/-2)
+
+## 2026-10-07 decode-viewer lanes/decode-viewer (entry 15: CR-023 bit10 amend + PV-010/NOTE-034)
+inputs:
+- quiz-decode PV-010 (viewer@8c1b919 merged dcdbef4; writer2@ee58b62 merged 67672bf) + writer1 NOTE-034 (post-pass C+proto 26/26 matrix, cells+commit next; no Q) (read first-hand)
+- own-gen pos hunt: big3m.bin (3MB zsh-repeat) pure + file-aar + dir-aar (all 6x0x4) + fullzsh pure [0x4,0x2x3] + fullzsh file-aar [0x4,0x2x3] + repdir dir-aar [0x4,0x402x3] (wild replicated, unc 2045677 MATCH) + repdir-inner pure re-encode [0x4,0x402x3] EXACT sizes (WS tmp/decode-viewer-probes/lrv003/pos; macOS 27.0.1)
+- aa archive usage (dir archiving needs -d, not -i; 148B no-recurse lesson recorded)
+not-consulted: patent contents, encode-side lanes, reference/port sources,
+  decompiler output (none), writer worktree files (git-show only + black-box runs), liblzraven src/*.c internals
+outputs: 0 new clauses (CR-023 amend: bit10 content-driven, tree-mode REFUTED, nblocks recount 36/36); NOTE-38/39
+findings:
+- bit10 = content feature on shifted slices (rides bit1-content); path/mode ruled out 2/2 same-bytes; wild vector reproduced first-hand; all vectors roundtrip-clean + decode-covered
+- VERIFY 43 PASS 0 FLAG current; Q/A 18/18; joint DONE still open (writer1/sweep DONEs pending; claim HELD)
+pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:f3163fd4fe27fd5512bd05a7ecb1064dd6cf7b27985e216bcd4103070b090848 bytes:24754
+pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:c7d7a64acf679edb40235a90136f1bcb2c07c53202383fdfa3cf1f9dfdc303a9 bytes:27346
 post-edit: (recorded at commit; see commit 2nd line stats)
