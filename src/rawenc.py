@@ -145,9 +145,17 @@ def walk(dirb, relb):
     return out
 
 
-ROOT = sys.argv[1]
-ROOTB = os.fsencode(ROOT)
-st0 = os.lstat(ROOTB)
-parts = [encode_entry(b"", st0, b"D")] + walk(ROOTB, b"")
-with open(sys.argv[2], "wb") as f:
-    f.write(b"".join(parts))
+ROOTB = None
+
+
+def build_inner(rootb):
+    global ROOTB
+    ROOTB = rootb
+    st0 = os.lstat(rootb)
+    return b"".join([encode_entry(b"", st0, b"D")] + walk(rootb, b""))
+
+
+if __name__ == "__main__":
+    data = build_inner(os.fsencode(sys.argv[1]))
+    with open(sys.argv[2], "wb") as f:
+        f.write(data)
