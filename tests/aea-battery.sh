@@ -217,8 +217,12 @@ if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/pf1.aea" 
 if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-profile1"; else bad "err-profile1"; fi
 openssl ecparam -name prime256v1 -genkey -noout -out "$WORK/ec2-priv.pem" 2>/dev/null
 openssl ec -in "$WORK/ec2-priv.pem" -pubout -out "$WORK/ec2-pub.pem" 2>/dev/null
-if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --key "$WORK/key32.bin" --sign-pub "$WORK/ec2-pub.pem" -i "$WORK/p2.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-wrongsign"; else ok "err-wrongsign"; fi
-if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --recipient-priv "$WORK/ec-priv.pem" --sign-pub "$WORK/ec2-pub.pem" -i "$WORK/p4.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-p4wrongsign"; else ok "err-p4wrongsign"; fi
+if aea decrypt -key "$WORK/key32.bin" -sign-pub "$WORK/ec2-pub.pem" -i "$WORK/p2.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --key "$WORK/key32.bin" --sign-pub "$WORK/ec2-pub.pem" -i "$WORK/p2.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
+if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-wrongsign"; else bad "err-wrongsign"; fi
+if aea decrypt -recipient-priv "$WORK/ec-priv.pem" -sign-pub "$WORK/ec2-pub.pem" -i "$WORK/p4.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --recipient-priv "$WORK/ec-priv.pem" --sign-pub "$WORK/ec2-pub.pem" -i "$WORK/p4.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
+if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-p4wrongsign"; else bad "err-p4wrongsign"; fi
 # 9b. EC-curve parity: oracle P-256-only (encrypt rejects 384/521 pubs,
 # decrypt exits 1 on 384/521 creds); proto exits 1 too. APROBE-01.
 for spec in 384:secp384r1 521:secp521r1; do
@@ -233,7 +237,9 @@ for spec in 384:secp384r1 521:secp521r1; do
   if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-sign-$tag"; else bad "err-sign-$tag"; fi
 done
 aea encrypt -profile 0 -sign-pub "$WORK/ec-pub.pem" -a none -padding none -i "$WORK/msg.txt" -o "$WORK/p0u.aea" 2>/dev/null
-if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --sign-pub "$WORK/ec-pub.pem" -i "$WORK/p0u.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-unsigned"; else ok "err-unsigned"; fi
+if aea decrypt -sign-pub "$WORK/ec-pub.pem" -i "$WORK/p0u.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --sign-pub "$WORK/ec-pub.pem" -i "$WORK/p0u.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
+if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-unsigned"; else bad "err-unsigned"; fi
 OIDU=$(aea id -i "$WORK/p0u.aea" 2>/dev/null)
 PIDU=$("$AEAD_PY" "$REPO/proto/aead.py" id -i "$WORK/p0u.aea" 2>/dev/null)
 if [ "$OIDU" = "$PIDU" ] && [ -n "$OIDU" ]; then ok "id-unsigned"; else bad "id-unsigned"; fi
@@ -244,13 +250,21 @@ cp "$WORK/p0u.aea" "$WORK/p0s.aea" && aea sign -sign-priv "$WORK/ec-priv.pem" -o
 EXP=$WORK/msg.txt
 cell sign-later --sign-pub "$WORK/ec-pub.pem" -i "$WORK/p0s.aea"
 head -c 31 /dev/urandom > "$WORK/key31.bin"; head -c 33 /dev/urandom > "$WORK/key33.bin"
-if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --key "$WORK/key31.bin" -i "$WORK/p1.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-key31"; else ok "err-key31"; fi
+if aea decrypt -key "$WORK/key31.bin" -i "$WORK/p1.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --key "$WORK/key31.bin" -i "$WORK/p1.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
+if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-key31"; else bad "err-key31"; fi
 EXP=$WORK/msg.txt
 cell mixed-p1-pwextra --key "$WORK/key32.bin" --password "$PW" -i "$WORK/p1.aea"
 cell mixed-p5-keyextra --password "$PW" --key "$WORK/key32.bin" -i "$WORK/p5.aea"
-if "$AEAD_PY" "$REPO/proto/aead.py" decrypt -i "$WORK/p5.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-no-creds"; else ok "err-no-creds"; fi
-if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/p1.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-wrong-credtype"; else ok "err-wrong-credtype"; fi
-if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --key "$WORK/key33.bin" -i "$WORK/p1.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-key33"; else ok "err-key33"; fi
+if aea decrypt -i "$WORK/p5.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt -i "$WORK/p5.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
+if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-no-creds"; else bad "err-no-creds"; fi
+if aea decrypt -password-value "$PW" -i "$WORK/p1.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/p1.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
+if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-wrong-credtype"; else bad "err-wrong-credtype"; fi
+if aea decrypt -key "$WORK/key33.bin" -i "$WORK/p1.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --key "$WORK/key33.bin" -i "$WORK/p1.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
+if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-key33"; else bad "err-key33"; fi
 # NOTE: seek=7 is the profile-u32 HIGH byte, not a strength field (APROBE-01
 # byte map); err-strength* names kept for history. Oracle: exit 1 unlock-class.
 cp "$WORK/p5.aea" "$WORK/ss3.aea" && printf '\003' | dd of="$WORK/ss3.aea" bs=1 seek=7 conv=notrunc 2>/dev/null
