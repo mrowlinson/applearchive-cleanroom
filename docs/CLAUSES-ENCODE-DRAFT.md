@@ -223,3 +223,68 @@ not-consulted: decompiler output (none produced; no disassembly run), port/refer
 outputs: 3 clause drafts (CR-116 MEASURED+VENDOR-DOC, CR-117/118 MEASURED), 0 promoted (parent renumbers)
 findings: lzma/lz4-Apple-Compression-identity, bv41-framing-closed, libcompression-cache-provenance
 base: lane commit d3c7512
+
+```
+CR-119 [MEASURED] raven/bitmap encoders = Apple Compression framework; compression_tool reproduces raven EXACT, rejects bitmap; libcompression one-shot reproduces BOTH EXACT
+stage: probe
+artifact: WS scratch-viewer3/bed.py + bed2.py (own, sha e5fdf5cb... / 2f1768f8...)
+numbers: inner 1109B fixed input. aa -a lzraven payload 508B == compression_tool -encode -a lzraven(inner)
+  EXACT; == libcompression COMPRESSION_LZRAVEN(0xD05) buffer call EXACT. aa -a lzbitmap payload 540B ==
+  libcompression COMPRESSION_LZBITMAP(0x702) buffer call EXACT. compression_tool -a/-A lzbitmap -> rc=1
+  usage error (algo list has no bitmap). compression.h (CLT 27.0 SDK, sha 62485df0...): 0x702 "buffer API
+  only", 0xD05 "buffer API only, macOS 27.0+". tool 135168B sha a8f4f8ca...e178 (own MATCH)
+verdict: NEW (raven joins lzma/lz4 with a compression_tool iteration oracle; bitmap oracle is
+  libcompression-only, beds-OK class per A-12(a)/CR-118; closes w2 Q-13)
+body: same shared-infra story as CR-116 for 2 more codecs: aa outer payload bytes are exactly what
+  Apple's Compression stack emits for the raw inner. No wasted bitmap hunt: iterate vs one-shot.
+```
+
+```
+CR-120 [MEASURED] outer blocks partition raw.aar WHOLE: sum(unc)==len(raw.aar) exact, last unc == tail slice; no +28/+30 anywhere
+stage: probe
+artifact: WS scratch-viewer3/bed.py + bed2.py + filename-vary bed (own runs)
+numbers: raven b10k zeros-100k x3 filenames: inners 100239/100239/100235, lasts 239/239/235, sum==rawlen
+  3/3; bitmap b10k 100239 EQ (11 frames); raven random-50k all-STORED 6/6 sum 50237 EQ; single-block
+  raven+bitmap 1109 EQ both. 10/10 EQ total (8 distinct configs + bitmap/random fresh re-runs).
+  chain closes byte-exact every case (12+sum(16+comp)==file)
+verdict: CORRECTS w2 NOTE-w2s2-5 (+30) and NOTE-w2s2-6 (+28 last-block rule): both are artifacts of w2's
+  UNC() defining inner=len(raw)-28. Their pinned verdict (su-28==len-28 ⟺ su==len) stays TRUE — record-only
+  fix, no battery change. raw.aar incl AA01 magic IS the blocked input (confirms A-10/CR-116 framing parses)
+body: the outer layer is a plain partitioner: 12B prefix (magic+0+BE blocksize) + blocks[16B hdr
+  (0,BE unc,0,BE comp) + comp bytes], stored ⟺ comp==unc with payload = raw slice.
+```
+
+```
+CR-121 [MEASURED] AEA -a accepts 8 values (7 + raw=none alias); codec choice has NO plaintext envelope field; bogus = rc1 hard error
+stage: probe
+artifact: WS scratch-viewer3/bed.py + bed2.py (own, profile 1, fixed key bytes 0x00..0x1F)
+numbers: none/lzfse/lzma/lz4/zlib/lzraven/lzbitmap + raw ALL rc=0 (help lists the 7; raw undocumented).
+  zeros-100k sizes: none/raw 118784, all 6 codecs 19456; urandom-5k: all-7 24576. hdr first-12B IDENTICAL
+  all 8 (AEA1 01 00000000 00000000). same-alg rerun agrees 127/24576 (~chance). -a bogus: rc=1
+  "Invalid compression algorithm: bogus" + usage, no fallback. decrypt -v prints "compression: <name>"
+  (own: none/lzma/lzbitmap) — tool-reported signal, not envelope bytes; both decrypts RT-clean
+verdict: NEW (AEA codec leg pinned for w2 battery; PRE-001 "seg-alg IDs on encode" answered: inside the
+  encrypted envelope, unbeddable from ciphertext — decode-side territory if ever needed; closes w2 Q-15)
+body: the AAR-outer 7 ⟷ AEA 7 codec correspondence holds. Observable encode-side codec effects = output
+  size on compressible input + decrypt -v echo only.
+```
+
+## Derivation appendix (this file, session 2026-10-07 attempt#3)
+
+inputs (fresh sha256 where file):
+- /usr/bin/aa 823df81f1c4331d10ef4 (own re-hash, MATCHES attempt#1 appendix prefix 823df81f...)
+- /usr/bin/aea 16bfbb1c09b092ef6c10 (own re-hash, MATCHES attempt#1 prefix 16bfbb1c...)
+- /usr/bin/compression_tool 135168B sha a8f4f8ca0d4a7096e178 (own re-hash, MATCHES CR-116)
+- compression.h (CLT 27.0 SDK) sha 62485df0c0bc5c9a (own; constant values read first-hand)
+- OS build 26A434 (own sw_vers, same as CR-118)
+- own probe beds: WS scratch-viewer3/bed.py (sha e5fdf5cb5661e578) + bed2.py (sha 2f1768f8b82a2860),
+  each run TWICE (initial + fresh re-run before writing; identities hold within-run both runs;
+  payload-size drift 504->508 across runs = input mtime, not behavior)
+- libcompression via ctypes CDLL("libcompression.dylib") (cache-resolved per CR-118; beds-OK A-12(a))
+- writer exhibits as CONFIRM/CORRECT targets only (NOTE-w2s2-5/6 trailer claims CORRECTED by CR-120,
+  NOTE-w2s3-2 codec-meta + GATE-592722d raw-alias/bogus independently AGREE with CR-121), never as evidence
+not-consulted: decompiler output (none produced; no disassembly run), port/reference sources, vendor
+  framework implementations, decode-side answers, other-lane branches beyond intake + writer lanes (verify duty)
+outputs: 3 clause drafts (CR-119/120/121 all MEASURED), 0 promoted (parent renumbers)
+findings: raven-bitmap-oracle-identity, outer-partition-rule-correction, AEA-codec-matrix
+base: lane commit c056286
