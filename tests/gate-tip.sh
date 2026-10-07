@@ -7,7 +7,8 @@
 # / ADOPT (A-1 harness pins vs lanes/harness-oracle, best-effort).
 # exit 0 GATE-PASS / 1 GATE-FAIL. all work under /Volumes/NVME only.
 # v2: PIN-STALE-NAME + UNPINNED-AAR, SMOKE-IMPL/IMPL2, committed-.aea WARN,
-# OUTER2 battery + PINS-OUTER2 setdiff leg, dual-suffix (.got.aar/.got.aea) pin legs.
+# OUTER2 battery + PINS-OUTER2 setdiff leg, dual-suffix (.got.aar/.got.aea) pin legs,
+# C-BUILD + RAWENC-C/PBZE-C + PINS-*-C (ENC_BIN parity), HYGIENE tmp/scratch- (PARENT-005).
 set -u
 REV=${1:?usage: gate-tip.sh <rev> <ws-outdir>}
 OUT=${2:?usage: gate-tip.sh <rev> <ws-outdir>}
@@ -20,7 +21,7 @@ fail=0
 say() { echo "GATELEG $1 $2"; }
 
 # 1. HYGIENE: artifact paths in the TIP TREE (not the stripped extract)
-ARTS=$(git -C "$REPO" ls-tree -r --name-only "$REV" | grep -E '(__pycache__|\.pyc$|\.pyo$|\.o$|\.a$|\.dylib$|\.ktrace$|/traces/|DerivedData/|\.aar$)' || true)
+ARTS=$(git -C "$REPO" ls-tree -r --name-only "$REV" | grep -E '(__pycache__|\.pyc$|\.pyo$|\.o$|\.a$|\.dylib$|\.ktrace$|/traces/|DerivedData/|\.aar$|tmp/scratch-)' || true)
 if [ -n "$ARTS" ]; then fail=1; say HYGIENE "FAIL artifacts:"; echo "$ARTS" | sed 's/^/  /';
 else say HYGIENE "PASS no-artifacts"; fi
 GI=$(git -C "$REPO" show "$REV:.gitignore" 2>/dev/null || true)
@@ -44,6 +45,13 @@ runb() { # $1=leg $2=script-path-in-tree $3=invoke...
     npass=$(grep -c '^PASS' "$log"); say "$leg" "PASS n=$npass"
   else fail=1; say "$leg" "FAIL (see work-$leg.log)"; grep -E '^(FAIL|.*RED)' "$log" | head -20 | sed 's/^/  /'; fi
 }
+# 3a. C-BUILD (C port parity; build outputs to per-gate NVME dir only)
+if [ -e "$OUT/tree/src/c/Makefile" ]; then
+  if make -C "$OUT/tree/src/c" BUILDDIR="$OUT/build" >"$OUT/work-C-BUILD.log" 2>&1 && [ -x "$OUT/build/aae" ]; then
+    nw=$(grep -ci 'warning' "$OUT/work-C-BUILD.log" || true)
+    say C-BUILD "PASS warnings=$nw"
+  else fail=1; say C-BUILD "FAIL (see work-C-BUILD.log)"; tail -20 "$OUT/work-C-BUILD.log" | sed 's/^/  /'; fi
+else say C-BUILD "SKIP no-c-port"; fi
 runb RAWENC tests/test_rawenc.sh sh "$OUT/tree/tests/test_rawenc.sh" "$OUT/work/rawenc"
 runb PBZE tests/test_pbze.sh sh "$OUT/tree/tests/test_pbze.sh" "$OUT/work/pbze"
 runb SMOKE tests/smoke.sh sh "$OUT/tree/tests/smoke.sh" "$OUT/work/smoke"
@@ -51,6 +59,13 @@ runb OUTER2 tests/test_outer2.sh sh "$OUT/tree/tests/test_outer2.sh" "$OUT/work/
 runb SMOKE-IMPL harness/impl-adapter.sh env BACKEND="$OUT/tree/harness/impl-adapter.sh" sh "$OUT/tree/tests/smoke.sh" "$OUT/work/smoke-impl"
 runb SMOKE-IMPL2 harness/impl2-adapter.sh env BACKEND="$OUT/tree/harness/impl2-adapter.sh" sh "$OUT/tree/tests/smoke.sh" "$OUT/work/smoke-impl2"
 runb UNITS tests/test_units.py python3 "$OUT/tree/tests/test_units.py"
+# 3b. C parity batteries (ENC_BIN override; c11/c13 bypass _IMP -> manual supplements at verdict)
+if [ -e "$OUT/tree/src/c/aae.c" ]; then
+  if [ -x "$OUT/build/aae" ]; then
+    runb RAWENC-C tests/test_rawenc.sh env ENC_BIN="$OUT/build/aae" sh "$OUT/tree/tests/test_rawenc.sh" "$OUT/work/rawenc-c"
+    runb PBZE-C tests/test_pbze.sh env ENC_BIN="$OUT/build/aae" sh "$OUT/tree/tests/test_pbze.sh" "$OUT/work/pbze-c"
+  else fail=1; say RAWENC-C "FAIL no-c-binary"; say PBZE-C "FAIL no-c-binary"; fi
+else say RAWENC-C "SKIP no-c-port"; say PBZE-C "SKIP no-c-port"; fi
 
 # 4. PINS: each csv row vs fresh got.aar (full sha256 + bytes)
 pinleg() { # $1=csv-in-tree $2=workdir $3=leg
@@ -84,6 +99,10 @@ pinleg() { # $1=csv-in-tree $2=workdir $3=leg
 }
 pinleg vectors/rawenc-PINS.csv "$OUT/work/rawenc" PINS-RAWENC
 pinleg vectors/pbze-PINS.csv "$OUT/work/pbze" PINS-PBZE
+if [ -x "$OUT/build/aae" ]; then
+  pinleg vectors/rawenc-PINS.csv "$OUT/work/rawenc-c" PINS-RAWENC-C
+  pinleg vectors/pbze-PINS.csv "$OUT/work/pbze-c" PINS-PBZE-C
+else say PINS-RAWENC-C "SKIP no-c-binary"; say PINS-PBZE-C "SKIP no-c-binary"; fi
 # 4b. PINSET: schema-agnostic pin coverage — battery-reported PASS set must
 # equal the csv row set exactly (catches skipped/renamed/unpinned cells
 # without duplicating the battery's name->artifact map). for outer2 the
