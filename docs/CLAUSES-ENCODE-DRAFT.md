@@ -288,3 +288,43 @@ not-consulted: decompiler output (none produced; no disassembly run), port/refer
 outputs: 3 clause drafts (CR-119/120/121 all MEASURED), 0 promoted (parent renumbers)
 findings: raven-bitmap-oracle-identity, outer-partition-rule-correction, AEA-codec-matrix
 base: lane commit c056286
+
+```
+CR-122 [MEASURED] lz4 matchfinder = hash table with count-based eviction (50% ~8.5K distinct inserts,
+0% by ~11.5K); distance/window ruled OUT; no-start tail zone ~121-128; plain dups future-independent
+stage: probe
+artifact: WS scratch-viewer3/lz4probe.py (sha aee4c9ea...) + bed3.py (sha 50e86d99...), oracle
+  compression_tool -a lz4 (CR-116-identical to aa payloads), own bv41/LZ4-sequence parser
+numbers: decisive pair (retest@12108): zeros-12K fill -> CHECK (len 1884, off 12008); distinct-12K ->
+  SKIP (literal, covering=[]). survival/6 seeds: 7250: 6/6; 8000: 5/6; 9000: 2/6; 10000/11000: 1/6;
+  >=11500: 0/6 (0/24 combined). phase: candpos 5000 + 8K/9K -> 5/6 + 3/6 (same as candpos 100).
+  tail: run60@1900/chunk2000 MISSED; run40@1123/chunk4163 CHECK (off 1021); zeros2000 tail 123 literal.
+  futures: 9 variants (5 seeds + 4 flip-distances) -> identical match (8,681). all numbers re-run fresh
+  (bed3.py) reproducing inline-bed values EXACTLY (deterministic oracle)
+verdict: NEW (eviction mechanism + table-size class for w1 hunt; CORRECTS any distance/window theory;
+  tail-zone CONFIRMS chunklen-relative ~121-128, REJECTS absolute-position limit; one-pass BOUNDED to
+  clear cases — w1 HOLE1 future-shape not replicated, needs their minimal-pair bytes)
+body: zeros fill (1 distinct 4-gram) never evicts over 12K; distinct fill evicts by count with a cliff
+  STEEPER than any single uniform table (no one S fits 6/6 @7.25K with 0/24 @11.5K+) — second mechanism
+  OPEN (segmented/capped/multi-slot/adaptive candidates). last-pos re-confirmed (offs track most recent).
+  metadata hash lead NONE-FOUND: compression_tool = 54-string thin driver (no encoder constants), no
+  dyld-shared-cache-util, SDK headers API-only, Ghidra absent. behavioral size: ~8-16K-slot CLASS (rough).
+```
+
+## Derivation appendix (this file, session 2026-10-07 attempt#3 entry-4)
+
+inputs (fresh sha256 where file):
+- /usr/bin/compression_tool sha a8f4f8ca0d4a7096e178 (re-MATCHES CR-116; oracle path for all beds)
+- own apparatus: WS scratch-viewer3/lz4probe.py (sha aee4c9ea56de1659; self-tests: zeros match@1,
+  rand stored-path, wall781 exact-start off-tracking) + bed3.py (sha 50e86d996e2d4954; fresh re-run
+  reproduces ALL headline numbers exactly)
+- own metadata sweep: strings -a (54 strings) + nm (thin driver, ParallelCompression imports) +
+  SDK compression.h grep (empty) + tool-absence checks (dyld-shared-cache-util, Ghidra per NOTE-035)
+- writer exhibits as CONFIRM/CORRECT targets only (NOTE-15/16/17/18 hunt state, misnumbered w1s2 Q-13
+  answered as A-17; TAILS5/SL1123 shapes bedded independently — same verdict class, own inputs),
+  never as evidence
+not-consulted: decompiler output (none produced; no disassembly run), port/reference sources, vendor
+  framework implementations, decode-side answers, other-lane branches beyond intake + writer lanes (verify duty)
+outputs: 1 clause draft (CR-122 MEASURED), 0 promoted (parent renumbers)
+findings: lz4-table-eviction-curve, tail-zone-confirm, future-independence-bound, metadata-none-found
+base: lane commit bda1f61
