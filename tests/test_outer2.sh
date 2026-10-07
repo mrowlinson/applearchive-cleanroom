@@ -264,6 +264,16 @@ for P in 1 5; do
     else echo "FAIL a-t-$P-$A rc"; FAIL=1; fi
   done
 done
+head -c 200000 /dev/zero > "$IN/a200k.bin"
+for F in a5000 a200k; do
+  for A in none lzfse; do
+    for B in 16b 64k; do
+      if "$AEA" encrypt -profile 1 -key "$WORK/key32.bin" -a "$A" -t 1 -b "$B" -i "$IN/$F.bin" -o "$WORK/a-b$F$A$B.aea" 2>/dev/null; then
+        chk "a-b-$F-$A-$B" size "$(sz "$WORK/a-b$F$A$B.aea")" "$(sz "$WORK/a-b$F$A$B.aea")"
+      else echo "FAIL a-b-$F-$A-$B rc"; FAIL=1; fi
+    done
+  done
+done
 for L in 19 20; do
   P=$(head -c "$L" /dev/zero | tr '\0' p)
   if sh "$ADAPTER" aea-encrypt --profile 5 --password "$P" --alg none --threads 1 "$IN/a100.bin" "$WORK/a-pw$L.aea" 2>/dev/null; then rc=0; else rc=$?; fi

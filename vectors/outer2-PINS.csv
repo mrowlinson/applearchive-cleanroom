@@ -117,6 +117,14 @@ a-t-1-none,str,SIZE-EQ,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-t-1-lzfse,str,SIZE-EQ,19456,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-t-5-none,str,SIZE-EQ,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-t-5-lzfse,str,SIZE-EQ,19456,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-b-a5000-none-16b,size,24576,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-b-a5000-none-64k,size,24576,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-b-a5000-lzfse-16b,size,19456,19456,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-b-a5000-lzfse-64k,size,19456,19456,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-b-a200k-none-16b,size,221184,221184,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-b-a200k-none-64k,size,221184,221184,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-b-a200k-lzfse-16b,size,21504,21504,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-b-a200k-lzfse-64k,size,19456,19456,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-pw19,rc,1,0,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-pw20,rc,0,0,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-kv-bare,rc,1,0,test_outer2.sh,27.0.1,oracle-adapter.sh
