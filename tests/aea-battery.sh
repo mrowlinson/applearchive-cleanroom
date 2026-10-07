@@ -182,9 +182,13 @@ OIDP=$(aea id -i "$WORK/pad-def.aea" 2>/dev/null)
 PIDP=$("$AEAD_PY" "$REPO/proto/aead.py" id -i "$WORK/pad-def.aea" 2>/dev/null)
 if [ "$OIDP" = "$PIDP" ] && [ -n "$OIDP" ]; then ok "id-pad"; else bad "id-pad"; fi
 head -c 100 "$WORK/p5.aea" > "$WORK/id-tr100.aea"
-if "$AEAD_PY" "$REPO/proto/aead.py" id -i "$WORK/id-tr100.aea" 2>/dev/null; then bad "err-id-trunc100"; else ok "err-id-trunc100"; fi
+if aea id -i "$WORK/id-tr100.aea" 2>/dev/null; then ora=0; else ora=1; fi
+if "$AEAD_PY" "$REPO/proto/aead.py" id -i "$WORK/id-tr100.aea" 2>/dev/null; then pro=0; else pro=1; fi
+if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-id-trunc100"; else bad "err-id-trunc100"; fi
 head -c 155 "$WORK/p5.aea" > "$WORK/id-tr155.aea"
-if "$AEAD_PY" "$REPO/proto/aead.py" id -i "$WORK/id-tr155.aea" 2>/dev/null; then bad "err-id-trunc155"; else ok "err-id-trunc155"; fi
+if aea id -i "$WORK/id-tr155.aea" 2>/dev/null; then ora=0; else ora=1; fi
+if "$AEAD_PY" "$REPO/proto/aead.py" id -i "$WORK/id-tr155.aea" 2>/dev/null; then pro=0; else pro=1; fi
+if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-id-trunc155"; else bad "err-id-trunc155"; fi
 head -c 156 "$WORK/p5.aea" > "$WORK/id-tr156.aea"
 OIDT=$(aea id -i "$WORK/id-tr156.aea" 2>/dev/null)
 PIDT=$("$AEAD_PY" "$REPO/proto/aead.py" id -i "$WORK/id-tr156.aea" 2>/dev/null)
@@ -192,7 +196,9 @@ if [ "$OIDT" = "$PIDT" ] && [ "$PIDT" = "$OID" ] && [ -n "$OIDT" ]; then ok "id-
 OIDA=$(aea id -i "$WORK/auth2.aea" 2>/dev/null)
 PIDA=$("$AEAD_PY" "$REPO/proto/aead.py" id -i "$WORK/auth2.aea" 2>/dev/null)
 if [ "$OIDA" = "$PIDA" ] && [ -n "$OIDA" ]; then ok "id-auth"; else bad "id-auth"; fi
-if (cd "$WORK" && rm -f ./- && "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i - -o iminus.out < "$WORK/p5.aea" 2>/dev/null); then bad "err-iminus"; else ok "err-iminus"; fi
+if (cd "$WORK" && rm -f ./- && aea decrypt -password-value "$PW" -i - -o iminus-ora.out < "$WORK/p5.aea" 2>/dev/null); then ora=0; else ora=1; fi
+if (cd "$WORK" && rm -f ./- && "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i - -o iminus.out < "$WORK/p5.aea" 2>/dev/null); then pro=0; else pro=1; fi
+if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-iminus"; else bad "err-iminus"; fi
 
 # 8b. thread-count indifference (oracle -t 1 vs default; proto single-threaded)
 aea encrypt -profile 5 -password-value "$PW" -a lzma -t 1 -padding none -i "$WORK/bigtext.bin" -o "$WORK/thr1.aea" 2>/dev/null
