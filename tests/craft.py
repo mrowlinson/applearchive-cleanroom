@@ -7,12 +7,19 @@ Usage: craft.py CMD IN OUT ARGS...
   killxat IN OUT IDX...       corrupt 1st XAT record size (items by idx)
   killxatpat IN OUT PAT...    same, items by PAT string
   settyp IN OUT IDX LETTER    set item TYP value byte
+  settyppat IN OUT PAT LETTER set TYP value byte by PAT
   setmod IN OUT PAT OCT       set first MOD u16 of item with PAT (octal)
   setmtm IN OUT PAT EPOCH     set MTM u64 LE of item with PAT
   addxat IN OUT PAT NAME VAL  append XAT record (exact-size; extends blob)
   blanktyp IN OUT N           blank Nth b"TYP" occurrence (0-based)
   blankdat IN OUT PAT         blank DAT key of item with PAT
   zeropat IN OUT PAT          empty PAT (removes bytes, fixes hsize)
+  setmagic IN OUT IDX HEX4    replace item magic (8 hex chars)
+  hsdelta IN OUT IDX D        add signed delta to item hsize
+  setsub IN OUT PAT KEY SUB   flip entry subtype byte in place
+  setbloblen IN OUT PAT KEY N set blob-len field (width-kept)
+  settyprec IN OUT IDX HEX    replace whole TYP record, fix hsize
+  append IN OUT HEX           append raw hex bytes at EOF
 """
 import struct
 import sys
@@ -130,8 +137,11 @@ def main():
             assert r, "no XAT"
             bp, _, _, _ = r
             raw[bp:bp + 4] = struct.pack("<I", 0xFFFFFF)
-    elif cmd == "settyp":
-        i, let = int(args[0]), args[1].encode()
+    elif cmd in ("settyp", "settyppat"):
+        if cmd == "settyp":
+            i, let = int(args[0]), args[1].encode()
+        else:
+            i, let = find_pat(args[0].encode()), args[1].encode()
         pos, hsz, ents = items[i]
         for k, st, voff, w in ents:
             if k == b"TYP" and st in UW:
@@ -198,6 +208,83 @@ def main():
                 break
         else:
             raise SystemExit("no PAT")
+    elif cmd == "setmagic":
+        pos, hsz, ents = items[int(args[0])]
+        raw[pos:pos + 4] = bytes.fromhex(args[1])
+    elif cmd == "hsdelta":
+        pos, hsz, ents = items[int(args[0])]
+        raw[pos + 4:pos + 6] = struct.pack("<H", hsz + int(args[1]))
+    elif cmd == "setsub":
+        i = find_pat(args[0].encode())
+        pos, hsz, ents = items[i]
+        p, end = pos + 6, pos + hsz
+        while p + 4 <= end:
+            if bytes(raw[p:p + 3]) == args[1].encode():
+                raw[p + 3] = args[2].encode()[0]
+                break
+            p += 4
+            st = raw[p - 1]
+            if st in UW:
+                p += UW[st]
+            elif st in BW:
+                p += BW[st]
+            elif st in HL:
+                p += HL[st]
+            elif st in TL:
+                p += TL[st]
+            elif st == 0x50:
+                p += 2 + struct.unpack("<H", raw[p:p + 2])[0]
+        else:
+            raise SystemExit("no key")
+    elif cmd == "setbloblen":
+        i = find_pat(args[0].encode())
+        pos, hsz, ents = items[i]
+        for k, st, voff, w in ents:
+            if k == args[1].encode() and st in BW:
+                raw[pos + voff:pos + voff + w] = int(args[2]).to_bytes(
+                    w, "little")
+                break
+        else:
+            raise SystemExit("no blob key")
+    elif cmd == "settyprec":
+        i = int(args[0])
+        pos, hsz, ents = items[i]
+        rec = bytes.fromhex(args[1])
+        p, end = pos + 6, pos + hsz
+        while p + 4 <= end:
+            if bytes(raw[p:p + 3]) == b"TYP":
+                q = p + 4
+                st = raw[p + 3]
+                if st in UW:
+                    q += UW[st]
+                elif st in BW:
+                    q += BW[st]
+                elif st in HL:
+                    q += HL[st]
+                elif st in TL:
+                    q += TL[st]
+                elif st == 0x50:
+                    q += 2 + struct.unpack("<H", raw[q:q + 2])[0]
+                raw[p:q] = rec
+                struct.pack_into("<H", raw, pos + 4,
+                                 hsz + (len(rec) - (q - p)))
+                break
+            p += 4
+            st = raw[p - 1]
+            if st in UW:
+                p += UW[st]
+            elif st in BW:
+                p += BW[st]
+            elif st in HL:
+                p += HL[st]
+            elif st in TL:
+                p += TL[st]
+            elif st == 0x50:
+                p += 2 + struct.unpack("<H", raw[p:p + 2])[0]
+        else:
+            raise SystemExit("no TYP")
+    elif cmd == "append":
+        raw += bytes.fromhex(args[0])
     else:
         raise SystemExit("unknown cmd")
     save(d, raw, stored, dst)

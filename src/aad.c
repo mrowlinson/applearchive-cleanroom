@@ -210,60 +210,78 @@ static int entry_val_len(unsigned char st, const unsigned char *p,
     }
 }
 
-static int parse_inner(const Buf *inner, Item **items, size_t *nitems) {
+/* inner parse failure classes (oracle wrapper per class; prefix kept) */
+enum { PF_OK = 0, PF_TAIL, PF_BADMAGIC, PF_HDRCUT, PF_ENDMISMATCH,
+       PF_VALUEOVERRUN, PF_BADSUBTYPE, PF_BLOBOVERRUN };
+
+static int parse_inner(const Buf *inner, Item **items, size_t *nitems,
+                       int *fcls, int *fsub) {
     const unsigned char *d = inner->data;
     size_t n = inner->len, pos = 0, cap = 0, cnt = 0;
     Item *arr = NULL;
+    int cls = PF_OK, sub = 0;
     while (pos < n) {
-        if (pos + 6 > n) { FAIL("inner hdr trunc\n"); goto err; }
+        if (pos + 6 > n) { cls = PF_TAIL; break; }
         if (memcmp(d + pos, "AA01", 4) && memcmp(d + pos, "YAA1", 4)) {
-            FAIL("bad inner magic @%zu\n", pos); goto err;
+            cls = PF_BADMAGIC; break;
         }
         size_t hsize = rd16le(d + pos + 4);
         size_t end = pos + hsize, p = pos + 6;
-        if (end > n) { FAIL("inner hdr overrun\n"); goto err; }
+        if (end > n) { cls = PF_VALUEOVERRUN; break; }
         Item it = { NULL, 0, NULL, 0 };
         size_t ecap = 0;
         while (p < end) {
-            if (p + 4 > end) { FAIL("entry trunc\n"); goto eerr; }
+            if (p + 4 > end) { cls = PF_HDRCUT; goto itfail; }
             Entry e;
             memcpy(e.key, d + p, 3); e.st = d[p + 3]; p += 4;
             int w = entry_val_len(e.st, d + p, end - p, &e.num, &e.raw,
                                   &e.rawlen);
-            if (w < 0) { FAIL("bad subtype 0x%02x\n", e.st); goto eerr; }
+            if (w < 0) {
+                switch (e.st) {
+                case '*': case '1': case '2': case '4': case '8':
+                case 'A': case 'B': case 'C': case 'F': case 'G':
+                case 'H': case 'I': case 'J': case 'S': case 'T':
+                case 'P':
+                    cls = PF_VALUEOVERRUN; break;
+                default:
+                    cls = PF_BADSUBTYPE; sub = e.st; break;
+                }
+                goto itfail;
+            }
             p += (size_t)w;
             if (it.nents == ecap) {
                 ecap = ecap ? ecap * 2 : 8;
                 Entry *ne = realloc(it.ents, ecap * sizeof *ne);
-                if (!ne) goto eerr;
+                if (!ne) { free(it.ents); goto fatal; }
                 it.ents = ne;
             }
             it.ents[it.nents++] = e;
         }
-        if (p != end) { FAIL("hdr end mismatch\n"); goto eerr; }
+        if (p != end) { cls = PF_ENDMISMATCH; goto itfail; }
         size_t blen = 0;
         for (size_t i = 0; i < it.nents; i++)
             if (it.ents[i].st == 'A' || it.ents[i].st == 'B' ||
                 it.ents[i].st == 'C')
                 blen += (size_t)it.ents[i].num;
-        if (end + blen > n) { FAIL("blob overrun\n"); goto eerr; }
+        if (end + blen > n) { cls = PF_BLOBOVERRUN; goto itfail; }
         it.blobs = d + end; it.bloblen = blen;
         if (cnt == cap) {
             cap = cap ? cap * 2 : 16;
             Item *na = realloc(arr, cap * sizeof *na);
-            if (!na) goto eerr;
+            if (!na) { free(it.ents); goto fatal; }
             arr = na;
         }
         arr[cnt++] = it;
         pos = end + blen;
         continue;
-eerr:
+itfail:
         free(it.ents);
-        goto err;
+        break;
     }
     *items = arr; *nitems = cnt;
+    *fcls = cls; *fsub = sub;
     return 0;
-err:
+fatal:
     if (arr) for (size_t i = 0; i < cnt; i++) free(arr[i].ents);
     free(arr);
     return -1;
@@ -444,7 +462,8 @@ static int safe_join(const char *root, const unsigned char *rel, size_t rlen,
     return 0;
 }
 
-static int extract(const Item *items, size_t nitems, const char *root) {
+static int extract(const Item *items, size_t nitems, const char *root,
+                     int fcls, int fsub) {
     if (mkdirs(root)) { FAIL("mkdir %s\n", root); return -1; }
     /* deferred dir metadata (children bump dir mtime; apply last) */
     typedef struct { char path[4096]; size_t idx; int islink; } Rec;
@@ -455,6 +474,8 @@ static int extract(const Item *items, size_t nitems, const char *root) {
     size_t nscols = 0;
     size_t *fsts = malloc(nitems * sizeof *fsts);
     size_t nfsts = 0;
+    Rec *eis = malloc(nitems * sizeof *eis);
+    size_t neis = 0;
     /* HLC group -> first member path (hardlink restore) */
     typedef struct { unsigned long long grp; char path[4096]; } Hlc;
     Hlc *hlcs = malloc(nitems * sizeof *hlcs);
@@ -477,6 +498,28 @@ static int extract(const Item *items, size_t nitems, const char *root) {
                     "stream cancelled\n");
             fails++; hdr = 1; aborted = 1; break;
         }
+        if (t->st != '1' && t->st != '2' && t->st != '4' && t->st != '8') {
+            int tn = -1;
+            switch (t->st) {
+            case 'P': tn = 2; break;
+            case 'S': case 'T': tn = 4; break;
+            case '*': tn = 0; break;
+            case 'F': case 'G': case 'H': case 'I': case 'J':
+                tn = 3; break; /* hash family (H probed) */
+            default: break; /* blob: content-fragile, internal line */
+            }
+            if (tn >= 0) {
+                fprintf(stderr, "Extraction failed\n"
+                        "extract failedError 0xe509b400\n"
+                        "invalid type %d, expected UINT\n"
+                        "Invalid entry: no TYP field\n"
+                        "archive stream read error (header)\n"
+                        "stream cancelled\n", tn);
+            } else {
+                FAIL("TYP non-uint subtype 0x%02x\n", t->st);
+            }
+            fails++; hdr = 1; aborted = 1; break;
+        }
         if (!p || p->st != 'P') continue; /* no PAT key: skip */
         if (!p->rawlen) {
             /* PAT-empty: D=root meta target; F=EISDIR counted; else skip */
@@ -484,7 +527,8 @@ static int extract(const Item *items, size_t nitems, const char *root) {
                 memcpy(dirs[ndirs].path, root, strlen(root) + 1);
                 dirs[ndirs].idx = k; dirs[ndirs].islink = 0; ndirs++;
             } else if (t->num == 'F') {
-                eisdir_err(&hdr, root);
+                memcpy(eis[neis].path, root, strlen(root) + 1);
+                eis[neis].idx = k; eis[neis].islink = 0; neis++;
                 fails++; sfails++;
             }
             continue;
@@ -531,7 +575,8 @@ static int extract(const Item *items, size_t nitems, const char *root) {
                 FILE *f = fopen(target, "wb");
                 if (!f) {
                     if (errno == EISDIR) {
-                        eisdir_err(&hdr, target);
+                        memcpy(eis[neis].path, target, strlen(target) + 1);
+                        eis[neis].idx = k; eis[neis].islink = 0; neis++;
                         fails++; sfails++; continue;
                     }
                     FAIL("open %s\n", target);
@@ -620,6 +665,56 @@ static int extract(const Item *items, size_t nitems, const char *root) {
             /* unknown TYP: silent skip (oracle parity, measured) */
         }
     }
+    /* parse-fail wrapper (after phase 1, before meta; suppressed on abort:
+     * a cancelled stream never reaches the later failure) */
+    if (fcls && !aborted) {
+        fails++;
+        hdr = 1;
+        switch (fcls) {
+        case PF_TAIL:
+            fprintf(stderr, "Extraction failed\n"
+                    "extract failedError 0xbd011800\n"
+                    "No more data\nread error\ntruncated stream\n"
+                    "archive stream read error (header)\nstream cancelled\n");
+            break;
+        case PF_BADMAGIC:
+            fprintf(stderr, "Extraction failed\n"
+                    "extract failedError 0xe501e800\n"
+                    "invalid header magic\ncorrupted archive header\n"
+                    "parsing entry header\n"
+                    "archive stream read error (header)\nstream cancelled\n");
+            break;
+        case PF_HDRCUT: case PF_ENDMISMATCH:
+            fprintf(stderr, "Extraction failed\n"
+                    "extract failedError 0xe5022800\n"
+                    "truncated header\ncorrupted archive header\n"
+                    "parsing entry header\n"
+                    "archive stream read error (header)\nstream cancelled\n");
+            break;
+        case PF_VALUEOVERRUN:
+            fprintf(stderr, "Extraction failed\n"
+                    "extract failedError 0xe502a400\n"
+                    "truncated header\ncorrupted archive header\n"
+                    "parsing entry header\n"
+                    "archive stream read error (header)\nstream cancelled\n");
+            break;
+        case PF_BADSUBTYPE:
+            fprintf(stderr, "Extraction failed\n"
+                    "extract failedError 0xe5029c00\n"
+                    "invalid field subtype: %d\ncorrupted archive header\n"
+                    "parsing entry header\n"
+                    "archive stream read error (header)\nstream cancelled\n",
+                    fsub);
+            break;
+        case PF_BLOBOVERRUN:
+            fprintf(stderr, "Extraction failed\n"
+                    "extract failedError 0xbd011800\n"
+                    "No more data\nread error\n"
+                    "archive stream read error (blob)\nstream cancelled\n");
+            sfails++;
+            break;
+        }
+    }
     /* phase 2: files meta, strict reverse (bad2, Q1 re-probe) */
     for (size_t i = nfiles; i-- > 0;) {
         const Item *it = &items[files[i].idx];
@@ -641,7 +736,9 @@ static int extract(const Item *items, size_t nitems, const char *root) {
         fprintf(stderr, "not implemented yet\ncreating fs object: %.*s\n",
                 (int)p->rawlen, p->raw);
     }
-    /* F-no-DAT flush, forward (nh2: after S-flush, before H-pass) */
+    /* EISDIR flush, forward (es/ne: after S-flush, before nodat) */
+    for (size_t i = 0; i < neis; i++) eisdir_err(&hdr, eis[i].path);
+    /* F-no-DAT flush, forward (nh2: after EISDIR-flush, before H-pass) */
     for (size_t i = 0; i < nfsts; i++) {
         const Entry *p = find_ent(&items[fsts[i]], "PAT");
         print_hdr(&hdr, 0xc8039000);
@@ -706,6 +803,7 @@ static int extract(const Item *items, size_t nitems, const char *root) {
     free(dirs);
     free(scols);
     free(fsts);
+    free(eis);
     free(hlcs);
     free(hlns);
     return fails ? 1 : 0;
@@ -719,8 +817,9 @@ int main(int argc, char **argv) {
     int rc = 1;
     if (read_file(argv[1], &file)) goto out;
     if (parse_chain(&file, &inner)) goto out;
-    if (parse_inner(&inner, &items, &nitems)) goto out;
-    if (extract(items, nitems, argv[2])) goto out;
+    int fcls = 0, fsub = 0;
+    if (parse_inner(&inner, &items, &nitems, &fcls, &fsub)) goto out;
+    if (extract(items, nitems, argv[2], fcls, fsub)) goto out;
     rc = 0;
 out:
     free(file.data); free(inner.data);

@@ -26,6 +26,18 @@ class FmtErr(Exception):
     pass
 
 
+# inner parse failure classes (oracle wrapper per class; prefix kept)
+(PF_OK, PF_TAIL, PF_BADMAGIC, PF_HDRCUT, PF_ENDMISMATCH,
+ PF_VALUEOVERRUN, PF_BADSUBTYPE, PF_BLOBOVERRUN) = range(8)
+
+
+class _PFail(Exception):
+    def __init__(self, cls, sub=0):
+        super().__init__(cls, sub)
+        self.cls = cls
+        self.sub = sub
+
+
 CTOOL = "/usr/bin/compression_tool"
 CTOOL_ALG = {b"pbze": "lzfse", b"pbz4": "lz4", b"pbzm": "lzraven"}
 _zbm = None
@@ -119,18 +131,18 @@ def parse_chain(data):
 def parse_header(data, pos):
     """-> (entries, endpos). entries: list of (key, subtype, value)."""
     if pos + 6 > len(data):
-        raise FmtErr("header past EOF at %d" % pos)
+        raise _PFail(PF_TAIL)
     if bytes(data[pos:pos + 4]) not in INNER_MAGICS:
-        raise FmtErr("bad inner magic at %d" % pos)
+        raise _PFail(PF_BADMAGIC)
     (hsize,) = struct.unpack_from("<H", data, pos + 4)
     end = pos + hsize
     if end > len(data) or hsize < 6:
-        raise FmtErr("header size past EOF at %d" % pos)
+        raise _PFail(PF_VALUEOVERRUN)
     p = pos + 6
     entries = []
     while p < end:
         if p + 4 > end:
-            raise FmtErr("entry tag past end at %d" % p)
+            raise _PFail(PF_HDRCUT)
         key = bytes(data[p:p + 3])
         st = data[p + 3]
         p += 4
@@ -139,56 +151,64 @@ def parse_header(data, pos):
         elif st in UINT_W:
             w = UINT_W[st]
             if p + w > end:
-                raise FmtErr("uint past end at %d" % p)
+                raise _PFail(PF_VALUEOVERRUN)
             val = int.from_bytes(data[p:p + w], "little")
             p += w
         elif st in BLOB_W:
             w = BLOB_W[st]
             if p + w > end:
-                raise FmtErr("bloblen past end at %d" % p)
+                raise _PFail(PF_VALUEOVERRUN)
             val = int.from_bytes(data[p:p + w], "little")
             p += w
         elif st in HASH_L:
             if p + HASH_L[st] > end:
-                raise FmtErr("hash past end at %d" % p)
+                raise _PFail(PF_VALUEOVERRUN)
             val = bytes(data[p:p + HASH_L[st]])
             p += HASH_L[st]
         elif st in TS_L:
             if p + TS_L[st] > end:
-                raise FmtErr("timespec past end at %d" % p)
+                raise _PFail(PF_VALUEOVERRUN)
             val = bytes(data[p:p + TS_L[st]])
             p += TS_L[st]
         elif st == ord("P"):
             if p + 2 > end:
-                raise FmtErr("pathlen past end at %d" % p)
+                raise _PFail(PF_VALUEOVERRUN)
             (ln,) = struct.unpack_from("<H", data, p)
             if p + 2 + ln > end:
-                raise FmtErr("path past end at %d" % p)
+                raise _PFail(PF_VALUEOVERRUN)
             val = bytes(data[p + 2:p + 2 + ln])
             p += 2 + ln
         else:
-            raise FmtErr("bad subtype 0x%02x at %d" % (st, p - 4))
+            raise _PFail(PF_BADSUBTYPE, st)
         entries.append((key, st, val))
     if p != end:
-        raise FmtErr("header overrun at %d" % pos)
+        raise _PFail(PF_ENDMISMATCH)
     return entries, end
 
 
 def parse_inner(data):
-    """-> list of (entries, blobs dict)."""
-    items, pos = [], 0
+    """-> (items, fcls, fsub). Prefix kept on failure."""
+    items, pos, fcls, fsub = [], 0, PF_OK, 0
     while pos < len(data):
-        entries, end = parse_header(data, pos)
+        try:
+            entries, end = parse_header(data, pos)
+        except _PFail as e:
+            fcls, fsub = e.cls, e.sub
+            break
         blobs, bp = {}, end
+        bad = False
         for key, st, val in entries:
             if st in BLOB_W:
                 if bp + val > len(data):
-                    raise FmtErr("blob past EOF at %d" % bp)
+                    fcls, bad = PF_BLOBOVERRUN, True
+                    break
                 blobs[key] = bytes(data[bp:bp + val])
                 bp += val
+        if bad:
+            break
         items.append((entries, blobs))
         pos = bp
-    return items
+    return items, fcls, fsub
 
 
 def _get(entries, key):
@@ -304,12 +324,13 @@ def eisdir_err(done, path):
           % (b, a, a), file=sys.stderr)
 
 
-def extract(items, root):
+def extract(items, root, fcls=0, fsub=0):
     os.makedirs(root, exist_ok=True)
     files = []
     dirs = []
     scols = []
     fsts = []
+    eis = []
     hlc_first = {}
     hlinks = []
     failed = 0
@@ -327,7 +348,7 @@ def extract(items, root):
     for entries, blobs in items:
         if aborted:
             break
-        _, typ = _get(entries, b"TYP")
+        tst, typ = _get(entries, b"TYP")
         pst, pat = _get(entries, b"PAT")
         if typ is None:
             print("Extraction failed\nextract failedError 0xbd03ac00\n"
@@ -338,13 +359,30 @@ def extract(items, root):
             hdr[0] = True
             aborted = True
             break
+        if tst not in UINT_W:
+            tn = {ord("P"): 2, ord("S"): 4, ord("T"): 4, ord("*"): 0,
+                  ord("F"): 3, ord("G"): 3, ord("H"): 3, ord("I"): 3,
+                  ord("J"): 3}.get(tst)
+            if tn is not None:
+                print("Extraction failed\nextract failedError 0xe509b400\n"
+                      "invalid type %d, expected UINT\n"
+                      "Invalid entry: no TYP field\n"
+                      "archive stream read error (header)\nstream cancelled"
+                      % tn, file=sys.stderr)
+            else:
+                print("aad: TYP non-uint subtype 0x%02x" % tst,
+                      file=sys.stderr)
+            failed += 1
+            hdr[0] = True
+            aborted = True
+            break
         if pat is None or pst != ord("P"):
             continue
         if len(pat) == 0:
             if typ == ord("D"):
                 dirs.append((root, entries, blobs))
             elif typ == ord("F"):
-                eisdir_err(hdr, root)
+                eis.append(root)
                 failed += 1
                 scount += 1
             continue
@@ -394,7 +432,7 @@ def extract(items, root):
                     with open(target, "wb") as f:
                         f.write(blobs[b"DAT"])
                 except IsADirectoryError:
-                    eisdir_err(hdr, target)
+                    eis.append(target)
                     failed += 1
                     scount += 1
                     continue
@@ -479,6 +517,45 @@ def extract(items, root):
             scount += 1
         else:
             pass  # unknown TYP: silent skip (oracle parity, measured)
+    # parse-fail wrapper (after phase 1, before meta; not on abort)
+    if fcls and not aborted:
+        failed += 1
+        hdr[0] = True
+        if fcls == PF_TAIL:
+            print("Extraction failed\nextract failedError 0xbd011800\n"
+                  "No more data\nread error\ntruncated stream\n"
+                  "archive stream read error (header)\nstream cancelled",
+                  file=sys.stderr)
+        elif fcls == PF_BADMAGIC:
+            print("Extraction failed\nextract failedError 0xe501e800\n"
+                  "invalid header magic\ncorrupted archive header\n"
+                  "parsing entry header\n"
+                  "archive stream read error (header)\nstream cancelled",
+                  file=sys.stderr)
+        elif fcls in (PF_HDRCUT, PF_ENDMISMATCH):
+            print("Extraction failed\nextract failedError 0xe5022800\n"
+                  "truncated header\ncorrupted archive header\n"
+                  "parsing entry header\n"
+                  "archive stream read error (header)\nstream cancelled",
+                  file=sys.stderr)
+        elif fcls == PF_VALUEOVERRUN:
+            print("Extraction failed\nextract failedError 0xe502a400\n"
+                  "truncated header\ncorrupted archive header\n"
+                  "parsing entry header\n"
+                  "archive stream read error (header)\nstream cancelled",
+                  file=sys.stderr)
+        elif fcls == PF_BADSUBTYPE:
+            print("Extraction failed\nextract failedError 0xe5029c00\n"
+                  "invalid field subtype: %d\ncorrupted archive header\n"
+                  "parsing entry header\n"
+                  "archive stream read error (header)\nstream cancelled"
+                  % fsub, file=sys.stderr)
+        elif fcls == PF_BLOBOVERRUN:
+            print("Extraction failed\nextract failedError 0xbd011800\n"
+                  "No more data\nread error\n"
+                  "archive stream read error (blob)\nstream cancelled",
+                  file=sys.stderr)
+            scount += 1
     # phase 2: files meta, strict reverse
     for target, entries, blobs, islink in reversed(files):
         try:
@@ -499,6 +576,9 @@ def extract(items, root):
         print_hdr(hdr, 0xc8055000)
         print("not implemented yet\ncreating fs object: %s" % _show(pat),
               file=sys.stderr)
+    # EISDIR flush, forward
+    for path in eis:
+        eisdir_err(hdr, path)
     # F-no-DAT flush, forward
     for entries in fsts:
         _, pat = _get(entries, b"PAT")
@@ -572,7 +652,8 @@ def main(argv):
         inner, metas = parse_chain(data)
         print("blocks:", len(metas), metas[0] if metas else {},
               file=sys.stderr)
-        return extract(parse_inner(inner), argv[2])
+        items, fcls, fsub = parse_inner(inner)
+        return extract(items, argv[2], fcls, fsub)
     except FmtErr as e:
         print("%s" % e, file=sys.stderr)
         return 1

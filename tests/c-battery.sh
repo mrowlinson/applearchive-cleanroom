@@ -358,6 +358,157 @@ CRC=0; "$AAD" "$WORK/mx.aar" "$WORK/c-mr" 2>/dev/null || CRC=$?
 diff -r "$WORK/o-mr" "$WORK/c-mr" >/dev/null 2>&1 && pass "mr-tree" || fail "mr-tree"
 [ "$(stat -f %p "$WORK/o-mr/hello/greet.txt")" = "$(stat -f %p "$WORK/c-mr/hello/greet.txt")" ] && [ "$(stat -f %p "$WORK/c-mr/hello/greet.txt")" = "100644" ] && pass "mr-mode" || fail "mr-mode"
 
+echo "== cell parse-badmagic (prefix + wrapper) =="
+python3 "$HERE/craft.py" setmagic "$V/aar/hello-raw.aar" "$WORK/f1.aar" 1 5A5A5A5A || die "craft-f1"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/f1.aar" "$WORK/o-pm" >/dev/null 2>&1 || ORC=$?
+CRC=0; "$AAD" "$WORK/f1.aar" "$WORK/c-pm" 2>"$WORK/pm.err" || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "pm-exit" || fail "pm-exit"
+diff -r "$WORK/o-pm" "$WORK/c-pm" >/dev/null 2>&1 && pass "pm-tree" || fail "pm-tree"
+grep -q "invalid header magic" "$WORK/pm.err" && pass "pm-tok" || fail "pm-tok"
+
+echo "== cell parse-hdrend (trailing byte: 2800) =="
+python3 "$HERE/craft.py" hsdelta "$V/aar/hello-raw.aar" "$WORK/f2.aar" 1 1 || die "craft-f2"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/f2.aar" "$WORK/o-ph" >/dev/null 2>&1 || ORC=$?
+CRC=0; "$AAD" "$WORK/f2.aar" "$WORK/c-ph" 2>"$WORK/ph.err" || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "ph-exit" || fail "ph-exit"
+diff -r "$WORK/o-ph" "$WORK/c-ph" >/dev/null 2>&1 && pass "ph-tree" || fail "ph-tree"
+grep -q "0xe5022800" "$WORK/ph.err" && pass "ph-tok" || fail "ph-tok"
+
+echo "== cell parse-valover (cut value: a400) =="
+python3 "$HERE/craft.py" hsdelta "$V/aar/hello-raw.aar" "$WORK/hs1.aar" 1 -1 || die "craft-hs1"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/hs1.aar" "$WORK/o-pv" >/dev/null 2>&1 || ORC=$?
+CRC=0; "$AAD" "$WORK/hs1.aar" "$WORK/c-pv" 2>"$WORK/pv.err" || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "pv-exit" || fail "pv-exit"
+diff -r "$WORK/o-pv" "$WORK/c-pv" >/dev/null 2>&1 && pass "pv-tree" || fail "pv-tree"
+grep -q "0xe502a400" "$WORK/pv.err" && pass "pv-tok" || fail "pv-tok"
+
+echo "== cell parse-badsubtype (DAT/K: 75) =="
+python3 "$HERE/craft.py" setsub "$V/aar/hello-raw.aar" "$WORK/f4.aar" hello/greet.txt DAT K || die "craft-f4"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/f4.aar" "$WORK/o-pb" >/dev/null 2>&1 || ORC=$?
+CRC=0; "$AAD" "$WORK/f4.aar" "$WORK/c-pb" 2>"$WORK/pb.err" || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "pb-exit" || fail "pb-exit"
+diff -r "$WORK/o-pb" "$WORK/c-pb" >/dev/null 2>&1 && pass "pb-tree" || fail "pb-tree"
+grep -q "invalid field subtype: 75" "$WORK/pb.err" && pass "pb-tok" || fail "pb-tok"
+
+echo "== cell parse-blobover (DAT huge: counted) =="
+python3 "$HERE/craft.py" setbloblen "$V/aar/hello-raw.aar" "$WORK/f3.aar" hello/greet.txt DAT 32767 || die "craft-f3"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/f3.aar" "$WORK/o-po" >/dev/null 2>&1 || ORC=$?
+CRC=0; "$AAD" "$WORK/f3.aar" "$WORK/c-po" 2>"$WORK/po.err" || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "po-exit" || fail "po-exit"
+diff -r "$WORK/o-po" "$WORK/c-po" >/dev/null 2>&1 && pass "po-tree" || fail "po-tree"
+grep -q "No more data" "$WORK/po.err" && grep -q "1 entries failed to extract" "$WORK/po.err" && pass "po-tok" || fail "po-tok"
+
+echo "== cell parse-tail (trailing garbage: full prefix) =="
+python3 "$HERE/craft.py" append "$V/aar/hello-raw.aar" "$WORK/tail1.aar" 5A || die "craft-tail"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/tail1.aar" "$WORK/o-pt" >/dev/null 2>&1 || ORC=$?
+CRC=0; "$AAD" "$WORK/tail1.aar" "$WORK/c-pt" 2>"$WORK/pt.err" || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "pt-exit" || fail "pt-exit"
+diff -r "$WORK/o-pt" "$WORK/c-pt" >/dev/null 2>&1 && pass "pt-tree" || fail "pt-tree"
+grep -q "truncated stream" "$WORK/pt.err" && pass "pt-tok" || fail "pt-tok"
+
+echo "== cell parse-hsbig (hsize overrun: a400) =="
+python3 "$HERE/craft.py" hsdelta "$V/aar/hello-raw.aar" "$WORK/hsbig.aar" 2 1000 || die "craft-hsbig"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/hsbig.aar" "$WORK/o-pg" >/dev/null 2>&1 || ORC=$?
+CRC=0; "$AAD" "$WORK/hsbig.aar" "$WORK/c-pg" 2>"$WORK/pg.err" || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "pg-exit" || fail "pg-exit"
+diff -r "$WORK/o-pg" "$WORK/c-pg" >/dev/null 2>&1 && pass "pg-tree" || fail "pg-tree"
+grep -q "0xe502a400" "$WORK/pg.err" && pass "pg-tok" || fail "pg-tok"
+
+echo "== cell typ-uint248 (wider uint TYP accepted) =="
+python3 "$HERE/craft.py" settyprec "$V/aar/hello-raw.aar" "$WORK/t2.aar" 1 545950324600 || die "craft-t2"
+python3 "$HERE/craft.py" settyprec "$V/aar/hello-raw.aar" "$WORK/t4.aar" 1 5459503446000000 || die "craft-t4"
+python3 "$HERE/craft.py" settyprec "$V/aar/hello-raw.aar" "$WORK/t8.aar" 1 545950384600000000000000 || die "craft-t8"
+TUOK=1
+for v in t2 t4 t8; do
+  ORC=0; sh "$ADAPTER" aar-decode "$WORK/$v.aar" "$WORK/o-$v" >/dev/null 2>&1 || ORC=$?
+  CRC=0; "$AAD" "$WORK/$v.aar" "$WORK/c-$v" 2>/dev/null || CRC=$?
+  [ "$ORC" -eq 0 ] && [ "$CRC" -eq 0 ] || TUOK=0
+  diff -r "$WORK/o-$v" "$WORK/c-$v" >/dev/null 2>&1 || TUOK=0
+done
+[ "$TUOK" -eq 1 ] && pass "tu-exit" || fail "tu-exit"
+[ "$TUOK" -eq 1 ] && pass "tu-tree" || fail "tu-tree"
+
+echo "== cell typ-enum (non-uint TYP: type-N abort) =="
+python3 "$HERE/craft.py" settyprec "$V/aar/hello-raw.aar" "$WORK/tP.aar" 1 54595050010046 || die "craft-tP"
+python3 "$HERE/craft.py" settyprec "$V/aar/hello-raw.aar" "$WORK/tS.aar" 1 545950534600000000000000 || die "craft-tS"
+python3 "$HERE/craft.py" settyprec "$V/aar/hello-raw.aar" "$WORK/tT.aar" 1 54595054460000000000000000000000 || die "craft-tT"
+python3 "$HERE/craft.py" settyprec "$V/aar/hello-raw.aar" "$WORK/tE.aar" 1 5459502a || die "craft-tE"
+python3 "$HERE/craft.py" settyprec "$V/aar/hello-raw.aar" "$WORK/tH.aar" 1 545950484600000000000000000000000000000000000000000000000000000000000000 || die "craft-tH"
+TEOK=1
+for v in tP tS tT tE tH; do
+  ORC=0; sh "$ADAPTER" aar-decode "$WORK/$v.aar" "$WORK/o-$v" >/dev/null 2>&1 || ORC=$?
+  CRC=0; "$AAD" "$WORK/$v.aar" "$WORK/c-$v" 2>/dev/null || CRC=$?
+  [ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] || TEOK=0
+  diff -r "$WORK/o-$v" "$WORK/c-$v" >/dev/null 2>&1 || TEOK=0
+done
+[ "$TEOK" -eq 1 ] && pass "te-exit" || fail "te-exit"
+[ "$TEOK" -eq 1 ] && pass "te-tree" || fail "te-tree"
+"$AAD" "$WORK/tP.aar" "$WORK/c-teP" 2>"$WORK/teP.err" || true
+"$AAD" "$WORK/tS.aar" "$WORK/c-teS" 2>"$WORK/teS.err" || true
+"$AAD" "$WORK/tT.aar" "$WORK/c-teT" 2>"$WORK/teT.err" || true
+"$AAD" "$WORK/tE.aar" "$WORK/c-teE" 2>"$WORK/teE.err" || true
+"$AAD" "$WORK/tH.aar" "$WORK/c-teH" 2>"$WORK/teH.err" || true
+grep -q "invalid type 2" "$WORK/teP.err" && grep -q "invalid type 4" "$WORK/teS.err" && grep -q "invalid type 4" "$WORK/teT.err" && grep -q "invalid type 0" "$WORK/teE.err" && grep -q "invalid type 3" "$WORK/teH.err" && pass "te-tok" || fail "te-tok"
+
+echo "== cell eisdir-order (S < EISDIR < nodat) =="
+python3 "$HERE/craft.py" zeropat "$V/aar/hello-raw.aar" "$WORK/es1a.aar" hello/greet.txt || die "craft-es1"
+python3 "$HERE/craft.py" settyp "$WORK/es1a.aar" "$WORK/es1.aar" 2 S || die "craft-es1b"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/es1.aar" "$WORK/o-eo" >/dev/null 2>&1 || ORC=$?
+CRC=0; "$AAD" "$WORK/es1.aar" "$WORK/c-eo" 2>"$WORK/eo.err" || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "eo-exit" || fail "eo-exit"
+diff -r "$WORK/o-eo" "$WORK/c-eo" >/dev/null 2>&1 && pass "eo-tree" || fail "eo-tree"
+ES=$(grep -n "not implemented yet" "$WORK/eo.err" | head -n 1 | cut -d: -f1); EE=$(grep -n "Is a directory" "$WORK/eo.err" | head -n 1 | cut -d: -f1)
+[ "$ES" -lt "$EE" ] && grep -q "2 entries failed to extract" "$WORK/eo.err" && pass "eo-shape" || fail "eo-shape"
+
+echo "== cell wrapper-eisdir (wrapper first, EISDIR bare) =="
+python3 "$HERE/craft.py" zeropat "$V/aar/hello-raw.aar" "$WORK/ef1a.aar" hello/greet.txt || die "craft-ef1"
+python3 "$HERE/craft.py" setmagic "$WORK/ef1a.aar" "$WORK/ef1.aar" 2 5A5A5A5A || die "craft-ef1b"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/ef1.aar" "$WORK/o-ew" >/dev/null 2>&1 || ORC=$?
+CRC=0; "$AAD" "$WORK/ef1.aar" "$WORK/c-ew" 2>"$WORK/ew.err" || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "ew-exit" || fail "ew-exit"
+diff -r "$WORK/o-ew" "$WORK/c-ew" >/dev/null 2>&1 && pass "ew-tree" || fail "ew-tree"
+EW=$(grep -n "invalid header magic" "$WORK/ew.err" | head -n 1 | cut -d: -f1); EE=$(grep -n "Is a directory" "$WORK/ew.err" | head -n 1 | cut -d: -f1)
+[ "$EW" -lt "$EE" ] && grep -q "1 entries failed to extract" "$WORK/ew.err" && pass "ew-shape" || fail "ew-shape"
+
+echo "== cell eisdir-nodat (EISDIR < nodat) =="
+python3 "$HERE/craft.py" blankdat "$V/aar/hello-raw.aar" "$WORK/ne1.aar" hello/greet.txt || die "craft-ne"
+python3 "$HERE/craft.py" zeropat "$WORK/ne1.aar" "$WORK/ne.aar" hello/repeat.txt || die "craft-ne2"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/ne.aar" "$WORK/o-ne" >/dev/null 2>&1 || ORC=$?
+CRC=0; "$AAD" "$WORK/ne.aar" "$WORK/c-ne" 2>"$WORK/ne.err" || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "ne-exit" || fail "ne-exit"
+diff -r "$WORK/o-ne" "$WORK/c-ne" >/dev/null 2>&1 && pass "ne-tree" || fail "ne-tree"
+EE=$(grep -n "Is a directory" "$WORK/ne.err" | head -n 1 | cut -d: -f1); NF=$(grep -n "final state" "$WORK/ne.err" | head -n 1 | cut -d: -f1)
+[ "$EE" -lt "$NF" ] && grep -q "1 entries failed to extract" "$WORK/ne.err" && pass "ne-shape" || fail "ne-shape"
+
+echo "== cell notyp-nodat (dd: no-TYP + bare no-DAT, stderr IDENT) =="
+python3 "$HERE/craft.py" blankdat "$V/aar/hello-raw.aar" "$WORK/dd1.aar" hello/greet.txt || die "craft-dd"
+python3 "$HERE/craft.py" blanktyp "$WORK/dd1.aar" "$WORK/dd.aar" 2 || die "craft-dd2"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/dd.aar" "$WORK/o-dd" >/dev/null 2>"$WORK/dd-o.err" || ORC=$?
+CRC=0; "$AAD" "$WORK/dd.aar" "$WORK/c-dd" 2>"$WORK/dd.err" || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "dd-exit" || fail "dd-exit"
+diff -r "$WORK/o-dd" "$WORK/c-dd" >/dev/null 2>&1 && pass "dd-tree" || fail "dd-tree"
+diff "$WORK/dd-o.err" "$WORK/dd.err" >/dev/null 2>&1 && pass "dd-shape" || fail "dd-shape"
+
+echo "== cell tri-class (S + nodat + dirXAT) =="
+mkdir -p "$WORK/trisrc/a/b"; printf 'x\n' > "$WORK/trisrc/a/b/f.txt"; printf 'y\n' > "$WORK/trisrc/a/g.txt"
+sh "$ADAPTER" aar-encode --alg raw --threads 1 "$WORK/trisrc" "$WORK/tri0.aar" >/dev/null 2>&1 || die "tri encode"
+python3 "$HERE/craft.py" blankdat "$WORK/tri0.aar" "$WORK/tri1.aar" a/b/f.txt || die "craft-tri"
+python3 "$HERE/craft.py" settyppat "$WORK/tri1.aar" "$WORK/tri2.aar" a/g.txt S || die "craft-tri2"
+python3 "$HERE/craft.py" killxatpat "$WORK/tri2.aar" "$WORK/tri.aar" a/b || die "craft-tri3"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/tri.aar" "$WORK/o-tr" >/dev/null 2>&1 || ORC=$?
+CRC=0; "$AAD" "$WORK/tri.aar" "$WORK/c-tr" 2>"$WORK/tr.err" || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "tr-exit" || fail "tr-exit"
+diff -r "$WORK/o-tr" "$WORK/c-tr" >/dev/null 2>&1 && pass "tr-tree" || fail "tr-tree"
+grep -q "not implemented yet" "$WORK/tr.err" && grep -q "final state" "$WORK/tr.err" && grep -q "process dirs" "$WORK/tr.err" && grep -q "1 entries failed to extract" "$WORK/tr.err" && pass "tr-shape" || fail "tr-shape"
+
+echo "== cell nodat-hlink (nodat + H-fail, no count) =="
+python3 "$HERE/craft.py" blankdat "$V/aar/hlink-missing.aar" "$WORK/nh2.aar" hello/repeat.txt || die "craft-nh2"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/nh2.aar" "$WORK/o-nh" >/dev/null 2>&1 || ORC=$?
+CRC=0; "$AAD" "$WORK/nh2.aar" "$WORK/c-nh" 2>"$WORK/nh.err" || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "nh-exit" || fail "nh-exit"
+diff -r "$WORK/o-nh" "$WORK/c-nh" >/dev/null 2>&1 && pass "nh-tree" || fail "nh-tree"
+grep -q "final state" "$WORK/nh.err" && grep -q "process hlinks" "$WORK/nh.err" && ! grep -q "entries failed" "$WORK/nh.err" && pass "nh-shape" || fail "nh-shape"
+
 echo "== $WORK =="
 [ "$FAIL" -eq 0 ] && echo CBATTERY-GREEN || echo CBATTERY-RED
 exit "$FAIL"
