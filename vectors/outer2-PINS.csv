@@ -177,3 +177,21 @@ a-r5-lz4,size,24576,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-r5-lzraven,size,24576,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-r5-lzbitmap,size,24576,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-r5-eq,str,EQ,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-pc-none-none,size,15428,15428,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-pc-none-murmur64,size,17476,17476,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-pc-none-sha256,size,23620,23620,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-pc-adaptive-none,size,15872,15872,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-pc-adaptive-murmur64,size,18432,18432,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-pc-adaptive-sha256,size,24576,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-pc-16-none,size,15440,15440,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-pc-16-murmur64,size,17488,17488,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-pc-16-sha256,size,23632,23632,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-pc-1024-none,size,16384,16384,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-pc-1024-murmur64,size,18432,18432,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-pc-1024-sha256,size,24576,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-pc-16384-none,size,16384,16384,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-pc-16384-murmur64,size,32768,32768,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-pc-16384-sha256,size,32768,32768,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-rt-pc,str,RT-OK,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-pad15-rc,rc,1,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-pad15-msg,str,Invalid padding value,0,test_outer2.sh,27.0.1,oracle-adapter.sh

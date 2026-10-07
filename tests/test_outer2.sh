@@ -347,6 +347,19 @@ for a in lzfse zlib lzma lz4 lzraven lzbitmap; do
   [ "$(sz "$WORK/a-r5-$a.aea")" = "$s0" ] || eq=DIFF
 done
 chk "a-r5-eq" str "$eq" 0
+PC() { # pad cks : chk a-pc-<pad>-<cks> size (z5k zeros, p1, -a none; NOTE-w2s3-4 beds)
+  if "$AEA" encrypt -profile 1 -key "$WORK/key32.bin" -a none -t 1 -padding "$1" -checksum "$2" -i "$IN/a5000.bin" -o "$WORK/a-pc-$1-$2.aea" 2>/dev/null; then
+    chk "a-pc-$1-$2" size "$(sz "$WORK/a-pc-$1-$2.aea")" "$(sz "$WORK/a-pc-$1-$2.aea")"
+  else echo "FAIL a-pc-$1-$2 rc"; FAIL=1; fi
+}
+for P in none adaptive 16 1024 16384; do
+  for C in none murmur64 sha256; do PC "$P" "$C"; done
+done
+if "$AEA" decrypt -key "$WORK/key32.bin" -i "$WORK/a-pc-1024-murmur64.aea" -o "$WORK/a-pc.back" 2>/dev/null && cmp -s "$WORK/a-pc.back" "$IN/a5000.bin"; then v=RT-OK; else v=RT-DIFF; fi
+chk "a-rt-pc" str "$v" 0
+if "$AEA" encrypt -profile 1 -key "$WORK/key32.bin" -a none -t 1 -padding 15 -i "$IN/a100.bin" -o "$WORK/a-pad15.aea" 2>"$WORK/a-pad15.err"; then rc=0; else rc=$?; fi
+chk "a-pad15-rc" rc "$rc" 0
+chk "a-pad15-msg" str "$(head -1 "$WORK/a-pad15.err")" 0
 [ -n "${RECORD:-}" ] && mv "$PINS.new" "$PINS" && echo "RECORDED $PINS"
 echo "== $WORK =="
 [ "$FAIL" -eq 0 ] && echo OUTER2-GREEN || echo OUTER2-RED
