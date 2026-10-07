@@ -72,6 +72,19 @@ aea encrypt -profile 5 -password-value "$PW" -a lzraven -padding none -i "$WORK/
 EXP=$WORK/mixtr.bin
 cell codec-lzraven-mixtr --password "$PW" -i "$WORK/c-lzraven-mixtr.aea"
 
+# 4c. padding modes (proto strips implicitly via segment structure; sizes APROBE-01)
+aea encrypt -profile 5 -password-value "$PW" -a none -i "$WORK/msg.txt" -o "$WORK/pad-def.aea" 2>/dev/null
+EXP=$WORK/msg.txt
+cell pad-default --password "$PW" -i "$WORK/pad-def.aea"
+for p in adaptive 16 4096 65536; do
+  aea encrypt -profile 5 -password-value "$PW" -a none -padding $p -i "$WORK/msg.txt" -o "$WORK/pad-$p.aea" 2>/dev/null
+  EXP=$WORK/msg.txt
+  cell pad-$p --password "$PW" -i "$WORK/pad-$p.aea"
+done
+aea encrypt -profile 1 -key "$WORK/key32.bin" -a zlib -i "$WORK/bigtext.bin" -o "$WORK/pad-big.aea" 2>/dev/null
+EXP=$WORK/bigtext.bin
+cell pad-big-def --key "$WORK/key32.bin" -i "$WORK/pad-big.aea"
+
 # 5. checksums
 aea encrypt -profile 5 -password-value "$PW" -a none -padding none -checksum none -i "$WORK/msg.txt" -o "$WORK/k-none.aea" 2>/dev/null
 EXP=$WORK/msg.txt
