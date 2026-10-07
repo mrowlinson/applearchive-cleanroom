@@ -10,7 +10,8 @@
 # OUTER2 battery + PINS-OUTER2 setdiff leg, dual-suffix (.got.aar/.got.aea) pin legs,
 # C-BUILD + RAWENC-C/PBZE-C + PINS-*-C (ENC_BIN parity), HYGIENE tmp/scratch- (PARENT-005),
 # RUN_BIG rawenc legs + PIN-ATTESTED log cross-check, LIBCOMPRESSION deny (PARENT-007),
-# RB2 battery + PINS-RB2 setdiff leg (w2 frame IMPL).
+# RB2 battery + PINS-RB2 setdiff leg (w2 frame IMPL),
+# RAVFRAME battery + PINS-RAVFRAME setdiff leg (w2 raven IMPL).
 set -u
 REV=${1:?usage: gate-tip.sh <rev> <ws-outdir>}
 OUT=${2:?usage: gate-tip.sh <rev> <ws-outdir>}
@@ -64,6 +65,7 @@ runb PBZE tests/test_pbze.sh sh "$OUT/tree/tests/test_pbze.sh" "$OUT/work/pbze"
 runb SMOKE tests/smoke.sh sh "$OUT/tree/tests/smoke.sh" "$OUT/work/smoke"
 runb OUTER2 tests/test_outer2.sh sh "$OUT/tree/tests/test_outer2.sh" "$OUT/work/outer2"
 runb RB2 tests/test_rb2.sh sh "$OUT/tree/tests/test_rb2.sh" "$OUT/work/rb2"
+runb RAVFRAME tests/test_ravframe.sh sh "$OUT/tree/tests/test_ravframe.sh" "$OUT/work/ravframe"
 runb SMOKE-IMPL harness/impl-adapter.sh env BACKEND="$OUT/tree/harness/impl-adapter.sh" sh "$OUT/tree/tests/smoke.sh" "$OUT/work/smoke-impl"
 runb SMOKE-IMPL2 harness/impl2-adapter.sh env BACKEND="$OUT/tree/harness/impl2-adapter.sh" sh "$OUT/tree/tests/smoke.sh" "$OUT/work/smoke-impl2"
 runb UNITS tests/test_units.py python3 "$OUT/tree/tests/test_units.py"
@@ -142,6 +144,7 @@ pinsetleg() { # $1=csv-in-tree $2=battery-log $3=leg
 }
 pinsetleg vectors/outer2-PINS.csv "$OUT/work-OUTER2.log" PINS-OUTER2
 pinsetleg vectors/rb2-PINS.csv "$OUT/work-RB2.log" PINS-RB2
+pinsetleg vectors/ravframe-PINS.csv "$OUT/work-RAVFRAME.log" PINS-RAVFRAME
 
 # 5. OSS: third-party lib loads in src+harness (PARENT-003 gate 3).
 # system libc (/usr/lib, /System) + bare ctypes stdlib use are NOT deps.
