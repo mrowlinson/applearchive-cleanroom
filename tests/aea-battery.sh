@@ -8,7 +8,8 @@ REPO=$(cd "$(dirname "$0")/.." && pwd)
 AEAD_PY=${AEAD_PY:-/Volumes/NVME/applearchive-cleanroom-ws/writer2/.venv/bin/python}
 LZFSE_BIN=${LZFSE_BIN:-/Volumes/NVME/applearchive-cleanroom-ws/writer2/oss/lzfse/build/bin/lzfse}
 ZBM_BIN=${ZBM_BIN:-/Volumes/NVME/applearchive-cleanroom-ws/writer2/oss/zbm/zbmcat}
-export LZFSE_BIN ZBM_BIN
+LZR_BIN=${LZR_BIN:-/Volumes/NVME/applearchive-cleanroom-ws/writer2/oss/lzraven/build/lzraven_dec}
+export LZFSE_BIN ZBM_BIN LZR_BIN
 WORK=$(mktemp -d "${TMPDIR:-/tmp}/aea-bat.XXXXXX")
 trap 'rm -rf "$WORK"' EXIT
 PASS=0; FAIL=0
@@ -55,7 +56,12 @@ for a in none zlib lzma lz4 lzfse lzbitmap; do
   cell codec-$a --password "$PW" -i "$WORK/c-$a.aea"
 done
 aea encrypt -profile 5 -password-value "$PW" -a lzraven -padding none -i "$WORK/bigtext.bin" -o "$WORK/c-lzraven.aea" 2>/dev/null
-if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/c-lzraven.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "codec-lzraven-failclosed"; else ok "codec-lzraven-failclosed"; fi
+EXP=$WORK/bigtext.bin
+cell codec-lzraven --password "$PW" -i "$WORK/c-lzraven.aea"
+cp "$LZR_BIN" "$WORK/macho.bin"
+aea encrypt -profile 5 -password-value "$PW" -a lzraven -padding none -i "$WORK/macho.bin" -o "$WORK/c-lzraven-macho.aea" 2>/dev/null
+EXP=$WORK/macho.bin
+cell codec-lzraven-macho --password "$PW" -i "$WORK/c-lzraven-macho.aea"
 
 # 5. checksums
 aea encrypt -profile 5 -password-value "$PW" -a none -padding none -checksum none -i "$WORK/msg.txt" -o "$WORK/k-none.aea" 2>/dev/null

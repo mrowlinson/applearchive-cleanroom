@@ -60,7 +60,10 @@ Encrypt adds `padding:` line. Encrypt to /dev/null fails (temp+rename).
 ## Gaps (Q or v2)
 
 - murmur64a DONE (A-010 path-line; own routine, cksum-murmur + big MATCH).
-- lzraven seg codec id `m` (Q-011 bed open; compression_tool cross-check MATCH, proto fail-closed by design).
+- lzraven DONE (A-011 bed + liblzraven @700b88c nomination; own-built lzraven_dec via LZR_BIN).
+  Framing own-confirmed on AEA seg: 244B = 8hdr + [4+148] + [4+76] + term, end-exact;
+  nblocks 2 == ceil(900000/512K); params i=15 size 917504 smallest>=900000 (resolves A-011 §4 CHECK: 2 blocks, not 1).
+  BCJ flags=0x002 fired own (own-built Mach-O input) -> proto MATCH. In-stream raw (bit0) still unobserved (outer-stored covers).
 - auth-data>0 MAPPED own: prologue = 156+authsize (2-blob auth12B flips unlock/decrypt @167/168); kv-form = u32LE pair + key\0+value (own-confirm FORMAT.md); both MATCH in proto.
 - `-keychain` flows (OUT of scope, touches system store). lzvn `f` (no oracle -a flag; skip).
 

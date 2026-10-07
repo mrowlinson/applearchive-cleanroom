@@ -146,6 +146,37 @@ def decomp(alg, data, size):
         if p.returncode != 0 or len(p.stdout) != size:
             raise FmtErr("lzbitmap failed")
         return p.stdout
+    if alg == "m":
+        import os
+        import subprocess
+        import tempfile
+        tool = os.environ.get("LZR_BIN", "")
+        if not tool:
+            raise FmtErr("lzraven needs LZR_BIN (own-built lzraven_dec)")
+        ip = op = None
+        try:
+            with tempfile.NamedTemporaryFile(delete=False) as fi:
+                fi.write(data)
+                ip = fi.name
+            op = ip + ".out"
+            p = subprocess.run([tool, ip, op], capture_output=True)
+            out = None
+            if p.returncode == 0:
+                with open(op, "rb") as fo:
+                    out = fo.read()
+        except OSError:
+            raise FmtErr("lzraven tool failed")
+        finally:
+            for q in (ip, op):
+                if q is None:
+                    continue
+                try:
+                    os.unlink(q)
+                except OSError:
+                    pass
+        if out is None or len(out) != size:
+            raise FmtErr("lzraven failed")
+        return out
     raise FmtErr("codec %r unsupported in v1" % alg)
 
 
