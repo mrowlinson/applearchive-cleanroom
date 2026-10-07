@@ -48,15 +48,45 @@ body chain: small __text + large bound-import surface (106/38 lib calls) + zero 
 verdict: OPEN vs OPEN-2 (dylib tables); gates deep behavior clauses (bitstream stage)
 ```
 
+```
+CR-006 [MEASURED] outer single-block layout (all pbz*)
+stage: bitstream
+artifact: vectors/selfgen 8 AAR (fixtures@eeedef2) + 3 own-gen probes (WS tmp/decode-viewer-probes: hello-b1m, tiny, rnd)
+numbers: 10/10 samples; 28B header; magic ASCII @0; zeros @4/@12/@20; blocksize BE u32 @8 (0x400000 @-b 4m, 0x100000 @-b 1m CONFIRMED own); uncSize BE u32 @16; compSize BE u32 @24; fileSize = 28 + compSize EXACT 10/10
+verdict: CONFIRM vs OSS-SURVEY §1 pbze note (BE sizes @+4/+12 of 16B block hdr: matches @16/@24 relative to @12); CONFIRM vs TARGET-L1 §A inner-off-0 (inner AA01 @28+ when stored, @0x2a lzfse/lz4 compressed)
+body: per-codec comp (unc 2445): lzfse 293, zlib 262, lzma 304, lz4 416, lzbitmap 337, lzraven 296. payload prefixes: bvxn/bv41 (lzfse/lz4, AA01 @0x2a), XZ magic (lzma), ZBM framing (lzbitmap, AA01 @0x2f), 2b00caec (lzraven), 06785e (zlib). inner hdr u16LE after AA01 (0x52 hello, 0x4d empty).
+```
+
+```
+CR-007 [MEASURED] stored-block rule (comp==unc, raw inner, no codec framing)
+stage: bitstream
+artifact: vectors/selfgen/aar/empty-lzfse.aar (141B, committed fixture, pin OK)
+numbers: 1 positive (empty: unc=comp=0x71=113, AA01 @28, 28+113=141 EXACT); 2 negatives (3B tiny comp 186<249, 100B random comp 284<344 — still framed bvxn)
+verdict: CONFIRM vs OSS-SURVEY §8 stored-block layout (comp==unc raw payload); PARTIAL vs trigger rule (empty triggers, tiny/random don't — trigger predicate OPEN)
+body: stored payload starts AA01 directly (no bv/codec bytes). writer MUST implement stored path: it is reachable from stock `aa` output (empty dir case) and breaks naive inflate-always readers (survey §2 failure class).
+```
+
+```
+CR-008 [INFERRED:STRONG] inner TLV field parse (key + subtype + len + LE value)
+stage: bitstream
+artifact: vectors/selfgen/aar/hello-raw.aar (2445B, pin OK)
+numbers: 7 fields read @6..~60: TYP/1/'D', PAT/P/0005/"hello", UID/2/f501, GID/1/14, MOD/2/ed01, FLG/1/00, CTM/T/12B
+verdict: OPEN vs CR-005 (deep: full TLV grammar incl long-form lens, all 23 -h keys); CONFIRM vs VENDOR-DOCS-L2 field list (typ/pat/uid/gid/mod/flg/ctm all in man list)
+body chain: UID f501 LE u16 = 501 (own uid) + GID 14 = 20 (staff) + MOD ed01 LE = 0x1ed = 493 = 0755 (own umask default) = 3 independent corroborations -> STRONG for (subtype byte, LE value) reading of short int fields. string field PAT carries u16LE len. CTM 12B timestamp shape unparsed (bytes recorded, no claim).
+```
+
 ## Clause index
 
 | ID | Tag | Claim | Verdict |
 |----|-----|-------|---------|
 | CR-001 | MEASURED | decode selector contract | CONFIRM/CORRECT, see body |
-| CR-002 | SYMBOL | aa decode-entry imports | CONFIRM + OPEN-3 minor |
+| CR-002 | SYMBOL | aa decode-entry imports | CONFIRM (OPEN-3 SETTLED: ___chkstk_darwin x4) |
 | CR-003 | SYMBOL | aea decode-entry imports | CONFIRM |
 | CR-004 | MEASURED | omit-flag stdio rule | CORRECT vs CLI-CONTRACT |
 | CR-005 | INFERRED:MODERATE | thin-shim, logic in dylibs | OPEN vs OPEN-2 |
+| CR-006 | MEASURED | outer single-block layout | CONFIRM |
+| CR-007 | MEASURED | stored-block rule | CONFIRM + trigger OPEN |
+| CR-008 | INFERRED:STRONG | inner TLV field parse | CONFIRM + grammar OPEN |
 
 Status of every clause: UNPROVEN until an implementation written ONLY from
 this spec handles vendor real output.

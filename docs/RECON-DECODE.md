@@ -74,4 +74,4 @@ green (tbd cover 0-missing; bind rows reconcile to section sizes; unique syms
 |---|---|---|---|
 | OPEN-1 | decompiler install (Ghidra/Hopper/radare2)? | install + pin version on demand | disassembly transcripts |
 | OPEN-2 | dylib tables (libAppleArchive in dyld cache)? | cache extraction tooling or decompiler-on-cache | table inventory (data) |
-| OPEN-3 | aa 3 duplicate bind rows: which symbols? | 1 dyld_info pass, diff rows vs unique | CR-002 completeness (minor) |
+| OPEN-3 | SETTLED: 3 extra rows = libSystem/___chkstk_darwin bound 4x (1 unique + 3 dup). 228/225 reconciled | — | CR-002 |
