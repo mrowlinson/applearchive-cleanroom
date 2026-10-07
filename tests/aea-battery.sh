@@ -182,6 +182,13 @@ cell pwfile-exact --password-file "$WORK/pw-exact.txt" -i "$WORK/p5.aea"
 cell pwfile-nl --password-file "$WORK/pw-nl.txt" -i "$WORK/p5.aea"
 printf '%s\r\n' "$PW" > "$WORK/pw-crlf.txt"
 cell pwfile-crlf --password-file "$WORK/pw-crlf.txt" -i "$WORK/p5.aea"
+printf '%s\n\n' "$PW" > "$WORK/pw-2nl.txt"
+cell pwfile-2nl --password-file "$WORK/pw-2nl.txt" -i "$WORK/p5.aea"
+for coff in 50 200 1000; do
+  cp "$WORK/pad-def.aea" "$WORK/padc-$coff.aea"
+  printf 'Q' | dd of="$WORK/padc-$coff.aea" bs=1 seek=$coff conv=notrunc 2>/dev/null
+  if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/padc-$coff.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-padcorr-$coff"; else ok "err-padcorr-$coff"; fi
+done
 KHEX=$(python3 -c "import sys;print(sys.stdin.buffer.read().hex())" < "$WORK/key32.bin")
 KB64=$(python3 -c "import sys,base64;print(base64.b64encode(sys.stdin.buffer.read()).decode())" < "$WORK/key32.bin")
 EXP=$WORK/msg.txt
