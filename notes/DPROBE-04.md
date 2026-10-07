@@ -17,9 +17,15 @@ No binaries opened, no disassembly. 2026-10-07.
 
 ## Quirk Q1: `aa extract` hangs on fifo-bearing archives
 
-2/2 runs: tree COMPLETE (fifo 0644 + siblings), process never exits
-(killed at 50s, 15s). Decoder mirrors tree + meta, exits 0, no hang.
-Documented divergence: exit/hang behavior only, never tree bytes.
+5/5 runs: tree COMPLETE, process never exits (killed 15-50s).
+Hang point mapped: data+mode+mtime applied for ALL entries (2020
+mtime honored on reg file); xattr pass runs in ARCHIVE ORDER and
+blocks AT the fifo (open-based apply): pre-fifo entries HAVE xattrs
+(FIRSTTAG verified), fifo + later entries LACK them (FIFOTAG/DIRTAG
+absent at kill). Archive DOES carry fifo XAT (XATlen 64 measured).
+Decoder = completed behavior: all xattrs applied, exit 0, no hang.
+PRINCIPLED divergence: never bake kill-truncated state into the
+deliverable (matches oracle on every archive where oracle exits).
 
 ## Quirk Q2: `aa archive` opens fifos blocking
 
