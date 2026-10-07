@@ -80,12 +80,13 @@ Encrypt adds `padding:` line. Encrypt to /dev/null fails (temp+rename).
 - auth edges own: 3-blob MATCH (cell auth-raw3); EMPTY auth-data-value REJECTED at encrypt (`Invalid auth-data-value`, raw + kv). Empty password REJECTED at encrypt (`Invalid password / Error loading credentials`).
 - `-keychain` flows (OUT of scope, touches system store). lzvn `f` (no oracle -a flag; skip).
 
-## Wide corpus (tests/aea-wide.sh v2, 152/152 WIDE-GREEN)
+## Wide corpus (tests/aea-wide.sh v3, 168/168 WIDE-GREEN)
 
 - FULL-equiv seed 7: 8 sizes (1B..3MB) x p{1,5} x {none,zlib,lzraven} x {none,sha256} = 96 MATCH.
 - FULL lzraven-text (compressible): 8 sizes x p{1,5} x {none,sha256} = 32 MATCH.
 - Holdout seed 99: 4 sizes x {p1/lzma/sha, p5/lz4/none, p1/lzraven/murmur64} = 12 MATCH.
 - Fresh seed 1234: 4 sizes x {p1/lzfse/sha, p5/lzbitmap/none, p5/lzraven/murmur64} = 12 MATCH.
 - v2 adds LZR_BIN export (v1 lacked it: lzraven never ran in wide) + first murmur64 wide cells.
+- v3 adds padded leg: 4 sizes x p{1,5} x {zlib,lzraven} x sha256, default pad = 16 MATCH.
 - 2-cluster: 269MB p5/none/sha256 OVH 37084 = 18620+18464 (2nd cluster hdr); proto MATCH 0.8s.
 - SPLIT RULE EXACT own (checksum-none, -a none): 1 cluster iff IN <= 268435456 (256MiB); 268435457 -> 2 clusters. Points: 200/255/256MB OVH 10428 (1 cl); 256MiB+1/257/260MB OVH 20700 (2 cl). Fits segcount>256 @1MB segs. (Q-015 Q1 self-closed; Q2 header-walk still open for viewer.)
