@@ -155,6 +155,41 @@ body: raven: iteration oracle = compression_tool bytes; no third-party encoder e
   for format/decode; byte-exact encode needs decision hunt. Both keep 15/16 store rule (NOTE-012).
 ```
 
+```
+CR-116 [MEASURED + VENDOR-DOC] lzma/lz4 encoders = Apple Compression framework (preset 6 / Compression-library frame)
+stage: probe
+artifact: WS scratch-viewer2/lzmabed/bed.py + AADefs.h (CLT 27.0 SDK)
+numbers: aa -a lzma payload 476B == compression_tool -encode -a lzma(inner 1109B) EXACT; lz4 614B == tool EXACT;
+  tool 135168B sha256 a8f4f8ca0d4a7096...; AADefs.h sha256 dc3181c690242b48...
+verdict: NEW (explains writer 355-combo liblzma fail + Apple-denser 236<240; liblzma-grid CLOSED, bed-war retargeted)
+body: AADefs.h: "constants match compression.h"; LZMA=0x306 "LZMA preset 6"; LZ4=0x100 "frame format used in
+  the Compression library". Container/props preset-6-shaped (dict 8M lc3lp0pb2) but encoder is Apple-internal
+  shared aa/compression_tool infra, not XZ Utils. Iteration oracle = compression_tool (beds-OK, not shippable).
+```
+
+```
+CR-117 [MEASURED] lz4 bv41 framing CLOSED: [bv41 u32le-unc u32le-len block[len]]+ + terminal bv4$; 64KB chunks; stock dict-linked blocks; no flags
+stage: probe
+artifact: WS scratch-viewer2/lzmabed beds (1109B + 100239B inners) + OSS liblz4 @0774d05 black-box decode
+numbers: bed1 4+4+4+598+4=614 exact; bed2 frames (65536,582)+(34703,264), consumed 870/870, usum 100239==outer unc;
+  OSS LZ4_decompress_safe exact (1109, 65536) + usingDict exact (34703 w/ 64K prefix); concat==inner byte-EXACT
+verdict: NEW (framing fully closed; CORRECT w2 NOTE-w2-9 "flags" mis-split — zero bytes unaccounted)
+body: blocks are stock LZ4 (decoder-compatible, encoder-hunt not format-war). Frame N>0 references prior output
+  (1-deep prefix proven; deeper chains same mechanism presumed). OSS encoder NONE-FOUND 30 settings
+  (writer 26 + viewer default/HC1/HC9/HC12 all 477B vs oracle 598B); lead = faster-than-default axis.
+```
+
+```
+CR-118 [MEASURED] libcompression is dyld-cache-resident (no on-disk file); provenance = OS build pin only, sha-pin impossible
+stage: probe
+artifact: find + ctypes CDLL resolution test
+numbers: find /usr/lib -maxdepth 2 '*compression*' = EMPTY; CDLL absolute + basename both OK (cache-resolved);
+  OS build 26A434
+verdict: NEW (beds-OK measurement class confirmed; src-use unpinnable — supports A-12 refuse-recommendation)
+body: same provenance class as libAppleArchive (VENDOR-BINARIES §2). Record OS build per bed; re-pin on any OS
+  bump (oracle-gate rule). A "pinned sha256" dependency on it is unstatable.
+```
+
 ## Derivation appendix (this file, session 2026-10-07)
 
 inputs (fresh sha256 where file):
@@ -169,3 +204,22 @@ not-consulted: decompiler output (none produced; no disassembly run), SDK header
 outputs: 12 clause drafts (11 MEASURED + 1 SYMBOL), 0 clauses promoted (parent renumbers)
 findings: framing/size/rule/store-rule/CTM/btime-invariant/blocksize-bounds/u32-u64-equivalence/fifo-negative
 base: 0999654 + lane commit b6b9026
+
+## Derivation appendix (this file, session 2026-10-07 attempt#2)
+
+inputs (fresh sha256 where file):
+- /usr/bin/compression_tool 135168B sha256 a8f4f8ca0d4a7096...e178 (own)
+- AADefs.h (CLT 27.0 SDK) sha256 dc3181c690242b48...9daf (own)
+- WS/tools/lz4 @0774d05537f9762f838f7ab541b7765f1a729cb5 (own rev-parse, tree clean) + liblz4 bytes
+  sha256 2ec9fac7...2dad (own, black-box decode/encode only)
+- WS/tools/libzbitmap @574abeae25b25c3319b9b6a9225cc7464e08ae88 (own rev-parse; +1 untracked build dylib noted)
+- /usr/bin/aa sha + OS build 26A434: aa bytes trusted-from-prior VENDOR-BINARIES.md:9 (not re-hashed this
+  session); OS build own sw_vers
+- own probe beds: WS scratch-viewer2/lzmabed/bed.py + inline parses (1109B + 100239B inners, 64KB chunk bed)
+- writer exhibits as CONFIRM/CORRECT targets only (CODEC-FINDINGS.md lzma/lz4 rows, NOTE-8 grids, NOTE-w2-9
+  framing gloss CORRECTED by A-11, RESULTS-rb/rb2 rows cross-checked), never as evidence
+not-consulted: decompiler output (none produced; no disassembly run), port/reference sources, vendor
+  framework implementations, decode-side answers, other-lane branches beyond intake + writer lanes (verify duty)
+outputs: 3 clause drafts (CR-116 MEASURED+VENDOR-DOC, CR-117/118 MEASURED), 0 promoted (parent renumbers)
+findings: lzma/lz4-Apple-Compression-identity, bv41-framing-closed, libcompression-cache-provenance
+base: lane commit d3c7512
