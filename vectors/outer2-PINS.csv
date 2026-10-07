@@ -153,3 +153,27 @@ a-b-a200k-lzfse-64k,size,19456,19456,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-pw19,rc,1,0,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-pw20,rc,0,0,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-kv-bare,rc,1,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-vc-none,str,none,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-vc-lzfse,str,lzfse,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-vc-zlib,str,zlib,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-vc-lzma,str,lzma,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-vc-lz4,str,lz4,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-vc-lzraven,str,lzraven,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-vc-lzbitmap,str,lzbitmap,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-raw-rc,rc,0,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-raw-size,size,24576,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-vc-raw,str,none,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-rt-raw,str,RT-OK,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-def-size,size,19456,19456,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-vc-def,str,lzfse,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-bogus-rc,rc,1,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-bogus-msg,str,Invalid compression algorithm: bogus,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-case-rc,rc,1,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-r5-none,size,24576,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-r5-lzfse,size,24576,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-r5-zlib,size,24576,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-r5-lzma,size,24576,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-r5-lz4,size,24576,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-r5-lzraven,size,24576,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-r5-lzbitmap,size,24576,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-r5-eq,str,EQ,0,test_outer2.sh,27.0.1,oracle-adapter.sh

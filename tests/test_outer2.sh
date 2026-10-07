@@ -312,6 +312,41 @@ for L in 19 20; do
 done
 if sh "$ADAPTER" aea-encrypt --profile 1 --key "$HEX" --alg none --threads 1 "$IN/a100.bin" "$WORK/a-kv-bare.aea" 2>/dev/null; then rc=0; else rc=$?; fi
 chk "a-kv-bare" rc "$rc" 0
+VC() { # tag aeafile : chk a-vc-<tag> str <alg> from decrypt -v (NOTE-w2s3-2 beds)
+  v=$("$AEA" decrypt -v -key "$WORK/key32.bin" -i "$WORK/$2" -o /dev/null 2>&1 1>/dev/null | sed -n 's/^ *compression: \([a-z0-9]*\) .*/\1/p')
+  chk "a-vc-$1" str "$v" 0
+}
+for a in none lzfse zlib lzma lz4 lzraven lzbitmap; do
+  set -- $(AEAa "a-v-$a" 1 hex "$a" "a5000.bin")
+  if [ "$1" != 0 ]; then echo "FAIL a-v-$a rc=$1"; FAIL=1; continue; fi
+  VC "$a" "a-v-$a.aea"
+done
+set -- $(AEAa "a-v-raw" 1 hex raw "a5000.bin")
+chk "a-raw-rc" rc "$1" 0
+if [ "$1" = 0 ]; then
+  chk "a-raw-size" size "$2" "$2"
+  VC "raw" "a-v-raw.aea"
+  chk "a-rt-raw" str "$(RTa rt-raw a-v-raw.aea a5000.bin hex)" 0
+else echo "FAIL a-raw encode rc=$1"; FAIL=1; fi
+if "$AEA" encrypt -profile 1 -key "$WORK/key32.bin" -t 1 -i "$IN/a5000.bin" -o "$WORK/a-v-def.aea" 2>/dev/null; then
+  chk "a-def-size" size "$(sz "$WORK/a-v-def.aea")" "$(sz "$WORK/a-v-def.aea")"
+  VC "def" "a-v-def.aea"
+else echo "FAIL a-def rc"; FAIL=1; fi
+if "$AEA" encrypt -profile 1 -key "$WORK/key32.bin" -a bogus -t 1 -i "$IN/a100.bin" -o "$WORK/a-bogus.aea" 2>"$WORK/a-bogus.err"; then rc=0; else rc=$?; fi
+chk "a-bogus-rc" rc "$rc" 0
+chk "a-bogus-msg" str "$(head -1 "$WORK/a-bogus.err")" 0
+if "$AEA" encrypt -profile 1 -key "$WORK/key32.bin" -a LZMA -t 1 -i "$IN/a100.bin" -o "$WORK/a-case.aea" 2>/dev/null; then rc=0; else rc=$?; fi
+chk "a-case-rc" rc "$rc" 0
+python3 -c "import random; open('$IN/r5k.bin','wb').write(random.Random(99).randbytes(5000))"
+for a in none lzfse zlib lzma lz4 lzraven lzbitmap; do
+  set -- $(AEAa "a-r5-$a" 1 hex "$a" "r5k.bin")
+  if [ "$1" != 0 ]; then echo "FAIL a-r5-$a rc=$1"; FAIL=1; else chk "a-r5-$a" size "$2" "$2"; fi
+done
+eq=EQ; s0=$(sz "$WORK/a-r5-none.aea")
+for a in lzfse zlib lzma lz4 lzraven lzbitmap; do
+  [ "$(sz "$WORK/a-r5-$a.aea")" = "$s0" ] || eq=DIFF
+done
+chk "a-r5-eq" str "$eq" 0
 [ -n "${RECORD:-}" ] && mv "$PINS.new" "$PINS" && echo "RECORDED $PINS"
 echo "== $WORK =="
 [ "$FAIL" -eq 0 ] && echo OUTER2-GREEN || echo OUTER2-RED
