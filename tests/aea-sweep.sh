@@ -10,7 +10,9 @@ trap 'rm -rf "$WORK"' EXIT
 PW='testpw32....................................'
 printf 'sweep-input-bytes\n' > "$WORK/in.bin"
 aea encrypt -profile 5 -password-value "$PW" -a none -padding none -i "$WORK/in.bin" -o "$WORK/t.aea" 2>/dev/null
+aea encrypt -profile 5 -password-value "$PW" -a none -i "$WORK/in.bin" -o "$WORK/u.aea" 2>/dev/null
 SZ=$(stat -f%z "$WORK/t.aea")
+PZ=$(stat -f%z "$WORK/u.aea")
 BAD=0; N=0
 chk() { # file tag
   N=$((N+1))
@@ -28,16 +30,34 @@ for k in 0 1 7 8 9 11 12 13 155 156 157; do
   head -c "$k" "$WORK/t.aea" > "$WORK/tr.aea" 2>/dev/null
   chk "$WORK/tr.aea" "edge-$k"
 done
-python3 - "$WORK/t.aea" "$WORK" <<'EOF'
+python3 - "$WORK/t.aea" "$WORK" "$WORK/u.aea" <<'EOF'
 import random,sys
 blob=open(sys.argv[1],"rb").read()
 r=random.Random(7)
 for j in range(50):
     i=r.randrange(len(blob)); b=bytearray(blob); b[i]^=1<<r.randrange(8)
     open("%s/c%d.aea"%(sys.argv[2],j),"wb").write(bytes(b))
+pblob=open(sys.argv[3],"rb").read()
+r2=random.Random(77)
+for j in range(50):
+    i=r2.randrange(len(pblob)); b=bytearray(pblob); b[i]^=1<<r2.randrange(8)
+    open("%s/d%d.aea"%(sys.argv[2],j),"wb").write(bytes(b))
 EOF
 j=0
 while [ "$j" -lt 50 ]; do chk "$WORK/c$j.aea" "corrupt-$j"; j=$((j+1)); done
+# padded leg: truncs + edges + corrupts must all exit!=0 too
+i=0
+while [ "$i" -lt "$PZ" ]; do
+  head -c "$i" "$WORK/u.aea" > "$WORK/ptr.aea" 2>/dev/null
+  chk "$WORK/ptr.aea" "p-trunc-$i"
+  i=$((i+1024))
+done
+for k in 0 1 7 8 9 11 12 13 155 156 157; do
+  head -c "$k" "$WORK/u.aea" > "$WORK/ptr.aea" 2>/dev/null
+  chk "$WORK/ptr.aea" "p-edge-$k"
+done
+j=0
+while [ "$j" -lt 50 ]; do chk "$WORK/d$j.aea" "p-corrupt-$j"; j=$((j+1)); done
 # v2 parity: same corpus vs oracle (exit-agreement + accept-byte-agreement)
 export WORK AEAD_PY REPO PW
 PAR_OUT=$(python3 - <<'EOF'
@@ -45,21 +65,26 @@ import hashlib, os, subprocess
 W = os.environ["WORK"]; py = os.environ["AEAD_PY"]
 repo = os.environ["REPO"]; pw = os.environ["PW"]
 files = []
-sz = os.path.getsize(os.path.join(W, "t.aea"))
-i = 0
-while i < sz:
-    files.append(("trunc-%d" % i, (i, None))); i += 1024
-for k in (0, 1, 7, 8, 9, 11, 12, 13, 155, 156, 157):
-    files.append(("edge-%d" % k, (k, None)))
-for j in range(50):
-    files.append(("corrupt-%d" % j, (None, j)))
-blob = open(os.path.join(W, "t.aea"), "rb").read()
+bases = [("t.aea", "c%d.aea", ""), ("u.aea", "d%d.aea", "p-")]
+blobs = {}
+for base, _, _ in bases:
+    blobs[base] = open(os.path.join(W, base), "rb").read()
+for base, cpat, pfx in bases:
+    sz = len(blobs[base])
+    i = 0
+    while i < sz:
+        files.append((pfx + "trunc-%d" % i, (base, i, None))); i += 1024
+    for k in (0, 1, 7, 8, 9, 11, 12, 13, 155, 156, 157):
+        files.append((pfx + "edge-%d" % k, (base, k, None)))
+    for j in range(50):
+        files.append((pfx + "corrupt-%d" % j, (base, None, j)))
+cpat_of = {b: c for b, c, _ in bases}
 n = bad = acc = 0
-for tag, (tr, cj) in files:
+for tag, (base, tr, cj) in files:
     if tr is not None:
-        data = blob[:tr]
+        data = blobs[base][:tr]
     else:
-        data = open(os.path.join(W, "c%d.aea" % cj), "rb").read()
+        data = open(os.path.join(W, cpat_of[base] % cj), "rb").read()
     p = os.path.join(W, "par.aea")
     open(p, "wb").write(data)
     try:
