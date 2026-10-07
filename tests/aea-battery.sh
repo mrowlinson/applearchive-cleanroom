@@ -337,7 +337,13 @@ python3 -c "import sys;p=sys.argv[1];b=bytearray(open(p,'rb').read());b[158]^=0x
 if aea decrypt -password-value "$PW" -i "$WORK/e-flip.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
 if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/e-flip.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
 if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-pad-flipe"; else bad "err-pad-flipe"; fi
-# 9f. pad-verify across profiles (p0 has no pad: none==default 18796, vacuous skip)
+# 9f. pad-verify across profiles (p0 default emits padlen 0 -> vacuous skip; explicit pad works)
+aea encrypt -profile 0 -sign-priv "$WORK/ec-priv.pem" -a none -padding 4096 -i "$WORK/msg.txt" -o "$WORK/pp0.aea" 2>/dev/null
+cp "$WORK/pp0.aea" "$WORK/ppf0.aea"
+python3 -c "import sys;p=sys.argv[1];b=bytearray(open(p,'rb').read());b[-1]^=0x01;open(p,'wb').write(bytes(b))" "$WORK/ppf0.aea"
+if aea decrypt -sign-pub "$WORK/ec-pub.pem" -i "$WORK/ppf0.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --sign-pub "$WORK/ec-pub.pem" -i "$WORK/ppf0.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
+if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-padflip-p0"; else bad "err-padflip-p0"; fi
 aea encrypt -profile 1 -key "$WORK/key32.bin" -a none -i "$WORK/msg.txt" -o "$WORK/pp1.aea" 2>/dev/null
 aea encrypt -profile 2 -key "$WORK/key32.bin" -sign-priv "$WORK/ec-priv.pem" -a none -i "$WORK/msg.txt" -o "$WORK/pp2.aea" 2>/dev/null
 aea encrypt -profile 3 -recipient-pub "$WORK/ec-pub.pem" -a none -i "$WORK/msg.txt" -o "$WORK/pp3.aea" 2>/dev/null
