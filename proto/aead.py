@@ -374,8 +374,8 @@ def main(argv):
     ap = argparse.ArgumentParser(prog="aead.py")
     sub = ap.add_subparsers(dest="cmd", required=True)
     d = sub.add_parser("decrypt")
-    d.add_argument("-i", required=True)
-    d.add_argument("-o", required=True)
+    d.add_argument("-i", default=None)  # absent = stdin (oracle); "-" = literal file
+    d.add_argument("-o", default=None)  # absent = stdout (oracle); "-" = literal file
     d.add_argument("--key", default=None)
     d.add_argument("--key-value", default=None)
     d.add_argument("--password", default=None)
@@ -388,8 +388,11 @@ def main(argv):
     g.add_argument("-i", required=True)
     a = ap.parse_args(argv)
     try:
-        with open(a.i, "rb") as fh:
-            blob = fh.read()
+        if a.i is None and a.cmd == "decrypt":
+            blob = sys.stdin.buffer.read()
+        else:
+            with open(a.i, "rb") as fh:
+                blob = fh.read()
         if a.cmd == "id":
             sys.stdout.write(archive_id(blob).hex() + "\n")
             return 0
@@ -415,8 +418,11 @@ def main(argv):
                 spub = fh.read()
         out = decrypt_aea(blob, symkey, recip, pw, spub,
                            a.range_offset, a.range_size)
-        with open(a.o, "wb") as fh:
-            fh.write(out)
+        if a.o is None:
+            sys.stdout.buffer.write(out)
+        else:
+            with open(a.o, "wb") as fh:
+                fh.write(out)
         return 0
     except FmtErr as e:
         sys.stderr.write("aead: %s\n" % e)

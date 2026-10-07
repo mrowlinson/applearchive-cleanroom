@@ -193,5 +193,14 @@ cat "$WORK/p5.aea" "$WORK/b.aea" > "$WORK/cat.aea"
 EXP=$WORK/msg.txt
 cell concat-first-only --password "$PW" -i "$WORK/cat.aea"
 
+# 10c. stdio paths (oracle: omit -i = stdin, omit -o = stdout, -o - = literal file `-`; APROBE-01/A-001)
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -o "$WORK/stdin.out" < "$WORK/p5.aea" 2>/dev/null \
+   && cmp -s "$WORK/stdin.out" "$WORK/msg.txt"; then ok "stdin"; else bad "stdin"; fi
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/p5.aea" > "$WORK/stdout.out" 2>/dev/null \
+   && cmp -s "$WORK/stdout.out" "$WORK/msg.txt"; then ok "stdout"; else bad "stdout"; fi
+if (cd "$WORK" && "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/p5.aea" -o - 2>/dev/null) \
+   && cmp -s "$WORK/-" "$WORK/msg.txt"; then ok "dash-o-literal"; else bad "dash-o-literal"; fi
+rm -f "$WORK/-"
+
 echo "PASS=$PASS FAIL=$FAIL"
 [ "$FAIL" -eq 0 ]
