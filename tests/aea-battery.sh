@@ -194,12 +194,18 @@ aea encrypt -profile 5 -password-value "$PW" -a lzma -t 1 -padding none -i "$WOR
 EXP=$WORK/bigtext.bin
 cell threads-t1 --password "$PW" -i "$WORK/thr1.aea"
 
-# 9. error-class parity (exit codes)
-if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password WRONG -i "$WORK/p5.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-wrongpw"; else ok "err-wrongpw"; fi
+# 9. error-class parity (exit codes; both sides must reject)
+if aea decrypt -password-value WRONG -i "$WORK/p5.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password WRONG -i "$WORK/p5.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
+if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-wrongpw"; else bad "err-wrongpw"; fi
 head -c 8 "$WORK/p5.aea" > "$WORK/tr8.aea"
-if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/tr8.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-trunc8"; else ok "err-trunc8"; fi
+if aea decrypt -password-value "$PW" -i "$WORK/tr8.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/tr8.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
+if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-trunc8"; else bad "err-trunc8"; fi
 cp "$WORK/p5.aea" "$WORK/mg.aea" && printf 'Q' | dd of="$WORK/mg.aea" bs=1 seek=0 conv=notrunc 2>/dev/null
-if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/mg.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-magic"; else ok "err-magic"; fi
+if aea decrypt -password-value "$PW" -i "$WORK/mg.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/mg.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
+if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-magic"; else bad "err-magic"; fi
 # 9a. profile-byte @4 parity (oracle: 7->`Invalid profile: 7`, 1->`-key required`; APROBE-01)
 cp "$WORK/p5.aea" "$WORK/pf7.aea" && printf '\007' | dd of="$WORK/pf7.aea" bs=1 seek=4 conv=notrunc 2>/dev/null
 if aea decrypt -password-value "$PW" -i "$WORK/pf7.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
