@@ -16,8 +16,10 @@ Notation: P# = probe id. Passwords/keys: `testpw32....` (38ch), `test-password-f
 | 5 scrypt | -password-value/-password-file | same | 18636 |
 
 - -key-gen file = ASCII `hex:<64hex>\n` (69B). bare64hex/0x/base64-bare all rejected.
-- pwfile: exact bytes CLEAN; trailing `\n` also CLEAN (NL-tolerant).
+- pwfile rule EXACT own: bytes verbatim + chomp trailing [\r\n]+ only (exact/NL/CRLF/2NL CLEAN; spaces significant — stripped variant REJECTED; sweep NOTE-006 observation confirmed + fixed in proto).
+- keyfile rule EXACT own: `hex:`/`base64:` text (trailing NL ok) parsed; else RAW byte-exact (32B+\n=33B REJECTED 0xcf058400; 31/33B same class).
 - Magic: `AEA1` + u24LE profile @4 + u8 scrypt @7 (always 0 own) + u32LE auth-size @8.
+- EC P-256-ONLY own: secp384r1/secp521r1 recipient-pub REJECTED (`Error parsing public key file`); secp384r1 sign-priv REJECTED (`Error parsing PEM blob 'EC PRIVATE KEY'`, p0+p2). No non-P256 oracle output exists -> proto P-256 path sufficient.
 
 ## Size rules (own, -a none unless noted)
 
@@ -30,6 +32,7 @@ Notation: P# = probe id. Passwords/keys: `testpw32....` (38ch), `test-password-f
 - -b {64k,1m} no size effect @300KB. -a {zlib,lzma,lzfse} on 100B rnd: IN+18620 (stored).
 - padding @16B: none 18636 / adaptive 19456 (=default) / 16->18640 / 4096->20480 / 65536->65536.
 - append: +N bytes for N appended (19B->+19, 1MB->+1000000, 0 table growth); decrypt = concat.
+- raw cat(a.aea+b.aea): decrypt = FIRST archive only (trailing bytes ignored); proto agrees. Raw cat != append.
 - `aea sign` on p5: `This archive profile can't be signed`.
 
 ## Determinism / id
@@ -49,7 +52,9 @@ Notation: P# = probe id. Passwords/keys: `testpw32....` (38ch), `test-password-f
 - authsize-huge: prologue class (0xb9045000) exit 1. Missing creds: `-sign-pub is required` etc, exit 1.
 - stderr text beyond exit-class = POLISH, out of CLI-CONTRACT (per writer1 NOTE-011; bytes+exits gated). Proto v1 emits own `aead:` lines.
 - `-o -` writes literal file `-` (exit 0); omit -i = stdin CLEAN; omit -o = stdout (A-001; own stdin confirmed).
+- `-i -` = LITERAL path (missing -> `Error creating I/O streams / 0x9106b002`, exit 1), NOT stdin. Proto parity: absent -i/-o = stdio, `-` = literal (cells stdin/stdout/dash-o-literal).
 - range clamps, never errors: 0/17->16B, 16/1->0B, 100/10->0B, exit 0.
+  offset-without-size reads to end (off6->tail, off0->full, exit 0); explicit size 0 -> empty, exit 0.
 
 ## Verbose manifest (-v decrypt)
 
@@ -58,12 +63,27 @@ Encrypt adds `padding:` line. Encrypt to /dev/null fails (temp+rename).
 
 ## Gaps (Q or v2)
 
-- murmur64a vectors (Q-010 open). lzraven seg codec id `m` (Q-011 bed open; compression_tool cross-check MATCH, proto fail-closed by design).
+- murmur64a DONE (A-010 path-line; own routine, cksum-murmur + big MATCH).
+- lzraven DONE (A-011 bed + liblzraven @700b88c nomination; own-built lzraven_dec via LZR_BIN).
+  Framing own-confirmed on AEA seg: 244B = 8hdr + [4+148] + [4+76] + term, end-exact;
+  nblocks 2 == ceil(900000/512K); params i=15 size 917504 smallest>=900000 (resolves A-011 §4 CHECK: 2 blocks, not 1).
+  BCJ flags=0x002 fired own (own-built Mach-O input) -> proto MATCH.
+  In-stream raw (bit0) FIRED own, both paths (bit0sweep.py, WS probes/bit0/):
+  raw compression_tool 10/10 end-exact + 10/10 lzraven_dec TOOL-MATCH; bit0 on
+  incompressible 512K blocks (random 3/3, rand-then-text blk1, text-then-rand
+  blk3, half-text blk3). AEA segs 10/10 proto cmp OK; bit0 fired 1 block
+  (rand-then-text seg1 0x1) -> MATCH via tool. Rule: bit0 = raw block for
+  incompressible content, per-block; fully-random AEA input stores at segment
+  level (decomp uncalled). Q-014 self-closed for AEA turf; battery 4b cells.
 - auth-data>0 MAPPED own: prologue = 156+authsize (2-blob auth12B flips unlock/decrypt @167/168); kv-form = u32LE pair + key\0+value (own-confirm FORMAT.md); both MATCH in proto.
+- auth edges own: 3-blob MATCH (cell auth-raw3); EMPTY auth-data-value REJECTED at encrypt (`Invalid auth-data-value`, raw + kv). Empty password REJECTED at encrypt (`Invalid password / Error loading credentials`).
 - `-keychain` flows (OUT of scope, touches system store). lzvn `f` (no oracle -a flag; skip).
 
-## Wide corpus (tests/aea-wide.sh v1)
+## Wide corpus (tests/aea-wide.sh v2, 152/152 WIDE-GREEN)
 
-- FULL-equiv seed 7: 8 sizes (1B..3MB) x p{1,5} x {none,zlib} x {none,sha256} = 64 MATCH.
-- Holdout seed 99: 4 sizes x {p1/lzma/sha, p5/lz4/none} = 8 MATCH. 72/72 WIDE-GREEN.
+- FULL-equiv seed 7: 8 sizes (1B..3MB) x p{1,5} x {none,zlib,lzraven} x {none,sha256} = 96 MATCH.
+- FULL lzraven-text (compressible): 8 sizes x p{1,5} x {none,sha256} = 32 MATCH.
+- Holdout seed 99: 4 sizes x {p1/lzma/sha, p5/lz4/none, p1/lzraven/murmur64} = 12 MATCH.
+- Fresh seed 1234: 4 sizes x {p1/lzfse/sha, p5/lzbitmap/none, p5/lzraven/murmur64} = 12 MATCH.
+- v2 adds LZR_BIN export (v1 lacked it: lzraven never ran in wide) + first murmur64 wide cells.
 - 2-cluster: 269MB p5/none/sha256 OVH 37084 = 18620+18464 (2nd cluster hdr); proto MATCH 0.8s.

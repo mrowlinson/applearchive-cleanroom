@@ -127,8 +127,9 @@ def decomp(alg, data, size):
         if not tool:
             raise FmtErr("lzfse needs LZFSE_BIN (own-built lzfse CLI)")
         try:
-            p = subprocess.run([tool, "-decode"], input=data, capture_output=True)
-        except OSError:
+            p = subprocess.run([tool, "-decode"], input=data, capture_output=True,
+                               timeout=120)
+        except (OSError, subprocess.TimeoutExpired):
             raise FmtErr("lzfse tool failed")
         if p.returncode != 0 or len(p.stdout) != size:
             raise FmtErr("lzfse failed")
@@ -140,18 +141,80 @@ def decomp(alg, data, size):
         if not tool:
             raise FmtErr("lzbitmap needs ZBM_BIN (own-built zbmcat)")
         try:
-            p = subprocess.run([tool], input=data, capture_output=True)
-        except OSError:
+            p = subprocess.run([tool], input=data, capture_output=True,
+                               timeout=120)
+        except (OSError, subprocess.TimeoutExpired):
             raise FmtErr("lzbitmap tool failed")
         if p.returncode != 0 or len(p.stdout) != size:
             raise FmtErr("lzbitmap failed")
         return p.stdout
+    if alg == "m":
+        import os
+        import subprocess
+        import tempfile
+        tool = os.environ.get("LZR_BIN", "")
+        if not tool:
+            raise FmtErr("lzraven needs LZR_BIN (own-built lzraven_dec)")
+        ip = op = None
+        try:
+            with tempfile.NamedTemporaryFile(delete=False) as fi:
+                fi.write(data)
+                ip = fi.name
+            op = ip + ".out"
+            p = subprocess.run([tool, ip, op], capture_output=True,
+                               timeout=120)
+            out = None
+            if p.returncode == 0:
+                with open(op, "rb") as fo:
+                    out = fo.read()
+        except (OSError, subprocess.TimeoutExpired):
+            raise FmtErr("lzraven tool failed")
+        finally:
+            for q in (ip, op):
+                if q is None:
+                    continue
+                try:
+                    os.unlink(q)
+                except OSError:
+                    pass
+        if out is None or len(out) != size:
+            raise FmtErr("lzraven failed")
+        return out
     raise FmtErr("codec %r unsupported in v1" % alg)
+
+
+M64 = (1 << 64) - 1
+MUR_SEED = 0xE2236FDC26A5F6D2
+
+
+def murmur64a(data, seed=MUR_SEED):
+    m, r = 0xC6A4A7935BD1E995, 47
+    h = (seed ^ ((len(data) * m) & M64)) & M64
+    nblk = len(data) & ~7
+    for i in range(0, nblk, 8):
+        (k,) = struct.unpack_from("<Q", data, i)
+        k = (k * m) & M64
+        k ^= k >> r
+        k = (k * m) & M64
+        h ^= k
+        h = (h * m) & M64
+    tail = len(data) - nblk
+    if tail:
+        t = 0
+        for j in range(tail):
+            t |= data[nblk + j] << (8 * j)
+        h = (((h ^ t) & M64) * m) & M64
+    h ^= h >> r
+    h = (h * m) & M64
+    h ^= h >> r
+    return struct.pack("<Q", h)
 
 
 def cksum(alg, data):
     if alg == 0:
         return b""
+    if alg == 1:
+        return murmur64a(data)
     if alg == 2:
         return hashlib.sha256(data).digest()
     raise FmtErr("checksum %d unsupported in v1" % alg)
@@ -220,11 +283,11 @@ def decrypt_aea(blob, symkey=None, recip_priv=None, password=None, sign_pub=None
         s = sig
         if prof != 0:
             s = dec_ver(kd.sigkey(), sig[:128], b"", sig[128:])
-        der = s[:s[1] + 2]
-        pro = blob[:sig_start] + bytes(sig_end - sig_start) + blob[sig_end:prologue_end]
         try:
+            der = s[:s[1] + 2]
+            pro = blob[:sig_start] + bytes(sig_end - sig_start) + blob[sig_end:prologue_end]
             spub.verify(der, pro, ec.ECDSA(hashes.SHA256()))
-        except InvalidSignature:
+        except (InvalidSignature, IndexError, ValueError):
             raise FmtErr("signature invalid")
 
     rh = dec_ver(kd.rootkey(), rdata, cmac + auth, rmac)
@@ -235,8 +298,6 @@ def decrypt_aea(blob, symkey=None, recip_priv=None, password=None, sign_pub=None
     if orig == 0:
         return b""
     shsz = 8 + CKSUM_SIZE[ckalg]
-    if ckalg == 1:
-        raise FmtErr("checksum murmur unsupported in v1")
 
     out = io.BytesIO()
     ci = 0
@@ -267,7 +328,9 @@ def decrypt_aea(blob, symkey=None, recip_priv=None, password=None, sign_pub=None
             if out.tell() >= orig:
                 full = out.getvalue()[:orig]
                 if range_off is not None:
-                    return full[range_off:range_off + (range_size or 0)]
+                    if range_size is None:
+                        return full[range_off:]
+                    return full[range_off:range_off + range_size]
                 return full
         cmac = nmac
         ci += 1
@@ -286,16 +349,15 @@ def read_key_file(path):
     with open(path, "rb") as fh:
         raw = fh.read()
     try:
-        txt = raw.decode("ascii").strip()
+        t = raw.decode("ascii")
     except UnicodeDecodeError:
-        txt = None
-    if txt is not None and txt.startswith("hex:"):
-        return bytes.fromhex(txt[4:])
-    if txt is not None and txt.startswith("base64:"):
+        return raw
+    c = t.rstrip("\r\n")
+    if c.startswith("hex:"):
+        return bytes.fromhex(c[4:])
+    if c.startswith("base64:"):
         import base64
-        return base64.b64decode(txt[7:])
-    if raw[:4] == b"hex:":
-        return bytes.fromhex(raw[4:].decode("ascii").strip())
+        return base64.b64decode(c[7:])
     return raw
 
 
@@ -312,8 +374,8 @@ def main(argv):
     ap = argparse.ArgumentParser(prog="aead.py")
     sub = ap.add_subparsers(dest="cmd", required=True)
     d = sub.add_parser("decrypt")
-    d.add_argument("-i", required=True)
-    d.add_argument("-o", required=True)
+    d.add_argument("-i", default=None)  # absent = stdin (oracle); "-" = literal file
+    d.add_argument("-o", default=None)  # absent = stdout (oracle); "-" = literal file
     d.add_argument("--key", default=None)
     d.add_argument("--key-value", default=None)
     d.add_argument("--password", default=None)
@@ -326,8 +388,11 @@ def main(argv):
     g.add_argument("-i", required=True)
     a = ap.parse_args(argv)
     try:
-        with open(a.i, "rb") as fh:
-            blob = fh.read()
+        if a.i is None and a.cmd == "decrypt":
+            blob = sys.stdin.buffer.read()
+        else:
+            with open(a.i, "rb") as fh:
+                blob = fh.read()
         if a.cmd == "id":
             sys.stdout.write(archive_id(blob).hex() + "\n")
             return 0
@@ -340,7 +405,11 @@ def main(argv):
             pw = a.password
         if a.password_file:
             with open(a.password_file, "rb") as fh:
-                pw = fh.read().decode().strip()
+                praw = fh.read()
+            try:
+                pw = praw.decode().rstrip("\r\n")
+            except UnicodeDecodeError:
+                raise FmtErr("password file not text")
         if a.recipient_priv:
             with open(a.recipient_priv, "rb") as fh:
                 recip = fh.read()
@@ -349,8 +418,11 @@ def main(argv):
                 spub = fh.read()
         out = decrypt_aea(blob, symkey, recip, pw, spub,
                            a.range_offset, a.range_size)
-        with open(a.o, "wb") as fh:
-            fh.write(out)
+        if a.o is None:
+            sys.stdout.buffer.write(out)
+        else:
+            with open(a.o, "wb") as fh:
+                fh.write(out)
         return 0
     except FmtErr as e:
         sys.stderr.write("aead: %s\n" % e)
