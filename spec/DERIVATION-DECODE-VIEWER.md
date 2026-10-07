@@ -85,3 +85,26 @@ findings:
 pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:2c0cec815a47474f471d252ff9de75aa1e81979234fd4b8c6783c6b606d16d7f bytes:9184
 pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:2324515c85d840e2a94cac95e07802b5cdd1fd779bdfbc1a7ecdcb54b3330011 bytes:5892
 post-edit: (recorded at commit; see commit 2nd line stats)
+
+## 2026-10-07 decode-viewer lanes/decode-viewer (entry 4: CR-012/013/014 + A-010/011/012 + VERIFY x20)
+inputs:
+- quiz-decode Q-010/Q-011/Q-012 + all A/NOTE/VERIFY/FLAG/GATE/PARENT filings (read first-hand; 12/12 Q answered)
+- own-gen lrv-ladder: 18 aa-emitted -a lzraven (unc 337..1048815) + 3 compression_tool -encode + surgery/sweep/leniency/range probes (WS tmp/decode-viewer-probes/lrv-ladder; macOS 27.0.1)
+- anat0m1a/liblzraven@700b88c4b2e1b1d96e499d172dfa0b8e5d9134ab (pin verified ls-remote+clone+tree): SPEC.md (65160B) + README + LICENSE (0BSD) + Makefile + tests/c/lzraven_dec.c usage read; built clean (-Werror) + 16/16 xcheck MATCH + 2/2 correct-reject own
+- kinnay/AEA@d22f4fd aea/murmur.py (200, 508B, stock M64A) + w2 murmur xcheck 21/21 own (WS murx/)
+- own-gen kindbed: 9-entry TLV + feeder-guarded fifo + crafted-cpio device convert + extract matrix (WS tmp/decode-viewer-probes/kindbed); root mknods x3 via helper (chowned back, no strays)
+- SDK MacOSX27.0 AADefs.h (130 ln) + AAFieldKeys.h (191 ln) read first-hand (vendor-published); dgelessus README (links-only, no format detail)
+- oss-survey@6056a80 §3 (murmur reusable) + vendor-docs L2 types/fields (corrected 8->11) + fixtures pins (reused, not re-pinned)
+- writer commits verified first-hand (full diffs + A-004 wall greps 0/20): w1 1d073b9 848bada c332c96 4a3c8ce 59fb30f 88b1e3d 16d9a8b; w2 5daf51c d59d825 64af2c4 1ecfb3f 9ca2a1e 650e0c5 35a1f7a 2d58522 6f4bea5 2ace77e 8ff280a 3bcdcb6 716dfb4
+not-consulted: decompiler output (still none), patent contents, reference/port sources,
+  encode-side lanes, writer worktree files (git-show only + black-box runs), liblzraven src/*.c internals (framing verdict needed only SPEC+build+xcheck)
+outputs: +3 clauses (CR-012/013/014 MEASURED), tag mix total MEASURED 10 / SYMBOL 2 / INFERRED 2;
+  A-010 + A-011 + A-012 + NOTE-09..13 + VERIFY x20 PASS (0 new FLAGs; sweep FLAG-59fb30f ACKed)
+findings:
+- lzraven framing fully cracked first-principles (block-hdr halves, params size(i) 24/24, terminator, unc-absent, no-checksum) + third-party SPEC mutual-CONFIRM; survey §10 OPEN settled by nomination
+- murmur path-line granted (A-010) + proven 21/21 in writer2 code; entry census 11 TYPs (A-012) + HLC exact-agreement
+- w1 848bada..59fb30f unbuildable-as-committed (Makefile lineage; fixed @88b1e3d, sweep-gated); c-battery xattr overclaim flagged to writer; w2 printf-octal 4-byte note
+- joint DONE not reached (writers mid-turf: w1 kinds/HLC-era, w2 lzraven-implementing; claim HELD)
+pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:02e806f0b12bf4b2ede23137c0e51867cd98db64a3ce1a0698bf0450c76634a0 bytes:10363
+pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:c97e3504e726db17c3e3cfa4936e5864be19d855afbfc3baa6698100a39c0483 bytes:7110
+post-edit: (recorded at commit; see commit 2nd line stats)
