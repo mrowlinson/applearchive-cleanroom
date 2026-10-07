@@ -110,13 +110,19 @@ def parse_chain(data):
 
 def parse_header(data, pos):
     """-> (entries, endpos). entries: list of (key, subtype, value)."""
+    if pos + 6 > len(data):
+        raise FmtErr("header past EOF at %d" % pos)
     if bytes(data[pos:pos + 4]) not in INNER_MAGICS:
         raise FmtErr("bad inner magic at %d" % pos)
     (hsize,) = struct.unpack_from("<H", data, pos + 4)
     end = pos + hsize
+    if end > len(data) or hsize < 6:
+        raise FmtErr("header size past EOF at %d" % pos)
     p = pos + 6
     entries = []
     while p < end:
+        if p + 4 > end:
+            raise FmtErr("entry tag past end at %d" % p)
         key = bytes(data[p:p + 3])
         st = data[p + 3]
         p += 4
@@ -124,20 +130,32 @@ def parse_header(data, pos):
             val = None
         elif st in UINT_W:
             w = UINT_W[st]
+            if p + w > end:
+                raise FmtErr("uint past end at %d" % p)
             val = int.from_bytes(data[p:p + w], "little")
             p += w
         elif st in BLOB_W:
             w = BLOB_W[st]
+            if p + w > end:
+                raise FmtErr("bloblen past end at %d" % p)
             val = int.from_bytes(data[p:p + w], "little")
             p += w
         elif st in HASH_L:
+            if p + HASH_L[st] > end:
+                raise FmtErr("hash past end at %d" % p)
             val = bytes(data[p:p + HASH_L[st]])
             p += HASH_L[st]
         elif st in TS_L:
+            if p + TS_L[st] > end:
+                raise FmtErr("timespec past end at %d" % p)
             val = bytes(data[p:p + TS_L[st]])
             p += TS_L[st]
         elif st == ord("P"):
+            if p + 2 > end:
+                raise FmtErr("pathlen past end at %d" % p)
             (ln,) = struct.unpack_from("<H", data, p)
+            if p + 2 + ln > end:
+                raise FmtErr("path past end at %d" % p)
             val = bytes(data[p + 2:p + 2 + ln])
             p += 2 + ln
         else:
@@ -156,6 +174,8 @@ def parse_inner(data):
         blobs, bp = {}, end
         for key, st, val in entries:
             if st in BLOB_W:
+                if bp + val > len(data):
+                    raise FmtErr("blob past EOF at %d" % bp)
                 blobs[key] = bytes(data[bp:bp + val])
                 bp += val
         items.append((entries, blobs))
