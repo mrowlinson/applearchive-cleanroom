@@ -101,6 +101,12 @@ cell empty --password "$PW" -i "$WORK/empty.aea"
 aea decrypt -password-value "$PW" -range-offset 0 -range-size 5 -i "$WORK/p5.aea" -o "$WORK/rg-ora.bin" 2>/dev/null
 EXP=$WORK/rg-ora.bin
 cell range-0-5 --password "$PW" --range-offset 0 --range-size 5 -i "$WORK/p5.aea"
+aea decrypt -password-value "$PW" -range-offset 6 -i "$WORK/p5.aea" -o "$WORK/rg-ora2.bin" 2>/dev/null
+EXP=$WORK/rg-ora2.bin
+cell range-off-only --password "$PW" --range-offset 6 -i "$WORK/p5.aea"
+aea decrypt -password-value "$PW" -range-offset 6 -range-size 0 -i "$WORK/p5.aea" -o "$WORK/rg-ora0.bin" 2>/dev/null
+EXP=$WORK/rg-ora0.bin
+cell range-size0 --password "$PW" --range-offset 6 --range-size 0 -i "$WORK/p5.aea"
 OID=$(aea id -i "$WORK/p5.aea" 2>/dev/null)
 PID=$("$AEAD_PY" "$REPO/proto/aead.py" id -i "$WORK/p5.aea" 2>/dev/null)
 if [ "$OID" = "$PID" ] && [ -n "$OID" ]; then ok "id"; else bad "id"; fi

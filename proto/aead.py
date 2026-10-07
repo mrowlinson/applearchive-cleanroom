@@ -127,8 +127,9 @@ def decomp(alg, data, size):
         if not tool:
             raise FmtErr("lzfse needs LZFSE_BIN (own-built lzfse CLI)")
         try:
-            p = subprocess.run([tool, "-decode"], input=data, capture_output=True)
-        except OSError:
+            p = subprocess.run([tool, "-decode"], input=data, capture_output=True,
+                               timeout=120)
+        except (OSError, subprocess.TimeoutExpired):
             raise FmtErr("lzfse tool failed")
         if p.returncode != 0 or len(p.stdout) != size:
             raise FmtErr("lzfse failed")
@@ -140,8 +141,9 @@ def decomp(alg, data, size):
         if not tool:
             raise FmtErr("lzbitmap needs ZBM_BIN (own-built zbmcat)")
         try:
-            p = subprocess.run([tool], input=data, capture_output=True)
-        except OSError:
+            p = subprocess.run([tool], input=data, capture_output=True,
+                               timeout=120)
+        except (OSError, subprocess.TimeoutExpired):
             raise FmtErr("lzbitmap tool failed")
         if p.returncode != 0 or len(p.stdout) != size:
             raise FmtErr("lzbitmap failed")
@@ -159,12 +161,13 @@ def decomp(alg, data, size):
                 fi.write(data)
                 ip = fi.name
             op = ip + ".out"
-            p = subprocess.run([tool, ip, op], capture_output=True)
+            p = subprocess.run([tool, ip, op], capture_output=True,
+                               timeout=120)
             out = None
             if p.returncode == 0:
                 with open(op, "rb") as fo:
                     out = fo.read()
-        except OSError:
+        except (OSError, subprocess.TimeoutExpired):
             raise FmtErr("lzraven tool failed")
         finally:
             for q in (ip, op):
@@ -280,11 +283,11 @@ def decrypt_aea(blob, symkey=None, recip_priv=None, password=None, sign_pub=None
         s = sig
         if prof != 0:
             s = dec_ver(kd.sigkey(), sig[:128], b"", sig[128:])
-        der = s[:s[1] + 2]
-        pro = blob[:sig_start] + bytes(sig_end - sig_start) + blob[sig_end:prologue_end]
         try:
+            der = s[:s[1] + 2]
+            pro = blob[:sig_start] + bytes(sig_end - sig_start) + blob[sig_end:prologue_end]
             spub.verify(der, pro, ec.ECDSA(hashes.SHA256()))
-        except InvalidSignature:
+        except (InvalidSignature, IndexError, ValueError):
             raise FmtErr("signature invalid")
 
     rh = dec_ver(kd.rootkey(), rdata, cmac + auth, rmac)
@@ -325,7 +328,9 @@ def decrypt_aea(blob, symkey=None, recip_priv=None, password=None, sign_pub=None
             if out.tell() >= orig:
                 full = out.getvalue()[:orig]
                 if range_off is not None:
-                    return full[range_off:range_off + (range_size or 0)]
+                    if range_size is None:
+                        return full[range_off:]
+                    return full[range_off:range_off + range_size]
                 return full
         cmac = nmac
         ci += 1

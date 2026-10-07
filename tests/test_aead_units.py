@@ -2,11 +2,13 @@
 """test_aead_units.py -- proto unit tests (no oracle, synthetic blobs)."""
 import hashlib
 import hmac
+import os
 import struct
 import sys
 import unittest
 
-sys.path.insert(0, "proto")
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                               "..", "proto"))
 import aead
 
 
