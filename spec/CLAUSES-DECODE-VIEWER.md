@@ -128,6 +128,7 @@ body: lzfse frame = magic + uncLE32 + (n: XLE32=comp-16 5/5 | 2: stream bytes) +
 | CR-020 | MEASURED | AEA pad-tag = last-nmac HMAC rule | CONFIRM (closes CR-018 OPEN) |
 | CR-021 | SYMBOL | libAppleArchive public-export inventory (232) | CONFIRM vs CR-002/003 + vendor list |
 | CR-022 | MEASURED | AEA empty-archive shape (156B bare / cmac pad-tag) | CONFIRM vs writer2 empty rows |
+| CR-023 | MEASURED | lzraven flag alphabet + raw exclusivity (0x3 negative, 0x402 wild) | CONFIRM alphabet; OPEN narrowed |
 
 ```
 CR-012 [MEASURED] lzraven stream framing (8B hdr + u32 block-hdrs + u32-0 terminator)
@@ -205,7 +206,7 @@ body: unknown-kind policy = skip-and-continue exit 0 regardless of DAT carriage;
 CR-020 [MEASURED] AEA pad-tag construction (last-nmac = HMAC(padkey, [padstart,arc)))
 stage: bitstream
 artifact: padsearch2.py v2 search + padconfirm.py (6 shapes) + unpadded negatives (WS tmp/decode-viewer-probes/padauth)
-numbers: HIT 3/3 seed files (pad 818/818/2B) + 3/3 generality (2-cluster last-nmac 8MB pad, p1/zlib 932B pad, cksum-none 4228B pad) + 2/2 unpadded negatives (nmac random iff padlen 0); rule: padkey = HKDF-SHA256(main, "AEA_PAK"), tag = HMAC-SHA256(padkey, file[padstart:arc)) vs last nmac
+numbers: HIT 3/3 seed files (pad 818/818/2B) + 4/4 generality (2-cluster last-nmac 8MB pad, p1/zlib 932B pad, cksum-none 4228B pad, p2-signed 658B pad) + 2/2 unpadded negatives (nmac random iff padlen 0); rule: padkey = HKDF-SHA256(main, "AEA_PAK"), tag = HMAC-SHA256(padkey, file[padstart:arc)) vs last nmac
 verdict: CONFIRM (closes CR-018 construction-OPEN); bed A-016B
 body: non-last nmacs keep chain role; padlen 0 skips auth; mismatch -> pad-auth fail, len<arc -> read class. universal across profiles/checksums/codecs/clusters/padlens 2B..8MB. streaming-verify mechanism (init/update/final, const-time compare) corroborates.
 ```
@@ -226,6 +227,15 @@ artifact: own-gen e-nopad.aea (156B) + e-pad2.aea (160B, p5/-a none) + flip + HM
 numbers: empty/-padding none = 156B exactly (prologue, zero cluster headers), decrypt exit 0, 0 bytes out; empty/default-pad = 160B (156 + 4 pad, arc 160), pad flip -> 0x9e041c00 exit 1, HMAC(padkey,[156,160)) == cmac True
 verdict: CONFIRM vs writer2 empty rows (size + decrypt); cmac-slot rule mutual-CONFIRM (writer2 found, viewer independently confirmed)
 body: orig==0 short-circuits cluster parsing entirely; pad (if any) starts at prologue_end and verifies against the cmac slot (no nmac exists). extends CR-020 with the degenerate case.
+```
+
+```
+CR-023 [MEASURED] lzraven block-flag alphabet {0,1,2,4,6,0x402} + raw-bit exclusivity (0x3/5/7 unobserved)
+stage: probe
+artifact: 7 own compression_tool -encode -a lzraven inputs (Mach-O /bin/ls, true-random 600K, code+random mix, /bin/zsh 2MB, 64K-alternating, BCJ-bait sea, xz-output) + block-flag walks + wild big-lrv.aar (2MB Mach-O via aa -a lzraven, stream flags [0x4,0x402x3]) + oracle/proto dual-decode (WS tmp/decode-viewer-probes/lrv003)
+numbers: 15 blocks: 0x0 x2, 0x1 x4, 0x2 x3, 0x4 x2 (zsh blk0 + big blk0), 0x6 x2, 0x402 x3 (big blk1-3, NEW bit10, AAR-path only); raw (0x1) blocks 4/4 carry no other bits; combos 0x3/0x5/0x7 0/15 blocks; wild-0x402 archive: oracle exit 0 MATCH + writer1 proto exit 0 TREE-MATCH (decoder-covered, no gap)
+verdict: CONFIRM alphabet {0,1,2,4,6,0x402}; CR-012/016 raw+BCJ OPEN narrowed to bounded negative (encoder not observed emitting raw+transform after targeted hunt; decoder fail-closed on unseen combos stands)
+body: bit0 = raw verbatim (incompressible/high-entropy chunks); bit1/bit2 = transform variants (fire on code-like chunks, incl 0x6 joint); bit10 fires on later stream chunks (AAR-path observed); bit0 never co-occurs with transform bits in 15/15 blocks. bit1/bit2/bit10 encoder-side meanings unassigned (decode-covered regardless).
 ```
 
 Status of every clause: UNPROVEN until an implementation written ONLY from

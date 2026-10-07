@@ -221,4 +221,34 @@ findings:
 - joint DONE not reached (GATEs + DONEs pending; claim HELD)
 pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:844d018af9c8f524f50bd7183c5774855004dbf9a515e38d20084ad8a25f4f50 bytes:21899
 pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:9eae5862a186b44f71db1f696d6af23bd7f8ec229ed3af65a79f1746277f92fd bytes:19827
+post-edit: (recorded at commit f85290a; 2 files, +27)
+
+## 2026-10-07 decode-viewer lanes/decode-viewer (entry 11: CR-023 flag alphabet + PV-007)
+inputs:
+- quiz-decode PV-007 (viewer 625dc1b+1f6b710+bc9ad02 merged e68cc65; scrub accepted; CORRECTION-2 noted) + writer1 NOTE-032 (post-pass reverse correction, no Q) (read first-hand)
+- own-gen lrv003/: 7 compression_tool lzraven encodes + flag walks incl reseed-bug red herring caught via roundtrip check (WS tmp/decode-viewer-probes/lrv003)
+not-consulted: patent contents, encode-side lanes, reference/port sources,
+  decompiler output (none), writer worktree files, liblzraven src/*.c internals
+outputs: +1 clause (CR-023 MEASURED), tag mix total MEASURED 18 / SYMBOL 3 / INFERRED 2; NOTE-29/30
+findings:
+- lzraven flag alphabet {0,1,2,4,6} over 11 blocks; raw-bit exclusivity 4/4; 0x3/5/7 bounded negative after targeted hunt (bit2 newly observed on zsh)
+- f85290a (CR-022+entry-10) rides next parent merge
+- joint DONE not reached (writers/sweep active, no DONEs; claim HELD)
+pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:676b0b7b362f2f2e1d9f967ffcc11767f50b6622bbd05939c882d38a18bafde1 bytes:22789
+pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:868f4d27a72ef4127f1ea6a3f2bfdd526811a00cfcb06eb40e02aea0b9b45e8d bytes:21325
+post-edit: (recorded at commit 4dcf84f; 2 files, +25)
+
+## 2026-10-07 decode-viewer lanes/decode-viewer (entry 12: CR-023 amend + CR-020 p2 fold + DONE-writer2)
+inputs:
+- quiz-decode DONE-writer2 (AEA turf complete @93f794f, merged db3fed5) + PV-008 (writer2@93f794f + viewer@f85290a merged) (read first-hand)
+- own-gen lrv003 extensions: blk0zero/blk0code first-flag probes (bit2-first hypothesis KILLED: zeros-blk0 = 0x0) + big-lrv.aar wild-0x402 + oracle/proto dual-decode MATCH (WS tmp/decode-viewer-probes/lrv003)
+- own-gen p2-18.aea pad-rule confirm (signed profile, HMAC True; info += x962(spub) per proto schedule) (WS tmp/decode-viewer-probes/padauth)
+not-consulted: patent contents, encode-side lanes, reference/port sources,
+  decompiler output (none), writer worktree files, liblzraven src/*.c internals
+outputs: 0 new clauses (CR-023 amended +0x402 wild, CR-020 numbers 6/6 -> 7/7 p2 fold); NOTE-33
+findings:
+- bit2-first-block hypothesis killed first-hand; bit1/bit2/bit10 encoder-side meanings unassigned (decode-covered regardless; encoder turf)
+- wild 0x402 decode-covered (oracle + writer1 proto MATCH); joint DONE still open (writer1 + sweep DONEs pending; claim HELD)
+pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:9518008355be2050fe9a24b927739a1bb28135a3879203e2fb4cf3a68228a0c0 bytes:23915
+pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:4bcb50ee6bc8332fc04ca9a7d52ae8ecec1c226124d7c80376a15f6a61e4554e bytes:22605
 post-edit: (recorded at commit; see commit 2nd line stats)
