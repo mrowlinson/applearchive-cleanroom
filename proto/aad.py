@@ -185,8 +185,70 @@ def safe_join(root, rel):
     return out
 
 
+_libc = None
+
+
+def _lib():
+    global _libc
+    if _libc is None:
+        _libc = ctypes.CDLL("/usr/lib/libc.dylib", use_errno=True)
+    return _libc
+
+
+def _ts_ns(raw):
+    sec = int.from_bytes(raw[:8], "little")
+    ns = int.from_bytes(raw[8:12], "little") if len(raw) == 12 else 0
+    return sec * 1000000000 + ns
+
+
+def apply_xattr_blob(target, blob, islink):
+    from ctypes import c_char_p, c_int, c_size_t, c_void_p
+    libc = _lib()
+    libc.setxattr.argtypes = [c_char_p, c_char_p, c_void_p, c_size_t, c_int,
+                              c_int]
+    libc.setxattr.restype = c_int
+    pos = 0
+    while pos + 4 <= len(blob):
+        size = int.from_bytes(blob[pos:pos + 4], "little")
+        if size < 4 or pos + size > len(blob):
+            raise FmtErr("bad xattr record at %d" % pos)
+        rec = blob[pos + 4:pos + size]
+        nul = rec.find(b"\0")
+        if nul < 0:
+            raise FmtErr("xattr name unterminated at %d" % pos)
+        name, val = bytes(rec[:nul]), bytes(rec[nul + 1:])
+        r = libc.setxattr(target.encode("utf-8", "surrogateescape"), name,
+                          val, len(val), 0, 1 if islink else 0)
+        if r != 0:
+            raise FmtErr("setxattr %r failed" % name)
+        pos += size
+
+
+def apply_meta(target, entries, blobs, islink):
+    _, mod = _get(entries, b"MOD")
+    _, uid = _get(entries, b"UID")
+    _, gid = _get(entries, b"GID")
+    _, mtm = _get(entries, b"MTM")
+    if not islink:
+        if mod is not None:
+            os.chmod(target, mod & 0o7777)
+        if uid is not None or gid is not None:
+            try:
+                os.chown(target, -1 if uid is None else uid,
+                         -1 if gid is None else gid)
+            except PermissionError:
+                pass
+    if mtm is not None:
+        ns = _ts_ns(mtm)
+        os.utime(target, ns=(ns, ns), follow_symlinks=False)
+    xat = blobs.get(b"XAT")
+    if xat:
+        apply_xattr_blob(target, xat, islink)
+
+
 def extract(items, root):
     os.makedirs(root, exist_ok=True)
+    deferred = []
     for entries, blobs in items:
         _, typ = _get(entries, b"TYP")
         _, pat = _get(entries, b"PAT")
@@ -195,12 +257,14 @@ def extract(items, root):
         target = safe_join(root, pat)
         if typ == ord("D"):
             os.makedirs(target, exist_ok=True)
+            deferred.append((target, entries, blobs))
         elif typ == ord("F"):
             parent = os.path.dirname(target)
             if parent:
                 os.makedirs(parent, exist_ok=True)
             with open(target, "wb") as f:
                 f.write(blobs.get(b"DAT", b""))
+            apply_meta(target, entries, blobs, False)
         elif typ == ord("L"):
             _, lnk = _get(entries, b"LNK")
             parent = os.path.dirname(target)
@@ -209,8 +273,11 @@ def extract(items, root):
             if os.path.lexists(target):
                 os.remove(target)
             os.symlink(lnk.decode("utf-8", "surrogateescape"), target)
+            apply_meta(target, entries, blobs, True)
         else:
             raise FmtErr("entry type %r" % typ)
+    for target, entries, blobs in reversed(deferred):
+        apply_meta(target, entries, blobs, False)
 
 
 def main(argv):
