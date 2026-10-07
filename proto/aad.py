@@ -249,6 +249,7 @@ def apply_meta(target, entries, blobs, islink):
 def extract(items, root):
     os.makedirs(root, exist_ok=True)
     deferred = []
+    hlc_first = {}
     for entries, blobs in items:
         _, typ = _get(entries, b"TYP")
         _, pat = _get(entries, b"PAT")
@@ -262,8 +263,16 @@ def extract(items, root):
             parent = os.path.dirname(target)
             if parent:
                 os.makedirs(parent, exist_ok=True)
-            with open(target, "wb") as f:
-                f.write(blobs.get(b"DAT", b""))
+            _, hlc = _get(entries, b"HLC")
+            if hlc is not None and hlc in hlc_first:
+                if os.path.lexists(target):
+                    os.remove(target)
+                os.link(hlc_first[hlc], target)
+            else:
+                with open(target, "wb") as f:
+                    f.write(blobs.get(b"DAT", b""))
+                if hlc is not None:
+                    hlc_first[hlc] = target
             apply_meta(target, entries, blobs, False)
         elif typ == ord("L"):
             _, lnk = _get(entries, b"LNK")

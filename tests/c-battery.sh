@@ -81,6 +81,28 @@ sh "$ADAPTER" aar-decode "$WORK/mb.aar" "$WORK/o-mb" >/dev/null 2>&1 || die "mb 
 "$AAD" "$WORK/mb.aar" "$WORK/c-mb" 2>/dev/null || fail "mb-cdec"
 diff -r "$WORK/o-mb" "$WORK/c-mb" >/dev/null 2>&1 && pass "mb-bytes" || fail "mb-bytes"
 
+echo "== cell hardlink =="
+mkdir -p "$WORK/hsrc"
+printf 'AAA-group0\n' > "$WORK/hsrc/a1.txt"; ln "$WORK/hsrc/a1.txt" "$WORK/hsrc/a2.txt"; ln "$WORK/hsrc/a1.txt" "$WORK/hsrc/a3.txt"
+printf 'BBB-group1\n' > "$WORK/hsrc/b1.txt"; ln "$WORK/hsrc/b1.txt" "$WORK/hsrc/b2.txt"
+printf 'lonely\n' > "$WORK/hsrc/solo.txt"
+sh "$ADAPTER" aar-encode --alg lzfse --threads 1 "$WORK/hsrc" "$WORK/hl.aar" >/dev/null 2>&1 || die "hl encode"
+sh "$ADAPTER" aar-decode "$WORK/hl.aar" "$WORK/o-hl" >/dev/null 2>&1 || die "hl oracle"
+"$AAD" "$WORK/hl.aar" "$WORK/c-hl" 2>/dev/null || fail "hl-cdec"
+diff -r "$WORK/o-hl" "$WORK/c-hl" >/dev/null 2>&1 && pass "hl-bytes" || fail "hl-bytes"
+python3 - "$WORK/o-hl" "$WORK/c-hl" <<'EOF' >/dev/null 2>&1 && pass "hl-links" || fail "hl-links"
+import os, sys
+def part(root):
+  ino2paths, nl = {}, {}
+  for dp, dn, fn in os.walk(root):
+    for n in sorted(fn):
+      p = os.path.join(dp, n); s = os.lstat(p)
+      ino2paths.setdefault(s.st_ino, []).append(os.path.relpath(p, root))
+      nl[os.path.relpath(p, root)] = s.st_nlink
+  return (sorted([tuple(sorted(v)) for v in ino2paths.values()]), nl)
+sys.exit(0 if part(sys.argv[1]) == part(sys.argv[2]) else 1)
+EOF
+
 echo "== cell errors =="
 head -c 100 /dev/urandom > "$WORK/corrupt.aar"
 "$AAD" "$WORK/corrupt.aar" "$WORK/c-cor" 2>/dev/null && fail "corrupt-exit" || pass "corrupt-exit"

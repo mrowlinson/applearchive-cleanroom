@@ -399,6 +399,10 @@ static int extract(const Item *items, size_t nitems, const char *root) {
     typedef struct { char path[4096]; size_t idx; } Def;
     Def *defs = malloc(nitems * sizeof *defs);
     size_t ndefs = 0;
+    /* HLC group -> first member path (hardlink restore) */
+    typedef struct { unsigned long long grp; char path[4096]; } Hlc;
+    Hlc *hlcs = malloc(nitems * sizeof *hlcs);
+    size_t nhlcs = 0;
     int rc = -1;
     for (size_t k = 0; k < nitems; k++) {
         const Item *it = &items[k];
@@ -415,14 +419,31 @@ static int extract(const Item *items, size_t nitems, const char *root) {
         } else if (t->num == 'F') {
             char *sl = strrchr(target, '/');
             if (sl) { *sl = 0; if (mkdirs(target)) goto out; *sl = '/'; }
-            size_t dl = 0;
-            const unsigned char *dd = blob_for(it, "DAT", &dl);
-            FILE *f = fopen(target, "wb");
-            if (!f) { FAIL("open %s\n", target); goto out; }
-            if (dl && fwrite(dd, 1, dl, f) != dl) {
-                fclose(f); FAIL("write %s\n", target); goto out;
+            const Entry *h = find_ent(it, "HLC");
+            const char *first = NULL;
+            if (h)
+                for (size_t i = 0; i < nhlcs; i++)
+                    if (hlcs[i].grp == h->num) { first = hlcs[i].path; break; }
+            if (first) {
+                unlink(target);
+                if (link(first, target)) {
+                    FAIL("link %s\n", target); goto out;
+                }
+            } else {
+                size_t dl = 0;
+                const unsigned char *dd = blob_for(it, "DAT", &dl);
+                FILE *f = fopen(target, "wb");
+                if (!f) { FAIL("open %s\n", target); goto out; }
+                if (dl && fwrite(dd, 1, dl, f) != dl) {
+                    fclose(f); FAIL("write %s\n", target); goto out;
+                }
+                fclose(f);
+                if (h) {
+                    hlcs[nhlcs].grp = h->num;
+                    memcpy(hlcs[nhlcs].path, target, strlen(target) + 1);
+                    nhlcs++;
+                }
             }
-            fclose(f);
             if (apply_meta(target, it, 0)) goto out;
         } else if (t->num == 'L') {
             const Entry *l = find_ent(it, "LNK");
@@ -447,6 +468,7 @@ static int extract(const Item *items, size_t nitems, const char *root) {
     rc = 0;
 out:
     free(defs);
+    free(hlcs);
     return rc;
 }
 
