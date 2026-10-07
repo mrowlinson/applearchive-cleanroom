@@ -200,6 +200,15 @@ head -c 8 "$WORK/p5.aea" > "$WORK/tr8.aea"
 if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/tr8.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-trunc8"; else ok "err-trunc8"; fi
 cp "$WORK/p5.aea" "$WORK/mg.aea" && printf 'Q' | dd of="$WORK/mg.aea" bs=1 seek=0 conv=notrunc 2>/dev/null
 if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/mg.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-magic"; else ok "err-magic"; fi
+# 9a. profile-byte @4 parity (oracle: 7->`Invalid profile: 7`, 1->`-key required`; APROBE-01)
+cp "$WORK/p5.aea" "$WORK/pf7.aea" && printf '\007' | dd of="$WORK/pf7.aea" bs=1 seek=4 conv=notrunc 2>/dev/null
+if aea decrypt -password-value "$PW" -i "$WORK/pf7.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/pf7.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
+if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-profile7"; else bad "err-profile7"; fi
+cp "$WORK/p5.aea" "$WORK/pf1.aea" && printf '\001' | dd of="$WORK/pf1.aea" bs=1 seek=4 conv=notrunc 2>/dev/null
+if aea decrypt -password-value "$PW" -i "$WORK/pf1.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/pf1.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
+if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-profile1"; else bad "err-profile1"; fi
 openssl ecparam -name prime256v1 -genkey -noout -out "$WORK/ec2-priv.pem" 2>/dev/null
 openssl ec -in "$WORK/ec2-priv.pem" -pubout -out "$WORK/ec2-pub.pem" 2>/dev/null
 if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --key "$WORK/key32.bin" --sign-pub "$WORK/ec2-pub.pem" -i "$WORK/p2.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-wrongsign"; else ok "err-wrongsign"; fi
