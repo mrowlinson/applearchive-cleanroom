@@ -127,3 +127,30 @@ findings:
 pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:135db0a2ee5fd0697e917abb4137dada756aac6b3f2f0a3e5f6c3298cb7bed35 bytes:14269
 pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:7926c122762e351d6677f879815ed21ce0abc108e1f2b3c2c436186a53220651 bytes:9930
 post-edit: (recorded at commit; see commit 2nd line stats)
+
+## 2026-10-07 decode-viewer lanes/decode-viewer (entry 6: CR-017/018/019 + A-015/016/017/018 + VERIFY x37)
+inputs:
+- quiz-decode Q-015/Q-016/Q-017/Q-018 + PARENT-001..008 + writer2 NOTE-051..063 + writer1 NOTE-024 + sweep NOTE-009/010/014 (read first-hand; answered A-015..A-018)
+- own-gen cluster2/: in-256M1.bin + c2-sha.aea (268472541B) + c1-18.aea + c2p-sha.aea (276824064B) + walk.py + flip matrices (WS tmp/decode-viewer-probes/cluster2; macOS 27.0.1)
+- own-gen padauth/: p-18/p-18b/p16-18.aea + padsearch.py (MAC-search v1, 0 hits) + segdump TEXT dump + xref/capstone reads (WS tmp/decode-viewer-probes/padauth)
+- own-gen q018/: raw single-file archive + 8 TYP-flip extracts (WS tmp/decode-viewer-probes/q018)
+- /usr/bin/aea sha256:16bfbb1c09b092ef0996191ba5e152485fad40be8b28736bf40f68f1628e6c10 MATCH
+- /usr/bin/aa sha256:823df81f1c4331d1e36eee38b20b71a76f016835a01c68d863ce5d8fcb280ef4 MATCH
+- libAppleArchive.dylib __TEXT self-dump (630836B, base 0x2b3aa9000, slide 0x8548000): pad-auth fn @0x173a4 + caller window 0x15624-0x1669c read via capstone (behavior extraction: streaming digest, "AEA_PAK" label, const-time compare; no expression crosses to answers)
+- writer2 proto/aead.py (read full decrypt path + ran for walks/searches/parity: viewer privilege) + notes/APROBE-01.md (read first-hand)
+- writer1 notes/DPROBE-04.md (read first-hand) + fixtures bdev-basic/mix-fail.aea (pins re-verified own + oracle extract first-hand)
+- kinnay/AEA + ipsw-aea OSS (read for pad-auth; DRY, no container-pad coverage)
+- writer commits verified first-hand (full diffs + wall greps 0/37): w2 d6df55e 5bf50fd 158d434 8818e05 1528d04 327831f e253e4d 9d45117 9ad63af 196d115 0f41f20 b13df0f a59c9cd 96f0ea8 944cc08 2f960ae 01170b2 7446cc2 c617d73 2d300d7 24a8d56 d445282 ce4315f b8abeb2 87313db 454d5c2 3661b43 8ec8dab 0365e18 163a1e3 ad33592 d79a170 5535467 9fd0936 2a59c5c 33cc27b; w1 2ad1b1e
+not-consulted: patent contents, encode-side lanes, reference/port sources,
+  Ghidra/IDA-class decompilers (none installed; capstone-on-own-dump used instead),
+  writer worktree files (git-show only + black-box runs), liblzraven src/*.c internals
+outputs: +3 clauses (CR-017/018/019 MEASURED), tag mix total MEASURED 15 / SYMBOL 2 / INFERRED 2;
+  A-015 + A-016 (partial: ranges closed, construction open) + A-017 + A-018 + NOTE-16..22 + VERIFY x37 PASS (0 FLAG)
+findings:
+- cluster walk closed (offsets/repeat/continue/N-global/equations) + 2-cluster MT flip matrix; -o-target head-code dependence found+resolved (NOTE-22: /dev/null 0x9e05cc00 vs file 0xba006800)
+- pad ranges closed ([padstart,arc), arc-ignored, read-vs-auth classes); tag outside pad (2B proof); construction still open (MAC-search v1 0 hits; setup callees 0x137fc/0x114e0 queued)
+- Q-017 premise refuted (proto verifies via explicit HMAC 8/8); W/R/T/M dispute closed (silent-skip stands, A-013 corrected)
+- joint DONE not reached (Q-016 construction + sweep-v3 + writer DONEs pending; claim HELD)
+pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:4bd81b4599c1e6e2f500044ba17f6e88d51d8dfda502cf2259dfc4a5b348d724 bytes:16402
+pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:4c1b7baff5dbd183d84150d2a2aa9dc046598b9614c7e8cf0e944c337af73b5e bytes:11719
+post-edit: (recorded at commit; see commit 2nd line stats)
