@@ -3,7 +3,7 @@
 # legs: HYGIENE (PARENT-002 artifacts) / BATTERIES (rawenc/pbze/units/smoke
 # as present in tip) / SMOKE-IMPL* (smoke via committed impl adapters) /
 # PINS (vectors/*-PINS.csv vs fresh got.aar, stale-name detection) /
-# CONTAM (vendor/disasm grep + Mach-O scan) / OSS (PARENT-003 new-dep scan; A-20 liblzma recognized)
+# CONTAM (vendor/disasm grep + Mach-O scan + PARENT-009 depload scan) / OSS (PARENT-003 new-dep scan; A-20 liblzma recognized)
 # / ADOPT (A-1 harness pins vs lanes/harness-oracle, best-effort).
 # exit 0 GATE-PASS / 1 GATE-FAIL. all work under /Volumes/NVME only.
 # v2: PIN-STALE-NAME + UNPINNED-AAR, SMOKE-IMPL/IMPL2, committed-.aea WARN,
@@ -28,6 +28,15 @@ tar -x -C "$OUT/tree" -f "$OUT/tree.tar" || { echo "GATE-FAIL $REV extract"; exi
 find "$OUT/tree" -name __pycache__ -type d -prune -exec rm -rf {} + 2>/dev/null
 fail=0
 say() { echo "GATELEG $1 $2"; }
+# PARENT-003/A-20: nominated-dep files (lzfse always; liblzma iff pin-marked;
+# system-libc-only FFI iff every load line is a system path — rawenc precedent).
+nominated() {
+  if grep -qi 'lzfse' "$1"; then return 0; fi
+  if grep -qi 'lzma' "$1" && grep -q '5\.8\.4' "$1" && { grep -q '1b2e12cc' "$1" || grep -q 'A-20' "$1"; }; then return 0; fi
+  loaded=$(grep -niE -i 'CDLL|LoadLibrary|\.dylib|(^|[^.a-zA-Z0-9])dylib' "$1" | grep -viE '/usr/lib/|/System/' || true)
+  [ -z "$loaded" ] && return 0
+  return 1
+}
 
 # 1. HYGIENE: artifact paths in the TIP TREE (not the stripped extract)
 ARTS=$(git -C "$REPO" ls-tree -r --name-only "$REV" | grep -E '(__pycache__|\.pyc$|\.pyo$|\.o$|\.a$|\.dylib$|\.ktrace$|/traces/|DerivedData/|\.aar$|tmp/scratch-)' || true)
@@ -42,7 +51,18 @@ if [ -n "$AEAS" ]; then say AEA-BIN "WARN committed-aea:"; echo "$AEAS" | sed 's
 CPAT='ghidra|binary ninja|hopper|ida pro|\.framework/|PrivateFrameworks|LC_SEGMENT|__TEXT,|decompile|disassembl'
 CHIT=$(grep -rniE -I "$CPAT" "$OUT/tree" 2>/dev/null | grep -v '^Binary' | grep -v 'CPAT=' || true)
 MHIT=$(find "$OUT/tree" -type f -exec sh -c 'file -b "$1" | grep -q "Mach-O" && echo "$1"' _ {} \; 2>/dev/null || true)
-if [ -n "$CHIT$MHIT" ]; then fail=1; say CONTAM "FAIL:"; [ -n "$CHIT" ] && echo "$CHIT" | sed 's/^/  /'; [ -n "$MHIT" ] && echo "$MHIT" | sed 's/^/  mach-o /';
+# PARENT-009: bare dep-loader refs (catches wrapped `libzbm<nl>dylib` class).
+# excluded: tests/ (beds-OK exec per PARENT-007(1)), docs/ + *FINDINGS*
+# (dep records PARENT-008 REQUIRES named), system libc, nominated files.
+DPAT='dylib|CDLL|dlopen|ctypes'
+DHITRAW=$(grep -rniE -I "$DPAT" "$OUT/tree" --exclude-dir=tests --exclude-dir=docs --exclude='*FINDINGS*' --exclude='.gitignore' 2>/dev/null | grep -v '^Binary' | grep -viE '/usr/lib/|/System/|DPAT=|OHIT=' || true)
+DHITF=""
+for _f in $(echo "$DHITRAW" | cut -d: -f1 | sort -u); do
+  [ -z "$_f" ] && continue
+  nominated "$_f" || DHITF="$DHITF $_f"
+done
+if [ -n "$CHIT$MHIT$DHITF" ]; then fail=1; say CONTAM "FAIL:"; [ -n "$CHIT" ] && echo "$CHIT" | sed 's/^/  /'; [ -n "$MHIT" ] && echo "$MHIT" | sed 's/^/  mach-o /';
+  for _f in $DHITF; do echo "$DHITRAW" | grep -F "$_f:" | sed 's/^/  depload /'; done
 else say CONTAM "PASS 0-hits"; fi
 
 # 3. BATTERIES (each present script, own WS workdir, grepped oks)
@@ -153,13 +173,11 @@ pinsetleg vectors/ravframe-PINS.csv "$OUT/work-RAVFRAME.log" PINS-RAVFRAME
 # system libc (/usr/lib, /System) + bare ctypes stdlib use are NOT deps.
 # a loading file is clean iff it names an already-nominated lib (lzfse, NOTE-013;
 # liblzma iff A-20 pin markers present: 5.8.4 + (1b2e12cc sha | A-20 cite)).
-OHIT=$(grep -rniE -I 'CDLL\(|cdll\.LoadLibrary|\.dylib|\.so\b|git submodule|add_subdirectory' "$OUT/tree/src" "$OUT/tree/harness" 2>/dev/null | grep -v '/usr/lib/' | grep -v '/System/' || true)
+OHIT=$(grep -rniE -I 'dylib|CDLL|dlopen|ctypes|\.so\b|git submodule|add_subdirectory' "$OUT/tree/src" "$OUT/tree/harness" 2>/dev/null | grep -v '/usr/lib/' | grep -v '/System/' || true)
 ONEW=""
 for _f in $(echo "$OHIT" | cut -d: -f1 | sort -u); do
   [ -z "$_f" ] && continue
-  if grep -qi 'lzfse' "$_f"; then continue; fi
-  if grep -qi 'lzma' "$_f" && grep -q '5\.8\.4' "$_f" && { grep -q '1b2e12cc' "$_f" || grep -q 'A-20' "$_f"; }; then continue; fi
-  ONEW="$ONEW $_f"
+  nominated "$_f" || ONEW="$ONEW $_f"
 done
 if [ -n "$ONEW" ]; then fail=1; say OSS "FAIL new-oss:$ONEW"; echo "$OHIT" | sed 's/^/  /';
 elif [ -n "$OHIT" ]; then say OSS "PASS nominated-only"; else say OSS "PASS none"; fi
