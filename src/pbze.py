@@ -33,12 +33,22 @@ def lzfse_encode(chunk):
     return dst.raw[:n]
 
 
+def zlib_encode(chunk):
+    import zlib
+    return zlib.compress(bytes(chunk), 5)
+
+
 def wrap_pbze(inner, magic=b"pbze", blocksize=4 * 1024 * 1024):
     chunks = [inner[i:i + blocksize] for i in range(0, len(inner), blocksize)] or [b""]
     blocks = []
     for ch in chunks:
-        fr = lzfse_encode(ch) if magic == b"pbze" else None
-        # store-vs-compress: compressed iff comp*16 <= unc*15 (100/100 probes)
+        if magic == b"pbze":
+            fr = lzfse_encode(ch)
+        elif magic == b"pbzz":
+            fr = zlib_encode(ch)
+        else:
+            fr = None
+        # store-vs-compress: compressed iff comp*16 <= unc*15 (lzfse 100/100, zlib per A-6(f))
         if fr is not None and len(fr) * 16 <= len(ch) * 15:
             blocks.append((len(ch), fr))
         else:

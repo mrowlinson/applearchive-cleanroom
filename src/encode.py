@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""encode.py SRCDIR OUT.aar [--alg raw|lzfse] [--block SIZE] [--threads N]
+"""encode.py SRCDIR OUT.aar [--alg raw|lzfse|zlib] [--block SIZE] [--threads N]
 Cleanroom AAR encoder (prototype). --threads accepted, single-threaded.
 SIZE: integer + optional b/k/m/g suffix.
 """
@@ -40,9 +40,12 @@ def main(argv):
         else:
             raise SystemExit("unexpected arg %r" % a)
     if src is None or out is None:
-        raise SystemExit("usage: encode.py SRCDIR OUT.aar [--alg raw|lzfse] [--block SIZE] [--threads N]")
+        raise SystemExit("usage: encode.py SRCDIR OUT.aar [--alg raw|lzfse|zlib] [--block SIZE] [--threads N]")
+    magics = {"lzfse": b"pbze", "zlib": b"pbzz"}
+    if alg not in ("raw",) + tuple(magics):
+        raise SystemExit("unsupported alg %r (parked: lzma lz4 lzraven lzbitmap)" % alg)
     inner = build_inner(os.fsencode(src))
-    data = inner if alg == "raw" else wrap_pbze(inner, blocksize=block)
+    data = inner if alg == "raw" else wrap_pbze(inner, magic=magics[alg], blocksize=block)
     with open(out, "wb") as f:
         f.write(data)
 
