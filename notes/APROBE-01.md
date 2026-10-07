@@ -8,7 +8,7 @@ Notation: P# = probe id. Passwords/keys: `testpw32....` (38ch), `test-password-f
 
 | prof | encrypt creds | decrypt creds | size@16B/-a none |
 |---|---|---|---|
-| 0 signed | -sign-priv PEM | -sign-pub PEM (nokey: `-sign-pub is required`) | 18796 |
+| 0 signed | -sign-priv PEM (sealed) or -sign-pub only (UNSIGNED, null sig) | -sign-pub PEM (nokey: `-sign-pub is required`; unsigned: `0xde13d800 Invalid signature` exit 1; `aea sign` seals -> MATCH) | 18796 |
 | 1 symmetric | -key file | -key file / -key-value `hex:`/`base64:` (bare/0x REJECT `Error parsing key`) | 18636 |
 | 2 sym+sign | -key + -sign-priv (else `Invalid options for profile`) | -key + -sign-pub | 18796 |
 | 3 ecdhe | -recipient-pub PEM (else `-recipient-pub is required`) | -recipient-priv PEM | 18701 |
