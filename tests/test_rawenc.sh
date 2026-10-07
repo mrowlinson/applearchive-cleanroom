@@ -71,15 +71,15 @@ if [ "${RUN_BIG:-0}" = "1" ]; then
   BW=/Volumes/NVME/applearchive-cleanroom-ws/tmp/bigcell.$$; rm -rf "$BW"; mkdir -p "$BW/in"
   truncate -s 4831838208 "$BW/in/big"; touch -d '2001-02-03 04:05:06' "$BW/in/big" "$BW/in"
   "$ORACLE" archive -a raw -t 1 -d "$BW/in" -o "$BW/c13.expect.aar" 2>"$W/c13.err" || { echo "FAIL c13 oracle-exit=$?"; fail=1; }
-  python3 "$ROOT/src/rawenc.py" "$BW/in" "$BW/c13.got.aar" 2>>"$W/c13.err" || { echo "FAIL c13 impl-exit=$?"; fail=1; }
+  $_IMP "$BW/in" "$BW/c13.got.aar" --alg raw 2>>"$W/c13.err" || { echo "FAIL c13 impl-exit=$?"; fail=1; }
   if cmp -s "$BW/c13.expect.aar" "$BW/c13.got.aar"; then echo "PASS c13 bytes=$(stat -f %z "$BW/c13.got.aar") sha=$(shasum -a 256 "$BW/c13.got.aar" | cut -c1-16)"; else echo "FAIL c13"; fail=1; fi
   rm -rf "$BW"
 else
   echo "SKIP c13 (RUN_BIG=1 to run)"
 fi
 # c11 live unix socket (compare-only; short path for AF_UNIX limit)
-python3 - "$W" "$ROOT" "$ORACLE" <<'EOF'
-import os, socket, subprocess, sys
+C11_IMP="$_IMP" python3 - "$W" "$ROOT" "$ORACLE" <<'EOF'
+import os, shlex, socket, subprocess, sys
 W, ROOT, ORACLE = sys.argv[1], sys.argv[2], sys.argv[3]
 d = os.path.join(os.environ.get("TMPDIR", "/tmp"), "sockcell.%d" % os.getpid())
 os.makedirs(d, exist_ok=True)
@@ -88,7 +88,7 @@ try: os.unlink(p)
 except OSError: pass
 s = socket.socket(socket.AF_UNIX); s.bind(p)
 r1 = subprocess.run([ORACLE, "archive", "-a", "raw", "-t", "1", "-d", d, "-o", W + "/c11.expect.aar"], capture_output=True)
-r2 = subprocess.run(["python3", ROOT + "/src/rawenc.py", d, W + "/c11.got.aar"], capture_output=True)
+r2 = subprocess.run(shlex.split(os.environ["C11_IMP"]) + [d, W + "/c11.got.aar", "--alg", "raw"], capture_output=True)
 s.close()
 e = open(W + "/c11.expect.aar", "rb").read(); g = open(W + "/c11.got.aar", "rb").read()
 print(("PASS" if (r1.returncode == 0 and e == g) else "FAIL") + " c11 bytes=%d" % len(g))
