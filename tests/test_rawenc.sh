@@ -48,6 +48,36 @@ mk c7; mkdir -p "$W/in/c7/sub"
 printf 'live1' > "$W/in/c7/b.txt"; printf 'live2' > "$W/in/c7/sub/a.txt"; ln -s b.txt "$W/in/c7/z"
 # c8 adversarial order: created z,m,a (reverse); oracle must emit sorted
 mk c8; printf '1' > "$W/in/c8/zebra"; printf '2' > "$W/in/c8/mike"; printf '3' > "$W/in/c8/apple"; fix "$W/in/c8"
-for c in c1 c2 c3 c4 c5 c6 c7 c8; do cell $c; done
-[ $fail -eq 0 ] && echo RAWENC-GREEN || echo RAWENC-RED
+# c9 odd modes + flags: 0600, setuid 4755, sticky subdir, UF_HIDDEN
+# (MOD'1' unreachable: any readable file/listable dir has bits >0xFF;
+#  width-1 covered by GID/FLG cells. unreadable input -> oracle exit 1
+#  "Archive encoding failed", observed, not a cell.)
+mk c9; printf 'm' > "$W/in/c9/tiny"; chmod 0600 "$W/in/c9/tiny"
+printf 's' > "$W/in/c9/suid"; chmod 4755 "$W/in/c9/suid"
+mkdir -p "$W/in/c9/stick"; chmod 1755 "$W/in/c9/stick"
+printf 'h' > "$W/in/c9/hid"; chflags hidden "$W/in/c9/hid"
+fix "$W/in/c9"
+# c10 non-ASCII symlink + xattr order (created zzz first, aaa second)
+mk c10; printf 'U' > "$W/in/c10/réal.txt"; ln -s "réal.txt" "$W/in/c10/liën.txt"
+printf 'X' > "$W/in/c10/f"; xattr -w user.zzz FIRST "$W/in/c10/f"; xattr -w user.aaa SECOND "$W/in/c10/f"
+fix "$W/in/c10"
+for c in c1 c2 c3 c4 c5 c6 c7 c8 c9 c10; do cell $c; done
+# c11 live unix socket (compare-only; short path for AF_UNIX limit)
+python3 - "$W" "$ROOT" "$ORACLE" <<'EOF'
+import os, socket, subprocess, sys
+W, ROOT, ORACLE = sys.argv[1], sys.argv[2], sys.argv[3]
+d = os.path.join(os.environ.get("TMPDIR", "/tmp"), "sockcell.%d" % os.getpid())
+os.makedirs(d, exist_ok=True)
+p = os.path.join(d, "sk")
+try: os.unlink(p)
+except OSError: pass
+s = socket.socket(socket.AF_UNIX); s.bind(p)
+r1 = subprocess.run([ORACLE, "archive", "-a", "raw", "-t", "1", "-d", d, "-o", W + "/c11.expect.aar"], capture_output=True)
+r2 = subprocess.run(["python3", ROOT + "/src/rawenc.py", d, W + "/c11.got.aar"], capture_output=True)
+s.close()
+e = open(W + "/c11.expect.aar", "rb").read(); g = open(W + "/c11.got.aar", "rb").read()
+print(("PASS" if (r1.returncode == 0 and e == g) else "FAIL") + " c11 bytes=%d" % len(g))
+sys.exit(0 if (r1.returncode == 0 and e == g) else 1)
+EOF
+[ $? -ne 0 ] && fail=1; [ $fail -eq 0 ] && echo RAWENC-GREEN || echo RAWENC-RED
 exit $fail

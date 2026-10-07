@@ -81,6 +81,14 @@ def crtime_ns(pathb, nofollow):
         return None
 
 
+def put_int(buf, key, val):
+    if val <= 0xFF:
+        return buf + key + b"1" + bytes([val])
+    if val <= 0xFFFF:
+        return buf + key + b"2" + val.to_bytes(2, "little")
+    return buf + key + b"4" + val.to_bytes(4, "little")
+
+
 def entry(hdr, payloads):
     hdrsize = 6 + len(hdr)
     return b"AA01" + hdrsize.to_bytes(2, "little") + hdr + b"".join(payloads)
@@ -94,10 +102,12 @@ def encode_entry(rel, st, typ):
     if typ == b"L":
         tgt = os.readlink(os.path.join(ROOTB, rel))
         h += b"LNKP" + len(tgt).to_bytes(2, "little") + tgt
-    h += b"UID2" + (st.st_uid & 0xFFFF).to_bytes(2, "little")
-    h += b"GID1" + bytes([st.st_gid & 0xFF])
-    h += b"MOD2" + (st.st_mode & 0x0FFF).to_bytes(2, "little")
-    h += b"FLG1\x00"
+    if typ in (b"B", b"C"):
+        h = put_int(h, b"DEV", st.st_rdev & 0xFFFFFFFF)
+    h = put_int(h, b"UID", st.st_uid)
+    h = put_int(h, b"GID", st.st_gid)
+    h = put_int(h, b"MOD", st.st_mode & 0x0FFF)
+    h = put_int(h, b"FLG", st.st_flags)
     full = os.path.join(ROOTB, rel)
     cns = crtime_ns(full, typ == b"L")
     if cns is None:  # no crtime (non-Apple FS): fall back to mtime
@@ -113,13 +123,14 @@ def encode_entry(rel, st, typ):
         else:
             h += b"DATB" + len(data).to_bytes(4, "little")
         payloads.append(data)
-    recs = xat_records(full, typ == b"L")
-    xat = b""
-    for nm, val in recs:
-        rec = len(nm) + 1 + len(val) + 4
-        xat += rec.to_bytes(4, "little") + nm + b"\x00" + val
-    h += b"XATA" + len(xat).to_bytes(2, "little")
-    payloads.append(xat)
+    if typ in (b"D", b"F", b"L"):
+        recs = xat_records(full, typ == b"L")
+        xat = b""
+        for nm, val in recs:
+            rec = len(nm) + 1 + len(val) + 4
+            xat += rec.to_bytes(4, "little") + nm + b"\x00" + val
+        h += b"XATA" + len(xat).to_bytes(2, "little")
+        payloads.append(xat)
     return entry(h, payloads)
 
 
@@ -141,7 +152,13 @@ def walk(dirb, relb):
             out.extend(walk(fb, rb))
         elif _s.S_ISREG(st.st_mode):
             out.append(encode_entry(rb, st, b"F"))
-        # fifo/socket/device: UNRESOLVED, skipped (oracle blocks on fifo)
+        elif _s.S_ISBLK(st.st_mode):
+            out.append(encode_entry(rb, st, b"B"))
+        elif _s.S_ISCHR(st.st_mode):
+            out.append(encode_entry(rb, st, b"C"))
+        elif _s.S_ISSOCK(st.st_mode):
+            out.append(encode_entry(rb, st, b"S"))
+        # fifo: oracle HANGS reading it (ruling-grade negative); skipped.
     return out
 
 
