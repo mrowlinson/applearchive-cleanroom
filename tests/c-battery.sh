@@ -103,6 +103,48 @@ def part(root):
 sys.exit(0 if part(sys.argv[1]) == part(sys.argv[2]) else 1)
 EOF
 
+echo "== cell special-types =="
+mkdir -p "$WORK/ssrc"
+python3 -c "import socket; s=socket.socket(socket.AF_UNIX); s.bind('$WORK/ssrc/sock.s'); s.close()" || die "socket mksock"
+printf 'keepme\n' > "$WORK/ssrc/keep.txt"
+sh "$ADAPTER" aar-encode --alg lzfse --threads 1 "$WORK/ssrc" "$WORK/sk.aar" >/dev/null 2>&1 || die "sk encode"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/sk.aar" "$WORK/o-sk" >/dev/null 2>&1 || ORC=$?
+CRC=0; "$AAD" "$WORK/sk.aar" "$WORK/c-sk" 2>/dev/null || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "sk-exit" || fail "sk-exit"
+diff -r "$WORK/o-sk" "$WORK/c-sk" >/dev/null 2>&1 && pass "sk-tree" || fail "sk-tree"
+python3 - "$ADAPTER" "$V/aar/fifo-mixed.aar" "$WORK/o-ff" <<'EOF' >/dev/null 2>&1 || true
+import subprocess, sys
+try:
+    subprocess.run(["sh", sys.argv[1], "aar-decode", sys.argv[2], sys.argv[3]], capture_output=True, timeout=30)
+except subprocess.TimeoutExpired:
+    pass
+EOF
+if "$AAD" "$V/aar/fifo-mixed.aar" "$WORK/c-ff" 2>/dev/null; then pass "ff-exit"; else fail "ff-exit"; fi
+python3 - "$WORK/o-ff" "$WORK/c-ff" <<'EOF' >/dev/null 2>&1 && pass "ff-tree" || fail "ff-tree"
+import os, stat, sys
+def sig(root):
+    d = {}
+    for dp, dn, fn in os.walk(root):
+        for n in sorted(dn + fn):
+            p = os.path.join(dp, n); s = os.lstat(p); m = s.st_mode
+            ft = "d" if stat.S_ISDIR(m) else "f" if stat.S_ISREG(m) else "l" if stat.S_ISLNK(m) else "p" if stat.S_ISFIFO(m) else "s" if stat.S_ISSOCK(m) else "?"
+            body = open(p, "rb").read() if stat.S_ISREG(m) else None
+            d[os.path.relpath(p, root)] = (ft, oct(stat.S_IMODE(m)), body)
+    assert any(v[0] == "p" for v in sig(sys.argv[1]).values()), "oracle tree lacks fifo"
+    sys.exit(0 if sig(sys.argv[1]) == sig(sys.argv[2]) else 1)
+EOF
+python3 - "$V/aar/hello-raw.aar" "$WORK/craft-Z.aar" <<'EOF' >/dev/null 2>&1 || die "craft-Z"
+import sys
+d = bytearray(open(sys.argv[1], "rb").read())
+i = d.find(b"TYP\x31F")
+assert i >= 0
+d[i + 4] = ord("Z")
+open(sys.argv[2], "wb").write(bytes(d))
+EOF
+if sh "$ADAPTER" aar-decode "$WORK/craft-Z.aar" "$WORK/o-cz" >/dev/null 2>&1; then pass "cz-orc"; else fail "cz-orc"; fi
+if "$AAD" "$WORK/craft-Z.aar" "$WORK/c-cz" 2>/dev/null; then pass "cz-exit"; else fail "cz-exit"; fi
+diff -r "$WORK/o-cz" "$WORK/c-cz" >/dev/null 2>&1 && pass "cz-tree" || fail "cz-tree"
+
 echo "== cell errors =="
 head -c 100 /dev/urandom > "$WORK/corrupt.aar"
 "$AAD" "$WORK/corrupt.aar" "$WORK/c-cor" 2>/dev/null && fail "corrupt-exit" || pass "corrupt-exit"

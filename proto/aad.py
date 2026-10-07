@@ -250,6 +250,7 @@ def extract(items, root):
     os.makedirs(root, exist_ok=True)
     deferred = []
     hlc_first = {}
+    failed = 0
     for entries, blobs in items:
         _, typ = _get(entries, b"TYP")
         _, pat = _get(entries, b"PAT")
@@ -283,10 +284,28 @@ def extract(items, root):
                 os.remove(target)
             os.symlink(lnk.decode("utf-8", "surrogateescape"), target)
             apply_meta(target, entries, blobs, True)
+        elif typ == ord("P"):
+            parent = os.path.dirname(target)
+            if parent:
+                os.makedirs(parent, exist_ok=True)
+            if os.path.lexists(target):
+                os.remove(target)
+            os.mkfifo(target, 0o600)
+            apply_meta(target, entries, blobs, False)
+        elif typ == ord("S"):
+            print("aad: skipping socket %r (not implemented)" % pat,
+                  file=sys.stderr)
+            failed += 1
+        elif typ == ord("B") or typ == ord("C"):
+            _, dev = _get(entries, b"DEV")
+            if dev is None:
+                raise FmtErr("device entry has no DEV field: %r" % pat)
+            raise FmtErr("device entry with DEV (unprobed, needs root)")
         else:
-            raise FmtErr("entry type %r" % typ)
+            pass  # unknown TYP: silent skip (oracle parity, measured)
     for target, entries, blobs in reversed(deferred):
         apply_meta(target, entries, blobs, False)
+    return 1 if failed else 0
 
 
 def main(argv):
@@ -295,10 +314,14 @@ def main(argv):
         return 2
     with open(argv[1], "rb") as f:
         data = f.read()
-    inner, metas = parse_chain(data)
-    print("blocks:", len(metas), metas[0] if metas else {}, file=sys.stderr)
-    extract(parse_inner(inner), argv[2])
-    return 0
+    try:
+        inner, metas = parse_chain(data)
+        print("blocks:", len(metas), metas[0] if metas else {},
+              file=sys.stderr)
+        return extract(parse_inner(inner), argv[2])
+    except FmtErr as e:
+        print("aad: %s" % e, file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":

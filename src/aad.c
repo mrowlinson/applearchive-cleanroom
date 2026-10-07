@@ -403,6 +403,7 @@ static int extract(const Item *items, size_t nitems, const char *root) {
     typedef struct { unsigned long long grp; char path[4096]; } Hlc;
     Hlc *hlcs = malloc(nitems * sizeof *hlcs);
     size_t nhlcs = 0;
+    unsigned fails = 0;
     int rc = -1;
     for (size_t k = 0; k < nitems; k++) {
         const Item *it = &items[k];
@@ -458,14 +459,31 @@ static int extract(const Item *items, size_t nitems, const char *root) {
                 FAIL("symlink %s\n", target); goto out;
             }
             if (apply_meta(target, it, 1)) goto out;
-        } else {
-            FAIL("entry type %llu\n", (unsigned long long)t->num);
+        } else if (t->num == 'P') {
+            char *sl = strrchr(target, '/');
+            if (sl) { *sl = 0; if (mkdirs(target)) goto out; *sl = '/'; }
+            unlink(target);
+            if (mkfifo(target, 0600)) {
+                FAIL("mkfifo %s\n", target); goto out;
+            }
+            if (apply_meta(target, it, 0)) goto out;
+        } else if (t->num == 'S') {
+            FAIL("skipping socket %s (not implemented)\n", target);
+            fails++;
+        } else if (t->num == 'B' || t->num == 'C') {
+            if (!find_ent(it, "DEV")) {
+                FAIL("device entry has no DEV field: %s\n", target);
+                goto out;
+            }
+            FAIL("device entry with DEV (unprobed)\n");
             goto out;
+        } else {
+            /* unknown TYP: silent skip (oracle parity, measured) */
         }
     }
     for (size_t i = ndefs; i-- > 0;)
         if (apply_meta(defs[i].path, &items[defs[i].idx], 0)) goto out;
-    rc = 0;
+    rc = fails ? 1 : 0;
 out:
     free(defs);
     free(hlcs);

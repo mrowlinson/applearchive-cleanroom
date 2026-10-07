@@ -11,3 +11,4 @@ e5a281529961b850da989a8bf68ebb96b914abaa524e744e39c233b1556da826  ./aar/hello-lz
 630dcd2966c4336691125448bbb25b4ff412a49c732db2c8abc1b8581bd710dd  ./aea/testkey.bin
 73adf39150fced7d32afc50288b92a6386400a671fab8092e957d8e9f20cd2d6  ./input/hello/greet.txt
 ccca685709aa9e68d44ebb8e4aa02743fbf0c32b65ab5ac93ab6b1fd3d7ec7aa  ./input/hello/repeat.txt
+2a3e4217604954010dc3fb5493f68a2337e3a27e131f686f3dbf756253d6f5e9  ./aar/fifo-mixed.aar
