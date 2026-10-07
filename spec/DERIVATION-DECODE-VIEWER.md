@@ -51,3 +51,21 @@ pre-edit: docs/RECON-DECODE.md sha256:77ea0d30e3a3954ed7fe8046a7afae84f00cb98c47
 pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:9dd6426fe02f033f7401bd4547aa4cd4c2aead8137f130985f8008f4dc02b483 bytes:4639
 pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:a963ca81ab48a8ab1c0ba1275bfdbf0778f7301535e73c37a0f8076794b6d6d0 bytes:2688
 post-edit: (recorded at commit; see commit 2nd line stats)
+
+## 2026-10-07 decode-viewer lanes/decode-viewer (entry 2: CR-009/010 + A-007/PRE-002 + VERIFY-7bb7b2b)
+inputs:
+- own-gen big/ probes @ -b 1m/-b 256k/-b 4m + -a raw (inner 3500382B) + extract cmp-clean (WS tmp/decode-viewer-probes)
+- own-gen lzraven tiny/rnd payloads (3-sample bed) + compression_tool decode matrix (lz4 x4, lzraven x7, lzfse x1, lzbitmap x1)
+- quiz-decode Q-007 (read first-hand) + writer 7bb7b2b proto/aad.py (read full 167 ln via git show + ran 5 cases first-hand)
+- https://github.com/lz4/lz4 (curl -I 200) + lib/LICENSE (BSD redistribution text verified)
+not-consulted: SDK header contents, decompiler output (still none), patent contents,
+  reference/port sources, encode-side lanes, writer worktree files (git-show only + black-box runs)
+outputs: +2 clauses (CR-009/010 MEASURED), tag mix total MEASURED 6 / SYMBOL 2 / INFERRED 2;
+  A-007 + PRE-002 + NOTE-06 + VERIFY-7bb7b2b PASS
+findings:
+- multi-block chain EOF-exact x3, unc sums 3500382 exact; stored mixes per-block
+- codec-frame rule: whole-payload oracle decode MATCH (lz4/lzraven/lzfse); lzma raw-XZ
+- proto v1 wall-clean + 3/3 MATCH re-run own; lzraven size fields still unlocated
+pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:dc82ac4077c1ab7162c6b9382cc369726e3c26908e524ca0c04715431aac67ae bytes:7292
+pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:0b7458b886191e2446a3ee9854d71601a2c662dad564ef82354e11e3da46dcc4 bytes:4419
+post-edit: (recorded at commit; see commit 2nd line stats)

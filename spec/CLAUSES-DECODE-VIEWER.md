@@ -75,6 +75,24 @@ verdict: OPEN vs CR-005 (deep: full TLV grammar incl long-form lens, all 23 -h k
 body chain: UID f501 LE u16 = 501 (own uid) + GID 14 = 20 (staff) + MOD ed01 LE = 0x1ed = 493 = 0755 (own umask default) = 3 independent corroborations -> STRONG for (subtype byte, LE value) reading of short int fields. string field PAT carries u16LE len. CTM 12B timestamp shape unparsed (bytes recorded, no claim).
 ```
 
+```
+CR-009 [MEASURED] multi-block chain (12B prefix + N x (16B hdr + payload), EOF-exact)
+stage: bitstream
+artifact: own-gen big/ (3MB zeros + 500KB random; inner 3500382B via -a raw) @ -b 1m/-b 256k/-b 4m (WS tmp/decode-viewer-probes)
+numbers: 3/3 walks EOF-exact; unc sums 3500382 EXACT x3; b1m 4 blocks (505811/759/759/408 comp); b256k 14 blocks (blk0 stored 262144==262144, blk1 240628, blk2..12 300 each, blk13 92510/254); b4m single (3500382/507323)
+verdict: CONFIRM vs CR-006 (single-block = 1-iteration special case); CONFIRM vs CR-007 (stored mixes per-block in chains)
+body: walk rule: off=12; loop {16B hdr zeros+uncBE+zeros+compBE; payload comp bytes; stored iff comp==unc} until off==EOF. zeros MUST be 0; off>EOF or pad = corrupt. blk BE field @8 = blocksize in all 3 (0x100000/0x40000/0x400000 CONFIRMED).
+```
+
+```
+CR-010 [MEASURED] outer payload = complete codec frame (oracle-decodable whole)
+stage: probe
+artifact: vectors/selfgen 4 AAR payloads (lz4/lzraven/lzfse/lzma) + compression_tool (macOS 27.0.1)
+numbers: 4 decoding rules verified: lz4 full-payload -a lz4 MATCH; lzraven full-payload -a lzraven MATCH (6/6 off>0 slices fail); lzfse full-payload -a lzfse MATCH; lzma payload = raw XZ magic (no frame). all MATCH = cmp vs hello-raw.aar
+verdict: CONFIRM vs compression_tool man digest (per-alg decode exists); OPEN sub-parse: lz4 inner XLE32 = comp-16 unexplained; lzraven size fields unlocated (3-sample bed filed, A-007); lzbitmap framing unprobed (writer has OSS path)
+body: writer oracle cross-check per codec: slice @28..28+comp, compression_tool -decode -a <alg>, cmp vs raw. lz4 sub-frame bytes: bv41 + uncLE32 + XLE32 + stream@12 (f7 2e + literals); raw-LZ4 reading of stream INFERRED:MODERATE (lz4_raw slice fails = quirk OPEN).
+```
+
 ## Clause index
 
 | ID | Tag | Claim | Verdict |
@@ -87,6 +105,8 @@ body chain: UID f501 LE u16 = 501 (own uid) + GID 14 = 20 (staff) + MOD ed01 LE 
 | CR-006 | MEASURED | outer single-block layout | CONFIRM |
 | CR-007 | MEASURED | stored-block rule | CONFIRM + trigger OPEN |
 | CR-008 | INFERRED:STRONG | inner TLV field parse | CONFIRM + grammar OPEN |
+| CR-009 | MEASURED | multi-block chain | CONFIRM |
+| CR-010 | MEASURED | payload = codec frame | CONFIRM + sub-parse OPEN |
 
 Status of every clause: UNPROVEN until an implementation written ONLY from
 this spec handles vendor real output.
