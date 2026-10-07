@@ -105,6 +105,22 @@ for a in lzraven lzbitmap; do
   chk "m-rb-$a-r1k" sha "$h" "$s"
   set -- $(AAR "m-rb-$a-z100k" rb-z100k "$a"); chk "m-rb-$a-z100k" sha "$3" "$2"
 done
+FLIP() { # tag nbytes alg : rule + sha pins (random seed42 input, NOTE-w2s2-3/4 beds)
+  tag=$1; n=$2; alg=$3
+  mk1file "fl$n" "$n" seed42
+  set -- $(AAR "m-$tag-raw" "fl$n" raw)
+  set -- $(AAR "m-$tag" "fl$n" "$alg"); s=$2 h=$3
+  chk "m-$tag-rule" str "$(rule_of "m-$tag" "$WORK/m-$tag-raw.aar")" "$s"
+  chk "m-$tag" sha "$h" "$s"
+}
+FLIP fl-lzma170 170 lzma;  FLIP fl-lzma171 171 lzma
+FLIP fl-lz4-62 62 lz4;     FLIP fl-lz4-63 63 lz4
+FLIP fl-lz4-274 274 lz4;   FLIP fl-lz4-275 275 lz4
+FLIP fl-zlib610 610 zlib;  FLIP fl-zlib611 611 zlib
+FLIP fl-lzfse658 658 lzfse; FLIP fl-lzfse659 659 lzfse
+FLIP fl-rav287 287 lzraven; FLIP fl-rav288 288 lzraven
+FLIP fl-bm50 50 lzbitmap;  FLIP fl-bm51 51 lzbitmap
+FLIP fl-bm70 70 lzbitmap;  FLIP fl-bm71 71 lzbitmap
 echo "== AEA =="
 AEA=${AEA:-/usr/bin/aea}
 PW="0123456789abcdef0123456789abcdef"
