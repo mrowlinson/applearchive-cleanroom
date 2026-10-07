@@ -1,10 +1,13 @@
 #!/bin/sh
 # tests/gate-tip.sh <rev> <ws-outdir> — sweep independent full-gate battery.
 # legs: HYGIENE (PARENT-002 artifacts) / BATTERIES (rawenc/pbze/units/smoke
-# as present in tip) / PINS (vectors/*-PINS.csv vs fresh got.aar) /
+# as present in tip) / SMOKE-IMPL* (smoke via committed impl adapters) /
+# PINS (vectors/*-PINS.csv vs fresh got.aar, stale-name detection) /
 # CONTAM (vendor/disasm grep + Mach-O scan) / OSS (PARENT-003 new-dep scan)
 # / ADOPT (A-1 harness pins vs lanes/harness-oracle, best-effort).
 # exit 0 GATE-PASS / 1 GATE-FAIL. all work under /Volumes/NVME only.
+# v2: PIN-STALE-NAME + UNPINNED-AAR, SMOKE-IMPL/IMPL2, committed-.aea WARN,
+# OUTER2 battery + outer2 pins, dual-suffix (.got.aar/.got.aea) pin legs.
 set -u
 REV=${1:?usage: gate-tip.sh <rev> <ws-outdir>}
 OUT=${2:?usage: gate-tip.sh <rev> <ws-outdir>}
@@ -22,6 +25,8 @@ if [ -n "$ARTS" ]; then fail=1; say HYGIENE "FAIL artifacts:"; echo "$ARTS" | se
 else say HYGIENE "PASS no-artifacts"; fi
 GI=$(git -C "$REPO" show "$REV:.gitignore" 2>/dev/null || true)
 case "$GI" in *__pycache__*|*.pyc*) say GITIGNORE "PASS pyc-rules";; *) say GITIGNORE "WARN no-pyc-rules";; esac
+AEAS=$(git -C "$REPO" ls-tree -r --name-only "$REV" | grep -E '\.aea$' || true)
+if [ -n "$AEAS" ]; then say AEA-BIN "WARN committed-aea:"; echo "$AEAS" | sed 's/^/  /'; fi
 
 # 2. CONTAM: vendor/disasm markers in tip text + Mach-O scan of extract
 CPAT='ghidra|binary ninja|hopper|ida pro|\.framework/|PrivateFrameworks|LC_SEGMENT|__TEXT,|decompile|disassembl'
@@ -42,24 +47,44 @@ runb() { # $1=leg $2=script-path-in-tree $3=invoke...
 runb RAWENC tests/test_rawenc.sh sh "$OUT/tree/tests/test_rawenc.sh" "$OUT/work/rawenc"
 runb PBZE tests/test_pbze.sh sh "$OUT/tree/tests/test_pbze.sh" "$OUT/work/pbze"
 runb SMOKE tests/smoke.sh sh "$OUT/tree/tests/smoke.sh" "$OUT/work/smoke"
+runb OUTER2 tests/test_outer2.sh sh "$OUT/tree/tests/test_outer2.sh" "$OUT/work/outer2"
+runb SMOKE-IMPL harness/impl-adapter.sh env BACKEND="$OUT/tree/harness/impl-adapter.sh" sh "$OUT/tree/tests/smoke.sh" "$OUT/work/smoke-impl"
+runb SMOKE-IMPL2 harness/impl2-adapter.sh env BACKEND="$OUT/tree/harness/impl2-adapter.sh" sh "$OUT/tree/tests/smoke.sh" "$OUT/work/smoke-impl2"
 runb UNITS tests/test_units.py python3 "$OUT/tree/tests/test_units.py"
 
 # 4. PINS: each csv row vs fresh got.aar (full sha256 + bytes)
 pinleg() { # $1=csv-in-tree $2=workdir $3=leg
   [ -f "$OUT/tree/$1" ] || { say "$3" "SKIP no-csv"; return; }
   n=0; bad=0
-  while IFS=, read -r name sha bytes; do
+  while IFS=, read -r name sha bytes rest; do
     case "$name" in ''|'#'*) continue;; esac
-    n=$((n+1)); f="$2/$name.got.aar"
+    name=$(printf '%s' "$name" | tr -d '\r'); sha=$(printf '%s' "$sha" | tr -d '\r'); bytes=$(printf '%s' "$bytes" | tr -d '\r')
+    n=$((n+1)); f="$2/$name.got.aar"; [ -f "$f" ] || f="$2/$name.got.aea"
     if [ -f "$f" ]; then
       got=$(shasum -a 256 "$f" | cut -d' ' -f1); sz=$(stat -f %z "$f")
       [ "$got" = "$sha" ] && [ "$sz" = "$bytes" ] || { bad=$((bad+1)); echo "  PIN-MISMATCH $name got=$got/$sz want=$sha/$bytes"; }
-    else bad=$((bad+1)); echo "  PIN-MISSING-AAR $name"; fi
+    else
+      cands=$(ls "$2/$name."*.got.aar "$2/$name."*.got.aea 2>/dev/null | sed "s|^$2/||" | tr '\n' ' ')
+      bad=$((bad+1))
+      if [ -n "$cands" ]; then echo "  PIN-STALE-NAME $name (no such artifact; candidates: $cands)";
+      else echo "  PIN-MISSING-AAR $name"; fi
+    fi
   done < "$OUT/tree/$1"
+  for af in "$2"/*.got.aar "$2"/*.got.aea; do
+    [ -e "$af" ] || continue
+    base=$(basename "$af" .got.aar); hit=0
+    while IFS=, read -r pname prest; do
+      case "$pname" in ''|'#'*) continue;; esac
+      pname=$(printf '%s' "$pname" | tr -d '\r')
+      case "$base" in "$pname"|"$pname".*) hit=1; break;; esac
+    done < "$OUT/tree/$1"
+    [ "$hit" -eq 1 ] || echo "  UNPINNED-AAR $base (no csv row; ok iff live compare-only)"
+  done
   [ "$bad" -eq 0 ] && say "$3" "PASS $n/$n" || { fail=1; say "$3" "FAIL bad=$bad/$n"; }
 }
 pinleg vectors/rawenc-PINS.csv "$OUT/work/rawenc" PINS-RAWENC
 pinleg vectors/pbze-PINS.csv "$OUT/work/pbze" PINS-PBZE
+pinleg vectors/outer2-PINS.csv "$OUT/work/outer2" PINS-OUTER2
 
 # 5. OSS: third-party lib loads in src+harness (PARENT-003 gate 3).
 # system libc (/usr/lib, /System) + bare ctypes stdlib use are NOT deps.
