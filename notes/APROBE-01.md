@@ -88,3 +88,4 @@ Encrypt adds `padding:` line. Encrypt to /dev/null fails (temp+rename).
 - Fresh seed 1234: 4 sizes x {p1/lzfse/sha, p5/lzbitmap/none, p5/lzraven/murmur64} = 12 MATCH.
 - v2 adds LZR_BIN export (v1 lacked it: lzraven never ran in wide) + first murmur64 wide cells.
 - 2-cluster: 269MB p5/none/sha256 OVH 37084 = 18620+18464 (2nd cluster hdr); proto MATCH 0.8s.
+- SPLIT RULE EXACT own (checksum-none, -a none): 1 cluster iff IN <= 268435456 (256MiB); 268435457 -> 2 clusters. Points: 200/255/256MB OVH 10428 (1 cl); 256MiB+1/257/260MB OVH 20700 (2 cl). Fits segcount>256 @1MB segs. (Q-015 Q1 self-closed; Q2 header-walk still open for viewer.)
