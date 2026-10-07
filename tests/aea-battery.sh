@@ -32,6 +32,8 @@ oracmp() { # name oracle-decrypt-args... (uses $EXP)
 EXP=$REPO/vectors/selfgen/aar/hello-raw.aar
 cell pin-p1 --key "$REPO/vectors/selfgen/aea/testkey.bin" -i "$REPO/vectors/selfgen/aea/hello-p1-nopad.aea"
 cell pin-p5 --password 'test-password-fixture' -i "$REPO/vectors/selfgen/aea/hello-p5.aea"
+oracmp pin-p1 -key "$REPO/vectors/selfgen/aea/testkey.bin" -i "$REPO/vectors/selfgen/aea/hello-p1-nopad.aea"
+oracmp pin-p5 -password-value 'test-password-fixture' -i "$REPO/vectors/selfgen/aea/hello-p5.aea"
 
 # 3. selfgen profiles 0-5 (fixed inputs; oracle encrypt, proto cmp)
 printf 'hello aea world\n' > "$WORK/msg.txt"
@@ -204,6 +206,7 @@ if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-iminus"; else bad "err-iminus"
 aea encrypt -profile 5 -password-value "$PW" -a lzma -t 1 -padding none -i "$WORK/bigtext.bin" -o "$WORK/thr1.aea" 2>/dev/null
 EXP=$WORK/bigtext.bin
 cell threads-t1 --password "$PW" -i "$WORK/thr1.aea"
+oracmp threads-t1 -password-value "$PW" -i "$WORK/thr1.aea"
 
 # 9. error-class parity (exit codes; both sides must reject)
 if aea decrypt -password-value WRONG -i "$WORK/p5.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
@@ -260,6 +263,7 @@ cell range-auth --password "$PW" --range-offset 0 --range-size 5 -i "$WORK/auth2
 cp "$WORK/p0u.aea" "$WORK/p0s.aea" && aea sign -sign-priv "$WORK/ec-priv.pem" -o "$WORK/p0s.aea" 2>/dev/null
 EXP=$WORK/msg.txt
 cell sign-later --sign-pub "$WORK/ec-pub.pem" -i "$WORK/p0s.aea"
+oracmp sign-later -sign-pub "$WORK/ec-pub.pem" -i "$WORK/p0s.aea"
 head -c 31 /dev/urandom > "$WORK/key31.bin"; head -c 33 /dev/urandom > "$WORK/key33.bin"
 if aea decrypt -key "$WORK/key31.bin" -i "$WORK/p1.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
 if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --key "$WORK/key31.bin" -i "$WORK/p1.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
