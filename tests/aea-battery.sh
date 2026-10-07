@@ -204,6 +204,19 @@ openssl ecparam -name prime256v1 -genkey -noout -out "$WORK/ec2-priv.pem" 2>/dev
 openssl ec -in "$WORK/ec2-priv.pem" -pubout -out "$WORK/ec2-pub.pem" 2>/dev/null
 if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --key "$WORK/key32.bin" --sign-pub "$WORK/ec2-pub.pem" -i "$WORK/p2.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-wrongsign"; else ok "err-wrongsign"; fi
 if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --recipient-priv "$WORK/ec-priv.pem" --sign-pub "$WORK/ec2-pub.pem" -i "$WORK/p4.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-p4wrongsign"; else ok "err-p4wrongsign"; fi
+# 9b. EC-curve parity: oracle P-256-only (encrypt rejects 384/521 pubs,
+# decrypt exits 1 on 384/521 creds); proto exits 1 too. APROBE-01.
+for spec in 384:secp384r1 521:secp521r1; do
+  tag=${spec%%:*}; curve=${spec##*:}
+  openssl ecparam -name $curve -genkey -noout -out "$WORK/ec-$tag-priv.pem" 2>/dev/null
+  openssl ec -in "$WORK/ec-$tag-priv.pem" -pubout -out "$WORK/ec-$tag-pub.pem" 2>/dev/null
+  if aea decrypt -recipient-priv "$WORK/ec-$tag-priv.pem" -i "$WORK/p3.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
+  if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --recipient-priv "$WORK/ec-$tag-priv.pem" -i "$WORK/p3.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
+  if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-rec-$tag"; else bad "err-rec-$tag"; fi
+  if aea decrypt -sign-pub "$WORK/ec-$tag-pub.pem" -i "$WORK/p0.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
+  if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --sign-pub "$WORK/ec-$tag-pub.pem" -i "$WORK/p0.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
+  if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-sign-$tag"; else bad "err-sign-$tag"; fi
+done
 aea encrypt -profile 0 -sign-pub "$WORK/ec-pub.pem" -a none -padding none -i "$WORK/msg.txt" -o "$WORK/p0u.aea" 2>/dev/null
 if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --sign-pub "$WORK/ec-pub.pem" -i "$WORK/p0u.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-unsigned"; else ok "err-unsigned"; fi
 OIDU=$(aea id -i "$WORK/p0u.aea" 2>/dev/null)

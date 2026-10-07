@@ -81,6 +81,7 @@ Encrypt adds `padding:` line. Encrypt to /dev/null fails (temp+rename).
 - auth-data>0 MAPPED own: prologue = 156+authsize (2-blob auth12B flips unlock/decrypt @167/168); kv-form = u32LE pair + key\0+value (own-confirm FORMAT.md); both MATCH in proto.
 - auth edges own: 3-blob MATCH (cell auth-raw3); EMPTY auth-data-value REJECTED at encrypt (`Invalid auth-data-value`, raw + kv). Empty password REJECTED at encrypt (`Invalid password / Error loading credentials`).
 - `-keychain` flows (OUT of scope, touches system store). lzvn `f` (no oracle -a flag; skip).
+- EC curves: oracle P-256-ONLY. Encrypt p3 with P-384/P-521 pub -> `Error parsing public key file / Error loading recipient_pub key` exit 1. Decrypt p3 with 384/521 priv -> `Error parsing PEM blob 'EC PRIVATE KEY'` exit 1; p0 with 384/521 sign-pub -> exit 1. Proto exits 1 on all four (traceback, polish). Cells err-rec-{384,521} + err-sign-{384,521} pin both-sides-reject.
 
 ## Wide corpus (tests/aea-wide.sh v3, 168/168 WIDE-GREEN)
 
