@@ -99,6 +99,13 @@ if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --sign-pub "$WORK/ec-pub.pem" -i "$W
 cp "$WORK/p0u.aea" "$WORK/p0s.aea" && aea sign -sign-priv "$WORK/ec-priv.pem" -o "$WORK/p0s.aea" 2>/dev/null
 EXP=$WORK/msg.txt
 cell sign-later --sign-pub "$WORK/ec-pub.pem" -i "$WORK/p0s.aea"
+head -c 31 /dev/urandom > "$WORK/key31.bin"; head -c 33 /dev/urandom > "$WORK/key33.bin"
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --key "$WORK/key31.bin" -i "$WORK/p1.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-key31"; else ok "err-key31"; fi
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --key "$WORK/key33.bin" -i "$WORK/p1.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-key33"; else ok "err-key33"; fi
+cp "$WORK/p5.aea" "$WORK/ss3.aea" && printf '\003' | dd of="$WORK/ss3.aea" bs=1 seek=7 conv=notrunc 2>/dev/null
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/ss3.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-strength3"; else ok "err-strength3"; fi
+cp "$WORK/p5.aea" "$WORK/ss9.aea" && printf '\011' | dd of="$WORK/ss9.aea" bs=1 seek=7 conv=notrunc 2>/dev/null
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/ss9.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-strength9"; else ok "err-strength9"; fi
 
 # 10. append
 printf 'APPENDED-DATA-BLOCK' > "$WORK/app-in.bin"
