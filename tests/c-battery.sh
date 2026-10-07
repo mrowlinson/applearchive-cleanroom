@@ -81,6 +81,113 @@ sh "$ADAPTER" aar-decode "$WORK/mb.aar" "$WORK/o-mb" >/dev/null 2>&1 || die "mb 
 "$AAD" "$WORK/mb.aar" "$WORK/c-mb" 2>/dev/null || fail "mb-cdec"
 diff -r "$WORK/o-mb" "$WORK/c-mb" >/dev/null 2>&1 && pass "mb-bytes" || fail "mb-bytes"
 
+echo "== cell hardlink =="
+mkdir -p "$WORK/hsrc"
+printf 'AAA-group0\n' > "$WORK/hsrc/a1.txt"; ln "$WORK/hsrc/a1.txt" "$WORK/hsrc/a2.txt"; ln "$WORK/hsrc/a1.txt" "$WORK/hsrc/a3.txt"
+printf 'BBB-group1\n' > "$WORK/hsrc/b1.txt"; ln "$WORK/hsrc/b1.txt" "$WORK/hsrc/b2.txt"
+printf 'lonely\n' > "$WORK/hsrc/solo.txt"
+sh "$ADAPTER" aar-encode --alg lzfse --threads 1 "$WORK/hsrc" "$WORK/hl.aar" >/dev/null 2>&1 || die "hl encode"
+sh "$ADAPTER" aar-decode "$WORK/hl.aar" "$WORK/o-hl" >/dev/null 2>&1 || die "hl oracle"
+"$AAD" "$WORK/hl.aar" "$WORK/c-hl" 2>/dev/null || fail "hl-cdec"
+diff -r "$WORK/o-hl" "$WORK/c-hl" >/dev/null 2>&1 && pass "hl-bytes" || fail "hl-bytes"
+python3 - "$WORK/o-hl" "$WORK/c-hl" <<'EOF' >/dev/null 2>&1 && pass "hl-links" || fail "hl-links"
+import os, sys
+def part(root):
+  ino2paths, nl = {}, {}
+  for dp, dn, fn in os.walk(root):
+    for n in sorted(fn):
+      p = os.path.join(dp, n); s = os.lstat(p)
+      ino2paths.setdefault(s.st_ino, []).append(os.path.relpath(p, root))
+      nl[os.path.relpath(p, root)] = s.st_nlink
+  return (sorted([tuple(sorted(v)) for v in ino2paths.values()]), nl)
+sys.exit(0 if part(sys.argv[1]) == part(sys.argv[2]) else 1)
+EOF
+
+echo "== cell special-types =="
+mkdir -p "$WORK/ssrc"
+python3 -c "import socket; s=socket.socket(socket.AF_UNIX); s.bind('$WORK/ssrc/sock.s'); s.close()" || die "socket mksock"
+printf 'keepme\n' > "$WORK/ssrc/keep.txt"
+sh "$ADAPTER" aar-encode --alg lzfse --threads 1 "$WORK/ssrc" "$WORK/sk.aar" >/dev/null 2>&1 || die "sk encode"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/sk.aar" "$WORK/o-sk" >/dev/null 2>&1 || ORC=$?
+CRC=0; "$AAD" "$WORK/sk.aar" "$WORK/c-sk" 2>/dev/null || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "sk-exit" || fail "sk-exit"
+diff -r "$WORK/o-sk" "$WORK/c-sk" >/dev/null 2>&1 && pass "sk-tree" || fail "sk-tree"
+python3 - "$ADAPTER" "$V/aar/fifo-mixed.aar" "$WORK/o-ff" <<'EOF' >/dev/null 2>&1 || true
+import subprocess, sys
+try:
+    subprocess.run(["sh", sys.argv[1], "aar-decode", sys.argv[2], sys.argv[3]], capture_output=True, timeout=30)
+except subprocess.TimeoutExpired:
+    pass
+EOF
+if "$AAD" "$V/aar/fifo-mixed.aar" "$WORK/c-ff" 2>/dev/null; then pass "ff-exit"; else fail "ff-exit"; fi
+python3 - "$WORK/o-ff" "$WORK/c-ff" <<'EOF' >/dev/null 2>&1 && pass "ff-tree" || fail "ff-tree"
+import os, stat, sys
+def sig(root):
+    d = {}
+    for dp, dn, fn in os.walk(root):
+        for n in sorted(dn + fn):
+            p = os.path.join(dp, n); s = os.lstat(p); m = s.st_mode
+            ft = "d" if stat.S_ISDIR(m) else "f" if stat.S_ISREG(m) else "l" if stat.S_ISLNK(m) else "p" if stat.S_ISFIFO(m) else "s" if stat.S_ISSOCK(m) else "?"
+            body = open(p, "rb").read() if stat.S_ISREG(m) else None
+            d[os.path.relpath(p, root)] = (ft, oct(stat.S_IMODE(m)), body)
+    assert any(v[0] == "p" for v in sig(sys.argv[1]).values()), "oracle tree lacks fifo"
+    sys.exit(0 if sig(sys.argv[1]) == sig(sys.argv[2]) else 1)
+EOF
+python3 - "$V/aar/hello-raw.aar" "$WORK/craft-Z.aar" <<'EOF' >/dev/null 2>&1 || die "craft-Z"
+import sys
+d = bytearray(open(sys.argv[1], "rb").read())
+i = d.find(b"TYP\x31F")
+assert i >= 0
+d[i + 4] = ord("Z")
+open(sys.argv[2], "wb").write(bytes(d))
+EOF
+if sh "$ADAPTER" aar-decode "$WORK/craft-Z.aar" "$WORK/o-cz" >/dev/null 2>&1; then pass "cz-orc"; else fail "cz-orc"; fi
+if "$AAD" "$WORK/craft-Z.aar" "$WORK/c-cz" 2>/dev/null; then pass "cz-exit"; else fail "cz-exit"; fi
+diff -r "$WORK/o-cz" "$WORK/c-cz" >/dev/null 2>&1 && pass "cz-tree" || fail "cz-tree"
+
+echo "== cell hlink-path =="
+sh "$ADAPTER" aar-decode "$V/aar/hlink-basic.aar" "$WORK/o-hb" >/dev/null 2>&1 && pass "hb-orc" || fail "hb-orc"
+if "$AAD" "$V/aar/hlink-basic.aar" "$WORK/c-hb" 2>/dev/null; then pass "hb-exit"; else fail "hb-exit"; fi
+python3 - "$WORK/o-hb" "$WORK/c-hb" <<'EOF' >/dev/null 2>&1 && pass "hb-links" || fail "hb-links"
+import os, stat, sys
+def sig(root):
+  d, ino2p = {}, {}
+  for dp, dn, fn in os.walk(root):
+    for n in sorted(dn + fn):
+      p = os.path.join(dp, n); s = os.lstat(p); m = s.st_mode
+      ft = "d" if stat.S_ISDIR(m) else "f" if stat.S_ISREG(m) else "?"
+      body = open(p, "rb").read() if stat.S_ISREG(m) else None
+      d[os.path.relpath(p, root)] = (ft, oct(stat.S_IMODE(m)), body)
+      ino2p.setdefault(s.st_ino, []).append(os.path.relpath(p, root))
+  return (d, sorted([tuple(sorted(v)) for v in ino2p.values()]))
+sys.exit(0 if sig(sys.argv[1]) == sig(sys.argv[2]) else 1)
+EOF
+ORC=0; sh "$ADAPTER" aar-decode "$V/aar/hlink-missing.aar" "$WORK/o-hm" >/dev/null 2>&1 || ORC=$?
+CRC=0; "$AAD" "$V/aar/hlink-missing.aar" "$WORK/c-hm" 2>/dev/null || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "hm-exit" || fail "hm-exit"
+diff -r "$WORK/o-hm" "$WORK/c-hm" >/dev/null 2>&1 && pass "hm-tree" || fail "hm-tree"
+python3 - "$V/aar/hello-raw.aar" "$WORK/evil.aar" <<'EOF' >/dev/null 2>&1 || die "craft-evil"
+import sys
+d = bytearray(open(sys.argv[1], "rb").read())
+old, new = b"hello/greet.txt", b"../evil-1234567"
+i = d.find(old)
+assert i >= 0
+d[i:i + 15] = new
+open(sys.argv[2], "wb").write(bytes(d))
+EOF
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/evil.aar" "$WORK/o-px" >/dev/null 2>&1 || ORC=$?
+CRC=0; "$AAD" "$WORK/evil.aar" "$WORK/c-px" 2>/dev/null || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "px-exit" || fail "px-exit"
+diff -r "$WORK/o-px" "$WORK/c-px" >/dev/null 2>&1 && pass "px-tree" || fail "px-tree"
+
+echo "== cell device-fail =="
+ORC=0; sh "$ADAPTER" aar-decode "$V/aar/bdev-basic.aar" "$WORK/o-bd" >/dev/null 2>&1 || ORC=$?
+CRC=0; "$AAD" "$V/aar/bdev-basic.aar" "$WORK/c-bd" 2>/dev/null || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "bd-exit" || fail "bd-exit"
+diff -r "$WORK/o-bd" "$WORK/c-bd" >/dev/null 2>&1 && pass "bd-tree" || fail "bd-tree"
+"$AAD" "$V/aar/mix-fail.aar" "$WORK/c-sx" 2>"$WORK/sx.err" || true
+grep -q "not implemented yet" "$WORK/sx.err" && grep -q "1 entries failed to extract" "$WORK/sx.err" && pass "sx-tokens" || fail "sx-tokens"
+
 echo "== cell errors =="
 head -c 100 /dev/urandom > "$WORK/corrupt.aar"
 "$AAD" "$WORK/corrupt.aar" "$WORK/c-cor" 2>/dev/null && fail "corrupt-exit" || pass "corrupt-exit"

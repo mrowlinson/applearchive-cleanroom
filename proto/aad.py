@@ -9,6 +9,7 @@ dylib (MIT, A-006 row 3) at $ZBM_DYLIB. Validated vs oracle, never vs OSS.
 import ctypes
 import lzma
 import os
+import stat
 import struct
 import subprocess
 import sys
@@ -110,13 +111,19 @@ def parse_chain(data):
 
 def parse_header(data, pos):
     """-> (entries, endpos). entries: list of (key, subtype, value)."""
+    if pos + 6 > len(data):
+        raise FmtErr("header past EOF at %d" % pos)
     if bytes(data[pos:pos + 4]) not in INNER_MAGICS:
         raise FmtErr("bad inner magic at %d" % pos)
     (hsize,) = struct.unpack_from("<H", data, pos + 4)
     end = pos + hsize
+    if end > len(data) or hsize < 6:
+        raise FmtErr("header size past EOF at %d" % pos)
     p = pos + 6
     entries = []
     while p < end:
+        if p + 4 > end:
+            raise FmtErr("entry tag past end at %d" % p)
         key = bytes(data[p:p + 3])
         st = data[p + 3]
         p += 4
@@ -124,20 +131,32 @@ def parse_header(data, pos):
             val = None
         elif st in UINT_W:
             w = UINT_W[st]
+            if p + w > end:
+                raise FmtErr("uint past end at %d" % p)
             val = int.from_bytes(data[p:p + w], "little")
             p += w
         elif st in BLOB_W:
             w = BLOB_W[st]
+            if p + w > end:
+                raise FmtErr("bloblen past end at %d" % p)
             val = int.from_bytes(data[p:p + w], "little")
             p += w
         elif st in HASH_L:
+            if p + HASH_L[st] > end:
+                raise FmtErr("hash past end at %d" % p)
             val = bytes(data[p:p + HASH_L[st]])
             p += HASH_L[st]
         elif st in TS_L:
+            if p + TS_L[st] > end:
+                raise FmtErr("timespec past end at %d" % p)
             val = bytes(data[p:p + TS_L[st]])
             p += TS_L[st]
         elif st == ord("P"):
+            if p + 2 > end:
+                raise FmtErr("pathlen past end at %d" % p)
             (ln,) = struct.unpack_from("<H", data, p)
+            if p + 2 + ln > end:
+                raise FmtErr("path past end at %d" % p)
             val = bytes(data[p + 2:p + 2 + ln])
             p += 2 + ln
         else:
@@ -156,6 +175,8 @@ def parse_inner(data):
         blobs, bp = {}, end
         for key, st, val in entries:
             if st in BLOB_W:
+                if bp + val > len(data):
+                    raise FmtErr("blob past EOF at %d" % bp)
                 blobs[key] = bytes(data[bp:bp + val])
                 bp += val
         items.append((entries, blobs))
@@ -246,9 +267,22 @@ def apply_meta(target, entries, blobs, islink):
         apply_xattr_blob(target, xat, islink)
 
 
+def _show(bs):
+    return bs.decode("utf-8", "surrogateescape")
+
+
+def _unimpl(pat):
+    print("Error 0xc8055000\nnot implemented yet\ncreating fs object: %s"
+          % _show(pat), file=sys.stderr)
+
+
 def extract(items, root):
     os.makedirs(root, exist_ok=True)
     deferred = []
+    hlc_first = {}
+    hlinks = []
+    failed = 0
+    scount = 0
     for entries, blobs in items:
         _, typ = _get(entries, b"TYP")
         _, pat = _get(entries, b"PAT")
@@ -262,11 +296,21 @@ def extract(items, root):
             parent = os.path.dirname(target)
             if parent:
                 os.makedirs(parent, exist_ok=True)
-            with open(target, "wb") as f:
-                f.write(blobs.get(b"DAT", b""))
+            _, hlc = _get(entries, b"HLC")
+            if hlc is not None and hlc in hlc_first:
+                if os.path.lexists(target):
+                    os.remove(target)
+                os.link(hlc_first[hlc], target)
+            else:
+                with open(target, "wb") as f:
+                    f.write(blobs.get(b"DAT", b""))
+                if hlc is not None:
+                    hlc_first[hlc] = target
             apply_meta(target, entries, blobs, False)
         elif typ == ord("L"):
             _, lnk = _get(entries, b"LNK")
+            if lnk is None:
+                raise FmtErr("YAA link entry has no LNK field: %r" % pat)
             parent = os.path.dirname(target)
             if parent:
                 os.makedirs(parent, exist_ok=True)
@@ -274,10 +318,65 @@ def extract(items, root):
                 os.remove(target)
             os.symlink(lnk.decode("utf-8", "surrogateescape"), target)
             apply_meta(target, entries, blobs, True)
+        elif typ == ord("P"):
+            parent = os.path.dirname(target)
+            if parent:
+                os.makedirs(parent, exist_ok=True)
+            if os.path.lexists(target):
+                os.remove(target)
+            os.mkfifo(target, 0o600)
+            apply_meta(target, entries, blobs, False)
+        elif typ == ord("S"):
+            _unimpl(pat)
+            failed += 1
+            scount += 1
+        elif typ == ord("H"):
+            _, lnk = _get(entries, b"LNK")
+            if lnk is None:
+                raise FmtErr("YAA link entry has no LNK field: %r" % pat)
+            hlinks.append((target, lnk))
+        elif typ == ord("B") or typ == ord("C"):
+            _, dev = _get(entries, b"DEV")
+            if dev is None:
+                raise FmtErr("YAA device entry has no DEV field: %r" % pat)
+            _unimpl(pat)
+            failed += 1
+            scount += 1
         else:
-            raise FmtErr("entry type %r" % typ)
+            pass  # unknown TYP: silent skip (oracle parity, measured)
+    for target, lnk in hlinks:
+        try:
+            src = safe_join(root, lnk)
+        except FmtErr:
+            print("invalid path: %s\ninvalid 'H' LNK" % _show(lnk),
+                  file=sys.stderr)
+            failed += 1
+            continue
+        try:
+            st = os.lstat(src)
+        except FileNotFoundError:
+            st = None
+        if st is None or not stat.S_ISREG(st.st_mode):
+            print("'H' LNK not a regular file: %s" % _show(lnk),
+                  file=sys.stderr)
+            failed += 1
+            continue
+        parent = os.path.dirname(target)
+        if parent:
+            os.makedirs(parent, exist_ok=True)
+        if os.path.lexists(target):
+            os.remove(target)
+        try:
+            os.link(src, target)
+        except OSError as e:
+            print("link %r failed: %s" % (target, e), file=sys.stderr)
+            failed += 1
+            continue
     for target, entries, blobs in reversed(deferred):
         apply_meta(target, entries, blobs, False)
+    if scount:
+        print("%d entries failed to extract" % scount, file=sys.stderr)
+    return 1 if failed else 0
 
 
 def main(argv):
@@ -286,10 +385,14 @@ def main(argv):
         return 2
     with open(argv[1], "rb") as f:
         data = f.read()
-    inner, metas = parse_chain(data)
-    print("blocks:", len(metas), metas[0] if metas else {}, file=sys.stderr)
-    extract(parse_inner(inner), argv[2])
-    return 0
+    try:
+        inner, metas = parse_chain(data)
+        print("blocks:", len(metas), metas[0] if metas else {},
+              file=sys.stderr)
+        return extract(parse_inner(inner), argv[2])
+    except FmtErr as e:
+        print("%s" % e, file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":
