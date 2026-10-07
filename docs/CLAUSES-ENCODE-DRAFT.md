@@ -78,7 +78,8 @@ CR-108 [MEASURED] Per-block store rule: compress iff 16*comp <= 15*unc (savings 
 stage: probe
 artifact: 20-pt bisect + name ladder + ratio sweep + fresh re-verify + writer 100/100
 numbers: flip pinned (847,793)->C vs (850,~797)->S; name ladder comp const 794, unc 849 C -> 850 S; fresh: (850,796)->C edge-inclusive; ratios 0.575..0.9264 C @937
-verdict: CORRECT writer "comp<unc" (misses (15unc/16,unc) window); VERIFIED lzfse+zlib, others consistent-unpinned
+verdict: CORRECT writer "comp<unc" (misses (15unc/16,unc) window); VERIFIED lzfse+zlib+lz4+lzma+lzraven (flip pairs),
+  lzbitmap 3/3 consistent incl non-monotonic compress@300 (494<=503) between stores (rule-predicted all)
 body: decision per block on that block's own comp. Exact tie 16c==15u never observed (OPEN micro-gap; <= assumed).
   lzbitmap stores tiny-incompressible where lzfse compresses (its comp misses the bar, same rule).
 ```
