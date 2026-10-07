@@ -94,6 +94,11 @@ if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/mg.aea" -
 openssl ecparam -name prime256v1 -genkey -noout -out "$WORK/ec2-priv.pem" 2>/dev/null
 openssl ec -in "$WORK/ec2-priv.pem" -pubout -out "$WORK/ec2-pub.pem" 2>/dev/null
 if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --key "$WORK/key32.bin" --sign-pub "$WORK/ec2-pub.pem" -i "$WORK/p2.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-wrongsign"; else ok "err-wrongsign"; fi
+aea encrypt -profile 0 -sign-pub "$WORK/ec-pub.pem" -a none -padding none -i "$WORK/msg.txt" -o "$WORK/p0u.aea" 2>/dev/null
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --sign-pub "$WORK/ec-pub.pem" -i "$WORK/p0u.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-unsigned"; else ok "err-unsigned"; fi
+cp "$WORK/p0u.aea" "$WORK/p0s.aea" && aea sign -sign-priv "$WORK/ec-priv.pem" -o "$WORK/p0s.aea" 2>/dev/null
+EXP=$WORK/msg.txt
+cell sign-later --sign-pub "$WORK/ec-pub.pem" -i "$WORK/p0s.aea"
 
 # 10. append
 printf 'APPENDED-DATA-BLOCK' > "$WORK/app-in.bin"
