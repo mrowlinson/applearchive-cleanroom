@@ -2,12 +2,19 @@
 # checks: sha=full-sha | size=byte count | str=opaque compare | rc=exit code
 # AAR deterministic (fixed mtimes + python seeds). AEA nondet: size/prefix/RT/rc only.
 m-empty-raw,sha,8d38adc92907e9d76c93f30a9efb15839294316def1c785a7c55daeb62f5441d,105,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-empty-raw-magic,str,41413031,105,test_outer2.sh,27.0.1,oracle-adapter.sh
 m-empty-lzfse,sha,878a0ff0373652c6d69ad5ef5a453277e047d1d5a7774d07d0a907a7d1e3fa32,133,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-empty-lzfse-magic,str,70627a65,133,test_outer2.sh,27.0.1,oracle-adapter.sh
 m-empty-lzma,sha,a07efe174526aa733a9787133eaef5f64dc1f6e4461f34def78c6b0605f140f7,133,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-empty-lzma-magic,str,70627a78,133,test_outer2.sh,27.0.1,oracle-adapter.sh
 m-empty-lz4,sha,d22b3dc2ed05c0cac39a3778195e0c481de402e86a7a04df6a203cb4f3616000,133,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-empty-lz4-magic,str,70627a34,133,test_outer2.sh,27.0.1,oracle-adapter.sh
 m-empty-zlib,sha,0b156d06f6f13c0e87ca19425273f4f9a14fba97b0ba39cef61aecc3ed822f7a,133,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-empty-zlib-magic,str,70627a7a,133,test_outer2.sh,27.0.1,oracle-adapter.sh
 m-empty-lzraven,sha,90038a662e6bdb94d419345144b4ddcff53b99b7e2cc5955e6f0ec007bedb036,133,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-empty-lzraven-magic,str,70627a6d,133,test_outer2.sh,27.0.1,oracle-adapter.sh
 m-empty-lzbitmap,sha,36d8081a48c8855be3b9e3c5c199bad95aef2cf8b5e100ef855e7bf45c945f39,133,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-empty-lzbitmap-magic,str,70627a62,133,test_outer2.sh,27.0.1,oracle-adapter.sh
 m-stored,sha,b141320946da0a19889b2acf41aeb18ef4d75892cdb820685b9a530aee3ea494,1249,test_outer2.sh,27.0.1,oracle-adapter.sh
 m-stored-rule,str,STORED,1249,test_outer2.sh,27.0.1,oracle-adapter.sh
 m-flip95-rule,str,STORED,2249,test_outer2.sh,27.0.1,oracle-adapter.sh
@@ -61,6 +68,36 @@ m-fl-bm70-rule,str,COMPRESSED,269,test_outer2.sh,27.0.1,oracle-adapter.sh
 m-fl-bm70,sha,cb5514172d01da12a5ce748686bb7c48af4c320444b25b55ec57ed7edc52160b,269,test_outer2.sh,27.0.1,oracle-adapter.sh
 m-fl-bm71-rule,str,STORED,320,test_outer2.sh,27.0.1,oracle-adapter.sh
 m-fl-bm71,sha,664ad1574a34b4ada0a844d5ce438202714a53e78f14613e464383e1bd413f52,320,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-fr-rav100k-lens,str,216:96:96:96:96:96:96:96:96:96:64,1172,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-fr-rav100k,sha,895c7634324fae7de6b46f11cc98cb3ce63a620d31eb69cf3c588f1b9c61fac6,1172,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-fr-bm100k-lens,str,234:110:110:110:110:110:110:110:110:110:90,1342,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-fr-bm100k,sha,fc80c17f5d644f05e4639ecb0d50b516a63b8943856f9fa844068b9752c096b7,1342,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-un-rav100k-b10k-unc,str,INNER-EQ-CHAIN-EQ-NB11,1172,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-un-rav100k-b10k,sha,895c7634324fae7de6b46f11cc98cb3ce63a620d31eb69cf3c588f1b9c61fac6,1172,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-un-bm100k-b10k-unc,str,INNER-EQ-CHAIN-EQ-NB11,1342,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-un-bm100k-b10k,sha,fc80c17f5d644f05e4639ecb0d50b516a63b8943856f9fa844068b9752c096b7,1342,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-un-rav200k-1-unc,str,INNER-EQ-CHAIN-EQ-NB1,260,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-un-rav200k-1,sha,9cd8a6b218f32e4fcad9471dfea8826f5c1b3b6a27be378a1745b0e7c5266254,260,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-un-bm200k-1-unc,str,INNER-EQ-CHAIN-EQ-NB1,1276,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-un-bm200k-1,sha,58159e0d9bd76a0e4fc522d79ec739a19f7e2bde032cc2bc549b7a6d48240da5,1276,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-mix-rav-pat,str,CCCCCSSSSSS,50931,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-mix-rav,sha,bb70e6c9684a72853e65de8b95ffa984698ca054f3cf3ee381d60fa402991cf1,50931,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-mix-bm-pat,str,CCCCCSSSSSS,51005,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-mix-bm,sha,6eeb2baf3c5ff141381dc6d878f8ea65f1b68dbb8c13ca812edce3c57c317538,51005,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-mix-lz-pat,str,CCCCCSSSSSS,51319,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-mix-lz,sha,e56d4b285a19d63a9e9ef95fbb20e95b08bc0b730efcd9ec4ffb7521940ea09f,51319,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-txt-lzfse-rule,str,COMPRESSED,66683,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-txt-lzfse,sha,1be11c13b5ef4344b89d0613fa963eebcea3987e5706d0399d54298086aa6c3b,66683,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-txt-lzma-rule,str,COMPRESSED,44244,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-txt-lzma,sha,7e8f039e029c9eeab5214dcf66f5b7395d170d5de4dfafcd77ffc9976a23223a,44244,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-txt-lz4-rule,str,COMPRESSED,153486,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-txt-lz4,sha,0f443896bd3120aa3f65a9f1940fb391a10605bab70482a689592208f360b37f,153486,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-txt-zlib-rule,str,COMPRESSED,57740,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-txt-zlib,sha,d877b220e41292d6accdb32c0075515b6787d7822dd794f8694b2042b18d670a,57740,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-txt-lzraven-rule,str,COMPRESSED,44352,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-txt-lzraven,sha,a41a067c7d5a889fcb2913c22adab9b227e1bc15d1d11673229a0f0eaf6fe6fd,44352,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-txt-lzbitmap-rule,str,COMPRESSED,93980,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-txt-lzbitmap,sha,2d8f294d0d516a7a3b479ba32ee2ac7f1527b2d5290842c50361a97ce815c620,93980,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-size-p1-0,size,160,160,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-size-p5-0,size,160,160,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-size-p1-1,size,19456,19456,test_outer2.sh,27.0.1,oracle-adapter.sh
@@ -101,6 +138,118 @@ a-app-size,size,18820,18820,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-rt-append,str,RT-OK,0,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-id-fmt,str,IDHEX,0,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-nondet,str,char 13,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-t-1-none,str,SIZE-EQ,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-t-1-lzfse,str,SIZE-EQ,19456,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-t-5-none,str,SIZE-EQ,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-t-5-lzfse,str,SIZE-EQ,19456,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-b-a5000-none-16b,size,24576,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-b-a5000-none-64k,size,24576,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-b-a5000-lzfse-16b,size,19456,19456,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-b-a5000-lzfse-64k,size,19456,19456,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-b-a200k-none-16b,size,221184,221184,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-b-a200k-none-64k,size,221184,221184,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-b-a200k-lzfse-16b,size,21504,21504,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-b-a200k-lzfse-64k,size,19456,19456,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-pw19,rc,1,0,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-pw20,rc,0,0,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-kv-bare,rc,1,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-vc-none,str,none,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-vc-lzfse,str,lzfse,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-vc-zlib,str,zlib,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-vc-lzma,str,lzma,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-vc-lz4,str,lz4,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-vc-lzraven,str,lzraven,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-vc-lzbitmap,str,lzbitmap,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-raw-rc,rc,0,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-raw-size,size,24576,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-vc-raw,str,none,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-rt-raw,str,RT-OK,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-def-size,size,19456,19456,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-vc-def,str,lzfse,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-bogus-rc,rc,1,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-bogus-msg,str,Invalid compression algorithm: bogus,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-case-rc,rc,1,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-r5-none,size,24576,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-r5-lzfse,size,24576,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-r5-zlib,size,24576,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-r5-lzma,size,24576,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-r5-lz4,size,24576,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-r5-lzraven,size,24576,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-r5-lzbitmap,size,24576,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-r5-eq,str,EQ,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-pc-none-none,size,15428,15428,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-pc-none-murmur64,size,17476,17476,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-pc-none-sha256,size,23620,23620,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-pc-adaptive-none,size,15872,15872,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-pc-adaptive-murmur64,size,18432,18432,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-pc-adaptive-sha256,size,24576,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-pc-16-none,size,15440,15440,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-pc-16-murmur64,size,17488,17488,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-pc-16-sha256,size,23632,23632,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-pc-1024-none,size,16384,16384,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-pc-1024-murmur64,size,18432,18432,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-pc-1024-sha256,size,24576,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-pc-16384-none,size,16384,16384,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-pc-16384-murmur64,size,32768,32768,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-pc-16384-sha256,size,32768,32768,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-rt-pc,str,RT-OK,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-pad15-rc,rc,1,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-pad15-msg,str,Invalid padding value,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-id-stable,str,DIFF,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-id-v,str,EQ,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-ab-z200k-none,size,221184,221184,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-ab-z200k-lzfse,size,21504,21504,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-ab-z200k-zlib,size,19456,19456,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-ab-z200k-lzma,size,20480,20480,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-ab-z200k-lz4,size,21504,21504,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-ab-z200k-lzraven,size,20480,20480,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-ab-z200k-lzbitmap,size,20480,20480,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-ab-m200k-none,size,221184,221184,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-ab-m200k-lzfse,size,120832,120832,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-ab-m200k-zlib,size,120832,120832,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-ab-m200k-lzma,size,120832,120832,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-ab-m200k-lz4,size,120832,120832,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-ab-m200k-lzraven,size,120832,120832,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-ab-m200k-lzbitmap,size,120832,120832,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-ab-r200k-none,size,221184,221184,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-ab-r200k-lzfse,size,221184,221184,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-ab-r200k-zlib,size,221184,221184,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-ab-r200k-lzma,size,221184,221184,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-ab-r200k-lz4,size,221184,221184,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-ab-r200k-lzraven,size,221184,221184,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-ab-r200k-lzbitmap,size,221184,221184,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-ab-m-eq,str,EQ,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-ab-r-eq,str,EQ,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-nd-p0,str,DIFF,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-nd-p2,str,char 13,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-nd-p3,str,char 14,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-nd-p4,str,char 13,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-eb-b0-rc,rc,0,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-eb-b0,size,24576,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-eb-bbogus-rc,rc,0,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-eb-bbogus,size,24576,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-eb-b129m-rc,rc,0,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-eb-b129m,size,24576,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-eb-t0-rc,rc,0,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-eb-t0,size,24576,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-rt-eb,str,RT-OK,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-vb-16b,str,lzfse 0 MB,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-vb-64k,str,lzfse 0 MB,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-vb-1m,str,lzfse 1 MB,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-vb-128m,str,lzfse 128 MB,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-sign-p1-rc,rc,1,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-sign-p1-msg,str,This archive profile can't be signed,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-sign-p1-mod,str,SAME,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-sign-p0-rc,rc,0,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-sign-p0-mod,str,MOD,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-rt-sign-p0,str,RT-OK,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-sign-p2a-rc,rc,1,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-sign-p2a-msg,str,-signature-key is required,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-sign-p2b-rc,rc,1,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-sign-p2b-msg,str,-sign-priv is required,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-sign-un2-rc,rc,0,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-sign-undec-rc,rc,1,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-sign-undec-msg,str,Failed to unlock container,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-sign-un2s-rc,rc,0,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-sign-un2s-mod,str,MOD,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-rt-sign-un2,str,RT-OK,0,test_outer2.sh,27.0.1,oracle-adapter.sh
