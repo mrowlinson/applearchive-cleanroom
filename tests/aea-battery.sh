@@ -180,6 +180,15 @@ printf '%s' "$PW" > "$WORK/pw-exact.txt"; printf '%s\n' "$PW" > "$WORK/pw-nl.txt
 EXP=$WORK/msg.txt
 cell pwfile-exact --password-file "$WORK/pw-exact.txt" -i "$WORK/p5.aea"
 cell pwfile-nl --password-file "$WORK/pw-nl.txt" -i "$WORK/p5.aea"
+printf '%s\r\n' "$PW" > "$WORK/pw-crlf.txt"
+cell pwfile-crlf --password-file "$WORK/pw-crlf.txt" -i "$WORK/p5.aea"
+KHEX=$(python3 -c "import sys;print(sys.stdin.buffer.read().hex())" < "$WORK/key32.bin")
+KB64=$(python3 -c "import sys,base64;print(base64.b64encode(sys.stdin.buffer.read()).decode())" < "$WORK/key32.bin")
+EXP=$WORK/msg.txt
+cell keyval-hex --key-value "hex:$KHEX" -i "$WORK/p1.aea"
+cell keyval-b64 --key-value "base64:$KB64" -i "$WORK/p1.aea"
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --key-value "$KHEX" -i "$WORK/p1.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-kv-bare"; else ok "err-kv-bare"; fi
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --key-value "0x$KHEX" -i "$WORK/p1.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-kv-0x"; else ok "err-kv-0x"; fi
 SPW='  spaced-battery-password-32ch-abcd  '
 aea encrypt -profile 5 -password-value "$SPW" -a none -padding none -i "$WORK/msg.txt" -o "$WORK/sp.aea" 2>/dev/null
 printf '%s' "$SPW" > "$WORK/sp-exact.txt"; printf '%s\n' "$SPW" > "$WORK/sp-nl.txt"; printf 'spaced-battery-password-32ch-abcd' > "$WORK/sp-strip.txt"
