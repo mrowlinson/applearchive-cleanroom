@@ -141,6 +141,10 @@ head -c 156 "$WORK/p5.aea" > "$WORK/id-tr156.aea"
 OIDT=$(aea id -i "$WORK/id-tr156.aea" 2>/dev/null)
 PIDT=$("$AEAD_PY" "$REPO/proto/aead.py" id -i "$WORK/id-tr156.aea" 2>/dev/null)
 if [ "$OIDT" = "$PIDT" ] && [ "$PIDT" = "$OID" ] && [ -n "$OIDT" ]; then ok "id-trunc156"; else bad "id-trunc156"; fi
+OIDA=$(aea id -i "$WORK/auth2.aea" 2>/dev/null)
+PIDA=$("$AEAD_PY" "$REPO/proto/aead.py" id -i "$WORK/auth2.aea" 2>/dev/null)
+if [ "$OIDA" = "$PIDA" ] && [ -n "$OIDA" ]; then ok "id-auth"; else bad "id-auth"; fi
+if (cd "$WORK" && rm -f ./- && "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i - -o iminus.out < "$WORK/p5.aea" 2>/dev/null); then bad "err-iminus"; else ok "err-iminus"; fi
 
 # 8b. thread-count indifference (oracle -t 1 vs default; proto single-threaded)
 aea encrypt -profile 5 -password-value "$PW" -a lzma -t 1 -padding none -i "$WORK/bigtext.bin" -o "$WORK/thr1.aea" 2>/dev/null
