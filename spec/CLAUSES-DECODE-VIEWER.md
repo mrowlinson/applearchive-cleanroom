@@ -122,6 +122,9 @@ body: lzfse frame = magic + uncLE32 + (n: XLE32=comp-16 5/5 | 2: stream bytes) +
 | CR-014 | MEASURED | entry-kind census (11 TYPs + behaviors) | CORRECTED by CR-015 (was 11, is 12) |
 | CR-015 | MEASURED | TYP H hardlink-by-path (12th kind) | CORRECT vs CR-014 |
 | CR-016 | MEASURED | lzraven bit0 raw emission rule | CONFIRM vs CR-012 |
+| CR-017 | MEASURED | AEA cluster-chain walk (offsets/repeat/N-global) | CONFIRM vs writer2 split rule |
+| CR-018 | MEASURED | AEA pad-auth verified ranges ([padstart,arc)) | CONFIRM ranges; construction OPEN |
+| CR-019 | MEASURED | W/R/T/M silent-skip exit 0 | CORRECT vs A-013; dispute CLOSED |
 
 ```
 CR-012 [MEASURED] lzraven stream framing (8B hdr + u32 block-hdrs + u32-0 terminator)
@@ -166,6 +169,33 @@ artifact: own-gen bit0/ (zr/rz/r600k/r2m aa -a lzraven + ct2-r/ct2-zr/ct2-r10k p
 numbers: 6 raw blocks: rz-blk0 524288, zr-blk1 90351 (== last-out EXACT), ct2-r 524288+90112, ct2-zr-blk1 90112, ct2-r10k 10240 (single-block); raw size == block output 6/6; roundtrips MATCH 5/5; pure-random aa inners OUTER-stored 2/2 (no stream); mixed aa inners per-block raw 2/2
 verdict: CONFIRM vs CR-012 (extends: raw-flag semantics + emission conditions); mutual-CONFIRM vs writer2 e7a9249 (independently derived same rule + AEA-seg firing); OPEN: raw+BCJ combos (0x003) unobserved
 body: rule: block incompressible -> flags bit0, payload = verbatim block bytes. aa path absorbs fully-random inners at outer level; pure-stream path has no outer so random always goes raw per-block. decoder: bit0 -> memcpy size bytes, skip entropy decode (SPEC §2.3 driver rule, behavior-confirmed).
+```
+
+```
+CR-017 [MEASURED] AEA cluster-chain walk (2-cluster offsets, repeat/continue, global seg-N)
+stage: probe
+artifact: own-gen c2-sha.aea (256MiB+1 zeros, p5/-a none/sha256/pad-none, 268472541B) + walk.py + 6 flip probes (WS tmp/decode-viewer-probes/cluster2)
+numbers: OVH 37084 = 18620+18464; C0 hdr@156 (sh[156,10396)/nmac/smacs), C0 data 256x(1M,1M), C1 hdr@268454076 (sh/nmac/smacs), C1 seg0 (1,1), tail 255x(0,0); EOF-exact; root orig/arc(=filesize 2/2)/segsz=1M/segper=256/comp='-'/ckalg=2; 6/6 flips exit 1 (seg-N GLOBAL: C0seg0->0, C1seg0->256; C0-hdr faults route via seg-0 worker tail, C1-hdr via next-cluster unlock without tail; smac faults surface at cluster level)
+verdict: CONFIRM vs writer2 split rule ceil(IN/256MiB) (boundary mutual-CONFIRM); bed A-015
+body: ONCE: prologue 156B + root fields. REPEAT per cluster: sh-table (256 entries, zero tail) + nmac32 + smacs. CONTINUE: cluster index, cmac chain (C1 verify consumes C0 nmac), output concat, seg-error N. size equation OUT = IN + 156 + N*clustersz(ck) (sha256 18464 measured 1+2cl; none 10272 writer 1..3cl; murmur64 12320 writer 2cl).
+```
+
+```
+CR-018 [MEASURED] AEA pad-auth verified ranges ([padstart,arc), arc-ignored, read-vs-auth classes)
+stage: probe
+artifact: own-gen p-18.aea (18B/default-pad 19456B) + p16-18.aea (pad 2B) + c2p-sha.aea (256MiB+1/default-pad 276824064B) + flip/append/trunc matrix (WS tmp/decode-viewer-probes/padauth)
+numbers: range [padstart,arc) EXACT 3 shapes (padstart = last-seg-data-end: 18638 / 18638 / 268472541); arc==filesize 4/4; bytes>=arc IGNORED 2/2 (exit 0 MATCH); short pad -> 0x9e040400 `reading padding`; corrupt -> 0x9e041c00 ST / 0x9e05cc00+`authenticating padding` MT; 2-byte pad both bytes authenticated; pad = randomized ciphertext (815/818 nonzero, 2 encryptions differ), OUTSIDE seg table (sh lists real segs only)
+verdict: CONFIRM ranges; OPEN construction (tag slot + MAC inputs); bed A-016 partial
+body: ONE trailing region all shapes (no per-cluster pads). tag is OUTSIDE pad (2B-pad proof); NOT rdata spare (22 zeros x4) NOR sh tail (255/255 zero x2); mechanism (own binary read): streaming digest <=1MB chunks, HKDF info label len7 "AEA_PAK", constant-time compare vs stored tag, wantlen [8,256]. candidates remain: nmac/smacs/cmac/rmac/salt.
+```
+
+```
+CR-019 [MEASURED] TYP W/R/T/M extract = silent-skip exit 0 (DAT + DAT-less)
+stage: probe
+artifact: own-gen raw single-file archive (D@6/F@119) + 8 TYP-flip extracts (WS tmp/decode-viewer-probes/q018)
+numbers: W/R/T/M DAT-carrying 4/4 exit 0 EMPTY-stderr SKIPPED; DAT-less W exit 0 skipped + sibling `hello` MATCH; Z control silent-skip; S controls 2/2 exit 1 loud stanza (`Error 0xc8055000 / not implemented yet / creating fs object: <pat> / N entries failed to extract`) + sibling extracted (continue)
+verdict: CORRECT vs A-013 (loud-for-W/R/T prescription, was unmeasured); CONFIRM vs writer1 256-TYP census; bed A-018; dispute CLOSED
+body: unknown-kind policy = skip-and-continue exit 0 regardless of DAT carriage; S-class = loud-skip-and-continue exit 1 with count line. no revisit unless a loud W/R/T vector fires.
 ```
 
 Status of every clause: UNPROVEN until an implementation written ONLY from
