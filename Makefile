@@ -7,7 +7,7 @@ all: $(OUTDIR)/aad
 
 $(OUTDIR)/aad: src/aad.c
 	mkdir -p $(OUTDIR)
-	$(CC) $(CFLAGS) -o $@ $< -lz
+	$(CC) $(CFLAGS) -o $@ $< -lz -lcompression
 
 clean:
 	rm -f $(OUTDIR)/aad
