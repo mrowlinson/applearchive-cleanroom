@@ -80,6 +80,45 @@ class Units(unittest.TestCase):
         self.assertNotEqual(m1, aead.cksum(1, b"qq"))
         self.assertEqual(aead.murmur64a(b""), aead.murmur64a(b""))
 
+    def test_read_key_file_forms(self):
+        import tempfile
+        raw32 = bytes(range(32))
+        cases = [(raw32, raw32),  # raw binary passthrough
+                 (b"hex:" + raw32.hex().encode() + b"\n", raw32),  # hex: + NL
+                 (b"base64:QUJD", b"ABC"),  # base64:
+                 (b"\xff\xfe\x00key", b"\xff\xfe\x00key"),  # non-ascii raw
+                 (raw32 + b"\n", raw32 + b"\n")]  # raw+NL NOT stripped (err-key32nl)
+        for content, want in cases:
+            with tempfile.NamedTemporaryFile(delete=False) as fh:
+                fh.write(content)
+                path = fh.name
+            try:
+                self.assertEqual(aead.read_key_file(path), want)
+            finally:
+                os.unlink(path)
+
+    def test_dec_ver(self):
+        key80 = bytes(range(80))
+        data, salt = b"payload-data", b"salty"
+        tag = aead.mac(key80[:32], data, salt)
+        # 80B key: verify + AES-CTR roundtrip
+        dec = aead.dec_ver(key80, data, salt, tag)
+        enc = aead.dec_ver(key80, dec, salt, aead.mac(key80[:32], dec, salt))
+        self.assertEqual(enc, data)
+        # 32B key: verify only, data passthrough
+        self.assertEqual(aead.dec_ver(key80[:32], data, salt, tag), data)
+        # tampered tag / data raise
+        with self.assertRaises(aead.FmtErr):
+            aead.dec_ver(key80, data, salt, b"\x00" * 32)
+        with self.assertRaises(aead.FmtErr):
+            aead.dec_ver(key80, data + b"x", salt, tag)
+
+    def test_scrypt_matches_hashlib(self):
+        for n in (1024, 16384):
+            self.assertEqual(aead.scrypt_key("pw", b"salt1234", n),
+                             hashlib.scrypt(b"pw", salt=b"salt1234",
+                                            n=n, r=8, p=1, dklen=32))
+
 
 if __name__ == "__main__":
     unittest.main()
