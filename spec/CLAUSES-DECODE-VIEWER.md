@@ -129,7 +129,7 @@ body: lzfse frame = magic + uncLE32 + (n: XLE32=comp-16 5/5 | 2: stream bytes) +
 | CR-021 | SYMBOL | libAppleArchive public-export inventory (232) | CONFIRM vs CR-002/003 + vendor list |
 | CR-022 | MEASURED | AEA empty-archive shape (156B bare / cmac pad-tag) | CONFIRM vs writer2 empty rows |
 | CR-023 | MEASURED | lzraven flag alphabet + raw exclusivity (0x3 negative, 0x402 wild) | CONFIRM alphabet; OPEN narrowed |
-| CR-024 | MEASURED | oracle extract stderr order-race (sorted-stable, -wt 1 pinned) | CONFIRM race; threshold OPEN |
+| CR-024 | MEASURED | oracle extract stderr order-race (sorted-stable, -wt 1 pinned) | CONFIRM race; threshold CLOSED (3) |
 
 ```
 CR-012 [MEASURED] lzraven stream framing (8B hdr + u32 block-hdrs + u32-0 terminator)
@@ -243,9 +243,9 @@ body: bit0 = raw verbatim (incompressible/high-entropy chunks); bit1/bit2/bit10 
 CR-024 [MEASURED] oracle extract stderr order-race under parallel failure load (sorted-content stable, -wt 1 deterministic)
 stage: probe
 artifact: own-gen orace/ (race2s.aar 2x S-flip + race20s.aar 20x S-flip, raw TYP-crafts) + 23 extract runs (WS tmp/decode-viewer-probes/orace; macOS 27.0.1)
-numbers: 20-fail default-threads 10 runs / 10 distinct stderrs, sorted-md5 10/10 IDENTICAL (pure stanza permutation; header `Error 0x...` + `N entries failed` lines position-stable; no mid-line interleave observed); 2-fail default 10/10 identical (reverse entry order); 20-fail -wt 1 3/3 identical; exits 1 throughout
-verdict: CONFIRM vs writer1 NOTE-034 bad2/S2 self-race report (mutual-CONFIRM on race existence; own trigger = failure-count load, threshold in (2,20] unbisected)
-body: multi-failure stderr MUST be compared order-insensitively (sort lines) or pinned with -wt 1; byte-IDENT on default writer threads is flaky by oracle design. implementations may emit any stanza order (writer1 deterministic-reverse is one valid oracle order). exit codes + count line are stable and stay byte-pinned.
+numbers: 20-fail default-threads 10 runs / 10 distinct stderrs, sorted-md5 10/10 IDENTICAL (pure stanza permutation; header `Error 0x...` + `N entries failed` lines position-stable; no mid-line interleave observed); 2-fail default 10/10 identical (reverse entry order); 20-fail -wt 1 3/3 identical; threshold bisect: n=3 4/8 distinct, n=4 7/8, n=5 5/5, n=10 5/5 -> race iff >=3 failures; exits 1 throughout
+verdict: CONFIRM vs writer1 NOTE-034 bad2/S2 self-race report (mutual-CONFIRM on race existence; own trigger = failure-count load, threshold CLOSED at 3)
+body: 1-2 failures byte-safe; >=3 failures stderr MUST be compared order-insensitively (sort lines) or pinned with -wt 1; byte-IDENT on default writer threads is flaky by oracle design. implementations may emit any stanza order (writer1 deterministic-reverse is one valid oracle order). exit codes + count line are stable and stay byte-pinned.
 ```
 
 Status of every clause: UNPROVEN until an implementation written ONLY from

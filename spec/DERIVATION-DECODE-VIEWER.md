@@ -325,4 +325,17 @@ findings:
 - VERIFY 43 PASS 0 FLAG current; Q/A 18/18; joint DONE still open (writer1/sweep DONEs pending; claim HELD)
 pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:23acc68cd484b2504ea796e1127bf7c0cc4499aaf0b32c186e005970842f1d62 bytes:25403
 pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:52ac0e0efdcd3dc0f794690703b2751904e6dfe8554de50ba714d5e101a887a4 bytes:30191
+post-edit: (recorded at commit ecf4277; 2 files, +24)
+
+## 2026-10-07 decode-viewer lanes/decode-viewer (entry 18: CR-024 threshold bisect)
+inputs:
+- own-gen orace bisect: race03s/race04s/race05s/race10s.aar (3/4/5/10x F->S flips on 20-file raw) + 8 + 8 + 5 + 5 extract runs (distinct-md5 counts) (WS tmp/decode-viewer-probes/orace; macOS 27.0.1)
+not-consulted: patent contents, encode-side lanes, reference/port sources,
+  decompiler output (none), writer worktree files (git-show only + black-box runs), liblzraven src/*.c internals
+outputs: 0 new clauses (CR-024 fold: threshold CLOSED at 3); NOTE-42
+findings:
+- race iff >=3 parallel failures (n=2 stable 10/10, n=3 racy 4/8); battery rule refined (1-2 byte-safe, 3+ sort-or-pin)
+- VERIFY 43 PASS 0 FLAG current; Q/A 18/18; joint DONE still open (writer1/sweep DONEs pending; claim HELD)
+pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:761411739339887e44d7333b3a12312f4da91a2a03152a0c9c6aaa4173a0b0b7 bytes:26626
+pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:9f2594562e5ecf2726b4de38457f70d1962f5db565eb00ceb97c070f4eb5e217 bytes:31589
 post-edit: (recorded at commit; see commit 2nd line stats)
