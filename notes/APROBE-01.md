@@ -51,6 +51,7 @@ Notation: P# = probe id. Passwords/keys: `testpw32....` (38ch), `test-password-f
 - stderr text beyond exit-class = POLISH, out of CLI-CONTRACT (per writer1 NOTE-011; bytes+exits gated). Proto v1 emits own `aead:` lines.
 - `-o -` writes literal file `-` (exit 0); omit -i = stdin CLEAN; omit -o = stdout (A-001; own stdin confirmed).
 - range clamps, never errors: 0/17->16B, 16/1->0B, 100/10->0B, exit 0.
+  offset-without-size reads to end (off6->tail, off0->full, exit 0); explicit size 0 -> empty, exit 0.
 
 ## Verbose manifest (-v decrypt)
 
