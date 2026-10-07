@@ -92,3 +92,4 @@ Encrypt adds `padding:` line. Encrypt to /dev/null fails (temp+rename).
 - v3 adds padded leg: 4 sizes x p{1,5} x {zlib,lzraven} x sha256, default pad = 16 MATCH.
 - 2-cluster: 269MB p5/none/sha256 OVH 37084 = 18620+18464 (2nd cluster hdr); proto MATCH 0.8s.
 - SPLIT RULE EXACT own (checksum-none, -a none): 1 cluster iff IN <= 268435456 (256MiB); 268435457 -> 2 clusters. Points: 200/255/256MB OVH 10428 (1 cl); 256MiB+1/257/260MB OVH 20700 (2 cl). Fits segcount>256 @1MB segs. (Q-015 Q1 self-closed; Q2 header-walk still open for viewer.)
+- SPLIT RULE GENERAL own (p5/-a none/cksum-none, zeros): clusters = ceil(IN/256MiB); 512MiB OVH 20700 (2 cl), 512MiB+1 OVH 30972 (3 cl). Per-extra-cluster delta 10272 (OVH = 10428 + (N-1)*10272 this shape; sha-shape differs: 18620+18464/cluster). Proto decrypts 3-cluster MATCH 1.1s (chaining blind, works). Q-015-Q1 scope now fully closed own (1->2->3 splits); Q2 walk still viewer-open.
