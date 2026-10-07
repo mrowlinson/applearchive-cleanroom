@@ -386,6 +386,70 @@ for a in lzfse zlib lzma lz4 lzraven lzbitmap; do
   [ "$(sz "$WORK/a-ab-r200k-$a.aea")" = "$s0" ] || eq=DIFF
 done
 chk "a-ab-r-eq" str "$eq" 0
+NDP() { # profile : chk a-nd-p<profile> first-diff char (p1=c13 known; NOTE-w2s3-6 beds)
+  case $1 in
+    0) E="-sign-priv $WORK/ec-priv.pem";;
+    2) E="-key $WORK/key32.bin -sign-priv $WORK/ec-priv.pem";;
+    3) E="-recipient-pub $WORK/ec-pub.pem";;
+    4) E="-recipient-pub $WORK/ec-pub.pem -sign-priv $WORK/ec-priv.pem";;
+  esac
+  # shellcheck disable=SC2086
+  "$AEA" encrypt -profile $1 $E -a none -t 1 -i "$IN/a5000.bin" -o "$WORK/a-ndp$1-1.aea" 2>/dev/null
+  # shellcheck disable=SC2086
+  "$AEA" encrypt -profile $1 $E -a none -t 1 -i "$IN/a5000.bin" -o "$WORK/a-ndp$1-2.aea" 2>/dev/null
+  if cmp -s "$WORK/a-ndp$1-1.aea" "$WORK/a-ndp$1-2.aea"; then v=SAME
+  elif [ "$1" = 0 ]; then v=DIFF # p0 ECDSA-unstable (c14/16/17 seen) -> verdict only
+  else v=$(cmp "$WORK/a-ndp$1-1.aea" "$WORK/a-ndp$1-2.aea" 2>&1 | grep -o 'char [0-9]*' || echo DIFF); fi
+  chk "a-nd-p$1" str "$v" 0
+}
+for P in 0 2 3 4; do NDP "$P"; done
+EB() { # tag f1 v1 f2 v2 : lenient-flag rc+size (p1 keyfile z5k; AEA silent-fallback beds)
+  if "$AEA" encrypt -profile 1 -key "$WORK/key32.bin" -a none "$2" "$3" "$4" "$5" -i "$IN/a5000.bin" -o "$WORK/a-eb-$1.aea" 2>"$WORK/a-eb-$1.err"; then
+    chk "a-eb-$1-rc" rc 0 0
+    chk "a-eb-$1" size "$(sz "$WORK/a-eb-$1.aea")" "$(sz "$WORK/a-eb-$1.aea")"
+  else chk "a-eb-$1-rc" rc "$?" 0; fi
+}
+EB b0 -b 0 -t 1; EB bbogus -b bogus -t 1; EB b129m -b 129m -t 1; EB t0 -t 0 -b 1m
+if "$AEA" decrypt -key "$WORK/key32.bin" -i "$WORK/a-eb-bbogus.aea" -o "$WORK/a-eb.back" 2>/dev/null && cmp -s "$WORK/a-eb.back" "$IN/a5000.bin"; then v=RT-OK; else v=RT-DIFF; fi
+chk "a-rt-eb" str "$v" 0
+for B in 16b 64k 1m 128m; do
+  if "$AEA" encrypt -profile 1 -key "$WORK/key32.bin" -a lzfse -t 1 -b "$B" -i "$IN/a5000.bin" -o "$WORK/a-vb-$B.aea" 2>/dev/null; then
+    v=$("$AEA" decrypt -v -key "$WORK/key32.bin" -i "$WORK/a-vb-$B.aea" -o /dev/null 2>&1 1>/dev/null | sed -n 's/^ *compression: //p')
+    chk "a-vb-$B" str "$v" 0
+  else echo "FAIL a-vb-$B rc"; FAIL=1; fi
+done
+cp "$WORK/a-p1-100.aea" "$WORK/a-sg-p1.aea"
+if "$AEA" sign -sign-priv "$WORK/ec-priv.pem" -o "$WORK/a-sg-p1.aea" >"$WORK/a-sg-p1.out" 2>"$WORK/a-sg-p1.err"; then rc=0; else rc=$?; fi
+chk "a-sign-p1-rc" rc "$rc" 0
+chk "a-sign-p1-msg" str "$(head -1 "$WORK/a-sg-p1.err")" 0
+cmp -s "$WORK/a-p1-100.aea" "$WORK/a-sg-p1.aea" && v=SAME || v=MOD; chk "a-sign-p1-mod" str "$v" 0
+if "$AEA" encrypt -profile 0 -sign-priv "$WORK/ec-priv.pem" -a none -t 1 -i "$IN/a100.bin" -o "$WORK/a-sg-p0.aea" 2>/dev/null; then
+  cp "$WORK/a-sg-p0.aea" "$WORK/a-sg-p0.pre"
+  if "$AEA" sign -sign-priv "$WORK/ec-priv.pem" -o "$WORK/a-sg-p0.aea" >"$WORK/a-sg-p0.out" 2>"$WORK/a-sg-p0.err"; then rc=0; else rc=$?; fi
+  chk "a-sign-p0-rc" rc "$rc" 0
+  cmp -s "$WORK/a-sg-p0.pre" "$WORK/a-sg-p0.aea" && v=SAME || v=MOD; chk "a-sign-p0-mod" str "$v" 0
+  if "$AEA" decrypt -sign-pub "$WORK/ec-pub.pem" -i "$WORK/a-sg-p0.aea" -o "$WORK/a-sg-p0.back" 2>/dev/null && cmp -s "$WORK/a-sg-p0.back" "$IN/a100.bin"; then v=RT-OK; else v=RT-DIFF; fi
+  chk "a-rt-sign-p0" str "$v" 0
+else echo "FAIL a-sign-p0 enc"; FAIL=1; fi
+cp "$WORK/a-p2.aea" "$WORK/a-sg-p2a.aea"
+if "$AEA" sign -sign-priv "$WORK/ec-priv.pem" -o "$WORK/a-sg-p2a.aea" >"$WORK/a-sg-p2a.out" 2>"$WORK/a-sg-p2a.err"; then rc=0; else rc=$?; fi
+chk "a-sign-p2a-rc" rc "$rc" 0
+chk "a-sign-p2a-msg" str "$(head -1 "$WORK/a-sg-p2a.err")" 0
+cp "$WORK/a-p2.aea" "$WORK/a-sg-p2b.aea"
+if "$AEA" sign -signature-key "$WORK/key32.bin" -o "$WORK/a-sg-p2b.aea" >"$WORK/a-sg-p2b.out" 2>"$WORK/a-sg-p2b.err"; then rc=0; else rc=$?; fi
+chk "a-sign-p2b-rc" rc "$rc" 0
+chk "a-sign-p2b-msg" str "$(head -1 "$WORK/a-sg-p2b.err")" 0
+if "$AEA" encrypt -profile 2 -key "$WORK/key32.bin" -sign-pub "$WORK/ec-pub.pem" -signature-key "$WORK/a-sg-key.bin" -a none -t 1 -i "$IN/a100.bin" -o "$WORK/a-sg-un2.aea" 2>/dev/null; then rc=0; else rc=$?; fi
+chk "a-sign-un2-rc" rc "$rc" 0
+if "$AEA" decrypt -key "$WORK/key32.bin" -sign-pub "$WORK/ec-pub.pem" -i "$WORK/a-sg-un2.aea" -o "$WORK/a-sg-un2.back" 2>"$WORK/a-sg-un2.err"; then rc=0; else rc=$?; fi
+chk "a-sign-undec-rc" rc "$rc" 0
+chk "a-sign-undec-msg" str "$(head -1 "$WORK/a-sg-un2.err")" 0
+cp "$WORK/a-sg-un2.aea" "$WORK/a-sg-un2.pre"
+if "$AEA" sign -sign-priv "$WORK/ec-priv.pem" -signature-key "$WORK/a-sg-key.bin" -o "$WORK/a-sg-un2.aea" >"$WORK/a-sg-un2.out" 2>"$WORK/a-sg-un2.err"; then rc=0; else rc=$?; fi
+chk "a-sign-un2s-rc" rc "$rc" 0
+cmp -s "$WORK/a-sg-un2.pre" "$WORK/a-sg-un2.aea" && v=SAME || v=MOD; chk "a-sign-un2s-mod" str "$v" 0
+if "$AEA" decrypt -key "$WORK/key32.bin" -sign-pub "$WORK/ec-pub.pem" -i "$WORK/a-sg-un2.aea" -o "$WORK/a-sg-un2s.back" 2>/dev/null && cmp -s "$WORK/a-sg-un2s.back" "$IN/a100.bin"; then v=RT-OK; else v=RT-DIFF; fi
+chk "a-rt-sign-un2" str "$v" 0
 [ -n "${RECORD:-}" ] && mv "$PINS.new" "$PINS" && echo "RECORDED $PINS"
 echo "== $WORK =="
 [ "$FAIL" -eq 0 ] && echo OUTER2-GREEN || echo OUTER2-RED

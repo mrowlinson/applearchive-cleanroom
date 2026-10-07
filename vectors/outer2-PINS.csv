@@ -220,3 +220,36 @@ a-ab-r200k-lzraven,size,221184,221184,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-ab-r200k-lzbitmap,size,221184,221184,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-ab-m-eq,str,EQ,0,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-ab-r-eq,str,EQ,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-nd-p0,str,DIFF,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-nd-p2,str,char 13,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-nd-p3,str,char 14,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-nd-p4,str,char 13,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-eb-b0-rc,rc,0,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-eb-b0,size,24576,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-eb-bbogus-rc,rc,0,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-eb-bbogus,size,24576,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-eb-b129m-rc,rc,0,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-eb-b129m,size,24576,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-eb-t0-rc,rc,0,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-eb-t0,size,24576,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-rt-eb,str,RT-OK,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-vb-16b,str,lzfse 0 MB,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-vb-64k,str,lzfse 0 MB,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-vb-1m,str,lzfse 1 MB,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-vb-128m,str,lzfse 128 MB,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-sign-p1-rc,rc,1,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-sign-p1-msg,str,This archive profile can't be signed,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-sign-p1-mod,str,SAME,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-sign-p0-rc,rc,0,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-sign-p0-mod,str,MOD,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-rt-sign-p0,str,RT-OK,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-sign-p2a-rc,rc,1,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-sign-p2a-msg,str,-signature-key is required,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-sign-p2b-rc,rc,1,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-sign-p2b-msg,str,-sign-priv is required,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-sign-un2-rc,rc,0,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-sign-undec-rc,rc,1,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-sign-undec-msg,str,Failed to unlock container,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-sign-un2s-rc,rc,0,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-sign-un2s-mod,str,MOD,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-rt-sign-un2,str,RT-OK,0,test_outer2.sh,27.0.1,oracle-adapter.sh
