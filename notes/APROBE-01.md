@@ -74,8 +74,11 @@ Encrypt adds `padding:` line. Encrypt to /dev/null fails (temp+rename).
 - auth-data>0 MAPPED own: prologue = 156+authsize (2-blob auth12B flips unlock/decrypt @167/168); kv-form = u32LE pair + key\0+value (own-confirm FORMAT.md); both MATCH in proto.
 - `-keychain` flows (OUT of scope, touches system store). lzvn `f` (no oracle -a flag; skip).
 
-## Wide corpus (tests/aea-wide.sh v1)
+## Wide corpus (tests/aea-wide.sh v2, 152/152 WIDE-GREEN)
 
-- FULL-equiv seed 7: 8 sizes (1B..3MB) x p{1,5} x {none,zlib} x {none,sha256} = 64 MATCH.
-- Holdout seed 99: 4 sizes x {p1/lzma/sha, p5/lz4/none} = 8 MATCH. 72/72 WIDE-GREEN.
+- FULL-equiv seed 7: 8 sizes (1B..3MB) x p{1,5} x {none,zlib,lzraven} x {none,sha256} = 96 MATCH.
+- FULL lzraven-text (compressible): 8 sizes x p{1,5} x {none,sha256} = 32 MATCH.
+- Holdout seed 99: 4 sizes x {p1/lzma/sha, p5/lz4/none, p1/lzraven/murmur64} = 12 MATCH.
+- Fresh seed 1234: 4 sizes x {p1/lzfse/sha, p5/lzbitmap/none, p5/lzraven/murmur64} = 12 MATCH.
+- v2 adds LZR_BIN export (v1 lacked it: lzraven never ran in wide) + first murmur64 wide cells.
 - 2-cluster: 269MB p5/none/sha256 OVH 37084 = 18620+18464 (2nd cluster hdr); proto MATCH 0.8s.
