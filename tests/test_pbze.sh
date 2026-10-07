@@ -35,5 +35,12 @@ cell z1 "" zlib
 cell r1 "" zlib
 cell mb 1m zlib
 cell mix 1m zlib
+# razor pair (FLAG-CLEARED ask): same 700B payload (seed 7), name len flips
+# the 15/16 verdict. rzs: 16c-15u=+5 STORED; rzc: -8 COMPRESSED.
+mkdir -p "$W/in/rzs" "$W/in/rzc"
+python3 -c "import random;random.seed(7);open('$W/in/rzs/n','wb').write(bytes(random.randrange(256) for _ in range(700)))"; fix "$W/in/rzs"
+python3 -c "import random;random.seed(7);open('$W/in/rzc/nnnn','wb').write(bytes(random.randrange(256) for _ in range(700)))"; fix "$W/in/rzc"
+cell rzs ""
+cell rzc ""
 [ $fail -eq 0 ] && echo PBZE-GREEN || echo PBZE-RED
 exit $fail

@@ -44,6 +44,8 @@ def main(argv):
     magics = {"lzfse": b"pbze", "zlib": b"pbzz"}
     if alg not in ("raw",) + tuple(magics):
         raise SystemExit("unsupported alg %r (parked: lzma lz4 lzraven lzbitmap)" % alg)
+    if not 1 <= block <= 134217728:
+        raise SystemExit("invalid block size %d (oracle range 1..134217728)" % block)
     inner = build_inner(os.fsencode(src))
     data = inner if alg == "raw" else wrap_pbze(inner, magic=magics[alg], blocksize=block)
     with open(out, "wb") as f:

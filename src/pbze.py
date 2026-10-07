@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """pbze outer wrapper. Derived black-box from /usr/bin/aa I/O only.
-Blocks: inner split by blocksize; per block lzfse-frame iff comp<unc
-else raw; non-last blocks += 16B BE(0,next_unc,0,next_comp).
+Blocks: inner split by blocksize; per block codec-frame iff
+comp*16 <= unc*15 else raw; non-last blocks += 16B BE(0,next_unc,0,next_comp).
+LZFSE_DYLIB env overrides the default OSS dylib path (prototype-only).
 """
 import ctypes
 import os

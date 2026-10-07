@@ -81,6 +81,14 @@ def crtime_ns(pathb, nofollow):
         return None
 
 
+def dat_kind(n):
+    if n <= 0xFFFF:
+        return b"A", n.to_bytes(2, "little")
+    if n <= 0xFFFFFFFF:
+        return b"B", n.to_bytes(4, "little")
+    return b"C", n.to_bytes(8, "little")
+
+
 def put_int(buf, key, val):
     if val <= 0xFF:
         return buf + key + b"1" + bytes([val])
@@ -118,10 +126,8 @@ def encode_entry(rel, st, typ):
     if typ == b"F":
         with open(full, "rb") as f:
             data = f.read()
-        if len(data) <= 0xFFFF:
-            h += b"DATA" + len(data).to_bytes(2, "little")
-        else:
-            h += b"DATB" + len(data).to_bytes(4, "little")
+        k, lb = dat_kind(len(data))
+        h += b"DAT" + k + lb
         payloads.append(data)
     if typ in (b"D", b"F", b"L"):
         recs = xat_records(full, typ == b"L")
@@ -131,6 +137,8 @@ def encode_entry(rel, st, typ):
             xat += rec.to_bytes(4, "little") + nm + b"\x00" + val
         h += b"XATA" + len(xat).to_bytes(2, "little")
         payloads.append(xat)
+    if typ == b"F" and st.st_nlink > 1:
+        h += b"HLC1\x00"
     return entry(h, payloads)
 
 

@@ -48,5 +48,12 @@ check("chr-dev", b"DEV4\x02\x00\x00\x03" in e)
 check("chr-nodat", b"DAT" not in e)
 check("chr-hdrsize", int.from_bytes(e[4:6], "little") == len(e))
 
+check("datA", rawenc.dat_kind(0) == (b"A", b"\x00\x00"))
+check("datAmax", rawenc.dat_kind(65535) == (b"A", b"\xff\xff"))
+check("datB", rawenc.dat_kind(65536) == (b"B", b"\x00\x00\x01\x00"))
+check("datBmax", rawenc.dat_kind(0xFFFFFFFF) == (b"B", b"\xff\xff\xff\xff"))
+check("datC", rawenc.dat_kind(0x100000000) == (b"C", b"\x00\x00\x00\x00\x01\x00\x00\x00"))
+check("datCbed", rawenc.dat_kind(4831838208) == (b"C", (4831838208).to_bytes(8, "little")))
+
 print("UNITS-GREEN" if fail == 0 else "UNITS-RED")
 sys.exit(fail)

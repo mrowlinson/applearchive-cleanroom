@@ -62,6 +62,20 @@ mk c10; printf 'U' > "$W/in/c10/réal.txt"; ln -s "réal.txt" "$W/in/c10/liën.t
 printf 'X' > "$W/in/c10/f"; xattr -w user.zzz FIRST "$W/in/c10/f"; xattr -w user.aaa SECOND "$W/in/c10/f"
 fix "$W/in/c10"
 for c in c1 c2 c3 c4 c5 c6 c7 c8 c9 c10; do cell $c; done
+# c12 hardlink pair + solo control (HLC'1' on nlink>1 regular files only)
+mk c12; printf 'LINKME' > "$W/in/c12/orig"; ln "$W/in/c12/orig" "$W/in/c12/hard"; printf 'SOLO' > "$W/in/c12/solo"; fix "$W/in/c12"
+for c in c12; do cell $c; done
+# c13 4.5GB sparse (DAT'C', RUN_BIG-gated: ~10GB transient on NVME, ~15s)
+if [ "${RUN_BIG:-0}" = "1" ]; then
+  BW=/Volumes/NVME/applearchive-cleanroom-ws/tmp/bigcell.$$; rm -rf "$BW"; mkdir -p "$BW/in"
+  truncate -s 4831838208 "$BW/in/big"; touch -d '2001-02-03 04:05:06' "$BW/in/big" "$BW/in"
+  "$ORACLE" archive -a raw -t 1 -d "$BW/in" -o "$BW/c13.expect.aar" 2>"$W/c13.err" || { echo "FAIL c13 oracle-exit=$?"; fail=1; }
+  python3 "$ROOT/src/rawenc.py" "$BW/in" "$BW/c13.got.aar" 2>>"$W/c13.err" || { echo "FAIL c13 impl-exit=$?"; fail=1; }
+  if cmp -s "$BW/c13.expect.aar" "$BW/c13.got.aar"; then echo "PASS c13 bytes=$(stat -f %z "$BW/c13.got.aar") sha=$(shasum -a 256 "$BW/c13.got.aar" | cut -c1-16)"; else echo "FAIL c13"; fail=1; fi
+  rm -rf "$BW"
+else
+  echo "SKIP c13 (RUN_BIG=1 to run)"
+fi
 # c11 live unix socket (compare-only; short path for AF_UNIX limit)
 python3 - "$W" "$ROOT" "$ORACLE" <<'EOF'
 import os, socket, subprocess, sys
