@@ -67,6 +67,7 @@ for a in raw lzfse lzma lz4 zlib lzraven lzbitmap; do
   set -- $(AAR "m-empty-$a" empty "$a"); rc=$1 s=$2 h=$3
   if [ "$rc" != 0 ]; then echo "FAIL m-empty-$a rc=$rc"; FAIL=1; continue; fi
   chk "m-empty-$a" sha "$h" "$s"
+  chk "m-empty-$a-magic" str "$(head -c 4 "$WORK/m-empty-$a.aar" | xxd -p | tr -d '\n')" "$s"
 done
 mk1file r1000 1000 seed2000
 set -- $(AAR "m-stored-raw" r1000 raw)

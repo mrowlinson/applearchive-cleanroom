@@ -2,12 +2,19 @@
 # checks: sha=full-sha | size=byte count | str=opaque compare | rc=exit code
 # AAR deterministic (fixed mtimes + python seeds). AEA nondet: size/prefix/RT/rc only.
 m-empty-raw,sha,8d38adc92907e9d76c93f30a9efb15839294316def1c785a7c55daeb62f5441d,105,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-empty-raw-magic,str,41413031,105,test_outer2.sh,27.0.1,oracle-adapter.sh
 m-empty-lzfse,sha,878a0ff0373652c6d69ad5ef5a453277e047d1d5a7774d07d0a907a7d1e3fa32,133,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-empty-lzfse-magic,str,70627a65,133,test_outer2.sh,27.0.1,oracle-adapter.sh
 m-empty-lzma,sha,a07efe174526aa733a9787133eaef5f64dc1f6e4461f34def78c6b0605f140f7,133,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-empty-lzma-magic,str,70627a78,133,test_outer2.sh,27.0.1,oracle-adapter.sh
 m-empty-lz4,sha,d22b3dc2ed05c0cac39a3778195e0c481de402e86a7a04df6a203cb4f3616000,133,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-empty-lz4-magic,str,70627a34,133,test_outer2.sh,27.0.1,oracle-adapter.sh
 m-empty-zlib,sha,0b156d06f6f13c0e87ca19425273f4f9a14fba97b0ba39cef61aecc3ed822f7a,133,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-empty-zlib-magic,str,70627a7a,133,test_outer2.sh,27.0.1,oracle-adapter.sh
 m-empty-lzraven,sha,90038a662e6bdb94d419345144b4ddcff53b99b7e2cc5955e6f0ec007bedb036,133,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-empty-lzraven-magic,str,70627a6d,133,test_outer2.sh,27.0.1,oracle-adapter.sh
 m-empty-lzbitmap,sha,36d8081a48c8855be3b9e3c5c199bad95aef2cf8b5e100ef855e7bf45c945f39,133,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-empty-lzbitmap-magic,str,70627a62,133,test_outer2.sh,27.0.1,oracle-adapter.sh
 m-stored,sha,b141320946da0a19889b2acf41aeb18ef4d75892cdb820685b9a530aee3ea494,1249,test_outer2.sh,27.0.1,oracle-adapter.sh
 m-stored-rule,str,STORED,1249,test_outer2.sh,27.0.1,oracle-adapter.sh
 m-flip95-rule,str,STORED,2249,test_outer2.sh,27.0.1,oracle-adapter.sh
