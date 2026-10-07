@@ -129,7 +129,7 @@ body: lzfse frame = magic + uncLE32 + (n: XLE32=comp-16 5/5 | 2: stream bytes) +
 | CR-021 | SYMBOL | libAppleArchive public-export inventory (232) | CONFIRM vs CR-002/003 + vendor list |
 | CR-022 | MEASURED | AEA empty-archive shape (156B bare / cmac pad-tag) | CONFIRM vs writer2 empty rows |
 | CR-023 | MEASURED | lzraven flag alphabet + raw exclusivity (0x3 negative, 0x402 wild) | CONFIRM alphabet; OPEN narrowed |
-| CR-024 | MEASURED | oracle extract stderr order-race (sorted-stable, -wt 1 pinned) | CONFIRM race; threshold CLOSED (3) |
+| CR-024 | MEASURED | oracle extract stderr order-race (sorted-stable, -wt 1 pinned) | CONFIRM race @>=2 all classes; canonical = archive order |
 
 ```
 CR-012 [MEASURED] lzraven stream framing (8B hdr + u32 block-hdrs + u32-0 terminator)
@@ -243,9 +243,9 @@ body: bit0 = raw verbatim (incompressible/high-entropy chunks); bit1/bit2/bit10 
 CR-024 [MEASURED] oracle extract stderr order-race under parallel failure load (sorted-content stable, -wt 1 deterministic)
 stage: probe
 artifact: own-gen orace/ (race2s.aar 2x S-flip + race20s.aar 20x S-flip, raw TYP-crafts) + 23 extract runs (WS tmp/decode-viewer-probes/orace; macOS 27.0.1)
-numbers: 20-fail default-threads 10 runs / 10 distinct stderrs, sorted-md5 10/10 IDENTICAL (pure stanza permutation; header `Error 0x...` + `N entries failed` lines position-stable; no mid-line interleave observed); 2-fail default 10/10 identical (reverse entry order); 20-fail -wt 1 3/3 identical; threshold bisect: n=3 4/8 distinct, n=4 7/8, n=5 5/5, n=10 5/5 -> S-class race iff >=3 failures; cross-phase: [XATbad,S] prints XAT-block-first 2/3 vs S-first 1/3 (phase prints race as units); first header follows the winner (arrival-ordered); S-flush direction REVERSE (f2,f1 14/14 + m3,m1 5/5; writer1 S2-fwd REFUTED, FLAG-ba293f1); nodat-flush RACY at n=2 (m1,m3 4/5 vs m3,m1 1/5); XAT-file RACY at n=2 first-hand (y1,y2 5/8 vs y2,y1 3/8; mutual-CONFIRM vs writer1 bad2); per-class stability differs; exits 1 throughout
-verdict: CONFIRM vs writer1 NOTE-034 bad2/S2 self-race report (mutual-CONFIRM on race existence; own trigger = failure-count load, S-class threshold CLOSED at 3; CORRECT vs DPROBE-06 S-flush-FORWARD + nodat-FORWARD-as-rule)
-body: stability is per-class: S-class 1-2 byte-safe (reverse exact), >=3 sort-or-pin; XAT-file + nodat-flush racy already at 2 (any fixed order valid); any cross-phase mix sort-or-pin. byte-IDENT on default writer threads is flaky by oracle design outside these bounds. exit codes + count line are stable and stay byte-pinned.
+numbers: 20-fail default-threads 10 runs / 10 distinct stderrs, sorted-md5 10/10 IDENTICAL (pure stanza permutation; header `Error 0x...` + `N entries failed` lines position-stable; no mid-line interleave observed); -wt 1 canonical = ARCHIVE order (pair fwd 3/3; 20-fail lexicographic == PAT order 3/3 identical); S-pair default RACY at n=2 (fwd 7/37 + 3/32 across 2 vectors; reverse-skewed scheduling artifact); nodat RACY at n=2 (4/5 vs 1/5); XAT-file RACY at n=2 (5/8 vs 3/8; mutual-CONFIRM vs writer1 bad2); H-fail RACY at n=2 (fwd 7/8 vs rev 1/8); cross-phase RACY (XAT-first 2/3 vs S-first 1/3, phase prints race as units); first header follows the winner (arrival-ordered); exits 1 throughout
+verdict: CONFIRM race at >=2 ALL classes + cross-phase; CONFIRM vs DPROBE-06 S-flush-FORWARD (writer1 vindicated); RETRACT own S-reverse + threshold-3 claims (small-sample artifacts: 14/14 luck, refuted by n>=20 re-proof + -wt 1 pin)
+body: n=1 byte-safe; n>=2 sort-or-pin ALWAYS (every class races at 2 first-hand). implementations emit canonical ARCHIVE order (writer1 conforms; matches -wt 1). batteries accept any order at >=2. exit codes + count line + trailers are stable and stay byte-pinned. method lesson: order claims need n>=20 runs + a -wt 1 canonical pin before any FLAG.
 ```
 
 Status of every clause: UNPROVEN until an implementation written ONLY from
