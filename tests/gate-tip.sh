@@ -7,7 +7,7 @@
 # / ADOPT (A-1 harness pins vs lanes/harness-oracle, best-effort).
 # exit 0 GATE-PASS / 1 GATE-FAIL. all work under /Volumes/NVME only.
 # v2: PIN-STALE-NAME + UNPINNED-AAR, SMOKE-IMPL/IMPL2, committed-.aea WARN,
-# OUTER2 battery + outer2 pins, dual-suffix (.got.aar/.got.aea) pin legs.
+# OUTER2 battery + PINS-OUTER2 setdiff leg, dual-suffix (.got.aar/.got.aea) pin legs.
 set -u
 REV=${1:?usage: gate-tip.sh <rev> <ws-outdir>}
 OUT=${2:?usage: gate-tip.sh <rev> <ws-outdir>}
@@ -84,7 +84,24 @@ pinleg() { # $1=csv-in-tree $2=workdir $3=leg
 }
 pinleg vectors/rawenc-PINS.csv "$OUT/work/rawenc" PINS-RAWENC
 pinleg vectors/pbze-PINS.csv "$OUT/work/pbze" PINS-PBZE
-pinleg vectors/outer2-PINS.csv "$OUT/work/outer2" PINS-OUTER2
+# 4b. PINSET: schema-agnostic pin coverage — battery-reported PASS set must
+# equal the csv row set exactly (catches skipped/renamed/unpinned cells
+# without duplicating the battery's name->artifact map). for outer2 the
+# battery is self-checking (fresh-measured vs committed, read first-hand).
+pinsetleg() { # $1=csv-in-tree $2=battery-log $3=leg
+  [ -f "$OUT/tree/$1" ] || { say "$3" "SKIP no-csv"; return; }
+  [ -f "$2" ] || { fail=1; say "$3" "FAIL no-battery-log"; return; }
+  grep -vE '^(#|$)' "$OUT/tree/$1" | cut -d, -f1 | tr -d '\r' | sort -u > "$OUT/work-$3.rows"
+  grep -oE '^PASS [^ ]+' "$2" | cut -d' ' -f2 | sort -u > "$OUT/work-$3.pass"
+  miss=$(comm -23 "$OUT/work-$3.rows" "$OUT/work-$3.pass" | tr '\n' ' ')
+  extra=$(comm -13 "$OUT/work-$3.rows" "$OUT/work-$3.pass" | tr '\n' ' ')
+  n=$(wc -l < "$OUT/work-$3.rows" | tr -d ' ')
+  if [ -n "$miss$extra" ]; then fail=1; say "$3" "FAIL rows=$n";
+    [ -n "$miss" ] && echo "  PINSET-NEVER-PASS:$miss";
+    [ -n "$extra" ] && echo "  PINSET-UNPINNED:$extra";
+  else say "$3" "PASS set-eq $n/$n"; fi
+}
+pinsetleg vectors/outer2-PINS.csv "$OUT/work-OUTER2.log" PINS-OUTER2
 
 # 5. OSS: third-party lib loads in src+harness (PARENT-003 gate 3).
 # system libc (/usr/lib, /System) + bare ctypes stdlib use are NOT deps.
