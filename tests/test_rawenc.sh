@@ -43,6 +43,11 @@ mk c5; python3 -c "import sys; sys.stdout.buffer.write(bytes((i*13+1)&0xFF for i
 # c6 65535B + 65536B boundary pair
 mk c6; python3 -c "import sys; sys.stdout.buffer.write(bytes((i*7)&0xFF for i in range(65535)))" > "$W/in/c6/a65k"
 python3 -c "import sys; sys.stdout.buffer.write(bytes((i*7)&0xFF for i in range(65536)))" > "$W/in/c6/b65k"; fix "$W/in/c6"
-for c in c1 c2 c3 c4 c5 c6; do cell $c; done
+# c7 live mtimes (T-path, compare-only: oracle+impl same tree, no writes between)
+mk c7; mkdir -p "$W/in/c7/sub"
+printf 'live1' > "$W/in/c7/b.txt"; printf 'live2' > "$W/in/c7/sub/a.txt"; ln -s b.txt "$W/in/c7/z"
+# c8 adversarial order: created z,m,a (reverse); oracle must emit sorted
+mk c8; printf '1' > "$W/in/c8/zebra"; printf '2' > "$W/in/c8/mike"; printf '3' > "$W/in/c8/apple"; fix "$W/in/c8"
+for c in c1 c2 c3 c4 c5 c6 c7 c8; do cell $c; done
 [ $fail -eq 0 ] && echo RAWENC-GREEN || echo RAWENC-RED
 exit $fail

@@ -54,6 +54,33 @@ def xat_records(path, is_link):
     return recs
 
 
+def crtime_ns(pathb, nofollow):
+    import ctypes
+    try:
+        libc = ctypes.CDLL("/usr/lib/libc.dylib", use_errno=True)
+
+        class AttrList(ctypes.Structure):
+            _fields_ = [("bitmapcount", ctypes.c_ushort), ("reserved", ctypes.c_ushort),
+                        ("commonattr", ctypes.c_uint), ("volattr", ctypes.c_uint),
+                        ("dirattr", ctypes.c_uint), ("fileattr", ctypes.c_uint),
+                        ("forkattr", ctypes.c_uint)]
+
+        class Ts(ctypes.Structure):
+            _fields_ = [("sec", ctypes.c_long), ("nsec", ctypes.c_long)]
+
+        al = AttrList(5, 0, 0x200, 0, 0, 0, 0)  # ATTR_CMN_CRTIME
+        buf = ctypes.create_string_buffer(20)
+        libc.getattrlist.argtypes = [ctypes.c_char_p, ctypes.c_void_p, ctypes.c_void_p,
+                                     ctypes.c_size_t, ctypes.c_ulong]
+        libc.getattrlist.restype = ctypes.c_int
+        if libc.getattrlist(pathb, ctypes.byref(al), buf, 20, 0x1 if nofollow else 0) != 0:
+            return None
+        ts = Ts.from_buffer_copy(buf, 4)
+        return ts.sec * 1_000_000_000 + ts.nsec
+    except OSError:
+        return None
+
+
 def entry(hdr, payloads):
     hdrsize = 6 + len(hdr)
     return b"AA01" + hdrsize.to_bytes(2, "little") + hdr + b"".join(payloads)
@@ -71,11 +98,13 @@ def encode_entry(rel, st, typ):
     h += b"GID1" + bytes([st.st_gid & 0xFF])
     h += b"MOD2" + (st.st_mode & 0x0FFF).to_bytes(2, "little")
     h += b"FLG1\x00"
-    sec = st.st_mtime_ns // 1_000_000_000
-    nsec = st.st_mtime_ns % 1_000_000_000
-    h = put_time(h, b"CTM", sec, nsec)
-    h = put_time(h, b"MTM", sec, nsec)
     full = os.path.join(ROOTB, rel)
+    cns = crtime_ns(full, typ == b"L")
+    if cns is None:  # no crtime (non-Apple FS): fall back to mtime
+        cns = st.st_mtime_ns
+    mns = st.st_mtime_ns
+    h = put_time(h, b"CTM", cns // 1_000_000_000, cns % 1_000_000_000)
+    h = put_time(h, b"MTM", mns // 1_000_000_000, mns % 1_000_000_000)
     if typ == b"F":
         with open(full, "rb") as f:
             data = f.read()
