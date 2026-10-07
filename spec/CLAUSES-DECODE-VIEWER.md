@@ -129,6 +129,7 @@ body: lzfse frame = magic + uncLE32 + (n: XLE32=comp-16 5/5 | 2: stream bytes) +
 | CR-021 | SYMBOL | libAppleArchive public-export inventory (232) | CONFIRM vs CR-002/003 + vendor list |
 | CR-022 | MEASURED | AEA empty-archive shape (156B bare / cmac pad-tag) | CONFIRM vs writer2 empty rows |
 | CR-023 | MEASURED | lzraven flag alphabet + raw exclusivity (0x3 negative, 0x402 wild) | CONFIRM alphabet; OPEN narrowed |
+| CR-024 | MEASURED | oracle extract stderr order-race (sorted-stable, -wt 1 pinned) | CONFIRM race; threshold CLOSED (3) |
 
 ```
 CR-012 [MEASURED] lzraven stream framing (8B hdr + u32 block-hdrs + u32-0 terminator)
@@ -233,9 +234,18 @@ body: orig==0 short-circuits cluster parsing entirely; pad (if any) starts at pr
 CR-023 [MEASURED] lzraven block-flag alphabet {0,1,2,4,6,0x402} + raw-bit exclusivity (0x3/5/7 unobserved)
 stage: probe
 artifact: 7 own compression_tool -encode -a lzraven inputs (Mach-O /bin/ls, true-random 600K, code+random mix, /bin/zsh 2MB, 64K-alternating, BCJ-bait sea, xz-output) + block-flag walks + wild big-lrv.aar (2MB Mach-O via aa -a lzraven, stream flags [0x4,0x402x3]) + oracle/proto dual-decode (WS tmp/decode-viewer-probes/lrv003)
-numbers: 15 blocks: 0x0 x2, 0x1 x4, 0x2 x3, 0x4 x2 (zsh blk0 + big blk0), 0x6 x2, 0x402 x3 (big blk1-3, NEW bit10, AAR-path only); raw (0x1) blocks 4/4 carry no other bits; combos 0x3/0x5/0x7 0/15 blocks; wild-0x402 archive: oracle exit 0 MATCH + writer1 proto exit 0 TREE-MATCH (decoder-covered, no gap)
+numbers: 15 blocks: 0x0 x2, 0x1 x4, 0x2 x3, 0x4 x2 (zsh blk0 + big blk0), 0x6 x2, 0x402 x3 (big blk1-3, NEW bit10, content-driven per amend); raw (0x1) blocks 4/4 carry no other bits; combos 0x3/0x5/0x7 0/15 blocks; wild-0x402 archive: oracle exit 0 MATCH + writer1 proto exit 0 TREE-MATCH (decoder-covered, no gap); trigger-map: 9 pos-vectors (A/B/C/D/E/F/G/H/I) all roundtrip-clean + end-exact, 19 blocks: code<->0x4 follows content thru position swap (A/B), zeros 4/4 0x0, zsh 8/8 0x4, ls-bytes 4/4 carry bit1 (E/C1/H 0x6, I-hi pure 0x2), size ruled out (G); bit10-hunt 5 vectors: same-bytes aa-vs-ct IDENTICAL 2/2 (big3m 6x0x4 both paths; dir-inner [0x4,0x402x3] both paths exact sizes), wild replicated (repdir unc 2045677 flags MATCH), full-zsh pure [0x4,0x2x3] vs dir-inner [0x4,0x402x3], big3m-dir 6x0x4 (no bit1-content, no bit10); 0x402 x6 total; nblocks==ceil(unc/512K) 38/38 (recount: 20 ladder + 9 pos + 7 hunt + 2 quarters incl inner-payload streams; entry-14's 26/26 undercounted); bit1 non-monotonic: ls-q3 (H=3.53) 0x2 vs ls-q4 (H=1.36, 88% zero) 0x0 (J/K roundtrip-clean) — ladder 0x0/0x2/0x6/0x4 by chunk character, exact thresholds encoder-side
 verdict: CONFIRM alphabet {0,1,2,4,6,0x402}; CR-012/016 raw+BCJ OPEN narrowed to bounded negative (encoder not observed emitting raw+transform after targeted hunt; decoder fail-closed on unseen combos stands)
-body: bit0 = raw verbatim (incompressible/high-entropy chunks); bit1/bit2 = transform variants (fire on code-like chunks, incl 0x6 joint); bit10 fires on later stream chunks (AAR-path observed); bit0 never co-occurs with transform bits in 15/15 blocks. bit1/bit2/bit10 encoder-side meanings unassigned (decode-covered regardless).
+body: bit0 = raw verbatim (incompressible/high-entropy chunks); bit1/bit2/bit10 = INDEPENDENTLY-triggered content features (bit2 on zsh-like code slices, bit1 on ls-like/zsh-late slices, joint 0x6 on mixed; bit10 rides bit1-content slices under shifted alignment; position/size/path ALL ruled out — tree-mode-bit hypothesis REFUTED first-hand); bit0 never co-occurs with transform bits in 15/15 blocks. exact per-feature predicates stay encoder-side (decode-covered regardless).
+```
+
+```
+CR-024 [MEASURED] oracle extract stderr order-race under parallel failure load (sorted-content stable, -wt 1 deterministic)
+stage: probe
+artifact: own-gen orace/ (race2s.aar 2x S-flip + race20s.aar 20x S-flip, raw TYP-crafts) + 23 extract runs (WS tmp/decode-viewer-probes/orace; macOS 27.0.1)
+numbers: 20-fail default-threads 10 runs / 10 distinct stderrs, sorted-md5 10/10 IDENTICAL (pure stanza permutation; header `Error 0x...` + `N entries failed` lines position-stable; no mid-line interleave observed); 2-fail default 10/10 identical (reverse entry order); 20-fail -wt 1 3/3 identical; threshold bisect: n=3 4/8 distinct, n=4 7/8, n=5 5/5, n=10 5/5 -> race iff >=3 failures; exits 1 throughout
+verdict: CONFIRM vs writer1 NOTE-034 bad2/S2 self-race report (mutual-CONFIRM on race existence; own trigger = failure-count load, threshold CLOSED at 3)
+body: 1-2 failures byte-safe; >=3 failures stderr MUST be compared order-insensitively (sort lines) or pinned with -wt 1; byte-IDENT on default writer threads is flaky by oracle design. implementations may emit any stanza order (writer1 deterministic-reverse is one valid oracle order). exit codes + count line are stable and stay byte-pinned.
 ```
 
 Status of every clause: UNPROVEN until an implementation written ONLY from

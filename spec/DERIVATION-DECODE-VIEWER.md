@@ -267,4 +267,75 @@ findings:
 - VERIFY 42 PASS 0 FLAG current thru both tips; joint DONE still open (writer1 post-pass + sweep DONEs pending; claim HELD)
 pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:388e44b231e10c74f3affb1656db6c77c27a6d807aae820ea7fcf56630ef914e bytes:24236
 pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:b0006e71595f7948c0e7ad9c8b05752415c105c4cfcdbad769a1d08f2f6f049d bytes:24043
+post-edit: (recorded at commit 8c1b919; 2 files, +18/-2)
+
+## 2026-10-07 decode-viewer lanes/decode-viewer (entry 14: CR-023 trigger-map fold + VERIFY-1a83bfa)
+inputs:
+- quiz-decode writer2 NOTE-077 (p0-pad closed @1a83bfa, mutual vs NOTE-36) + NOTE-GATE-ee58b62 (sweep GREEN 131/131) (read first-hand)
+- own-gen pos/: 9 lzraven position/content vectors (A-codefirst/B-codesecond/C-codeboth/D-zerozero/E-lshomog/F-zshhomog/G-zsh252/H-lslo/I-lshi; 600KB zsh + 252512B ls + zeros) + oracle roundtrips 9/9 + flag walks 19 blocks + otool -l /bin/ls layout (__TEXT 32768B) (WS tmp/decode-viewer-probes/lrv003/pos; macOS 27.0.1)
+- writer commit verified first-hand (full diff + new-pattern wall grep 0/1): w2 1a83bfa (battery-only p0 cell + note fix)
+not-consulted: patent contents, encode-side lanes, reference/port sources,
+  decompiler output (none), writer worktree files (git-show only + black-box runs), liblzraven src/*.c internals
+outputs: 0 new clauses (CR-023 fold: trigger-map 19 blocks, nblocks 26/26); VERIFY-1a83bfa + NOTE-37
+findings:
+- flag triggers are content-driven + position/size-independent; bit1/bit2 independent features (zsh->0x4, ls->bit1, pure 0x2 on ls-hi); E single-block = input <512K, rule holds
+- VERIFY 43 PASS 0 FLAG current thru both tips; joint DONE still open (writer1 post-pass + sweep DONEs pending; claim HELD)
+pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:80b33ba0e44c69e22b7aa9765f074e913edde25109cce7ddf292040b94b68765 bytes:24391
+pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:87b5d9b3ea68bfb8c15e738bc45e8f5d7846bb1889c0335ba8c962232321c62a bytes:25751
+post-edit: (recorded at commit 0d6c442; 2 files, +17/-2)
+
+## 2026-10-07 decode-viewer lanes/decode-viewer (entry 15: CR-023 bit10 amend + PV-010/NOTE-034)
+inputs:
+- quiz-decode PV-010 (viewer@8c1b919 merged dcdbef4; writer2@ee58b62 merged 67672bf) + writer1 NOTE-034 (post-pass C+proto 26/26 matrix, cells+commit next; no Q) (read first-hand)
+- own-gen pos hunt: big3m.bin (3MB zsh-repeat) pure + file-aar + dir-aar (all 6x0x4) + fullzsh pure [0x4,0x2x3] + fullzsh file-aar [0x4,0x2x3] + repdir dir-aar [0x4,0x402x3] (wild replicated, unc 2045677 MATCH) + repdir-inner pure re-encode [0x4,0x402x3] EXACT sizes (WS tmp/decode-viewer-probes/lrv003/pos; macOS 27.0.1)
+- aa archive usage (dir archiving needs -d, not -i; 148B no-recurse lesson recorded)
+not-consulted: patent contents, encode-side lanes, reference/port sources,
+  decompiler output (none), writer worktree files (git-show only + black-box runs), liblzraven src/*.c internals
+outputs: 0 new clauses (CR-023 amend: bit10 content-driven, tree-mode REFUTED, nblocks recount 36/36); NOTE-38/39
+findings:
+- bit10 = content feature on shifted slices (rides bit1-content); path/mode ruled out 2/2 same-bytes; wild vector reproduced first-hand; all vectors roundtrip-clean + decode-covered
+- VERIFY 43 PASS 0 FLAG current; Q/A 18/18; joint DONE still open (writer1/sweep DONEs pending; claim HELD)
+pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:f3163fd4fe27fd5512bd05a7ecb1064dd6cf7b27985e216bcd4103070b090848 bytes:24754
+pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:c7d7a64acf679edb40235a90136f1bcb2c07c53202383fdfa3cf1f9dfdc303a9 bytes:27346
+post-edit: (recorded at commit 197e76d; 2 files, +17/-2)
+
+## 2026-10-07 decode-viewer lanes/decode-viewer (entry 16: CR-023 J/K fold + GATE-1a83bfa)
+inputs:
+- quiz-decode NOTE-GATE-1a83bfa (sweep GREEN 132/132, shift 56/56) (read first-hand)
+- own-gen pos quarters: J-lsq3 (63KB, H=3.53) -> 0x2 + K-lsq4 (63KB, H=1.36) -> 0x0 + entropy profiles (H/G/I/J/K zero-rates) + oracle roundtrips 2/2 (WS tmp/decode-viewer-probes/lrv003/pos; macOS 27.0.1)
+not-consulted: patent contents, encode-side lanes, reference/port sources,
+  decompiler output (none), writer worktree files (git-show only + black-box runs), liblzraven src/*.c internals
+outputs: 0 new clauses (CR-023 fold: bit1 non-monotonicity, nblocks 38/38); NOTE-40
+findings:
+- bit1 fires on sparse-structured, drops on near-empty (0x0); selection ladder recorded; exact thresholds encoder-side, decode-irrelevant — hunt parked
+- VERIFY 43 PASS 0 FLAG current; Q/A 18/18; joint DONE still open (writer1/sweep DONEs pending; claim HELD)
+pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:fe92a6ac710587feb46302ed0727545103bd81c6e90f869d0c99065d905e7d91 bytes:25229
+pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:8d5afa9ba9716572aa801d00c64568d7c2065333e2b5e7cdde3fadaaecc76c3c bytes:28949
+post-edit: (recorded at commit b6a9155; 2 files, +15/-1)
+
+## 2026-10-07 decode-viewer lanes/decode-viewer (entry 17: CR-024 oracle stderr race)
+inputs:
+- quiz-decode writer1 NOTE-034 (bad2/S2 oracle self-race report: 2/5-vs-3/5 orders, deterministic-reverse valid) (read first-hand; mutual-CONFIRM target)
+- own-gen orace/: race.aar/race2s.aar (2-file raw + 2x F->S TYP flips) + race20.aar/race20s.aar (20-file + 20x flips) + 10 + 10 + 3 extract runs (md5/sorted-md5 matrices) + aa archive -h (dir needs -d) (WS tmp/decode-viewer-probes/orace; macOS 27.0.1)
+not-consulted: patent contents, encode-side lanes, reference/port sources,
+  decompiler output (none), writer worktree files (git-show only + black-box runs), liblzraven src/*.c internals
+outputs: +1 clause (CR-024 MEASURED), tag mix total MEASURED 19 / SYMBOL 3 / INFERRED 2; NOTE-41
+findings:
+- oracle stderr order-race confirmed first-hand (10/10 distinct raw, 10/10 identical sorted; -wt 1 pins 3/3); battery rule: sort-or-pin multi-failure stderr, byte-pin exits + count line
+- VERIFY 43 PASS 0 FLAG current; Q/A 18/18; joint DONE still open (writer1/sweep DONEs pending; claim HELD)
+pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:23acc68cd484b2504ea796e1127bf7c0cc4499aaf0b32c186e005970842f1d62 bytes:25403
+pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:52ac0e0efdcd3dc0f794690703b2751904e6dfe8554de50ba714d5e101a887a4 bytes:30191
+post-edit: (recorded at commit ecf4277; 2 files, +24)
+
+## 2026-10-07 decode-viewer lanes/decode-viewer (entry 18: CR-024 threshold bisect)
+inputs:
+- own-gen orace bisect: race03s/race04s/race05s/race10s.aar (3/4/5/10x F->S flips on 20-file raw) + 8 + 8 + 5 + 5 extract runs (distinct-md5 counts) (WS tmp/decode-viewer-probes/orace; macOS 27.0.1)
+not-consulted: patent contents, encode-side lanes, reference/port sources,
+  decompiler output (none), writer worktree files (git-show only + black-box runs), liblzraven src/*.c internals
+outputs: 0 new clauses (CR-024 fold: threshold CLOSED at 3); NOTE-42
+findings:
+- race iff >=3 parallel failures (n=2 stable 10/10, n=3 racy 4/8); battery rule refined (1-2 byte-safe, 3+ sort-or-pin)
+- VERIFY 43 PASS 0 FLAG current; Q/A 18/18; joint DONE still open (writer1/sweep DONEs pending; claim HELD)
+pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:761411739339887e44d7333b3a12312f4da91a2a03152a0c9c6aaa4173a0b0b7 bytes:26626
+pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:9f2594562e5ecf2726b4de38457f70d1962f5db565eb00ceb97c070f4eb5e217 bytes:31589
 post-edit: (recorded at commit; see commit 2nd line stats)
