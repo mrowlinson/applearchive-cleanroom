@@ -1,11 +1,16 @@
 #!/usr/bin/env python3
-"""aad.py — decode prototype v1 (REFERENCE ONLY, not the deliverable).
+"""aad.py — decode prototype v2 (REFERENCE ONLY, not the deliverable).
 
-Covers: outer 28B container (PRE-001) + STORED/raw + inner TLV + extract.
-Codec payloads: zlib only in v1 (stdlib). Validated vs oracle, never vs OSS.
+Covers: multi-block chain (PRE-002) + all 7 codecs + inner TLV + extract.
+Codec backends (prototype-only): stored/raw direct; zlib+xz stdlib;
+lzfse/lz4/lzraven via /usr/bin/compression_tool; lzbitmap via libzbm
+dylib (MIT, A-006 row 3) at $ZBM_DYLIB. Validated vs oracle, never vs OSS.
 """
+import ctypes
+import lzma
 import os
 import struct
+import subprocess
 import sys
 import zlib
 
@@ -20,30 +25,87 @@ class FmtErr(Exception):
     pass
 
 
-def parse_outer(data):
-    """-> (inner_bytes, meta). meta: alg, stored, unc, comp."""
+CTOOL = "/usr/bin/compression_tool"
+CTOOL_ALG = {b"pbze": "lzfse", b"pbz4": "lz4", b"pbzm": "lzraven"}
+_zbm = None
+
+
+def _zbm_dec(payload, unc):
+    global _zbm
+    if _zbm is None:
+        path = os.environ.get("ZBM_DYLIB")
+        if not path:
+            raise FmtErr("ZBM_DYLIB unset for lzbitmap block")
+        _zbm = ctypes.CDLL(path)
+        _zbm.zbm_decompress.argtypes = [ctypes.c_void_p, ctypes.c_size_t,
+                                        ctypes.c_void_p, ctypes.c_size_t,
+                                        ctypes.POINTER(ctypes.c_size_t)]
+        _zbm.zbm_decompress.restype = ctypes.c_int
+    out = ctypes.create_string_buffer(unc)
+    n = ctypes.c_size_t(0)
+    r = _zbm.zbm_decompress(out, unc, payload, len(payload), ctypes.byref(n))
+    if r != 0 or n.value != unc:
+        raise FmtErr("zbm decode r=%d n=%d unc=%d" % (r, n.value, unc))
+    return bytes(out.raw)
+
+
+def _ctool_dec(payload, alg, unc):
+    p = subprocess.run([CTOOL, "-decode", "-a", alg], input=payload,
+                       capture_output=True)
+    if p.returncode != 0:
+        raise FmtErr("compression_tool %s exit %d" % (alg, p.returncode))
+    if len(p.stdout) != unc:
+        raise FmtErr("ctool %s size %d != %d" % (alg, len(p.stdout), unc))
+    return p.stdout
+
+
+def decode_block(magic, payload, unc, comp):
+    """Decode one block payload -> inner bytes (A-007 frame rule)."""
+    if comp == unc:
+        return bytes(payload)
+    if magic == b"pbzz":
+        raw = zlib.decompress(bytes(payload))
+    elif magic == b"pbzx":
+        raw = lzma.decompress(bytes(payload))
+    elif magic in CTOOL_ALG:
+        return _ctool_dec(bytes(payload), CTOOL_ALG[magic], unc)
+    elif magic == b"pbzb":
+        return _zbm_dec(bytes(payload), unc)
+    else:
+        raise FmtErr("unknown codec %r" % magic)
+    if len(raw) != unc:
+        raise FmtErr("codec %r size %d != %d" % (magic, len(raw), unc))
+    return raw
+
+
+def parse_chain(data):
+    """-> (inner_bytes, metas). PRE-002: 12B prefix + [16B hdr + comp]*."""
     if bytes(data[:4]) in INNER_MAGICS:
-        return bytes(data), {"alg": "raw", "stored": True,
-                             "unc": len(data), "comp": len(data)}
+        return bytes(data), [{"alg": "raw", "stored": True,
+                              "unc": len(data), "comp": len(data)}]
     if bytes(data[:3]) != b"pbz" or len(data) < 28:
         raise FmtErr("bad outer magic")
     magic = bytes(data[:4])
-    z4, bsize, z12, unc, z20, comp = struct.unpack(">4sI4sI4sI", data[4:28])
-    if z4 != b"\0\0\0\0" or z12 != b"\0\0\0\0" or z20 != b"\0\0\0\0":
-        raise FmtErr("outer zero fields nonzero")
-    if len(data) != 28 + comp:
-        raise FmtErr("outer size mismatch %d != 28+%d" % (len(data), comp))
-    payload = bytes(data[28:28 + comp])
-    meta = {"alg": magic.decode("ascii"), "stored": comp == unc,
-            "unc": unc, "comp": comp, "bsize": bsize}
-    if comp == unc:
-        return payload, meta
-    if magic == b"pbzz":
-        raw = zlib.decompress(payload)
-        if len(raw) != unc:
-            raise FmtErr("zlib size %d != %d" % (len(raw), unc))
-        return raw, meta
-    raise FmtErr("codec %s not in v1" % magic.decode("ascii"))
+    if data[4:8] != b"\0\0\0\0":
+        raise FmtErr("prefix zeros nonzero")
+    bsize = struct.unpack(">I", data[8:12])[0]
+    inner, metas, off = bytearray(), [], 12
+    while off < len(data):
+        if off + 16 > len(data):
+            raise FmtErr("block header past EOF at %d" % off)
+        z1, unc, z2, comp = struct.unpack(">4sI4sI", data[off:off + 16])
+        if z1 != b"\0\0\0\0" or z2 != b"\0\0\0\0":
+            raise FmtErr("block zeros nonzero at %d" % off)
+        payload = bytes(data[off + 16:off + 16 + comp])
+        if len(payload) != comp:
+            raise FmtErr("block data past EOF at %d" % off)
+        inner += decode_block(magic, payload, unc, comp)
+        metas.append({"alg": magic.decode("ascii"), "stored": comp == unc,
+                      "unc": unc, "comp": comp, "bsize": bsize})
+        off += 16 + comp
+    if off != len(data):
+        raise FmtErr("chain overrun")
+    return bytes(inner), metas
 
 
 def parse_header(data, pos):
@@ -157,8 +219,8 @@ def main(argv):
         return 2
     with open(argv[1], "rb") as f:
         data = f.read()
-    inner, meta = parse_outer(data)
-    print("meta:", meta, file=sys.stderr)
+    inner, metas = parse_chain(data)
+    print("blocks:", len(metas), metas[0] if metas else {}, file=sys.stderr)
     extract(parse_inner(inner), argv[2])
     return 0
 
