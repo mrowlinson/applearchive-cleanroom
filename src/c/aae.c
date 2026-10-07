@@ -1,11 +1,14 @@
-/* aae.c — cleanroom AAR encoder (C port of prototype rawenc/pbze).
- * Derived black-box from /usr/bin/aa I/O only. raw/lzfse/zlib paths.
+/* aae.c — cleanroom AAR encoder (C port of prototype rawenc/pbze/lzmaenc).
+ * Derived black-box from /usr/bin/aa I/O only. raw/lzfse/zlib/lzma paths.
+ * lzma packets: liblzma preset-6 pinned per quiz A-20 (5.8.4 artifact, see
+ * Makefile LZMA_DYLIB + sha256); XZ framing rewritten below (own code).
  * Build: make BUILDDIR=/Volumes/NVME/applearchive-cleanroom-ws/build/aae
  */
 #define _DARWIN_C_SOURCE 1
 #include <dirent.h>
 #include <dlfcn.h>
 #include <errno.h>
+#include <lzma.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -61,6 +64,8 @@ static void bbe32(buf *b, uint32_t v) {
                     (uint8_t)(v >> 8), (uint8_t)v};
     bput(b, t, 4);
 }
+
+static void bputc(buf *b, uint8_t c) { bput(b, &c, 1); }
 
 /* minimal-width int field: key(3) + kind(1) + value */
 static void put_int(buf *b, const char key[3], uint32_t v) {
@@ -329,6 +334,164 @@ static void lzfse_init(void) {
     }
 }
 
+/* ---- lzma (pbzx): stock-packet XZ rewritten to oracle framing ---- */
+
+static size_t xz_vint(uint8_t *o, uint64_t v) {
+    size_t n = 0;
+    for (;;) {
+        uint8_t b = (uint8_t)(v & 0x7F);
+        v >>= 7;
+        if (v)
+            o[n++] = (uint8_t)(0x80 | b);
+        else {
+            o[n++] = b;
+            return n;
+        }
+    }
+}
+
+static uint64_t xz_read_vint(const uint8_t *d, size_t *pp) {
+    uint64_t n = 0;
+    int sh = 0;
+    size_t p = *pp;
+    for (;;) {
+        uint8_t b = d[p++];
+        n |= (uint64_t)(b & 0x7F) << sh;
+        if (!(b & 0x80)) {
+            *pp = p;
+            return n;
+        }
+        sh += 7;
+    }
+}
+
+/* end offsets of the lzma2 data run: *eos = EOS byte end, return = pad end */
+static size_t xz_lzma2_end(const uint8_t *xz, size_t start, size_t *eos) {
+    size_t q = start;
+    for (;;) {
+        uint8_t ctrl = xz[q++];
+        if (ctrl == 0) {
+            *eos = q;
+            while ((q - start) % 4) {
+                if (xz[q] != 0) {
+                    fprintf(stderr, "bad lzma2 pad\n");
+                    exit(1);
+                }
+                q++;
+            }
+            return q;
+        } else if (ctrl == 1 || ctrl == 2) {
+            size_t us = ((size_t)xz[q] << 8 | xz[q + 1]) + 1;
+            q += 2 + us;
+        } else if (ctrl >= 0x80) {
+            int rs = (ctrl >> 5) & 3;
+            size_t uhi = (size_t)(ctrl & 0x1F);
+            (void)uhi; /* usize recomputed below */
+            size_t us = (uhi << 16) + ((size_t)xz[q] << 8 | xz[q + 1]) + 1;
+            size_t cs = ((size_t)xz[q + 2] << 8 | xz[q + 3]) + 1;
+            (void)us;
+            q += 4;
+            if (rs >= 2) q += 1;
+            q += cs;
+        } else {
+            fprintf(stderr, "bad lzma2 ctrl %u\n", ctrl);
+            exit(1);
+        }
+    }
+}
+
+static void xz_fail(const char *m) {
+    fprintf(stderr, "oracle_xz: %s\n", m);
+    exit(1);
+}
+
+/* rewrite one single-block stock preset-6 check-none XZ to oracle form */
+static uint8_t *oracle_xz(const uint8_t *xz, size_t xzn, size_t unc,
+                           size_t *out_len) {
+    static const uint8_t kMagic[6] = {0xFD, 0x37, 0x7A, 0x58, 0x5A, 0x00};
+    if (xzn < 12 || memcmp(xz, kMagic, 6) || xz[6] || xz[7])
+        xz_fail("not check-none XZ");
+    size_t pos = 12;
+    size_t hlen = ((size_t)xz[pos] + 1) * 4;
+    uint8_t flags = xz[pos + 1];
+    if ((flags & 0x3C) || (flags & 3)) xz_fail("multi-filter block");
+    size_t p = pos + 2;
+    if (flags & 0x40) xz_read_vint(xz, &p);
+    if (flags & 0x80) xz_read_vint(xz, &p);
+    if (xz[p] != 0x21) xz_fail("not LZMA2");
+    size_t fsize = xz[p + 1];
+    const uint8_t *dc = xz + p + 2;
+    size_t data_start = pos + hlen;
+    size_t eos_end, data_end;
+    data_end = xz_lzma2_end(xz, data_start, &eos_end);
+    if (data_end % 4) xz_fail("misaligned lzma2");
+    size_t lzlen = data_end - data_start;
+    size_t ob0 = unc >= ((size_t)1 << 21) ? 4 : 3;
+    size_t ohlen = (ob0 + 1) * 4;
+    buf o = {0};
+    bput(&o, xz, 12);
+    size_t hstart = o.n;
+    uint8_t vb[16];
+    bputc(&o, (uint8_t)ob0);
+    bputc(&o, 0xC0);
+    bput(&o, vb, xz_vint(vb, (uint64_t)(eos_end - data_start)));
+    bput(&o, vb, xz_vint(vb, (uint64_t)unc));
+    bputc(&o, 0x21);
+    bputc(&o, 0x01);
+    bput(&o, dc, fsize);
+    while (o.n - hstart < ohlen - 4) bputc(&o, 0);
+    if (o.n - hstart != ohlen - 4) xz_fail("header overflow");
+    uint32_t hc = (uint32_t)crc32(0L, o.p + hstart, (uInt)(ohlen - 4));
+    bu32le(&o, hc);
+    size_t unpadded = ohlen + (eos_end - data_start);
+    size_t istart = o.n;
+    bputc(&o, 0x00);
+    bputc(&o, 0x01);
+    bput(&o, vb, xz_vint(vb, (uint64_t)unpadded));
+    bput(&o, vb, xz_vint(vb, (uint64_t)unc));
+    while ((o.n - istart) % 4) bputc(&o, 0);
+    /* NOTE: index pad included in crc below (idx bytes then crc) */
+    uint32_t ic = (uint32_t)crc32(0L, o.p + istart, (uInt)(o.n - istart));
+    bu32le(&o, ic);
+    uint8_t back[6];
+    uint32_t bw = (uint32_t)((o.n - istart - 4) / 4);
+    back[0] = (uint8_t)bw;
+    back[1] = (uint8_t)(bw >> 8);
+    back[2] = (uint8_t)(bw >> 16);
+    back[3] = (uint8_t)(bw >> 24);
+    back[4] = back[5] = 0;
+    uint32_t fc = (uint32_t)crc32(0L, back, 6);
+    bu32le(&o, fc);
+    bput(&o, back, 6);
+    bputc(&o, 'Y');
+    bputc(&o, 'Z');
+    /* splice lzdata between header and index: rebuild in order */
+    buf f = {0};
+    bput(&f, o.p, 12 + ohlen);
+    bput(&f, xz + data_start, lzlen);
+    bput(&f, o.p + 12 + ohlen, o.n - (12 + ohlen));
+    free(o.p);
+    *out_len = f.n;
+    return f.p;
+}
+
+/* stock preset-6 check-none XZ of chunk, rewritten to oracle framing */
+static uint8_t *xz_encode(const uint8_t *ch, size_t n, size_t *out_len) {
+    size_t bound = lzma_stream_buffer_bound(n);
+    uint8_t *std = malloc(bound ? bound : 1);
+    if (!std) die("malloc");
+    size_t opos = 0;
+    lzma_ret r = lzma_easy_buffer_encode(6, LZMA_CHECK_NONE, NULL, ch, n,
+                                         std, &opos, bound);
+    if (r != LZMA_OK) {
+        fprintf(stderr, "lzma_easy_buffer_encode: %d\n", r);
+        exit(1);
+    }
+    uint8_t *rw = oracle_xz(std, opos, n, out_len);
+    free(std);
+    return rw;
+}
+
 /* returns compressed bytes (malloc) or NULL to store */
 static uint8_t *code_block(const char *alg, const uint8_t *ch, size_t n,
                            size_t *out_len) {
@@ -352,6 +515,8 @@ static uint8_t *code_block(const char *alg, const uint8_t *ch, size_t n,
             return NULL;
         }
         cn = (size_t)zlen;
+    } else if (!strcmp(alg, "lzma")) {
+        dst = xz_encode(ch, n, &cn);
     } else {
         return NULL;
     }
@@ -447,7 +612,7 @@ int main(int argc, char **argv) {
         }
     }
     if (!src || !dst) {
-        fprintf(stderr, "usage: aae SRCDIR OUT.aar [--alg raw|lzfse|zlib] "
+        fprintf(stderr, "usage: aae SRCDIR OUT.aar [--alg raw|lzfse|zlib|lzma] "
                         "[--block SIZE] [--threads N]\n");
         return 1;
     }
@@ -456,6 +621,8 @@ int main(int argc, char **argv) {
         magic = "pbze";
     else if (!strcmp(alg, "zlib"))
         magic = "pbzz";
+    else if (!strcmp(alg, "lzma"))
+        magic = "pbzx";
     else if (strcmp(alg, "raw")) {
         fprintf(stderr, "unsupported alg %s\n", alg);
         return 1;
