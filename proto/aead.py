@@ -133,6 +133,19 @@ def decomp(alg, data, size):
         if p.returncode != 0 or len(p.stdout) != size:
             raise FmtErr("lzfse failed")
         return p.stdout
+    if alg == "b":
+        import os
+        import subprocess
+        tool = os.environ.get("ZBM_BIN", "")
+        if not tool:
+            raise FmtErr("lzbitmap needs ZBM_BIN (own-built zbmcat)")
+        try:
+            p = subprocess.run([tool], input=data, capture_output=True)
+        except OSError:
+            raise FmtErr("lzbitmap tool failed")
+        if p.returncode != 0 or len(p.stdout) != size:
+            raise FmtErr("lzbitmap failed")
+        return p.stdout
     raise FmtErr("codec %r unsupported in v1" % alg)
 
 

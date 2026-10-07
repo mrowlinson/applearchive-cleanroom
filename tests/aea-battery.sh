@@ -7,7 +7,8 @@ set -u
 REPO=$(cd "$(dirname "$0")/.." && pwd)
 AEAD_PY=${AEAD_PY:-/Volumes/NVME/applearchive-cleanroom-ws/writer2/.venv/bin/python}
 LZFSE_BIN=${LZFSE_BIN:-/Volumes/NVME/applearchive-cleanroom-ws/writer2/oss/lzfse/build/bin/lzfse}
-export LZFSE_BIN
+ZBM_BIN=${ZBM_BIN:-/Volumes/NVME/applearchive-cleanroom-ws/writer2/oss/zbm/zbmcat}
+export LZFSE_BIN ZBM_BIN
 WORK=$(mktemp -d "${TMPDIR:-/tmp}/aea-bat.XXXXXX")
 trap 'rm -rf "$WORK"' EXIT
 PASS=0; FAIL=0
@@ -48,13 +49,13 @@ cell sg-p5 --password "$PW" -i "$WORK/p5.aea"
 
 # 4. codecs (900KB text, p5)
 python3 -c "open('$WORK/bigtext.bin','wb').write(b'The quick brown fox jumps over the lazy dog. '*20000)"
-for a in none zlib lzma lz4 lzfse; do
+for a in none zlib lzma lz4 lzfse lzbitmap; do
   aea encrypt -profile 5 -password-value "$PW" -a $a -padding none -i "$WORK/bigtext.bin" -o "$WORK/c-$a.aea" 2>/dev/null
   EXP=$WORK/bigtext.bin
   cell codec-$a --password "$PW" -i "$WORK/c-$a.aea"
 done
-aea encrypt -profile 5 -password-value "$PW" -a lzbitmap -padding none -i "$WORK/bigtext.bin" -o "$WORK/c-lzbitmap.aea" 2>/dev/null
-if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/c-lzbitmap.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "codec-lzbitmap-failclosed"; else ok "codec-lzbitmap-failclosed"; fi
+aea encrypt -profile 5 -password-value "$PW" -a lzraven -padding none -i "$WORK/bigtext.bin" -o "$WORK/c-lzraven.aea" 2>/dev/null
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/c-lzraven.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "codec-lzraven-failclosed"; else ok "codec-lzraven-failclosed"; fi
 
 # 5. checksums
 aea encrypt -profile 5 -password-value "$PW" -a none -padding none -checksum none -i "$WORK/msg.txt" -o "$WORK/k-none.aea" 2>/dev/null
