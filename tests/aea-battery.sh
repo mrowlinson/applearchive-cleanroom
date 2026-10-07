@@ -279,10 +279,13 @@ cell pwspace-file --password-file "$WORK/sp-exact.txt" -i "$WORK/sp.aea"
 cell pwspace-nl --password-file "$WORK/sp-nl.txt" -i "$WORK/sp.aea"
 if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password-file "$WORK/sp-strip.txt" -i "$WORK/sp.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-pwspace-strip"; else ok "err-pwspace-strip"; fi
 cp "$WORK/key32.bin" "$WORK/key32nl.bin" && printf '\n' >> "$WORK/key32nl.bin"
-if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --key "$WORK/key32nl.bin" -i "$WORK/p1.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-key32nl"; else ok "err-key32nl"; fi
+if aea decrypt -key "$WORK/key32nl.bin" -i "$WORK/p1.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --key "$WORK/key32nl.bin" -i "$WORK/p1.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
+if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-key32nl"; else bad "err-key32nl"; fi
 aea encrypt -profile 1 -key "$WORK/genkey.txt" -key-gen -a none -padding none -i "$WORK/msg.txt" -o "$WORK/gen.aea" 2>/dev/null
 cell keygen-file --key "$WORK/genkey.txt" -i "$WORK/gen.aea"
 if [ "$(wc -c < "$WORK/genkey.txt")" -eq 69 ] && head -c 4 "$WORK/genkey.txt" | grep -q "hex:"; then ok "keygen-format"; else bad "keygen-format"; fi
+if aea decrypt -key "$WORK/genkey.txt" -i "$WORK/gen.aea" -o "$WORK/out.bin" 2>/dev/null && cmp -s "$WORK/out.bin" "$WORK/msg.txt"; then ok "keygen-oracle"; else bad "keygen-oracle"; fi
 
 # 9b. block-size flag indifference (same bytes as default @small input)
 for b in 64k 1m; do
