@@ -84,6 +84,9 @@ done
 aea encrypt -profile 1 -key "$WORK/key32.bin" -a zlib -i "$WORK/bigtext.bin" -o "$WORK/pad-big.aea" 2>/dev/null
 EXP=$WORK/bigtext.bin
 cell pad-big-def --key "$WORK/key32.bin" -i "$WORK/pad-big.aea"
+aea encrypt -profile 1 -key "$WORK/key32.bin" -a zlib -padding 4096 -checksum murmur64 -i "$WORK/bigtext.bin" -o "$WORK/pad-ck.aea" 2>/dev/null
+EXP=$WORK/bigtext.bin
+cell pad-cksum-combo --key "$WORK/key32.bin" -i "$WORK/pad-ck.aea"
 
 # 5. checksums
 aea encrypt -profile 5 -password-value "$PW" -a none -padding none -checksum none -i "$WORK/msg.txt" -o "$WORK/k-none.aea" 2>/dev/null
@@ -160,6 +163,7 @@ if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/mg.aea" -
 openssl ecparam -name prime256v1 -genkey -noout -out "$WORK/ec2-priv.pem" 2>/dev/null
 openssl ec -in "$WORK/ec2-priv.pem" -pubout -out "$WORK/ec2-pub.pem" 2>/dev/null
 if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --key "$WORK/key32.bin" --sign-pub "$WORK/ec2-pub.pem" -i "$WORK/p2.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-wrongsign"; else ok "err-wrongsign"; fi
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --recipient-priv "$WORK/ec-priv.pem" --sign-pub "$WORK/ec2-pub.pem" -i "$WORK/p4.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-p4wrongsign"; else ok "err-p4wrongsign"; fi
 aea encrypt -profile 0 -sign-pub "$WORK/ec-pub.pem" -a none -padding none -i "$WORK/msg.txt" -o "$WORK/p0u.aea" 2>/dev/null
 if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --sign-pub "$WORK/ec-pub.pem" -i "$WORK/p0u.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-unsigned"; else ok "err-unsigned"; fi
 cp "$WORK/p0u.aea" "$WORK/p0s.aea" && aea sign -sign-priv "$WORK/ec-priv.pem" -o "$WORK/p0s.aea" 2>/dev/null
