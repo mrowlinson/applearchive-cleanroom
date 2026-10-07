@@ -20,6 +20,11 @@ cell() { # name proto-args... -- input expected
   if "$AEAD_PY" "$REPO/proto/aead.py" decrypt "$@" -o "$WORK/out.bin" 2>"$WORK/err.txt" \
      && cmp -s "$WORK/out.bin" "$EXP"; then ok "$name"; else bad "$name"; fi
 }
+oracmp() { # name oracle-decrypt-args... (uses $EXP)
+  name=$1; shift
+  if aea decrypt "$@" -o "$WORK/out-ora.bin" 2>/dev/null \
+     && cmp -s "$WORK/out-ora.bin" "$EXP"; then ok "ora-$name"; else bad "ora-$name"; fi
+}
 
 (cd "$REPO/vectors/selfgen" && shasum -c SHA256SUMS >/dev/null 2>&1) || { echo "HARD FAIL pins"; exit 1; }
 
@@ -268,9 +273,13 @@ if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-key33"; else bad "err-key33"; 
 # NOTE: seek=7 is the profile-u32 HIGH byte, not a strength field (APROBE-01
 # byte map); err-strength* names kept for history. Oracle: exit 1 unlock-class.
 cp "$WORK/p5.aea" "$WORK/ss3.aea" && printf '\003' | dd of="$WORK/ss3.aea" bs=1 seek=7 conv=notrunc 2>/dev/null
-if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/ss3.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-strength3"; else ok "err-strength3"; fi
+if aea decrypt -password-value "$PW" -i "$WORK/ss3.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/ss3.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
+if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-strength3"; else bad "err-strength3"; fi
 cp "$WORK/p5.aea" "$WORK/ss9.aea" && printf '\011' | dd of="$WORK/ss9.aea" bs=1 seek=7 conv=notrunc 2>/dev/null
-if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/ss9.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-strength9"; else ok "err-strength9"; fi
+if aea decrypt -password-value "$PW" -i "$WORK/ss9.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/ss9.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
+if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-strength9"; else bad "err-strength9"; fi
 printf '%s' "$PW" > "$WORK/pw-exact.txt"; printf '%s\n' "$PW" > "$WORK/pw-nl.txt"
 EXP=$WORK/msg.txt
 cell pwfile-exact --password-file "$WORK/pw-exact.txt" -i "$WORK/p5.aea"
@@ -279,25 +288,43 @@ printf '%s\r\n' "$PW" > "$WORK/pw-crlf.txt"
 cell pwfile-crlf --password-file "$WORK/pw-crlf.txt" -i "$WORK/p5.aea"
 printf '%s\n\n' "$PW" > "$WORK/pw-2nl.txt"
 cell pwfile-2nl --password-file "$WORK/pw-2nl.txt" -i "$WORK/p5.aea"
+# oracle -password <file> is the file form (proto --password-file); both must MATCH
+oracmp pwfile-exact -password "$WORK/pw-exact.txt" -i "$WORK/p5.aea"
+oracmp pwfile-nl -password "$WORK/pw-nl.txt" -i "$WORK/p5.aea"
+oracmp pwfile-crlf -password "$WORK/pw-crlf.txt" -i "$WORK/p5.aea"
+oracmp pwfile-2nl -password "$WORK/pw-2nl.txt" -i "$WORK/p5.aea"
 for coff in 50 200 1000; do
   cp "$WORK/pad-def.aea" "$WORK/padc-$coff.aea"
   python3 -c "import sys;p=sys.argv[1];o=int(sys.argv[2]);b=bytearray(open(p,'rb').read());b[o]^=0xFF;open(p,'wb').write(bytes(b))" "$WORK/padc-$coff.aea" "$coff"
-  if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/padc-$coff.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-padcorr-$coff"; else ok "err-padcorr-$coff"; fi
+  if aea decrypt -password-value "$PW" -i "$WORK/padc-$coff.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
+  if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/padc-$coff.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
+  if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-padcorr-$coff"; else bad "err-padcorr-$coff"; fi
 done
 KHEX=$(python3 -c "import sys;print(sys.stdin.buffer.read().hex())" < "$WORK/key32.bin")
 KB64=$(python3 -c "import sys,base64;print(base64.b64encode(sys.stdin.buffer.read()).decode())" < "$WORK/key32.bin")
 EXP=$WORK/msg.txt
 cell keyval-hex --key-value "hex:$KHEX" -i "$WORK/p1.aea"
 cell keyval-b64 --key-value "base64:$KB64" -i "$WORK/p1.aea"
-if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --key-value "$KHEX" -i "$WORK/p1.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-kv-bare"; else ok "err-kv-bare"; fi
-if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --key-value "0x$KHEX" -i "$WORK/p1.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-kv-0x"; else ok "err-kv-0x"; fi
+oracmp keyval-hex -key-value "hex:$KHEX" -i "$WORK/p1.aea"
+oracmp keyval-b64 -key-value "base64:$KB64" -i "$WORK/p1.aea"
+if aea decrypt -key-value "$KHEX" -i "$WORK/p1.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --key-value "$KHEX" -i "$WORK/p1.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
+if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-kv-bare"; else bad "err-kv-bare"; fi
+if aea decrypt -key-value "0x$KHEX" -i "$WORK/p1.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --key-value "0x$KHEX" -i "$WORK/p1.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
+if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-kv-0x"; else bad "err-kv-0x"; fi
 SPW='  spaced-battery-password-32ch-abcd  '
 aea encrypt -profile 5 -password-value "$SPW" -a none -padding none -i "$WORK/msg.txt" -o "$WORK/sp.aea" 2>/dev/null
 printf '%s' "$SPW" > "$WORK/sp-exact.txt"; printf '%s\n' "$SPW" > "$WORK/sp-nl.txt"; printf 'spaced-battery-password-32ch-abcd' > "$WORK/sp-strip.txt"
 cell pwspace-value --password "$SPW" -i "$WORK/sp.aea"
 cell pwspace-file --password-file "$WORK/sp-exact.txt" -i "$WORK/sp.aea"
 cell pwspace-nl --password-file "$WORK/sp-nl.txt" -i "$WORK/sp.aea"
-if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password-file "$WORK/sp-strip.txt" -i "$WORK/sp.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-pwspace-strip"; else ok "err-pwspace-strip"; fi
+oracmp pwspace-value -password-value "$SPW" -i "$WORK/sp.aea"
+oracmp pwspace-file -password "$WORK/sp-exact.txt" -i "$WORK/sp.aea"
+oracmp pwspace-nl -password "$WORK/sp-nl.txt" -i "$WORK/sp.aea"
+if aea decrypt -password "$WORK/sp-strip.txt" -i "$WORK/sp.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password-file "$WORK/sp-strip.txt" -i "$WORK/sp.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
+if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-pwspace-strip"; else bad "err-pwspace-strip"; fi
 cp "$WORK/key32.bin" "$WORK/key32nl.bin" && printf '\n' >> "$WORK/key32nl.bin"
 if aea decrypt -key "$WORK/key32nl.bin" -i "$WORK/p1.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
 if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --key "$WORK/key32nl.bin" -i "$WORK/p1.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
