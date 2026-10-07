@@ -127,6 +127,7 @@ body: lzfse frame = magic + uncLE32 + (n: XLE32=comp-16 5/5 | 2: stream bytes) +
 | CR-019 | MEASURED | W/R/T/M silent-skip exit 0 | CORRECT vs A-013; dispute CLOSED |
 | CR-020 | MEASURED | AEA pad-tag = last-nmac HMAC rule | CONFIRM (closes CR-018 OPEN) |
 | CR-021 | SYMBOL | libAppleArchive public-export inventory (232) | CONFIRM vs CR-002/003 + vendor list |
+| CR-022 | MEASURED | AEA empty-archive shape (156B bare / cmac pad-tag) | CONFIRM vs writer2 empty rows |
 
 ```
 CR-012 [MEASURED] lzraven stream framing (8B hdr + u32 block-hdrs + u32-0 terminator)
@@ -216,6 +217,15 @@ artifact: dyld_info -all_dyld_cache -exports (macOS 27.0.1, arm64e) -> WS aa-exp
 numbers: 232 exports = 185 AA* + 47 AEA* + 0 other; setdiff vs vendor-docs API-SYMBOLS-L2.txt 232-list EMPTY both ways; all CR-002 (106) + CR-003 (38) bound imports resolve incl every named decode entry; 18 Decrypt/Decode symbols exported, CLIs bind a subset (ToStream/AndExtract/RandomAccess families unbound by either CLI)
 verdict: CONFIRM vs CR-002/CR-003 (dylib side of the client import inventory); CONFIRM vs vendor-docs symbol list (exact mutual); PARTIAL vs CR-005 (public surface closed; stripped internals stay behavior-only by design)
 body: the dylib's public API surface is fully enumerated and cross-checked three ways (cache exports, vendor list, CLI binds). decode entries live here as public symbols; no hidden public decode API exists outside this table.
+```
+
+```
+CR-022 [MEASURED] AEA empty-archive shape (prologue-only bare, cmac pad-tag when padded)
+stage: probe
+artifact: own-gen e-nopad.aea (156B) + e-pad2.aea (160B, p5/-a none) + flip + HMAC confirm (WS tmp/decode-viewer-probes/padauth)
+numbers: empty/-padding none = 156B exactly (prologue, zero cluster headers), decrypt exit 0, 0 bytes out; empty/default-pad = 160B (156 + 4 pad, arc 160), pad flip -> 0x9e041c00 exit 1, HMAC(padkey,[156,160)) == cmac True
+verdict: CONFIRM vs writer2 empty rows (size + decrypt); cmac-slot rule mutual-CONFIRM (writer2 found, viewer independently confirmed)
+body: orig==0 short-circuits cluster parsing entirely; pad (if any) starts at prologue_end and verifies against the cmac slot (no nmac exists). extends CR-020 with the degenerate case.
 ```
 
 Status of every clause: UNPROVEN until an implementation written ONLY from

@@ -204,4 +204,21 @@ findings:
 - joint DONE not reached (writers/sweep active, no DONEs; claim HELD)
 pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:ef4a24537a0562cc6b7cd9f1647ec5c761f7967c6050da50791ad94521c8e6e6 bytes:20738
 pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:7117916cf132579ab38308d905d3d82873e5247ceb8fe865e0d1dac1d3ffd31c bytes:18613
+post-edit: (recorded at commit bc9ad02; 2 files, +25)
+
+## 2026-10-07 decode-viewer lanes/decode-viewer (entry 10: CR-022 empty shape + VERIFY x2 + PARENT-009)
+inputs:
+- quiz-decode PARENT-009 (grep fix, obeyed: strengthened VERIFY patterns + back-check) + writer2 NOTE-075 (gap closed) + writer1 NOTE-030/031 (read first-hand)
+- own-gen e-nopad.aea + e-pad2.aea + flip/class + HMAC==cmac confirm + range+corrupt-pad exit parity (WS tmp/decode-viewer-probes/padauth)
+- writer commits verified first-hand (full diffs + new-pattern wall greps 0/2): w2 9b3a1bc (pad-verify impl = A-016B exactly + own empty-cmac, independently confirmed 3 ways) + 93f794f (sweep-v3 padded leg)
+not-consulted: patent contents, encode-side lanes, reference/port sources,
+  decompiler output (none), writer worktree files, liblzraven src/*.c internals
+outputs: +1 clause (CR-022 MEASURED), tag mix total MEASURED 17 / SYMBOL 3 / INFERRED 2;
+  VERIFY-9b3a1bc + VERIFY-93f794f + NOTE-28 (PASS, 0 FLAG)
+findings:
+- empty-archive degenerate case closed (bare 156B + cmac pad-tag); writer2 gap fully closed pending GATE+DONE
+- PARENT-009 adopted; back-check surfaces only the known-compliant libzbm usage (no FLAG)
+- joint DONE not reached (GATEs + DONEs pending; claim HELD)
+pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:844d018af9c8f524f50bd7183c5774855004dbf9a515e38d20084ad8a25f4f50 bytes:21899
+pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:9eae5862a186b44f71db1f696d6af23bd7f8ec229ed3af65a79f1746277f92fd bytes:19827
 post-edit: (recorded at commit; see commit 2nd line stats)
