@@ -12,3 +12,5 @@ e5a281529961b850da989a8bf68ebb96b914abaa524e744e39c233b1556da826  ./aar/hello-lz
 73adf39150fced7d32afc50288b92a6386400a671fab8092e957d8e9f20cd2d6  ./input/hello/greet.txt
 ccca685709aa9e68d44ebb8e4aa02743fbf0c32b65ab5ac93ab6b1fd3d7ec7aa  ./input/hello/repeat.txt
 2a3e4217604954010dc3fb5493f68a2337e3a27e131f686f3dbf756253d6f5e9  ./aar/fifo-mixed.aar
+46239d2319e31a7dae7f0702a8fddbcb7213071150bcfafb3d4ad4339f7e9104  ./aar/hlink-basic.aar
+5f2c3ce52a26520b13612be1163dffc0f1c7aa28d3be880b2ae5eecff1a4a663  ./aar/hlink-missing.aar

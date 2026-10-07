@@ -403,6 +403,9 @@ static int extract(const Item *items, size_t nitems, const char *root) {
     typedef struct { unsigned long long grp; char path[4096]; } Hlc;
     Hlc *hlcs = malloc(nitems * sizeof *hlcs);
     size_t nhlcs = 0;
+    typedef struct { char path[4096]; size_t idx; } Hln;
+    Hln *hlns = malloc(nitems * sizeof *hlns);
+    size_t nhlns = 0;
     unsigned fails = 0;
     int rc = -1;
     for (size_t k = 0; k < nitems; k++) {
@@ -459,6 +462,13 @@ static int extract(const Item *items, size_t nitems, const char *root) {
                 FAIL("symlink %s\n", target); goto out;
             }
             if (apply_meta(target, it, 1)) goto out;
+        } else if (t->num == 'H') {
+            const Entry *l = find_ent(it, "LNK");
+            if (!l || l->st != 'P') {
+                FAIL("link entry has no LNK field\n"); goto out;
+            }
+            memcpy(hlns[nhlns].path, target, strlen(target) + 1);
+            hlns[nhlns++].idx = k;
         } else if (t->num == 'P') {
             char *sl = strrchr(target, '/');
             if (sl) { *sl = 0; if (mkdirs(target)) goto out; *sl = '/'; }
@@ -481,12 +491,36 @@ static int extract(const Item *items, size_t nitems, const char *root) {
             /* unknown TYP: silent skip (oracle parity, measured) */
         }
     }
+    /* H pass after all entries (forward refs), before deferred dir meta */
+    for (size_t i = 0; i < nhlns; i++) {
+        const Entry *l = find_ent(&items[hlns[i].idx], "LNK");
+        char src[4096];
+        if (safe_join(root, l->raw, l->rawlen, src)) {
+            FAIL("invalid 'H' LNK\n"); fails++; continue;
+        }
+        struct stat sb;
+        if (lstat(src, &sb) || !S_ISREG(sb.st_mode)) {
+            FAIL("'H' LNK not a regular file\n"); fails++; continue;
+        }
+        char *sl = strrchr(hlns[i].path, '/');
+        if (sl) {
+            *sl = 0;
+            int merr = mkdirs(hlns[i].path);
+            *sl = '/';
+            if (merr) { FAIL("mkdir for link\n"); fails++; continue; }
+        }
+        unlink(hlns[i].path);
+        if (link(src, hlns[i].path)) {
+            FAIL("link %s\n", hlns[i].path); fails++; continue;
+        }
+    }
     for (size_t i = ndefs; i-- > 0;)
         if (apply_meta(defs[i].path, &items[defs[i].idx], 0)) goto out;
     rc = fails ? 1 : 0;
 out:
     free(defs);
     free(hlcs);
+    free(hlns);
     return rc;
 }
 

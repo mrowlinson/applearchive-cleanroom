@@ -9,6 +9,7 @@ dylib (MIT, A-006 row 3) at $ZBM_DYLIB. Validated vs oracle, never vs OSS.
 import ctypes
 import lzma
 import os
+import stat
 import struct
 import subprocess
 import sys
@@ -270,6 +271,7 @@ def extract(items, root):
     os.makedirs(root, exist_ok=True)
     deferred = []
     hlc_first = {}
+    hlinks = []
     failed = 0
     for entries, blobs in items:
         _, typ = _get(entries, b"TYP")
@@ -316,6 +318,11 @@ def extract(items, root):
             print("aad: skipping socket %r (not implemented)" % pat,
                   file=sys.stderr)
             failed += 1
+        elif typ == ord("H"):
+            _, lnk = _get(entries, b"LNK")
+            if lnk is None:
+                raise FmtErr("link entry has no LNK field: %r" % pat)
+            hlinks.append((target, lnk))
         elif typ == ord("B") or typ == ord("C"):
             _, dev = _get(entries, b"DEV")
             if dev is None:
@@ -323,6 +330,33 @@ def extract(items, root):
             raise FmtErr("device entry with DEV (unprobed, needs root)")
         else:
             pass  # unknown TYP: silent skip (oracle parity, measured)
+    for target, lnk in hlinks:
+        try:
+            src = safe_join(root, lnk)
+        except FmtErr:
+            print("aad: invalid 'H' LNK: %r" % lnk, file=sys.stderr)
+            failed += 1
+            continue
+        try:
+            st = os.lstat(src)
+        except FileNotFoundError:
+            st = None
+        if st is None or not stat.S_ISREG(st.st_mode):
+            print("aad: 'H' LNK not a regular file: %r" % lnk,
+                  file=sys.stderr)
+            failed += 1
+            continue
+        parent = os.path.dirname(target)
+        if parent:
+            os.makedirs(parent, exist_ok=True)
+        if os.path.lexists(target):
+            os.remove(target)
+        try:
+            os.link(src, target)
+        except OSError as e:
+            print("aad: link %r failed: %s" % (target, e), file=sys.stderr)
+            failed += 1
+            continue
     for target, entries, blobs in reversed(deferred):
         apply_meta(target, entries, blobs, False)
     return 1 if failed else 0

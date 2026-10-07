@@ -145,6 +145,41 @@ if sh "$ADAPTER" aar-decode "$WORK/craft-Z.aar" "$WORK/o-cz" >/dev/null 2>&1; th
 if "$AAD" "$WORK/craft-Z.aar" "$WORK/c-cz" 2>/dev/null; then pass "cz-exit"; else fail "cz-exit"; fi
 diff -r "$WORK/o-cz" "$WORK/c-cz" >/dev/null 2>&1 && pass "cz-tree" || fail "cz-tree"
 
+echo "== cell hlink-path =="
+sh "$ADAPTER" aar-decode "$V/aar/hlink-basic.aar" "$WORK/o-hb" >/dev/null 2>&1 && pass "hb-orc" || fail "hb-orc"
+if "$AAD" "$V/aar/hlink-basic.aar" "$WORK/c-hb" 2>/dev/null; then pass "hb-exit"; else fail "hb-exit"; fi
+python3 - "$WORK/o-hb" "$WORK/c-hb" <<'EOF' >/dev/null 2>&1 && pass "hb-links" || fail "hb-links"
+import os, stat, sys
+def sig(root):
+  d, ino2p = {}, {}
+  for dp, dn, fn in os.walk(root):
+    for n in sorted(dn + fn):
+      p = os.path.join(dp, n); s = os.lstat(p); m = s.st_mode
+      ft = "d" if stat.S_ISDIR(m) else "f" if stat.S_ISREG(m) else "?"
+      body = open(p, "rb").read() if stat.S_ISREG(m) else None
+      d[os.path.relpath(p, root)] = (ft, oct(stat.S_IMODE(m)), body)
+      ino2p.setdefault(s.st_ino, []).append(os.path.relpath(p, root))
+  return (d, sorted([tuple(sorted(v)) for v in ino2p.values()]))
+sys.exit(0 if sig(sys.argv[1]) == sig(sys.argv[2]) else 1)
+EOF
+ORC=0; sh "$ADAPTER" aar-decode "$V/aar/hlink-missing.aar" "$WORK/o-hm" >/dev/null 2>&1 || ORC=$?
+CRC=0; "$AAD" "$V/aar/hlink-missing.aar" "$WORK/c-hm" 2>/dev/null || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "hm-exit" || fail "hm-exit"
+diff -r "$WORK/o-hm" "$WORK/c-hm" >/dev/null 2>&1 && pass "hm-tree" || fail "hm-tree"
+python3 - "$V/aar/hello-raw.aar" "$WORK/evil.aar" <<'EOF' >/dev/null 2>&1 || die "craft-evil"
+import sys
+d = bytearray(open(sys.argv[1], "rb").read())
+old, new = b"hello/greet.txt", b"../evil-1234567"
+i = d.find(old)
+assert i >= 0
+d[i:i + 15] = new
+open(sys.argv[2], "wb").write(bytes(d))
+EOF
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/evil.aar" "$WORK/o-px" >/dev/null 2>&1 || ORC=$?
+CRC=0; "$AAD" "$WORK/evil.aar" "$WORK/c-px" 2>/dev/null || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "px-exit" || fail "px-exit"
+diff -r "$WORK/o-px" "$WORK/c-px" >/dev/null 2>&1 && pass "px-tree" || fail "px-tree"
+
 echo "== cell errors =="
 head -c 100 /dev/urandom > "$WORK/corrupt.aar"
 "$AAD" "$WORK/corrupt.aar" "$WORK/c-cor" 2>/dev/null && fail "corrupt-exit" || pass "corrupt-exit"

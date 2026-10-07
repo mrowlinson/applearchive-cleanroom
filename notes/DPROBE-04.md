@@ -35,6 +35,32 @@ HLC = uint group id (0,1..; solo files lack key); all members carry
 full DAT; oracle links post-extract. Decoder: first member writes,
 rest link(2) to first; meta applied per member (idempotent).
 
+## Full TYP census (256/256 crafted flips, oracle decode)
+
+248 values: silent skip, exit 0, continue. Non-baseline only:
+B/C device-no-DEV abort; D-on-file creates dir; F normal; H link
+(see below); L-no-LNK aborts ("link entry has no LNK field");
+P-with-DAT hangs (same as real fifo); S loud-skip exit 1.
+Decoder mirrors all 8 classes (verified matrix + battery cells).
+
+## H hardlink-by-path (TYP 72, LNK key)
+
+H + LNK=archive-relative-path -> link(2) to that path; entry's own
+DAT IGNORED; meta NOT applied (mode600 probe: target mode kept).
+Forward refs work: oracle runs "process hlinks" post-pass after all
+entries, before deferred dir-meta (dir mtime = archived MTM).
+H-no-LNK: loud ABORT exit 1, stop (like B). H failures in post-pass:
+exit 1, others already extracted. LNK must be archive-relative +
+existing REGULAR file, else exit 1 ("invalid 'H' LNK" for abs/escape;
+"'H' LNK not a regular file" for missing/dir). No natural H vector
+observed (encoder emits HLC groups); all H evidence crafted.
+
+## PAT escape parity
+
+PAT `../evil-...`: oracle exit 1 "Invalid entry path...stream
+cancelled", aborts (later entries skipped), no escape artifact.
+Decoder safe_join abort exit 1, same partial tree. MATCH.
+
 ## Open (viewer Q-012/Q-013)
 
 B/C-with-DEV shape + behavior (needs root); whiteout kind (if any);
