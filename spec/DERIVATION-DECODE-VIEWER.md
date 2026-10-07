@@ -297,4 +297,18 @@ findings:
 - VERIFY 43 PASS 0 FLAG current; Q/A 18/18; joint DONE still open (writer1/sweep DONEs pending; claim HELD)
 pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:f3163fd4fe27fd5512bd05a7ecb1064dd6cf7b27985e216bcd4103070b090848 bytes:24754
 pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:c7d7a64acf679edb40235a90136f1bcb2c07c53202383fdfa3cf1f9dfdc303a9 bytes:27346
+post-edit: (recorded at commit 197e76d; 2 files, +17/-2)
+
+## 2026-10-07 decode-viewer lanes/decode-viewer (entry 16: CR-023 J/K fold + GATE-1a83bfa)
+inputs:
+- quiz-decode NOTE-GATE-1a83bfa (sweep GREEN 132/132, shift 56/56) (read first-hand)
+- own-gen pos quarters: J-lsq3 (63KB, H=3.53) -> 0x2 + K-lsq4 (63KB, H=1.36) -> 0x0 + entropy profiles (H/G/I/J/K zero-rates) + oracle roundtrips 2/2 (WS tmp/decode-viewer-probes/lrv003/pos; macOS 27.0.1)
+not-consulted: patent contents, encode-side lanes, reference/port sources,
+  decompiler output (none), writer worktree files (git-show only + black-box runs), liblzraven src/*.c internals
+outputs: 0 new clauses (CR-023 fold: bit1 non-monotonicity, nblocks 38/38); NOTE-40
+findings:
+- bit1 fires on sparse-structured, drops on near-empty (0x0); selection ladder recorded; exact thresholds encoder-side, decode-irrelevant — hunt parked
+- VERIFY 43 PASS 0 FLAG current; Q/A 18/18; joint DONE still open (writer1/sweep DONEs pending; claim HELD)
+pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:fe92a6ac710587feb46302ed0727545103bd81c6e90f869d0c99065d905e7d91 bytes:25229
+pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:8d5afa9ba9716572aa801d00c64568d7c2065333e2b5e7cdde3fadaaecc76c3c bytes:28949
 post-edit: (recorded at commit; see commit 2nd line stats)
