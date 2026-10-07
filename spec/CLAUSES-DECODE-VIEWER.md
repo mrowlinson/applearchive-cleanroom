@@ -117,6 +117,36 @@ body: lzfse frame = magic + uncLE32 + (n: XLE32=comp-16 5/5 | 2: stream bytes) +
 | CR-009 | MEASURED | multi-block chain | CONFIRM |
 | CR-010 | MEASURED | payload = codec frame | CONFIRM + sub-parse OPEN |
 | CR-011 | MEASURED | sub-frame rules (4096/64K/stored) | CONFIRM + 4 OPENs |
+| CR-012 | MEASURED | lzraven stream framing (hdr/blocks/params/terminator) | CONFIRM + 2 OPENs |
+| CR-013 | MEASURED | AAR outer magic per codec (pbz* table) | CONFIRM |
+| CR-014 | MEASURED | entry-kind census (11 TYPs + behaviors) | CONFIRM + 3 OPENs |
+
+```
+CR-012 [MEASURED] lzraven stream framing (8B hdr + u32 block-hdrs + u32-0 terminator)
+stage: bitstream
+artifact: own-gen lrv-ladder (18 aa-emitted -a lzraven -b 4m -t 1, unc 337..1048815) + 3 compression_tool -encode streams + 3 A-007 re-parsed (WS tmp/decode-viewer-probes/lrv-ladder)
+numbers: walks end-exact 20/20; nblocks == ceil(unc/524288) 20/20; params size(i) smallest>=src 24/24 (2 exact 239B-margin fits); oracle full-stream MATCH 18/18 framed + 2/2 outer-stored; surgery 12/12 structural-FAIL; sweep 67 (62 FAIL / 1 MATCH-explained-reserved-bit / 4 DIFF); leniency MATCH 3/3 (params-high/reserved-flags/trailing); corruption-localization 3/3 last-32B of block range; third-party lzraven_dec 16/16 MATCH + 2/2 correct-reject
+verdict: CONFIRM vs CR-010 (payload = frame(s) + terminator, sub-parse now closed); CONFIRM vs third-party SPEC [test] framing (anat0m1a/liblzraven@700b88c, corroborated first-hand, NOT used as evidence); CORRECT vs A-007 (size fields LOCATED: @8/@10 are u32 block-hdr halves (size>>12, flags&0xFFF); @4 is params u32, not zeros); OPEN: stream-internals implementation (writer turf via nominated SPEC), BCJ/raw flags unobserved (0x000 24/24)
+body: layout: u32 magic 0xECCA002B (LE 2b00caec) + u32 params (bits[31:26] dict index, decoder validates low26==0 then ignores) + N x [u32 (size<<12|flags) + size payload] + u32 0 mandatory. unc ABSENT from stream (0 pattern hits); output length emergent; outer uncBE is the check. no stream checksum (4 silent-corrupt DIFFs). decoder stops at terminator, ignores trailing.
+```
+
+```
+CR-013 [MEASURED] AAR outer magic encodes the codec (per-codec pbz* table)
+stage: bitstream
+artifact: vectors/selfgen/aar 8 fixtures (fixtures@eeedef2, pins OK) + ladder AARs
+numbers: 8/8 fixtures: lzfse->pbze lz4->pbz4 lzbitmap->pbzb lzma->pbzx lzraven->pbzm zlib->pbzz raw->AA01-bare (no outer); ladder lzraven AARs 18/18 pbzm
+verdict: CONFIRM vs CR-006 (magic ASCII @0, now tabulated); CONFIRM vs writer aad.c dispatch (independent agreement); NOTE: magic family shared with OTA pbzx/pbzm containers, DIFFERENT layouts (ours 28B+BE-u32 per CR-006/009 vs theirs 12B+BE-u64) — never apply third-party §10 container doc to AAR outer
+body: raw = bare inner (AA01 @0, file IS the inner). all other codecs = outer-framed with codec magic.
+```
+
+```
+CR-014 [MEASURED] entry-kind census: 11 TYPs, 8 sampled with record bytes + fs effects
+stage: probe
+artifact: own-gen kindbed (reg/symlink/hardlink/fifo/socket/xattr/sub, feeder-guarded) + dev2.aar (crafted-cpio convert) + SDK AADefs.h enum (VENDOR-DOC corroboration) (WS tmp/decode-viewer-probes/kindbed)
+numbers: TYP bytes: F/D/L/P/S/C/B sampled (record hex + list-json + extract); H = F+HLC:0 (same-ino nlink=2 post-extract); fifo archive-hang w/o feeder + extract-hang post-create (25s+ timeout); socket/device extract exit-1 0xc8055000 "not implemented yet"; device archive 6/6 FAIL "Archive encoding failed"; /dev scan aborts (fd); M trigger 0/5 probes; whiteout 0 vendor mentions outside header enum
+verdict: CONFIRM vs CR-008 (TLV shape; entry u16 = keys-region offset, value blobs appended); CONFIRM vs VENDOR-DOCS-L2 types (CORRECTED: 11 not 8 — h is HLC pseudo-filter, W/R/T exist in enum); CONFIRM vs writer HLC semantics (NOTE-015, exact agreement); OPEN: W/R/T/M triggers + samples (parse rule safe-by-construction: TYP always 1-char UINT)
+body: TYP1<char> for all kinds; LNK/P+u16; HLC1/u8 group; DAT/A+u16 reg-only; DEV4/u32LE st_rdev (3,2/1,0 exact); XAT blob u32-records; MTM S-short(8B)/T-long(12B). xattr-only is NOT a kind (field on F). R/T unreachable on macOS (Solaris bits). M = parse + skip (no fs object).
+```
 
 Status of every clause: UNPROVEN until an implementation written ONLY from
 this spec handles vendor real output.
