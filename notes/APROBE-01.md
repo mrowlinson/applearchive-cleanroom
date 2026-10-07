@@ -63,7 +63,14 @@ Encrypt adds `padding:` line. Encrypt to /dev/null fails (temp+rename).
 - lzraven DONE (A-011 bed + liblzraven @700b88c nomination; own-built lzraven_dec via LZR_BIN).
   Framing own-confirmed on AEA seg: 244B = 8hdr + [4+148] + [4+76] + term, end-exact;
   nblocks 2 == ceil(900000/512K); params i=15 size 917504 smallest>=900000 (resolves A-011 §4 CHECK: 2 blocks, not 1).
-  BCJ flags=0x002 fired own (own-built Mach-O input) -> proto MATCH. In-stream raw (bit0) still unobserved (outer-stored covers).
+  BCJ flags=0x002 fired own (own-built Mach-O input) -> proto MATCH.
+  In-stream raw (bit0) FIRED own, both paths (bit0sweep.py, WS probes/bit0/):
+  raw compression_tool 10/10 end-exact + 10/10 lzraven_dec TOOL-MATCH; bit0 on
+  incompressible 512K blocks (random 3/3, rand-then-text blk1, text-then-rand
+  blk3, half-text blk3). AEA segs 10/10 proto cmp OK; bit0 fired 1 block
+  (rand-then-text seg1 0x1) -> MATCH via tool. Rule: bit0 = raw block for
+  incompressible content, per-block; fully-random AEA input stores at segment
+  level (decomp uncalled). Q-014 self-closed for AEA turf; battery 4b cells.
 - auth-data>0 MAPPED own: prologue = 156+authsize (2-blob auth12B flips unlock/decrypt @167/168); kv-form = u32LE pair + key\0+value (own-confirm FORMAT.md); both MATCH in proto.
 - `-keychain` flows (OUT of scope, touches system store). lzvn `f` (no oracle -a flag; skip).
 

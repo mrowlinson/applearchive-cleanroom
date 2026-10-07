@@ -62,6 +62,15 @@ cp "$LZR_BIN" "$WORK/macho.bin"
 aea encrypt -profile 5 -password-value "$PW" -a lzraven -padding none -i "$WORK/macho.bin" -o "$WORK/c-lzraven-macho.aea" 2>/dev/null
 EXP=$WORK/macho.bin
 cell codec-lzraven-macho --password "$PW" -i "$WORK/c-lzraven-macho.aea"
+# 4b. mixed-content lzraven (fires in-stream raw bit0 blocks, APROBE-01)
+python3 -c "import random;open('$WORK/mixrt.bin','wb').write(random.Random(7).randbytes(524288)+b'Mixed tail text. '*40000)"
+aea encrypt -profile 5 -password-value "$PW" -a lzraven -padding none -i "$WORK/mixrt.bin" -o "$WORK/c-lzraven-mixrt.aea" 2>/dev/null
+EXP=$WORK/mixrt.bin
+cell codec-lzraven-mixrt --password "$PW" -i "$WORK/c-lzraven-mixrt.aea"
+python3 -c "import random;open('$WORK/mixtr.bin','wb').write(b'Mixed head text. '*40000+random.Random(9).randbytes(524288))"
+aea encrypt -profile 5 -password-value "$PW" -a lzraven -padding none -i "$WORK/mixtr.bin" -o "$WORK/c-lzraven-mixtr.aea" 2>/dev/null
+EXP=$WORK/mixtr.bin
+cell codec-lzraven-mixtr --password "$PW" -i "$WORK/c-lzraven-mixtr.aea"
 
 # 5. checksums
 aea encrypt -profile 5 -password-value "$PW" -a none -padding none -checksum none -i "$WORK/msg.txt" -o "$WORK/k-none.aea" 2>/dev/null
