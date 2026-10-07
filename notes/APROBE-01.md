@@ -19,6 +19,7 @@ Notation: P# = probe id. Passwords/keys: `testpw32....` (38ch), `test-password-f
 - pwfile rule EXACT own: bytes verbatim + chomp trailing [\r\n]+ only (exact/NL/CRLF/2NL CLEAN; spaces significant — stripped variant REJECTED; sweep NOTE-006 observation confirmed + fixed in proto).
 - keyfile rule EXACT own: `hex:`/`base64:` text (trailing NL ok) parsed; else RAW byte-exact (32B+\n=33B REJECTED 0xcf058400; 31/33B same class).
 - Magic: `AEA1` + u24LE profile @4 + u8 scrypt @7 (always 0 own) + u32LE auth-size @8.
+- EC P-256-ONLY own: secp384r1/secp521r1 recipient-pub REJECTED (`Error parsing public key file`); secp384r1 sign-priv REJECTED (`Error parsing PEM blob 'EC PRIVATE KEY'`, p0+p2). No non-P256 oracle output exists -> proto P-256 path sufficient.
 
 ## Size rules (own, -a none unless noted)
 
