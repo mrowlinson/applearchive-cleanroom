@@ -103,6 +103,8 @@ EXP=$WORK/msg.txt
 cell auth-raw2 --password "$PW" -i "$WORK/auth2.aea"
 aea encrypt -profile 5 -password-value "$PW" -a none -padding none -auth-data-key mykey -auth-data-value hex:deadbeef -i "$WORK/msg.txt" -o "$WORK/authkv.aea" 2>/dev/null
 cell auth-kv --password "$PW" -i "$WORK/authkv.aea"
+aea encrypt -profile 5 -password-value "$PW" -a none -padding none -auth-data-value hex:aa -auth-data-value hex:bbcc -auth-data-value hex:dd -i "$WORK/msg.txt" -o "$WORK/auth3.aea" 2>/dev/null
+cell auth-raw3 --password "$PW" -i "$WORK/auth3.aea"
 
 # 6. empty
 : > "$WORK/empty.bin"

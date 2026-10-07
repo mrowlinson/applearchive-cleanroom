@@ -75,6 +75,7 @@ Encrypt adds `padding:` line. Encrypt to /dev/null fails (temp+rename).
   incompressible content, per-block; fully-random AEA input stores at segment
   level (decomp uncalled). Q-014 self-closed for AEA turf; battery 4b cells.
 - auth-data>0 MAPPED own: prologue = 156+authsize (2-blob auth12B flips unlock/decrypt @167/168); kv-form = u32LE pair + key\0+value (own-confirm FORMAT.md); both MATCH in proto.
+- auth edges own: 3-blob MATCH (cell auth-raw3); EMPTY auth-data-value REJECTED at encrypt (`Invalid auth-data-value`, raw + kv). Empty password REJECTED at encrypt (`Invalid password / Error loading credentials`).
 - `-keychain` flows (OUT of scope, touches system store). lzvn `f` (no oracle -a flag; skip).
 
 ## Wide corpus (tests/aea-wide.sh v2, 152/152 WIDE-GREEN)
