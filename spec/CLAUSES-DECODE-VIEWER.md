@@ -206,9 +206,9 @@ body: unknown-kind policy = skip-and-continue exit 0 regardless of DAT carriage;
 CR-020 [MEASURED] AEA pad-tag construction (last-nmac = HMAC(padkey, [padstart,arc)))
 stage: bitstream
 artifact: padsearch2.py v2 search + padconfirm.py (6 shapes) + unpadded negatives (WS tmp/decode-viewer-probes/padauth)
-numbers: HIT 3/3 seed files (pad 818/818/2B) + 4/4 generality (2-cluster last-nmac 8MB pad, p1/zlib 932B pad, cksum-none 4228B pad, p2-signed 658B pad) + 2/2 unpadded negatives (nmac random iff padlen 0); rule: padkey = HKDF-SHA256(main, "AEA_PAK"), tag = HMAC-SHA256(padkey, file[padstart:arc)) vs last nmac
+numbers: HIT 3/3 seed files (pad 818/818/2B) + 7/7 generality (2-cluster last-nmac 8MB pad, p1/zlib 932B pad, cksum-none 4228B pad, p2-signed 658B pad, p0-signed-padded 4068B pad, p3-ecdhe 61507B pad, p4-ecdhe-signed 61347B pad) + 3/3 unpadded negatives (nmac random iff padlen 0); rule: padkey = HKDF-SHA256(main, "AEA_PAK"), tag = HMAC-SHA256(padkey, file[padstart:arc)) vs last nmac
 verdict: CONFIRM (closes CR-018 construction-OPEN); bed A-016B
-body: non-last nmacs keep chain role; padlen 0 skips auth; mismatch -> pad-auth fail, len<arc -> read class. universal across profiles/checksums/codecs/clusters/padlens 2B..8MB. streaming-verify mechanism (init/update/final, const-time compare) corroborates.
+body: non-last nmacs keep chain role; padlen 0 skips auth; mismatch -> pad-auth fail, len<arc -> read class. universal across all 6 profiles (p0..p5 first-hand)/checksums/codecs/clusters/padlens 2B..8MB; p0 default emits no pad (roundtrip OK, skip holds). streaming-verify mechanism (init/update/final, const-time compare) corroborates.
 ```
 
 ```
