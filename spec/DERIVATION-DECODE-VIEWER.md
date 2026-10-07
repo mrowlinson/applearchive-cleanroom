@@ -338,4 +338,19 @@ findings:
 - VERIFY 43 PASS 0 FLAG current; Q/A 18/18; joint DONE still open (writer1/sweep DONEs pending; claim HELD)
 pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:761411739339887e44d7333b3a12312f4da91a2a03152a0c9c6aaa4173a0b0b7 bytes:26626
 pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:9f2594562e5ecf2726b4de38457f70d1962f5db565eb00ceb97c070f4eb5e217 bytes:31589
+post-edit: (recorded at commit 14d9882; 2 files, +17/-4)
+
+## 2026-10-07 decode-viewer lanes/decode-viewer (entry 19: CR-024 S-reverse + cross-phase + VERIFY-ba293f1 FLAG)
+inputs:
+- quiz-decode writer1 tip ba293f1 (post-pass C+proto 833+/133-, DPROBE-06, craft.py, battery; full diffs + wall grep 0 read first-hand)
+- own-gen orace extensions: mixSFS.aar ([S,F,S] -> m3,m1 5/5) + xs-xb1s2.aar ([XATbad,S] via craft.py killxat + TYP flip -> XAT-first 2/3, S-first 1/3, arrival-header) + proto@ba293f1 black-box runs (n=20 SORT-MATCH, n=2/mix DIVERGE forward) (WS tmp/decode-viewer-probes/orace; macOS 27.0.1)
+- writer1 tests/craft.py killxat (used as craft tool, viewer privilege) + notes/DPROBE-06.md S-flush-FORWARD claim (refuted)
+not-consulted: patent contents, encode-side lanes, reference/port sources,
+  decompiler output (none), writer worktree files (git-show only + black-box runs), liblzraven src/*.c internals
+outputs: 0 new clauses (CR-024 fold: S-reverse 19/19, cross-phase race, arrival-header, CORRECT vs DPROBE-06); VERIFY-ba293f1 (FLAG) + FLAG-ba293f1-viewer + NOTE-44
+findings:
+- S-flush is REVERSE (stable 19/19 <3); writer1 S2-fwd refuted; merge blocked on direction fix + re-gate; cross-phase prints race as units (any mix = sort-or-pin); first-header arrival-ordered
+- VERIFY 43 PASS 1 FLAG; Q/A 18/18; joint DONE still open (writer1 fix + sweep DONEs pending; claim HELD)
+pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:31f425875547336e7532b5414220ef5d2ffc8414393b0b84db97373ee97e9f88 bytes:26735
+pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:c775f73d053277a792a401ddaf2ff560a3c1d68f4b4a44fa6990b6c60a0c83dc bytes:32681
 post-edit: (recorded at commit; see commit 2nd line stats)
