@@ -360,6 +360,32 @@ chk "a-rt-pc" str "$v" 0
 if "$AEA" encrypt -profile 1 -key "$WORK/key32.bin" -a none -t 1 -padding 15 -i "$IN/a100.bin" -o "$WORK/a-pad15.aea" 2>"$WORK/a-pad15.err"; then rc=0; else rc=$?; fi
 chk "a-pad15-rc" rc "$rc" 0
 chk "a-pad15-msg" str "$(head -1 "$WORK/a-pad15.err")" 0
+set -- $(AEAa "a-id1" 1 hex none "a5000.bin"); set -- $(AEAa "a-id2" 1 hex none "a5000.bin")
+I1=$(sh "$ADAPTER" aea-id "$WORK/a-id1.aea"); I2=$(sh "$ADAPTER" aea-id "$WORK/a-id2.aea")
+[ "$I1" = "$I2" ] && v=SAME || v=DIFF; chk "a-id-stable" str "$v" 0
+V=$("$AEA" decrypt -v -key "$WORK/key32.bin" -i "$WORK/a-id1.aea" -o /dev/null 2>&1 1>/dev/null | sed -n 's/^ *archive identifier: //p')
+[ "$V" = "$I1" ] && w=EQ || w=DIFF; chk "a-id-v" str "$w" 0
+head -c 200000 /dev/zero > "$IN/ab-z200k.bin"
+python3 -c "import random; open('$IN/ab-m200k.bin','wb').write(bytes(100000)+random.Random(11).randbytes(100000))"
+python3 -c "import random; open('$IN/ab-r200k.bin','wb').write(random.Random(11).randbytes(200000))"
+AB() { # tag infile alg : size pin, p1 keyfile -b 10000 (NOTE-w2s3-5 beds)
+  if "$AEA" encrypt -profile 1 -key "$WORK/key32.bin" -a "$3" -t 1 -b 10000 -i "$IN/$2" -o "$WORK/a-$1.aea" 2>/dev/null; then
+    chk "a-$1" size "$(sz "$WORK/a-$1.aea")" "$(sz "$WORK/a-$1.aea")"
+  else echo "FAIL a-$1 rc"; FAIL=1; fi
+}
+for F in z200k m200k r200k; do
+  for a in none lzfse zlib lzma lz4 lzraven lzbitmap; do AB "ab-$F-$a" "ab-$F.bin" "$a"; done
+done
+eq=EQ; s0=$(sz "$WORK/a-ab-m200k-lzfse.aea")
+for a in zlib lzma lz4 lzraven lzbitmap; do
+  [ "$(sz "$WORK/a-ab-m200k-$a.aea")" = "$s0" ] || eq=DIFF
+done
+chk "a-ab-m-eq" str "$eq" 0
+eq=EQ; s0=$(sz "$WORK/a-ab-r200k-none.aea")
+for a in lzfse zlib lzma lz4 lzraven lzbitmap; do
+  [ "$(sz "$WORK/a-ab-r200k-$a.aea")" = "$s0" ] || eq=DIFF
+done
+chk "a-ab-r-eq" str "$eq" 0
 [ -n "${RECORD:-}" ] && mv "$PINS.new" "$PINS" && echo "RECORDED $PINS"
 echo "== $WORK =="
 [ "$FAIL" -eq 0 ] && echo OUTER2-GREEN || echo OUTER2-RED
