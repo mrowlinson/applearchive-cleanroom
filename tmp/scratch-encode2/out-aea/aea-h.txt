@@ -1,0 +1,83 @@
+Invalid command: -h
+Usage: aea command <options>
+
+Commands:
+
+  encrypt                     Create a new encrypted archive `output_file` from the data in `input_file`
+  decrypt                     Decrypt the contents of encrypted archive `input_file` to `output_file`
+  append                      Append the contents of `input_file` to an existing encrypted archive `output_file`
+  sign                        Sign an existing encrypted archive `output_file`
+  id                          Print archive identifier for `input_file`
+  remove-from-keychain        Remove credentials stored in Keychain for the input archive
+
+Options:
+
+  -v                          Increase verbosity, default is silent
+  -h                          Print usage
+  -i input_file               Input file, default is stdin
+  -o output_file              Output file, default is stdout
+  -profile p                  Archive profile, one of (index and string are both valid):
+                              0: hkdf_sha256_hmac__none__ecdsa_p256
+                              1: hkdf_sha256_aesctr_hmac__symmetric__none
+                              2: hkdf_sha256_aesctr_hmac__symmetric__ecdsa_p256
+                              3: hkdf_sha256_aesctr_hmac__ecdhe_p256__none
+                              4: hkdf_sha256_aesctr_hmac__ecdhe_p256__ecdsa_p256
+                              5: hkdf_sha256_aesctr_hmac__scrypt__none
+  -a algorithm                Compression algorithm, one of lzfse, lzma, lzraven, zlib, lz4, lzbitmap, none (no compression), default is lzfse
+  -b block_size               Compression and encryption block size, units are b=1 byte, k=2^10 bytes, m=2^20 bytes, g=2^30 bytes,
+                              default value is 1m
+  -t n_threads                Number of worker threads, default is 18 on this machine
+  -range-offset offset        Offset (bytes in uncompressed data) of range to decrypt
+  -range-size size            Size (bytes in uncompressed data) of range to decrypt
+  -padding padding_size       Padding size, units are b=1 byte, k=2^10 bytes, m=2^20 bytes, g=2^30 bytes,
+                              default is defined for each profile. Can also be 'none' or 0 for no padding, or 'adaptive'
+                              for adaptive Padmé padding size. Numerical values other than 0 must be >= 16.
+  -checksum digest            Checksum mode, one of none, murmur64, sha256, default is defined for each profile
+  -keychain                   Use the Keychain to store (encrypt) and lookup (other commands) the archive password or symmetric key
+  -key key_file               File providing key for symmetric encryption mode
+  -key-value key              Key for symmetric encryption mode (hex or base64 encoded)
+  -key-gen                    When encrypting using the symmetric encryption mode. Generate a random
+                              high entropy key, and store it in `key_file`.
+  -password password_file     File providing password for password encryption mode
+  -password-value password    Password for password encryption mode
+  -password-gen               When encrypting using the password encryption mode. Generate a random
+                              password and store it in `password_file`
+  -auth-data-key string       Specifies the key to use for the next `-auth-data file` or `-auth-data-value data` option
+                              If this option is given, the auth data blob in the archive will use the key->value format,
+                              and this option must be given before each `-auth-data file` or `-auth-data-value data` option
+  -auth-data file             Insert the contents of a file as authentication data in the document prologue.
+                              This option can be specified multiple times, and data will be added at the end.
+                              If this option is specified after a -auth-data-key string, then the file contents
+                              will be stored under the key, and auth data will use the key->value format
+  -auth-data-value data       Insert the contents of data (hex or base64 encoded) as authentication data in the document prologue.
+                              This option can be specified multiple times, and data will be added at the end.
+                              If this option is specified after a `-auth-data-key string`, then the data
+                              will be stored under the key, and auth data will use the key->value format
+  -sign-pub key_file          Sender's public key used to verify signature, and encrypt the document
+  -sign-pub-value key         Sender's public key used to verify signature, and encrypt the document (hex or base64 X9.63 encoded)
+  -sign-pub-auth-key key      Fetch sender signing key from auth data entry key
+  -sign-priv key_file         Sender's private key used to sign the document
+  -sign-priv-value key        Sender's private key used to sign the document (hex or base64 X9.63 encoded)
+  -recipient-pub key_file     Recipient's public key used to encrypt the document
+  -recipient-pub-value key    Recipient's public key used to encrypt the document (hex or base64 X9.63 encoded)
+  -recipient-priv key_file    Recipient's private key used to decrypt the document
+  -recipient-priv-value key   Recipient's private key used to decrypt the document (hex or base64 X9.63 encoded)
+  -main-key key_file          If provided with 'encrypt', store the document main key in key_file.
+                              Required with -append to re-open the document for the `ecdhe` profiles
+  -signature-key key_file     If provided with 'encrypt' or 'append', store the signature encryption key in key_file.
+                              Required with -sign to sign the document
+
+For encrypt and append operations, when profile is one of the `ecdsa` digital signature profiles,
+it is necessary to specify either -sign-pub, or -sign-priv
+If -sign-priv is provided, the archive will be signed. If only -sign-pub is provided,
+a separate call to -sign with -sign-priv and -signature-key will be necessary to sign the archive.
+
+The symmetric key files can begin with 'hex:' or 'base64:', followed by hex or base64 encoded bytes.
+If none of these prefixes is present, the binary contents of the file are taken
+
+decrypt-to-file hashes the current contents of the output file if present, to determine which blocks to read;
+checksum sha256 is required for this decryption mode.
+
+Elliptic Curve P-256 key pairs can be generated with different tools:
+  ssh-keygen -q -b 256 -t ecdsa -f <key_file> -N ''
+  openssl ecparam -name prime256v1 -genkey -noout -out <key file> ; openssl ec -in <key file> -pubout -out <key file>.pub

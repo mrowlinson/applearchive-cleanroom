@@ -6,6 +6,11 @@ OUT=${1:?outdir}
 AA=/usr/bin/aa
 mkdir -p "$OUT"
 > "$OUT/RESULTS.txt"
+{
+echo "# generator: probe-outer.sh (lanes/encode-writer2 committed script)"
+echo "# seed-policy: zeros + python-random deterministic (r-cells seed 1000+N); all inputs touch -t 202001010000"
+echo "# date_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ) os=$(sw_vers -productVersion 2>/dev/null || echo unknown) backend=oracle aa=$(shasum -a 256 /usr/bin/aa | cut -c1-16)"
+} >> "$OUT/RESULTS.txt"
 
 mkinput() { # $1=dir $2=sizebytes : one file f.bin of zeros, fixed mtime
   d=$1; n=$2; rm -rf "$d"; mkdir -p "$d"
@@ -28,10 +33,12 @@ one() { # $1=tag $2=srcdir $3=alg $4=extra-args
 BASE="$OUT/inputs"; mkdir -p "$BASE"
 # size sweep, zeros (highly compressible)
 for n in 0 1 16 1000 65535 65536 70000 200000; do mkinput "$BASE/z$n" "$n"; done
-# size sweep, random (incompressible) — fixed seed via openssl
+# size sweep, random (incompressible) — deterministic via python random (seed 1000+N).
+# (GATE-12c4bdc minor: openssl rand was fresh entropy; r-cell shas now pinned.)
+python3 -c "import random; [open('$BASE/seed-RN.bin'.replace('RN', str(n)), 'wb').write(random.Random(1000 + n).randbytes(n)) for n in (1000, 70000)]"
 for n in 1000 70000; do
   rm -rf "$BASE/r$n"; mkdir -p "$BASE/r$n"
-  openssl rand -out "$BASE/r$n/f.bin" "$n" 2>/dev/null || head -c "$n" /dev/urandom > "$BASE/r$n/f.bin"
+  cp "$BASE/seed-$n.bin" "$BASE/r$n/f.bin"
   touch -t 202001010000 "$BASE/r$n/f.bin" "$BASE/r$n"
 done
 # empty dir input

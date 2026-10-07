@@ -1,0 +1,129 @@
+help_bytes: 6689 6669
+key32sha16=8538d554c8a685da pwlen=34
+p1-none-z1 size=19456 head16=414541310100000000000000f13dd0e5
+p1-none-r1 size=19456 head16=4145413101000000000000007a900fdb
+p5-none-z1 size=19456 head16=4145413105000000000000008c065025
+p5-none-r1 size=19456 head16=414541310500000000000000fa7772ec
+p1-none-z100 size=19456 head16=414541310100000000000000dd243dc3
+p1-none-r100 size=19456 head16=414541310100000000000000aa88fb3f
+p5-none-z100 size=19456 head16=41454131050000000000000026491292
+p5-none-r100 size=19456 head16=414541310500000000000000509eb359
+p1-none-z1000 size=20480 head16=414541310100000000000000e8f2e3c3
+p1-none-r1000 size=20480 head16=4145413101000000000000004fbce208
+p5-none-z1000 size=20480 head16=414541310500000000000000ab46b658
+p5-none-r1000 size=20480 head16=414541310500000000000000bef5a107
+p1-none-z5000 size=24576 head16=414541310100000000000000b8ca5b27
+p1-none-r5000 size=24576 head16=4145413101000000000000009d4a936e
+p5-none-z5000 size=24576 head16=41454131050000000000000060e5b1bf
+p5-none-r5000 size=24576 head16=4145413105000000000000004ec2abf1
+p1-none-empty size=160 head16=4145413101000000000000000d94fc83
+p5-none-empty size=160 head16=41454131050000000000000038e8af6c
+p5-lzfse-r5000 size=24576 head16=414541310500000000000000e3d62235
+p5-zlib-r5000 size=24576 head16=41454131050000000000000005abfc83
+p5-lzma-r5000 size=24576 head16=4145413105000000000000005cc2cde2
+p5-lz4-r5000 size=24576 head16=414541310500000000000000bfd20f5c
+p5-lzraven-r5000 size=24576 head16=414541310500000000000000672febb7
+p5-lzbitmap-r5000 size=24576 head16=414541310500000000000000611ee673
+p1-lzfse-r5000 size=24576 head16=414541310100000000000000f9201788
+p1-padnone-r5000 size=23620 head16=41454131010000000000000031b831d3
+p1-padadaptive-r5000 size=24576 head16=414541310100000000000000e9a802f0
+p1-cksnone-r5000 size=15872 head16=414541310100000000000000ff5d3f69
+p1-ckssha256-r5000 size=24576 head16=41454131010000000000000071f21390
+p1-none-r5000-rep size=24576 head16=414541310100000000000000bede68e6
+p5-none-r5000-rep size=24576 head16=414541310500000000000000b017fe61
+p1-none-r5000-dec RT-OK
+p5-none-r5000-dec RT-OK
+p5-lzfse-r5000-dec RT-OK
+id-p1 rc=0 out=fe64e1b731239ffed346e5930d10e64d59c7450115ae573bd856666aa42fd16f
+id-p5 rc=0 out=1c578e91950d8e40cf88937ac48ec66aebd99dcdce6c9f2040f00844010ee332
+rep-diff-p1: /Users/mrowlinson/Projects/applearchive-cleanroom/tmp/wt-encode-writer2/tmp/scratch-encode2/out-aea/p1-none-r5000.aea /Users/mrowlinson/Projects/applearchive-cleanroom/tmp/wt-encode-writer2/tmp/scratch-encode2/out-aea/p1-none-r5000-rep.aea differ: char 13, line 1
+rep-diff-p5: /Users/mrowlinson/Projects/applearchive-cleanroom/tmp/wt-encode-writer2/tmp/scratch-encode2/out-aea/p5-none-r5000.aea /Users/mrowlinson/Projects/applearchive-cleanroom/tmp/wt-encode-writer2/tmp/scratch-encode2/out-aea/p5-none-r5000-rep.aea differ: char 13, line 1
+p5-lzfse-z5000 size=19456
+p5-zlib-z5000 size=19456
+p5-lzma-z5000 size=19456
+p5-lz4-z5000 size=19456
+p5-lzraven-z5000 size=19456
+p5-lzbitmap-z5000 size=19456
+id-p1-rep: 1f66a810476ae6294b648afffb1531dfafb0679eb7a4824f8d2ced3a2fcfcf0b (orig fe64e1b7...)
+id-p5-rep: 6682b528aaa54a3a408606d316780959a6688daa1bffff64c42191ae0c53c6b4 (orig 1c578e91...)
+id-p1z: 4e8973046194f5340796dd6f4af63e78959f88f63dfc1e1c5824a9b416f914b2
+p1-b4k rc=0 size=24576 err=
+p1-b64k rc=0 size=24576 err=
+p1-b1m rc=0 size=24576 err=
+p1-none-r16384 size=36864
+p1-none-r100000 size=118784
+p0-bare rc=1 err=Either -sign-priv or -sign-pub is required|
+id-copy: fe64e1b731239ffed346e5930d10e64d59c7450115ae573bd856666aa42fd16f
+id-flip: fe64e1b731239ffed346e5930d10e64d59c7450115ae573bd856666aa42fd16f
+flip-dec rc=1 err=Decryption failed|Authentication failed|Error 0xde108400|HMAC|decrypting cluster
+sw-n200 size=19456
+sw-n400 size=19456
+sw-n600 size=19456
+sw-n900 size=20480
+sw-n1100 size=20480
+sw-n1500 size=20480
+sw-n2000 size=21504
+sw-n3000 size=22528
+sw-n4000 size=23552
+sw-n6000 size=25600
+sw-n8000 size=26624
+sw-n12000 size=30720
+ec-keygen rc=0
+p0-signpriv rc=0 size=18880 err=
+p2 rc=0 size=19456 err=
+p3 rc=0 size=19456 err=
+p4 rc=0 size=19456 err=
+kv-barehex rc=1 err=Error parsing key|Error loading credentials|
+kv-hexpfx rc=0 size=19456 err=
+p1-murmur size=18432
+p1-1m-b4k size=1032192
+p1-1m-b64k size=1032192
+p1-1m-b1m size=1032192
+pwlen1 rc=1 err=Invalid password|Error loading credentials|
+pwlen8 rc=1 err=Error 0xb9076000|Password is too short|Main key derivation failed (-2)|Main key 
+pwlen16 rc=1 err=Error 0xb9076000|Password is too short|Main key derivation failed (-2)|Main key 
+pwlen31 rc=0 err=
+pwlen32 rc=0 err=
+hdr-p0: 41454131000000000000000030440220
+hdr-p2: 41454131020000000000000070155b06
+hdr-p3: 414541310300000000000000047b1b22
+hdr-p4: 41454131040000000000000091080b77
+p0-dec-pub RT-OK
+p2-dec-key rc=1 err=-sign-pub is required|
+p2-dec-keypub RT-OK
+p3-dec-rpriv RT-OK
+p4-dec-rpriv rc=1 err=-sign-pub is required|
+p4-dec-both RT-OK
+kv-hex-filedec RT-OK
+fileenc-hexdec RT-OK
+kv-b64pfx rc=0 size=19456
+kv-b64bare rc=1 err=Error parsing key|Error loading credentials|
+p1z1m-b4k size=28672
+p1r1m-b4k size=1032192
+p1z1m-b64k size=22528
+p1r1m-b64k size=1032192
+p1z1m-b1m size=19456
+p1r1m-b1m size=1032192
+p1-murmur-rt RT-OK
+pwlen17 rc=1 err=Error 0xb9076000|Password is too short|Main key de
+pwlen20 rc=0 err=
+pwlen23 rc=0 err=
+pwlen26 rc=0 err=
+pwlen29 rc=0 err=
+pwlen18 rc=1 err=Error 0xb9076000|Password is too short|Main key de
+pwlen19 rc=1 err=Error 0xb9076000|Password is too short|Main key de
+ad-value rc=1 size= (baseline 19456) err=Invalid auth-data-value|
+ad-keyvalue rc=1 size= err=Invalid auth-data-value|
+ad-kv RT-DIFF
+app-p1 rc=0 size=18820 err=
+app-p1 RT-CONCAT-OK
+p3-mainkey-enc rc=0 err=
+app-p3 rc=1 size=19456 err=-recipient-pub is required|
+app-p3 RT-DIFF
+ad-value-hex rc=0 size=19456 (baseline 19456) err=
+ad-keyvalue-hex rc=0 size=19456 err=
+ad-kv2 RT-OK
+app-p3b rc=0 size=18885 err=
+app-p3 RT-CONCAT-OK
+app-p5 rc=0 size=18820 err=
+app-p5 RT-CONCAT-OK
