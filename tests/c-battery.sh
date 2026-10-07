@@ -87,6 +87,18 @@ head -c 100 /dev/urandom > "$WORK/corrupt.aar"
 head -c 20 "$V/aar/hello-lzfse.aar" > "$WORK/trunc.aar"
 "$AAD" "$WORK/trunc.aar" "$WORK/c-tru" 2>/dev/null && fail "trunc-exit" || pass "trunc-exit"
 
+echo "== cell trunc-sweep (exit-1-or-clean, no crash) =="
+SZ=$(wc -c < "$V/aar/hello-lzfse.aar" | tr -d ' ')
+N=0; BAD=0
+while [ "$N" -le "$SZ" ]; do
+  if [ "$N" -eq 0 ]; then : > "$WORK/sw.aar"; else head -c "$N" "$V/aar/hello-lzfse.aar" > "$WORK/sw.aar"; fi
+  if "$AAD" "$WORK/sw.aar" "$WORK/sw-o" 2>/dev/null; then RC=0; else RC=$?; fi
+  if [ "$RC" -eq 0 ] && [ "$N" -ne "$SZ" ]; then BAD=$((BAD+1)); fi
+  if [ "$RC" -gt 1 ]; then BAD=$((BAD+1)); fi
+  N=$((N+37))
+done
+[ "$BAD" -eq 0 ] && pass "trunc-sweep" || fail "trunc-sweep"
+
 echo "== $WORK =="
 [ "$FAIL" -eq 0 ] && echo CBATTERY-GREEN || echo CBATTERY-RED
 exit "$FAIL"
