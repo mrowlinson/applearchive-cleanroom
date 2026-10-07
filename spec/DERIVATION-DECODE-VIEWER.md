@@ -153,4 +153,23 @@ findings:
 - joint DONE not reached (Q-016 construction + sweep-v3 + writer DONEs pending; claim HELD)
 pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:4bd81b4599c1e6e2f500044ba17f6e88d51d8dfda502cf2259dfc4a5b348d724 bytes:16402
 pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:4c1b7baff5dbd183d84150d2a2aa9dc046598b9614c7e8cf0e944c337af73b5e bytes:11719
+post-edit: (recorded at commit c9ffd27; 2 files, +57)
+
+## 2026-10-07 decode-viewer lanes/decode-viewer (entry 7: CR-020 pad-tag rule + A-016B + PRE-003/004)
+inputs:
+- quiz-decode writer2 NOTE-072 (HOLD on A-016(3)) + writer1 NOTE-029 (fuzz adler hole) + sweep GATEs 9fd0936/2a59c5c/33cc27b (read first-hand)
+- own-gen padauth v2: padsearch2.py (1848 combos x3 files, HIT 3/3) + padconfirm.py (c2p last-nmac + fresh p1-3m + p5none-3m, ALL-CONFIRMED) + unpadded negatives c1-18/c2-sha (WS tmp/decode-viewer-probes/padauth)
+- own-gen adler/: hello-zlib.aar + 7 wrapper/trailer/stream flips vs oracle (WS tmp/decode-viewer-probes/adler)
+- own TEXT-dump reads: setup1 @0x137fc (crypto dispatcher arms) + caller-xref survey (auth fn invoked via pointer, 0 direct xrefs; 0x173a4/0x1748c frame-shared split pair)
+- fixtures hello-zlib.aar + hello-raw.aar (wt-fixtures copies, read-only)
+not-consulted: patent contents, encode-side lanes, reference/port sources,
+  writer worktree files (git-show only + black-box runs), liblzraven src/*.c internals
+outputs: +1 clause (CR-020 MEASURED), tag mix total MEASURED 16 / SYMBOL 2 / INFERRED 2;
+  A-016B + PRE-003 + PRE-004 + NOTE-23/24
+findings:
+- pad-tag construction CLOSED: last-nmac = HMAC-SHA256(HKDF(main,"AEA_PAK"), [padstart,arc)); 6/6 + 2/2 negatives; Q-016 fully closed, writer2 unblocked
+- zlib wrapper-ignored rule replicated (CMF/FLG/adler unchecked, raw inflate; deflate-data corruption -> header-parse abort); pre-answered writer1 case188 via PRE-004
+- joint DONE not reached (writer2 verify-or-reject + sweep-v3 + DONEs pending; claim HELD)
+pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:98aeea34c2dd6df8d8437d03659fbb0bba06f3c6025987fc34f5d8bcee467a4f bytes:19806
+pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:a37f52800bed89378f08898f83167e16d7291828d8319ba2f4fa02fb707ddfcd bytes:14990
 post-edit: (recorded at commit; see commit 2nd line stats)
