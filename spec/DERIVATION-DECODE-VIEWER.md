@@ -108,3 +108,22 @@ findings:
 pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:02e806f0b12bf4b2ede23137c0e51867cd98db64a3ce1a0698bf0450c76634a0 bytes:10363
 pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:c97e3504e726db17c3e3cfa4936e5864be19d855afbfc3baa6698100a39c0483 bytes:7110
 post-edit: (recorded at commit; see commit 2nd line stats)
+
+## 2026-10-07 decode-viewer lanes/decode-viewer (entry 5: CR-015/016 + A-013/014 + VERIFY x8)
+inputs:
+- quiz-decode Q-013/Q-014 (read first-hand) + writer1 DPROBE-04 (03aec9c) + writer2 NOTE-034 (e78e38e era)
+- own-gen bit0/ probes: zr/rz/r600k/r2m (aa) + ct2-r/ct2-zr/ct2-r10k (pure-stream, seeded; first ct- rows discarded: reseed-per-draw bug -> 0xB0 const) + root B/C extract (WS tmp/decode-viewer-probes/bit0 + kindbed)
+- writer1 fixtures hlink-basic/missing + fifo-mixed (bytes + pins verified own) + `aa list` TYP-H parse own
+- writer commits verified first-hand (full diffs + A-004 wall greps 0/8): w1 e87ec65 ffcb297 99db53e 03aec9c; w2 7205bf9 e7a9249 80577a2 e78e38e
+not-consulted: decompiler output (still none), patent contents, reference/port sources,
+  encode-side lanes, writer worktree files (git-show only + black-box runs), liblzraven src/*.c internals
+outputs: +2 clauses (CR-015/016 MEASURED), tag mix total MEASURED 12 / SYMBOL 2 / INFERRED 2;
+  A-013 + A-014 + NOTE-14 (H correction) + VERIFY x8 PASS (0 new FLAGs)
+findings:
+- TYP H real (12th kind): writer-crafted + oracle-parsed; own census CORRECTED (11->12); CLI 'h' = H filter
+- bit0 rule: incompressible block -> raw verbatim (6/6 size-exact, 5/5 roundtrips); pure-random aa inners outer-stored
+- B/C extract always-fails incl root (capability, not privilege); unknown-TYP silent-skip accepted (writer-measured); W/R/T loud-vs-skip UNRESOLVED
+- joint DONE not reached (writers mid-turf; claim HELD)
+pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:135db0a2ee5fd0697e917abb4137dada756aac6b3f2f0a3e5f6c3298cb7bed35 bytes:14269
+pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:7926c122762e351d6677f879815ed21ce0abc108e1f2b3c2c436186a53220651 bytes:9930
+post-edit: (recorded at commit; see commit 2nd line stats)
