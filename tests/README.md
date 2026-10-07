@@ -3,9 +3,13 @@
 Harness notes live here. Black-box oracles: local `aa` / `aea`.
 
 Batteries (all: exit 0 green / 1 FAIL / 2 harness error; work in WS):
-- c-battery.sh — C deliverable vs oracle, 53 cells (fixtures,
+- c-battery.sh — C deliverable vs oracle, 83 cells (fixtures,
   attrtree, wide, multiblock, hardlink, specials, hlink-path,
-  device-fail, errors, trunc-sweep, no-typ, xattr-order, adler).
+  device-fail, errors, trunc-sweep, no-typ, xattr-order, adler,
+  xat-file-order, socket-flush, xat-plus-socket, xat-dir,
+  xat-2dirs, root-meta, no-dat, empty-pat-file, hlink-trailer,
+  socket-plus-abort, xat-fail-skips-rest).
+- craft.py — deterministic structure crafts used by the cells.
 - smoke.sh — T0 encode/decode roundtrip smoke.
 - flip-fuzz.sh — oracle-vs-C, 200 seeded flips (seed 49420).
 - c-vs-proto.sh — C-vs-proto, 150 seeded flips (seed 40608).

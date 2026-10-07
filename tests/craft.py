@@ -1,0 +1,207 @@
+#!/usr/bin/env python3
+"""craft.py — deterministic archive-structure crafts for battery cells.
+
+All crafts preserve lengths except where noted; outer stored blocks
+get comp/unc fixups. Raw (AA01) and stored-single-block inputs only.
+Usage: craft.py CMD IN OUT ARGS...
+  killxat IN OUT IDX...       corrupt 1st XAT record size (items by idx)
+  killxatpat IN OUT PAT...    same, items by PAT string
+  settyp IN OUT IDX LETTER    set item TYP value byte
+  setmod IN OUT PAT OCT       set first MOD u16 of item with PAT (octal)
+  setmtm IN OUT PAT EPOCH     set MTM u64 LE of item with PAT
+  addxat IN OUT PAT NAME VAL  append XAT record (exact-size; extends blob)
+  blanktyp IN OUT N           blank Nth b"TYP" occurrence (0-based)
+  blankdat IN OUT PAT         blank DAT key of item with PAT
+  zeropat IN OUT PAT          empty PAT (removes bytes, fixes hsize)
+"""
+import struct
+import sys
+
+UW = {0x31: 1, 0x32: 2, 0x34: 4, 0x38: 8}
+BW = {0x41: 2, 0x42: 4, 0x43: 8}
+HL = {0x46: 4, 0x47: 20, 0x48: 32, 0x49: 48, 0x4A: 64}
+TL = {0x53: 8, 0x54: 12}
+
+
+def entries_of(hdr):
+    p, end, out = 6, len(hdr), []
+    while p + 4 <= end:
+        k, st = bytes(hdr[p:p + 3]), hdr[p + 3]
+        if st in UW:
+            out.append((k, st, p + 4, UW[st])); p += 4 + UW[st]
+        elif st in BW:
+            out.append((k, st, p + 4, BW[st])); p += 4 + BW[st]
+        elif st == 0x50:
+            ln = struct.unpack("<H", hdr[p + 4:p + 6])[0]
+            out.append((k, st, p + 4, 2 + ln)); p += 6 + ln
+        elif st in HL:
+            out.append((k, st, p + 4, HL[st])); p += 4 + HL[st]
+        elif st in TL:
+            out.append((k, st, p + 4, TL[st])); p += 4 + TL[st]
+        elif st == 0x2A:
+            out.append((k, st, p + 4, 0)); p += 4
+        else:
+            raise SystemExit("bad subtype 0x%02x" % st)
+    return out
+
+
+def items_of(raw):
+    out, pos = [], 0
+    while pos + 6 <= len(raw):
+        mg = bytes(raw[pos:pos + 4])
+        if mg not in (b"AA01", b"YAA1"):
+            break
+        hsz = struct.unpack("<H", raw[pos + 4:pos + 6])[0]
+        ents = entries_of(raw[pos:pos + hsz])
+        blen = 0
+        for k, st, voff, w in ents:
+            if st in BW:
+                blen += int.from_bytes(raw[pos + voff:pos + voff + w],
+                                       "little")
+        out.append([pos, hsz, ents])
+        pos += hsz + blen
+    return out
+
+
+def pat_of(raw, pos, ents):
+    for k, st, voff, w in ents:
+        if k == b"PAT" and st == 0x50:
+            ln = struct.unpack("<H", raw[pos + voff:pos + voff + 2])[0]
+            return bytes(raw[pos + voff + 2:pos + voff + 2 + ln])
+    return None
+
+
+def blob_off(raw, pos, ents, key):
+    bp = pos + struct.unpack("<H", raw[pos + 4:pos + 6])[0]
+    for k, st, voff, w in ents:
+        if st in BW:
+            ln = int.from_bytes(raw[pos + voff:pos + voff + w], "little")
+            if k == key:
+                return bp, pos + voff, w, ln
+            bp += ln
+    return None
+
+
+def load(path):
+    d = bytearray(open(path, "rb").read())
+    if d[:4] in (b"AA01", b"YAA1"):
+        return d, bytearray(d), False
+    assert d[:3] == b"pbz", "outer magic"
+    unc = struct.unpack(">I", d[16:20])[0]
+    comp = struct.unpack(">I", d[24:28])[0]
+    assert unc == comp, "stored only"
+    assert 28 + comp == len(d), "single block only"
+    return d, bytearray(d[28:28 + comp]), True
+
+
+def save(d, raw, stored, path):
+    if not stored:
+        open(path, "wb").write(bytes(raw))
+        return
+    d[28:28 + (len(d) - 28)] = bytes(raw)
+    struct.pack_into(">I", d, 16, len(raw))
+    struct.pack_into(">I", d, 24, len(raw))
+    open(path, "wb").write(bytes(d))
+
+
+def main():
+    cmd, src, dst, args = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4:]
+    d, raw, stored = load(src)
+    items = items_of(raw)
+
+    def find_pat(pat):
+        for i, (pos, hsz, ents) in enumerate(items):
+            if pat_of(raw, pos, ents) == pat:
+                return i
+        raise SystemExit("no PAT %r" % pat)
+
+    if cmd == "killxat":
+        for s in args:
+            pos, hsz, ents = items[int(s)]
+            r = blob_off(raw, pos, ents, b"XAT")
+            assert r, "no XAT"
+            bp, _, _, _ = r
+            raw[bp:bp + 4] = struct.pack("<I", 0xFFFFFF)
+    elif cmd == "killxatpat":
+        for s in args:
+            i = find_pat(s.encode())
+            pos, hsz, ents = items[i]
+            r = blob_off(raw, pos, ents, b"XAT")
+            assert r, "no XAT"
+            bp, _, _, _ = r
+            raw[bp:bp + 4] = struct.pack("<I", 0xFFFFFF)
+    elif cmd == "settyp":
+        i, let = int(args[0]), args[1].encode()
+        pos, hsz, ents = items[i]
+        for k, st, voff, w in ents:
+            if k == b"TYP" and st in UW:
+                raw[pos + voff] = let[0]
+                break
+        else:
+            raise SystemExit("no TYP")
+    elif cmd == "setmod":
+        i = find_pat(args[0].encode())
+        pos, hsz, ents = items[i]
+        for k, st, voff, w in ents:
+            if k == b"MOD" and st in UW:
+                raw[pos + voff:pos + voff + w] = int(args[1], 8).to_bytes(
+                    w, "little")
+                break
+        else:
+            raise SystemExit("no MOD")
+    elif cmd == "setmtm":
+        i = find_pat(args[0].encode())
+        pos, hsz, ents = items[i]
+        for k, st, voff, w in ents:
+            if k == b"MTM" and st in TL:
+                raw[pos + voff:pos + voff + 8] = int(args[1]).to_bytes(
+                    8, "little")
+                break
+        else:
+            raise SystemExit("no MTM")
+    elif cmd == "addxat":
+        i = find_pat(args[0].encode())
+        pos, hsz, ents = items[i]
+        name, val = args[1].encode(), args[2].encode()
+        rec = struct.pack("<I", 4 + len(name) + 1 + len(val)) + name + \
+            b"\x00" + val
+        r = blob_off(raw, pos, ents, b"XAT")
+        assert r, "no XAT"
+        bp, loff, w, ln = r
+        raw[bp + ln:bp + ln] = rec
+        raw[loff:loff + w] = (ln + len(rec)).to_bytes(w, "little")
+    elif cmd == "blanktyp":
+        n, j, found = int(args[0]), 0, -1
+        for _ in range(n + 1):
+            found = bytes(raw).find(b"TYP", j)
+            assert found >= 0
+            j = found + 1
+        raw[found:found + 3] = b"XXX"
+    elif cmd == "blankdat":
+        i = find_pat(args[0].encode())
+        pos, hsz, ents = items[i]
+        for k, st, voff, w in ents:
+            if k == b"DAT":
+                raw[pos + voff - 4:pos + voff - 1] = b"XXX"
+                break
+        else:
+            raise SystemExit("no DAT")
+    elif cmd == "zeropat":
+        i = find_pat(args[0].encode())
+        pos, hsz, ents = items[i]
+        for k, st, voff, w in ents:
+            if k == b"PAT" and st == 0x50:
+                ln = struct.unpack("<H", raw[pos + voff:pos + voff + 2])[0]
+                del raw[pos + voff + 2:pos + voff + 2 + ln]
+                struct.pack_into("<H", raw, pos + 4, hsz - ln)
+                raw[pos + voff:pos + voff + 2] = struct.pack("<H", 0)
+                break
+        else:
+            raise SystemExit("no PAT")
+    else:
+        raise SystemExit("unknown cmd")
+    save(d, raw, stored, dst)
+
+
+if __name__ == "__main__":
+    main()

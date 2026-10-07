@@ -310,33 +310,65 @@ static int set_one_time(const char *path, unsigned dirattr_unused,
                        nofollow ? FSOPT_NOFOLLOW : 0);
 }
 
+/* 0 ok / -1 invalid-or-unsettable. SILENT: callers print oracle lines. */
 static int apply_xattr_blob(const char *target, const unsigned char *blob,
                             size_t blen, int islink) {
     size_t pos = 0;
     while (pos + 4 <= blen) {
         uint32_t size = rd32le(blob + pos);
-        if (size < 4 || pos + size > blen) { FAIL("bad xattr rec\n"); return -1; }
+        if (size < 4 || pos + size > blen) return -1;
         const unsigned char *rec = blob + pos + 4;
         size_t remlen = size - 4, nl = 0;
         while (nl < remlen && rec[nl]) nl++;
-        if (nl == remlen) { FAIL("xattr name unterminated\n"); return -1; }
+        if (nl == remlen) return -1;
         if (setxattr(target, (const char *)rec, rec + nl + 1,
                      remlen - nl - 1, 0,
-                     islink ? XATTR_NOFOLLOW : 0)) {
-            FAIL("setxattr %s\n", rec); return -1;
-        }
+                     islink ? XATTR_NOFOLLOW : 0)) return -1;
         pos += size;
     }
+    if (pos != blen) return -1; /* oracle rejects trailing bytes */
     return 0;
 }
 
-static int apply_meta(const char *target, const Item *it, int islink) {
+/* oracle prints one "Error 0x..." header per run: first class wins. */
+static void print_hdr(int *done, unsigned code) {
+    if (!*done) { fprintf(stderr, "Error 0x%08x\n", code); *done = 1; }
+}
+
+/* EISDIR shape: L1 = basename(arg), L2 = absolute target (epf2 probes). */
+static void eisdir_err(int *done, const char *path) {
+    char strip[4096], abs[8192];
+    size_t n = strlen(path);
+    if (n >= sizeof strip) n = sizeof strip - 1;
+    memcpy(strip, path, n); strip[n] = 0;
+    while (n > 1 && strip[n - 1] == '/') strip[--n] = 0;
+    const char *b = strrchr(strip, '/');
+    b = b ? b + 1 : strip;
+    if (strip[0] == '/') {
+        snprintf(abs, sizeof abs, "%s", strip);
+    } else {
+        char cwd[4096];
+        if (getcwd(cwd, sizeof cwd))
+            snprintf(abs, sizeof abs, "%s/%s", cwd, strip);
+        else
+            snprintf(abs, sizeof abs, "%s", strip);
+    }
+    print_hdr(done, 0xc305ac15);
+    fprintf(stderr, "Is a directory: %s\nIs a directory: %s\n"
+            "opening output file: %s\n", b, abs, abs);
+}
+
+/* xattr step, strict. 0 ok / -1 fail (caller prints + classifies). */
+static int apply_xattr_only(const char *target, const Item *it, int islink) {
+    size_t xl = 0;
+    const unsigned char *xb = blob_for(it, "XAT", &xl);
+    if (xb && xl && apply_xattr_blob(target, xb, xl, islink)) return -1;
+    return 0;
+}
+
+/* mode/owner/times step. Best-effort: never fails the run. */
+static void apply_rest(const char *target, const Item *it, int islink) {
     const Entry *e;
-    /* XAT FIRST: chmod may strip +x/write needed for xattr (case110:
-     * MOD 566 dir rejects setxattr EPERM; oracle has xattr + 566). */
-    size_t xl0 = 0;
-    const unsigned char *xb0 = blob_for(it, "XAT", &xl0);
-    if (xb0 && xl0 && apply_xattr_blob(target, xb0, xl0, islink)) return -1;
     if (!islink) {
         e = find_ent(it, "MOD");
         if (e && (e->st == '1' || e->st == '2' || e->st == '4' || e->st == '8'))
@@ -368,7 +400,6 @@ static int apply_meta(const char *target, const Item *it, int islink) {
         ts_from_raw(e->raw, e->rawlen, &ts);
         set_one_time(target, 0, ATTR_CMN_CRTIME, &ts, islink); /* best-effort */
     }
-    return 0;
 }
 
 /* ---- extract ---- */
@@ -416,9 +447,14 @@ static int safe_join(const char *root, const unsigned char *rel, size_t rlen,
 static int extract(const Item *items, size_t nitems, const char *root) {
     if (mkdirs(root)) { FAIL("mkdir %s\n", root); return -1; }
     /* deferred dir metadata (children bump dir mtime; apply last) */
-    typedef struct { char path[4096]; size_t idx; } Def;
-    Def *defs = malloc(nitems * sizeof *defs);
-    size_t ndefs = 0;
+    typedef struct { char path[4096]; size_t idx; int islink; } Rec;
+    Rec *files = malloc(nitems * sizeof *files);
+    Rec *dirs = malloc(nitems * sizeof *dirs);
+    size_t nfiles = 0, ndirs = 0;
+    size_t *scols = malloc(nitems * sizeof *scols);
+    size_t nscols = 0;
+    size_t *fsts = malloc(nitems * sizeof *fsts);
+    size_t nfsts = 0;
     /* HLC group -> first member path (hardlink restore) */
     typedef struct { unsigned long long grp; char path[4096]; } Hlc;
     Hlc *hlcs = malloc(nitems * sizeof *hlcs);
@@ -427,27 +463,53 @@ static int extract(const Item *items, size_t nitems, const char *root) {
     Hln *hlns = malloc(nitems * sizeof *hlns);
     size_t nhlns = 0;
     unsigned fails = 0, sfails = 0;
-    int rc = -1;
-    for (size_t k = 0; k < nitems; k++) {
+    int hdr = 0, dirfail = 0, aborted = 0;
+    /* phase 1: create everything, forward. aborts stop creation only. */
+    for (size_t k = 0; k < nitems && !aborted; k++) {
         const Item *it = &items[k];
         const Entry *t = find_ent(it, "TYP"), *p = find_ent(it, "PAT");
-        /* oracle requires TYP on EVERY item incl PAT-empty root (case175) */
+        /* oracle requires TYP on EVERY item (case175, notyp probes) */
         if (!t) {
-            fprintf(stderr, "Invalid entry: no TYP field\n");
-            fails++; goto out;
+            fprintf(stderr, "Extraction failed\n"
+                    "extract failedError 0xbd03ac00\n"
+                    "Invalid entry: no TYP field\n"
+                    "archive stream read error (header)\n"
+                    "stream cancelled\n");
+            fails++; hdr = 1; aborted = 1; break;
         }
-        if (!p || p->st != 'P' || !p->rawlen) continue; /* root desc */
+        if (!p || p->st != 'P') continue; /* no PAT key: skip */
+        if (!p->rawlen) {
+            /* PAT-empty: D=root meta target; F=EISDIR counted; else skip */
+            if (t->num == 'D') {
+                memcpy(dirs[ndirs].path, root, strlen(root) + 1);
+                dirs[ndirs].idx = k; dirs[ndirs].islink = 0; ndirs++;
+            } else if (t->num == 'F') {
+                eisdir_err(&hdr, root);
+                fails++; sfails++;
+            }
+            continue;
+        }
         char target[4096];
         if (safe_join(root, p->raw, p->rawlen, target)) {
-            FAIL("bad path\n"); goto out;
+            FAIL("bad path\n"); fails++; hdr = 1; aborted = 1; break;
         }
         if (t->num == 'D') {
-            if (mkdirs(target)) { FAIL("mkdir %s\n", target); goto out; }
-            memcpy(defs[ndefs].path, target, strlen(target) + 1);
-            defs[ndefs++].idx = k;
+            if (mkdirs(target)) {
+                FAIL("mkdir %s\n", target);
+                fails++; hdr = 1; aborted = 1; break;
+            }
+            memcpy(dirs[ndirs].path, target, strlen(target) + 1);
+            dirs[ndirs].idx = k; dirs[ndirs].islink = 0; ndirs++;
         } else if (t->num == 'F') {
             char *sl = strrchr(target, '/');
-            if (sl) { *sl = 0; if (mkdirs(target)) goto out; *sl = '/'; }
+            if (sl) {
+                *sl = 0;
+                if (mkdirs(target)) {
+                    FAIL("mkdir %s\n", target);
+                    fails++; hdr = 1; aborted = 1; break;
+                }
+                *sl = '/';
+            }
             const Entry *h = find_ent(it, "HLC");
             const char *first = NULL;
             if (h)
@@ -456,15 +518,28 @@ static int extract(const Item *items, size_t nitems, const char *root) {
             if (first) {
                 unlink(target);
                 if (link(first, target)) {
-                    FAIL("link %s\n", target); goto out;
+                    FAIL("link %s\n", target);
+                    fails++; hdr = 1; aborted = 1; break;
                 }
             } else {
                 size_t dl = 0;
                 const unsigned char *dd = blob_for(it, "DAT", &dl);
+                if (!dd) {
+                    fsts[nfsts++] = k; /* flushed fwd after S-flush */
+                    fails++; continue;
+                }
                 FILE *f = fopen(target, "wb");
-                if (!f) { FAIL("open %s\n", target); goto out; }
+                if (!f) {
+                    if (errno == EISDIR) {
+                        eisdir_err(&hdr, target);
+                        fails++; sfails++; continue;
+                    }
+                    FAIL("open %s\n", target);
+                    fails++; hdr = 1; aborted = 1; break;
+                }
                 if (dl && fwrite(dd, 1, dl, f) != dl) {
-                    fclose(f); FAIL("write %s\n", target); goto out;
+                    fclose(f); FAIL("write %s\n", target);
+                    fails++; hdr = 1; aborted = 1; break;
                 }
                 fclose(f);
                 if (h) {
@@ -473,97 +548,167 @@ static int extract(const Item *items, size_t nitems, const char *root) {
                     nhlcs++;
                 }
             }
-            if (apply_meta(target, it, 0)) goto out;
+            memcpy(files[nfiles].path, target, strlen(target) + 1);
+            files[nfiles].idx = k; files[nfiles].islink = 0; nfiles++;
         } else if (t->num == 'L') {
             const Entry *l = find_ent(it, "LNK");
             if (!l || l->st != 'P') {
                 fprintf(stderr, "YAA link entry has no LNK field: %.*s\n",
                         (int)p->rawlen, p->raw);
-                goto out;
+                fails++; hdr = 1; aborted = 1; break;
             }
             char *sl = strrchr(target, '/');
-            if (sl) { *sl = 0; if (mkdirs(target)) goto out; *sl = '/'; }
+            if (sl) {
+                *sl = 0;
+                if (mkdirs(target)) {
+                    FAIL("mkdir %s\n", target);
+                    fails++; hdr = 1; aborted = 1; break;
+                }
+                *sl = '/';
+            }
             char lbuf[4096];
-            if (l->rawlen >= sizeof lbuf) goto out;
+            if (l->rawlen >= sizeof lbuf) {
+                FAIL("link target too long\n");
+                fails++; hdr = 1; aborted = 1; break;
+            }
             memcpy(lbuf, l->raw, l->rawlen); lbuf[l->rawlen] = 0;
             unlink(target);
             if (symlink(lbuf, target)) {
-                FAIL("symlink %s\n", target); goto out;
+                FAIL("symlink %s\n", target);
+                fails++; hdr = 1; aborted = 1; break;
             }
-            if (apply_meta(target, it, 1)) goto out;
+            memcpy(files[nfiles].path, target, strlen(target) + 1);
+            files[nfiles].idx = k; files[nfiles].islink = 1; nfiles++;
         } else if (t->num == 'H') {
             const Entry *l = find_ent(it, "LNK");
             if (!l || l->st != 'P') {
                 fprintf(stderr, "YAA link entry has no LNK field: %.*s\n",
                         (int)p->rawlen, p->raw);
-                goto out;
+                fails++; hdr = 1; aborted = 1; break;
             }
             memcpy(hlns[nhlns].path, target, strlen(target) + 1);
             hlns[nhlns++].idx = k;
         } else if (t->num == 'P') {
             char *sl = strrchr(target, '/');
-            if (sl) { *sl = 0; if (mkdirs(target)) goto out; *sl = '/'; }
+            if (sl) {
+                *sl = 0;
+                if (mkdirs(target)) {
+                    FAIL("mkdir %s\n", target);
+                    fails++; hdr = 1; aborted = 1; break;
+                }
+                *sl = '/';
+            }
             unlink(target);
             if (mkfifo(target, 0600)) {
-                FAIL("mkfifo %s\n", target); goto out;
+                FAIL("mkfifo %s\n", target);
+                fails++; hdr = 1; aborted = 1; break;
             }
-            if (apply_meta(target, it, 0)) goto out;
+            memcpy(files[nfiles].path, target, strlen(target) + 1);
+            files[nfiles].idx = k; files[nfiles].islink = 0; nfiles++;
         } else if (t->num == 'S') {
-            fprintf(stderr, "Error 0xc8055000\nnot implemented yet\n"
-                    "creating fs object: %.*s\n",
-                    (int)p->rawlen, p->raw);
+            scols[nscols++] = k; /* flushed forward after files-meta */
             fails++; sfails++;
         } else if (t->num == 'B' || t->num == 'C') {
             if (!find_ent(it, "DEV")) {
                 fprintf(stderr, "YAA device entry has no DEV field: %.*s\n",
                         (int)p->rawlen, p->raw);
-                goto out;
+                fails++; hdr = 1; aborted = 1; break;
             }
-            fprintf(stderr, "Error 0xc8055000\nnot implemented yet\n"
-                    "creating fs object: %.*s\n",
-                    (int)p->rawlen, p->raw);
+            scols[nscols++] = k;
             fails++; sfails++;
         } else {
             /* unknown TYP: silent skip (oracle parity, measured) */
         }
     }
-    /* H pass after all entries (forward refs), before deferred dir meta */
-    for (size_t i = 0; i < nhlns; i++) {
-        const Entry *l = find_ent(&items[hlns[i].idx], "LNK");
-        char src[4096];
-        if (safe_join(root, l->raw, l->rawlen, src)) {
-            fprintf(stderr, "invalid path: %.*s\ninvalid 'H' LNK\n",
-                    (int)l->rawlen, l->raw);
-            fails++; continue;
-        }
-        struct stat sb;
-        if (lstat(src, &sb) || !S_ISREG(sb.st_mode)) {
-            fprintf(stderr, "'H' LNK not a regular file: %.*s\n",
-                    (int)l->rawlen, l->raw);
-            fails++; continue;
-        }
-        char *sl = strrchr(hlns[i].path, '/');
-        if (sl) {
-            *sl = 0;
-            int merr = mkdirs(hlns[i].path);
-            *sl = '/';
-            if (merr) { FAIL("mkdir for link\n"); fails++; continue; }
-        }
-        unlink(hlns[i].path);
-        if (link(src, hlns[i].path)) {
-            FAIL("link %s\n", hlns[i].path); fails++; continue;
+    /* phase 2: files meta, strict reverse (bad2, Q1 re-probe) */
+    for (size_t i = nfiles; i-- > 0;) {
+        const Item *it = &items[files[i].idx];
+        if (apply_xattr_only(files[i].path, it, files[i].islink)) {
+            const Entry *p = find_ent(it, "PAT");
+            print_hdr(&hdr, 0xe8012000);
+            fprintf(stderr, "invalid XAT blob\ninvalid XAT blob\n");
+            fprintf(stderr, "applyEntryAttributes failed: %.*s\n",
+                    (int)p->rawlen, p->raw);
+            fails++; sfails++;
+        } else {
+            apply_rest(files[i].path, it, files[i].islink);
         }
     }
-    for (size_t i = ndefs; i-- > 0;)
-        if (apply_meta(defs[i].path, &items[defs[i].idx], 0)) goto out;
+    /* S-flush, forward (S2; after files-meta per E4/E5) */
+    for (size_t i = 0; i < nscols; i++) {
+        const Entry *p = find_ent(&items[scols[i]], "PAT");
+        print_hdr(&hdr, 0xc8055000);
+        fprintf(stderr, "not implemented yet\ncreating fs object: %.*s\n",
+                (int)p->rawlen, p->raw);
+    }
+    /* F-no-DAT flush, forward (nh2: after S-flush, before H-pass) */
+    for (size_t i = 0; i < nfsts; i++) {
+        const Entry *p = find_ent(&items[fsts[i]], "PAT");
+        print_hdr(&hdr, 0xc8039000);
+        fprintf(stderr, "invalid entry final state 0: %.*s\n",
+                (int)p->rawlen, p->raw);
+    }
+    /* H pass (runs even on abort per HAB; trailer iff failure) */
+    {
+        int hfailed = 0;
+        for (size_t i = 0; i < nhlns; i++) {
+            const Entry *l = find_ent(&items[hlns[i].idx], "LNK");
+            char src[4096];
+            if (safe_join(root, l->raw, l->rawlen, src)) {
+                print_hdr(&hdr, 0xc8104800);
+                fprintf(stderr, "invalid path: %.*s\ninvalid 'H' LNK\n",
+                        (int)l->rawlen, l->raw);
+                fails++; hfailed = 1; continue;
+            }
+            struct stat sb;
+            if (lstat(src, &sb) || !S_ISREG(sb.st_mode)) {
+                print_hdr(&hdr, 0xc8104800);
+                fprintf(stderr, "'H' LNK not a regular file: %.*s\n",
+                        (int)l->rawlen, l->raw);
+                fails++; hfailed = 1; continue;
+            }
+            char *sl = strrchr(hlns[i].path, '/');
+            if (sl) {
+                *sl = 0;
+                int merr = mkdirs(hlns[i].path);
+                *sl = '/';
+                if (merr) {
+                    print_hdr(&hdr, 0xc8104800);
+                    FAIL("mkdir for link\n");
+                    fails++; hfailed = 1; continue;
+                }
+            }
+            unlink(hlns[i].path);
+            if (link(src, hlns[i].path)) {
+                print_hdr(&hdr, 0xc8104800);
+                FAIL("link %s\n", hlns[i].path);
+                fails++; hfailed = 1; continue;
+            }
+        }
+        if (hfailed) fprintf(stderr, "process hlinks\n");
+    }
+    /* phase 3: dirs meta, reverse (children-first); root=outdir in place */
+    for (size_t i = ndirs; i-- > 0;) {
+        const Item *it = &items[dirs[i].idx];
+        if (apply_xattr_only(dirs[i].path, it, 0)) {
+            print_hdr(&hdr, 0xe8012000);
+            fprintf(stderr, "invalid XAT blob\ninvalid XAT blob\n");
+            fprintf(stderr, "applyEntryAttributes failed\n");
+            fails++; dirfail = 1;
+        } else {
+            apply_rest(dirs[i].path, it, 0);
+        }
+    }
+    if (dirfail) fprintf(stderr, "process dirs\n");
     if (sfails)
         fprintf(stderr, "%u entries failed to extract\n", sfails);
-    rc = fails ? 1 : 0;
-out:
-    free(defs);
+    free(files);
+    free(dirs);
+    free(scols);
+    free(fsts);
     free(hlcs);
     free(hlns);
-    return rc;
+    return fails ? 1 : 0;
 }
 
 int main(int argc, char **argv) {
