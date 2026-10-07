@@ -6,11 +6,12 @@ HERE=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 ROOT=$(CDPATH= cd -- "$HERE/.." && pwd)
 W=${1:-$(mktemp -d "${TMPDIR:-/tmp}/pbze.XXXXXX")}
 ORACLE=${ORACLE:-/usr/bin/aa}
+_IMP=${ENC_BIN:-python3 "$ROOT/src/encode.py"}
 fail=0
 cell() { # $1=name $2=block $3=alg(lzfse|zlib)
   _alg=${3:-lzfse}
   "$ORACLE" archive -a $_alg -t 1 ${2:+-b "$2"} -d "$W/in/$1" -o "$W/$1.$_alg.expect.aar" 2>"$W/$1.$_alg.err" || { echo "FAIL $1.$_alg oracle-exit=$?"; fail=1; return; }
-  python3 "$ROOT/src/encode.py" "$W/in/$1" "$W/$1.$_alg.got.aar" --alg $_alg ${2:+--block "$2"} 2>>"$W/$1.$_alg.err" || { echo "FAIL $1.$_alg impl-exit=$?"; fail=1; return; }
+  $_IMP "$W/in/$1" "$W/$1.$_alg.got.aar" --alg $_alg ${2:+--block "$2"} 2>>"$W/$1.$_alg.err" || { echo "FAIL $1.$_alg impl-exit=$?"; fail=1; return; }
   if cmp -s "$W/$1.$_alg.expect.aar" "$W/$1.$_alg.got.aar"; then
     echo "PASS $1.$_alg bytes=$(stat -f %z "$W/$1.$_alg.got.aar") sha=$(shasum -a 256 "$W/$1.$_alg.got.aar" | cut -c1-16)"
   else

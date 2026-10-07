@@ -6,6 +6,7 @@ HERE=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 ROOT=$(CDPATH= cd -- "$HERE/.." && pwd)
 W=${1:-$(mktemp -d "${TMPDIR:-/tmp}/rawenc.XXXXXX")}
 ORACLE=${ORACLE:-/usr/bin/aa}
+_IMP=${ENC_BIN:-python3 "$ROOT/src/rawenc.py"}
 fail=0
 mk() { # $1=name -> builds $W/in/$1, caller fills, then fix()
   mkdir -p "$W/in/$1"
@@ -17,7 +18,7 @@ fix() { # pin all mtimes under dir ($1) to fixed stamp
 }
 cell() { # $1=name
   "$ORACLE" archive -a raw -t 1 -d "$W/in/$1" -o "$W/$1.expect.aar" 2>"$W/$1.err" || { echo "FAIL $1 oracle-exit=$?"; fail=1; return; }
-  python3 "$ROOT/src/rawenc.py" "$W/in/$1" "$W/$1.got.aar" 2>>"$W/$1.err" || { echo "FAIL $1 impl-exit=$?"; fail=1; return; }
+  $_IMP "$W/in/$1" "$W/$1.got.aar" --alg raw 2>>"$W/$1.err" || { echo "FAIL $1 impl-exit=$?"; fail=1; return; }
   if cmp -s "$W/$1.expect.aar" "$W/$1.got.aar"; then
     echo "PASS $1 bytes=$(stat -f %z "$W/$1.got.aar") sha=$(shasum -a 256 "$W/$1.got.aar" | cut -c1-16)"
   else
