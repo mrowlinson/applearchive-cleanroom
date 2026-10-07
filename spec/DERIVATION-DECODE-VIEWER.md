@@ -368,4 +368,19 @@ findings:
 - VERIFY 43 PASS 1 FLAG (open); Q/A 18/18; joint DONE still open (writer1 S-fix + sweep DONEs pending; claim HELD)
 pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:c98e17e08435f8830ab36033f0f99d542ce3676e5b32726b3fc6a290c371a3a2 bytes:27108
 pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:5a36ad1a29ef5bf44c409649e57a3dd75739c6740977e376f4b6a01e43a7eddf bytes:34326
+post-edit: (recorded at commit e779bdd; 2 files, +18/-3)
+
+## 2026-10-07 decode-viewer lanes/decode-viewer (entry 21: CR-024 H-race fold)
+inputs:
+- own-gen orace H-pair: dupH.py (H-item dup splice + same-length PAT/LNK patch on hlink-missing.aar; reparse 4/4) + h2miss.aar 8 extract runs (fwd 7/8 vs rev 1/8, exits 1, trailer stable) (WS tmp/decode-viewer-probes/orace; macOS 27.0.1)
+- quiz-decode writer2 NOTE-079 (successor steady-state, DONE held) (read first-hand)
+- writer1 hlink-missing.aar fixture (read-only craft input, viewer privilege) + tests/craft.py items_of framing (reused for splice offsets)
+not-consulted: patent contents, encode-side lanes, reference/port sources,
+  decompiler output (none), writer worktree files (git-show only + black-box runs), liblzraven src/*.c internals
+outputs: 0 new clauses (CR-024 fold: H-fail racy @2, table FINAL); NOTE-48
+findings:
+- H-fail detail order races at n=2 (skewed 7/1, still racy); writer1 forward-H valid, no FLAG; per-class table complete, all first-hand except bad2-origin (mutual)
+- VERIFY 43 PASS 1 FLAG (open); Q/A 18/18; joint DONE still open (writer1 S-fix + sweep DONEs pending; claim HELD)
+pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:e2edca03c401bc0cf27223658ea2208acfcb82c41f11a3bf7acd5e3230c463b7 bytes:27203
+pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:b0eb899a208fe5ec5c5e7c2715985076dcd7069d291c696fb5af5b77284acc62 bytes:35818
 post-edit: (recorded at commit; see commit 2nd line stats)
