@@ -189,4 +189,19 @@ findings:
 - joint DONE not reached (writer2 pad-verify + sweep-v3 + DONEs pending; claim HELD)
 pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:ef4a24537a0562cc6b7cd9f1647ec5c761f7967c6050da50791ad94521c8e6e6 bytes:20738 (unchanged this entry)
 pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:e281984805ac98a4338436d0eb254a29139804055a2a0ceeb99b0cdfeb9cc6bf bytes:16834 (at 625dc1b; entry covers scrub + this entry)
+post-edit: (recorded at commit 1f6b710; 1 file, +20/-3)
+
+## 2026-10-07 decode-viewer lanes/decode-viewer (entry 9: CR-021 export inventory)
+inputs:
+- dyld_info -all_dyld_cache -exports (macOS 27.0.1, arm64e) first-hand -> WS aa-exports.txt + aa-block.txt (409MB full dump deleted post-extract)
+- lanes/vendor-docs docs/API-SYMBOLS-L2.txt (232 names, read first-hand; setdiff EMPTY both ways own)
+- own lane docs/RECON-DECODE.md CR-002/003 import enumerations (re-confirmed resolving)
+not-consulted: patent contents, encode-side lanes, reference/port sources,
+  decompiler output (none), writer worktree files, liblzraven src/*.c internals
+outputs: +1 clause (CR-021 SYMBOL), tag mix total MEASURED 16 / SYMBOL 3 / INFERRED 2; NOTE-27
+findings:
+- dylib public surface fully enumerated (232 = 185 AA + 47 AEA); three-way cross-check exact; full public decode surface listed (CLIs bind a subset)
+- joint DONE not reached (writers/sweep active, no DONEs; claim HELD)
+pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:ef4a24537a0562cc6b7cd9f1647ec5c761f7967c6050da50791ad94521c8e6e6 bytes:20738
+pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:7117916cf132579ab38308d905d3d82873e5247ceb8fe865e0d1dac1d3ffd31c bytes:18613
 post-edit: (recorded at commit; see commit 2nd line stats)

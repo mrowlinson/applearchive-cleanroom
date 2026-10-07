@@ -126,6 +126,7 @@ body: lzfse frame = magic + uncLE32 + (n: XLE32=comp-16 5/5 | 2: stream bytes) +
 | CR-018 | MEASURED | AEA pad-auth verified ranges ([padstart,arc)) | CONFIRM ranges; construction OPEN |
 | CR-019 | MEASURED | W/R/T/M silent-skip exit 0 | CORRECT vs A-013; dispute CLOSED |
 | CR-020 | MEASURED | AEA pad-tag = last-nmac HMAC rule | CONFIRM (closes CR-018 OPEN) |
+| CR-021 | SYMBOL | libAppleArchive public-export inventory (232) | CONFIRM vs CR-002/003 + vendor list |
 
 ```
 CR-012 [MEASURED] lzraven stream framing (8B hdr + u32 block-hdrs + u32-0 terminator)
@@ -206,6 +207,15 @@ artifact: padsearch2.py v2 search + padconfirm.py (6 shapes) + unpadded negative
 numbers: HIT 3/3 seed files (pad 818/818/2B) + 3/3 generality (2-cluster last-nmac 8MB pad, p1/zlib 932B pad, cksum-none 4228B pad) + 2/2 unpadded negatives (nmac random iff padlen 0); rule: padkey = HKDF-SHA256(main, "AEA_PAK"), tag = HMAC-SHA256(padkey, file[padstart:arc)) vs last nmac
 verdict: CONFIRM (closes CR-018 construction-OPEN); bed A-016B
 body: non-last nmacs keep chain role; padlen 0 skips auth; mismatch -> pad-auth fail, len<arc -> read class. universal across profiles/checksums/codecs/clusters/padlens 2B..8MB. streaming-verify mechanism (init/update/final, const-time compare) corroborates.
+```
+
+```
+CR-021 [SYMBOL] libAppleArchive public-export inventory (232 exports, decode surface enumerated)
+stage: recon
+artifact: dyld_info -all_dyld_cache -exports (macOS 27.0.1, arm64e) -> WS aa-exports.txt (232 names) + aa-block.txt (offsets); full-cache dump deleted post-extract
+numbers: 232 exports = 185 AA* + 47 AEA* + 0 other; setdiff vs vendor-docs API-SYMBOLS-L2.txt 232-list EMPTY both ways; all CR-002 (106) + CR-003 (38) bound imports resolve incl every named decode entry; 18 Decrypt/Decode symbols exported, CLIs bind a subset (ToStream/AndExtract/RandomAccess families unbound by either CLI)
+verdict: CONFIRM vs CR-002/CR-003 (dylib side of the client import inventory); CONFIRM vs vendor-docs symbol list (exact mutual); PARTIAL vs CR-005 (public surface closed; stripped internals stay behavior-only by design)
+body: the dylib's public API surface is fully enumerated and cross-checked three ways (cache exports, vendor list, CLI binds). decode entries live here as public symbols; no hidden public decode API exists outside this table.
 ```
 
 Status of every clause: UNPROVEN until an implementation written ONLY from
