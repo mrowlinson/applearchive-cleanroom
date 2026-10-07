@@ -325,6 +325,18 @@ head -c $(($(wc -c < "$WORK/e-pad.aea")-2)) "$WORK/e-pad.aea" > "$WORK/e-short2.
 if aea decrypt -password-value "$PW" -i "$WORK/e-short2.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
 if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/e-short2.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
 if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-pad-short-empty"; else bad "err-pad-short-empty"; fi
+# 9e. pad-CONTENT flips (A-016B verify-or-reject; both must reject, fail-closed)
+PSTART=$(($(wc -c < "$WORK/msg.txt")+18620))
+cp "$WORK/pad-def.aea" "$WORK/pad-flip.aea"
+python3 -c "import sys;p=sys.argv[1];o=int(sys.argv[2]);b=bytearray(open(p,'rb').read());b[o]^=0x01;open(p,'wb').write(bytes(b))" "$WORK/pad-flip.aea" "$PSTART"
+if aea decrypt -password-value "$PW" -i "$WORK/pad-flip.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/pad-flip.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
+if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-pad-flip"; else bad "err-pad-flip"; fi
+cp "$WORK/e-pad.aea" "$WORK/e-flip.aea"
+python3 -c "import sys;p=sys.argv[1];b=bytearray(open(p,'rb').read());b[158]^=0x01;open(p,'wb').write(bytes(b))" "$WORK/e-flip.aea"
+if aea decrypt -password-value "$PW" -i "$WORK/e-flip.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/e-flip.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
+if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-pad-flipe"; else bad "err-pad-flipe"; fi
 # 9d. A-017 R1/R2 regression bed (8 tag/data flips; both sides reject via real HMAC checks)
 aea encrypt -profile 5 -password-value "$PW" -a none -padding none -checksum sha256 -i "$WORK/msg.txt" -o "$WORK/a17.aea" 2>/dev/null
 for off in 50 80 130 200 10396 10428 10460 18620; do

@@ -297,7 +297,11 @@ def decrypt_aea(blob, symkey=None, recip_priv=None, password=None, sign_pub=None
         raise FmtErr("bad checksum alg")
     if len(blob) < arc:
         raise FmtErr("truncated archive")
+    padkey = hkdf(32, kd.main, b"AEA_PAK")  # A-016B: interop const, NOTE-25 sanctioned
     if orig == 0:
+        if arc > prologue_end and not hmac.compare_digest(
+                hmac.digest(padkey, blob[prologue_end:arc], "sha256"), cmac):
+            raise FmtErr("padding auth failed")
         return b""
     shsz = 8 + CKSUM_SIZE[ckalg]
 
@@ -328,6 +332,10 @@ def decrypt_aea(blob, symkey=None, recip_priv=None, password=None, sign_pub=None
                 raise FmtErr("checksum wrong")
             out.write(data)
             if out.tell() >= orig:
+                padstart = f.tell()
+                if arc > padstart and not hmac.compare_digest(
+                        hmac.digest(padkey, blob[padstart:arc], "sha256"), nmac):
+                    raise FmtErr("padding auth failed")
                 full = out.getvalue()[:orig]
                 if range_off is not None:
                     if range_size is None:
