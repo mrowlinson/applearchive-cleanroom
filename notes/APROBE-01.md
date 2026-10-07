@@ -66,3 +66,4 @@ Encrypt adds `padding:` line. Encrypt to /dev/null fails (temp+rename).
 
 - FULL-equiv seed 7: 8 sizes (1B..3MB) x p{1,5} x {none,zlib} x {none,sha256} = 64 MATCH.
 - Holdout seed 99: 4 sizes x {p1/lzma/sha, p5/lz4/none} = 8 MATCH. 72/72 WIDE-GREEN.
+- 2-cluster: 269MB p5/none/sha256 OVH 37084 = 18620+18464 (2nd cluster hdr); proto MATCH 0.8s.
