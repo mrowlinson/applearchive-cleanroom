@@ -47,7 +47,18 @@ Ghidra: absent (no /Applications, brew cellar, /opt, WS/tools; sibling path stal
 dyld-shared-cache-util. RE so far via nm/otool/dyld_info/strings + running-binary probes. Disassembly
 stage NOT started; table inventory from export offsets is next-best without extraction.
 
-## 6. Wall log
+## 6. Table inventory (encode entries; funcstarts-joined size upper bounds)
+
+libAppleArchive: 1074 funcstarts. libParallelCompression: 6512 funcstarts (incl unrelated
+CMIO/CoreFollowUp re-export rows — shared-cache neighbor bleed, non-AA).
+Encode-entry sizeUBs (bytes, upper bound only): WritePathList 5784, CompressionOutputStreamOpenExisting 2172,
+Open 904, AssetExtractorWrite 1116, EncodeArchiveOutputStreamOpen 368, WriteHeader 24, WriteBlob 28,
+ByteStreamWrite/PWrite 24, *GetEncodedSize/PayloadSize 8 (accessors), *CreateWithEncodedData 92.
+PC: WriteDirContents 8488 (largest — traversal orchestrator), OLDWriterAddEntry 1508, WriteEntryHeader 508,
+WriteEntryData 248, WriterCreate 128, CompressionEncode 96, OStream ops 4-104 (thunks).
+Captures: WS recon/funcstarts-{AA,PC}.txt + exports-*.txt. No disassembly run (Ghidra absent).
+
+## 7. Wall log
 
 No clean-side contact beyond quiz A-/NOTE-/VERIFY-. No vendor expression crossed (beds+numbers+verdicts
 only; symbol names above stay on dirty side / this lane). LNK-bytes + xattr-order + per-alg flips + hardlink
