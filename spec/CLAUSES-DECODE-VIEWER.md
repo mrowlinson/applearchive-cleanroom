@@ -93,6 +93,15 @@ verdict: CONFIRM vs compression_tool man digest (per-alg decode exists); OPEN su
 body: writer oracle cross-check per codec: slice @28..28+comp, compression_tool -decode -a <alg>, cmp vs raw. lz4 sub-frame bytes: bv41 + uncLE32 + XLE32 + stream@12 (f7 2e + literals); raw-LZ4 reading of stream INFERRED:MODERATE (lz4_raw slice fails = quirk OPEN).
 ```
 
+```
+CR-011 [MEASURED] codec sub-frame rules (lzfse magic @4096 unc; lz4 64KB frames; stored trigger)
+stage: bitstream
+artifact: own-gen magic sweep (20 archives: zeros/text/random x sizes, -b 4m single-block) + fixtures (WS tmp/decode-viewer-probes)
+numbers: lzfse n<4096 (max 3998) / 2>=4096 (min 4098), 100B bracket, comp-overlap kills comp-theory; lz4 @4 = min(unc,65536) bracket (31738,102650], frames EOF-exact x2, usum exact x2 (102650, 600244); stored: random 10K-600K 4/4 stored, small random framed iff comp<unc; tails bvx$ 12/12 lzfse, bv4$ 3/3 lz4
+verdict: CONFIRM vs CR-007 (stored trigger refined to comp>=unc); CONFIRM vs CR-010 (payload = frame(s) + $-terminator); OPEN: lz4 stream raw-LZ4 confirm (writer-side lib), bvx2 @8+ stream parse (OSS-readable), exact stored comparison, lzraven internals
+body: lzfse frame = magic + uncLE32 + (n: XLE32=comp-16 5/5 | 2: stream bytes) + stream + bvx$. lz4 frame = bv41 + uncLE + compLE + raw-block stream; multi-frame concatenated + bv4$; per-block rule (multi-block blk1 -> bvx2). writer1's 4MB flip = unc-driven, not multi-block-driven.
+```
+
 ## Clause index
 
 | ID | Tag | Claim | Verdict |
@@ -107,6 +116,7 @@ body: writer oracle cross-check per codec: slice @28..28+comp, compression_tool 
 | CR-008 | INFERRED:STRONG | inner TLV field parse | CONFIRM + grammar OPEN |
 | CR-009 | MEASURED | multi-block chain | CONFIRM |
 | CR-010 | MEASURED | payload = codec frame | CONFIRM + sub-parse OPEN |
+| CR-011 | MEASURED | sub-frame rules (4096/64K/stored) | CONFIRM + 4 OPENs |
 
 Status of every clause: UNPROVEN until an implementation written ONLY from
 this spec handles vendor real output.

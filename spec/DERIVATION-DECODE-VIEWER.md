@@ -69,3 +69,19 @@ findings:
 pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:dc82ac4077c1ab7162c6b9382cc369726e3c26908e524ca0c04715431aac67ae bytes:7292
 pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:0b7458b886191e2446a3ee9854d71601a2c662dad564ef82354e11e3da46dcc4 bytes:4419
 post-edit: (recorded at commit; see commit 2nd line stats)
+
+## 2026-10-07 decode-viewer lanes/decode-viewer (entry 3: CR-011 + A-008/A-009 + NOTE-07)
+inputs:
+- own-gen magic sweep: 20 archives (zeros 1K-600K, text 20K, random 100B-600K; -a lzfse/lz4, -b 4m) + bvx walks (WS tmp/decode-viewer-probes)
+- quiz-decode Q-008 + Q-009 + writer2 NOTE-001 (read first-hand)
+- writer1 lanes/decode-writer@7bb7b2b (turf inventory for A-009 split: proto/aad.py + notes/DPROBE-01 + adopted copies)
+not-consulted: SDK header contents, decompiler output (still none), patent contents,
+  reference/port sources, encode-side lanes, lzfse OSS stream internals (writer-side read)
+outputs: +1 clause (CR-011 MEASURED), tag mix total MEASURED 7 / SYMBOL 2 / INFERRED 2;
+  A-008 + A-009 + NOTE-07
+findings:
+- 4096 magic rule (100B bracket) + lz4 64KB frames (EOF/usum exact x2) + stored ~= comp>=unc
+- writer2 seated on AEA turf; Q/A 9/9; VERIFY current; joint DONE not reached (claim HELD)
+pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:2c0cec815a47474f471d252ff9de75aa1e81979234fd4b8c6783c6b606d16d7f bytes:9184
+pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:2324515c85d840e2a94cac95e07802b5cdd1fd779bdfbc1a7ecdcb54b3330011 bytes:5892
+post-edit: (recorded at commit; see commit 2nd line stats)
