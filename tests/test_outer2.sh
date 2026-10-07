@@ -94,6 +94,17 @@ for k in R Z; do
   chk "m-t$k-cmp" str "$v" "$(sz "$WORK/m-t$k-1.aar")"
   chk "m-t$k" sha "$(sha "$WORK/m-t$k-1.aar")" "$(sz "$WORK/m-t$k-1.aar")"
 done
+mk1file rb-z1000 1000 z
+mk1file rb-r1000 1000 seed6000
+mk1file rb-z100k 100000 z
+set -- $(AAR "m-rb-r1k-raw" rb-r1000 raw)
+for a in lzraven lzbitmap; do
+  set -- $(AAR "m-rb-$a-z1k" rb-z1000 "$a"); chk "m-rb-$a-z1k" sha "$3" "$2"
+  set -- $(AAR "m-rb-$a-r1k" rb-r1000 "$a"); s=$2 h=$3
+  chk "m-rb-$a-r1k-rule" str "$(rule_of "m-rb-$a-r1k" "$WORK/m-rb-r1k-raw.aar")" "$s"
+  chk "m-rb-$a-r1k" sha "$h" "$s"
+  set -- $(AAR "m-rb-$a-z100k" rb-z100k "$a"); chk "m-rb-$a-z100k" sha "$3" "$2"
+done
 echo "== AEA =="
 AEA=${AEA:-/usr/bin/aea}
 PW="0123456789abcdef0123456789abcdef"

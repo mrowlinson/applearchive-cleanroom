@@ -21,6 +21,14 @@ m-tR-cmp,str,EQ,5000267,test_outer2.sh,27.0.1,oracle-adapter.sh
 m-tR,sha,861bd4f38285aaaf50ea27ae34180c009d9f4dd3c94261509e002023a4e5cfd3,5000267,test_outer2.sh,27.0.1,oracle-adapter.sh
 m-tZ-cmp,str,EQ,3518,test_outer2.sh,27.0.1,oracle-adapter.sh
 m-tZ,sha,4391a49d7ef7a03caaf80ce9bb190b1d2462dbc323298edda384792b51ae12a0,3518,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-rb-lzraven-z1k,sha,3d1a9c7f2eef3e63fdca154b7ca993af712a52eec8e9fdcddfac7d3c32db037d,212,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-rb-lzraven-r1k-rule,str,STORED,1249,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-rb-lzraven-r1k,sha,7e268bd0bf1414277618f028ce1e49f6867ae1b207efb17e7fae997de1c4b055,1249,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-rb-lzraven-z100k,sha,98b1ccfcef81f8b10fb751aa6b8396ae4292df6cb8274a016b93e5eceeb337bb,256,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-rb-lzbitmap-z1k,sha,671b0fefbd7de03fc770ad180f714d608fac8f636fce2edb8cf139d0ea9de75d,246,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-rb-lzbitmap-r1k-rule,str,STORED,1249,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-rb-lzbitmap-r1k,sha,c8209db5f51eaf288f2792537bd7eb429dcba290fc31f974db5dae5ed944ae3e,1249,test_outer2.sh,27.0.1,oracle-adapter.sh
+m-rb-lzbitmap-z100k,sha,b718bce99a463212d54508ef1fd87ecdf803cfc3044a879cd0d0a5dc02f39cb6,758,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-size-p1-0,size,160,160,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-size-p5-0,size,160,160,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-size-p1-1,size,19456,19456,test_outer2.sh,27.0.1,oracle-adapter.sh
