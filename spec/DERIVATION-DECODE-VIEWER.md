@@ -136,7 +136,7 @@ inputs:
 - own-gen q018/: raw single-file archive + 8 TYP-flip extracts (WS tmp/decode-viewer-probes/q018)
 - /usr/bin/aea sha256:16bfbb1c09b092ef0996191ba5e152485fad40be8b28736bf40f68f1628e6c10 MATCH
 - /usr/bin/aa sha256:823df81f1c4331d1e36eee38b20b71a76f016835a01c68d863ce5d8fcb280ef4 MATCH
-- libAppleArchive.dylib __TEXT self-dump (630836B, base 0x2b3aa9000, slide 0x8548000): pad-auth fn @0x173a4 + caller window 0x15624-0x1669c read via capstone (behavior extraction: streaming digest, "AEA_PAK" label, const-time compare; no expression crosses to answers)
+- libAppleArchive.dylib __TEXT self-dump (630836B, own-session addrs): pad-auth routine + caller window read via capstone (behavior extraction: streaming digest, "AEA_PAK" functional label, const-time compare; procedures/addresses stay in WS probe records, never in quiz/spec) [scrubbed entry-8: code addrs + internal names removed]
 - writer2 proto/aead.py (read full decrypt path + ran for walks/searches/parity: viewer privilege) + notes/APROBE-01.md (read first-hand)
 - writer1 notes/DPROBE-04.md (read first-hand) + fixtures bdev-basic/mix-fail.aea (pins re-verified own + oracle extract first-hand)
 - kinnay/AEA + ipsw-aea OSS (read for pad-auth; DRY, no container-pad coverage)
@@ -148,9 +148,60 @@ outputs: +3 clauses (CR-017/018/019 MEASURED), tag mix total MEASURED 15 / SYMBO
   A-015 + A-016 (partial: ranges closed, construction open) + A-017 + A-018 + NOTE-16..22 + VERIFY x37 PASS (0 FLAG)
 findings:
 - cluster walk closed (offsets/repeat/continue/N-global/equations) + 2-cluster MT flip matrix; -o-target head-code dependence found+resolved (NOTE-22: /dev/null 0x9e05cc00 vs file 0xba006800)
-- pad ranges closed ([padstart,arc), arc-ignored, read-vs-auth classes); tag outside pad (2B proof); construction still open (MAC-search v1 0 hits; setup callees 0x137fc/0x114e0 queued)
+- pad ranges closed ([padstart,arc), arc-ignored, read-vs-auth classes); tag outside pad (2B proof); construction still open (MAC-search v1 0 hits; setup-callee reads queued) [scrubbed entry-8]
 - Q-017 premise refuted (proto verifies via explicit HMAC 8/8); W/R/T/M dispute closed (silent-skip stands, A-013 corrected)
 - joint DONE not reached (Q-016 construction + sweep-v3 + writer DONEs pending; claim HELD)
 pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:4bd81b4599c1e6e2f500044ba17f6e88d51d8dfda502cf2259dfc4a5b348d724 bytes:16402
 pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:4c1b7baff5dbd183d84150d2a2aa9dc046598b9614c7e8cf0e944c337af73b5e bytes:11719
+post-edit: (recorded at commit c9ffd27; 2 files, +57)
+
+## 2026-10-07 decode-viewer lanes/decode-viewer (entry 7: CR-020 pad-tag rule + A-016B + PRE-003/004)
+inputs:
+- quiz-decode writer2 NOTE-072 (HOLD on A-016(3)) + writer1 NOTE-029 (fuzz adler hole) + sweep GATEs 9fd0936/2a59c5c/33cc27b (read first-hand)
+- own-gen padauth v2: padsearch2.py (1848 combos x3 files, HIT 3/3) + padconfirm.py (c2p last-nmac + fresh p1-3m + p5none-3m, ALL-CONFIRMED) + unpadded negatives c1-18/c2-sha (WS tmp/decode-viewer-probes/padauth)
+- own-gen adler/: hello-zlib.aar + 7 wrapper/trailer/stream flips vs oracle (WS tmp/decode-viewer-probes/adler)
+- own TEXT-dump reads: setup-callee crypto-dispatcher arms + caller-xref survey (auth routine invoked via pointer, 0 direct xrefs; frame-shared split pair) [scrubbed entry-8: code addrs + internal names removed]
+- fixtures hello-zlib.aar + hello-raw.aar (wt-fixtures copies, read-only)
+not-consulted: patent contents, encode-side lanes, reference/port sources,
+  writer worktree files (git-show only + black-box runs), liblzraven src/*.c internals
+outputs: +1 clause (CR-020 MEASURED), tag mix total MEASURED 16 / SYMBOL 2 / INFERRED 2;
+  A-016B + PRE-003 + PRE-004 + NOTE-23/24
+findings:
+- pad-tag construction CLOSED: last-nmac = HMAC-SHA256(HKDF(main,"AEA_PAK"), [padstart,arc)); 6/6 + 2/2 negatives; Q-016 fully closed, writer2 unblocked
+- zlib wrapper-ignored rule replicated (CMF/FLG/adler unchecked, raw inflate; deflate-data corruption -> header-parse abort); pre-answered writer1 case188 via PRE-004
+- joint DONE not reached (writer2 verify-or-reject + sweep-v3 + DONEs pending; claim HELD)
+pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:98aeea34c2dd6df8d8437d03659fbb0bba06f3c6025987fc34f5d8bcee467a4f bytes:19806
+pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:a37f52800bed89378f08898f83167e16d7291828d8319ba2f4fa02fb707ddfcd bytes:14990
+post-edit: (recorded at commit 625dc1b; 2 files, +29)
+
+## 2026-10-07 decode-viewer lanes/decode-viewer (entry 8: wall-hygiene scrub, no behavior change)
+inputs:
+- quiz-decode writer2 NOTE-074 (quarantine handling of NOTE-19/PRE-003 internals) + NOTE-030/031 + PV-006 (read first-hand)
+- own filings re-read: NOTE-19/PRE-003/NOTE-20 (scrubbed of code addrs + internal names, behavior kept) + this log entries 6/7 (same scrub)
+- writer commits verified first-hand (full diffs + wall greps 0/2): w2 a5f53e3; w1 4ef6d9e (fuzz legs + 3 fixes, proto central len-guard confirmed covering zlib fallback)
+not-consulted: patent contents, encode-side lanes, reference/port sources,
+  writer worktree files (git-show only + black-box runs), liblzraven src/*.c internals
+outputs: 0 clauses (mix unchanged MEASURED 16 / SYMBOL 2 / INFERRED 2);
+  NOTE-25 (incident record) + NOTE-26 + VERIFY-a5f53e3 + VERIFY-4ef6d9e (PASS, 0 FLAG)
+findings:
+- symbol internals crossed into shared quiz via NOTE-19/PRE-003 (code addrs + internal names); writer2 self-quarantined with zero-hit proof; scrubbed own filings + log entries; mechanism fix (behavior-only quiz filings) in NOTE-25
+- VERIFY current thru both tips (39 PASS total, 0 FLAG); PV-006 merged viewer@c9ffd27 + writer2@33cc27b
+- joint DONE not reached (writer2 pad-verify + sweep-v3 + DONEs pending; claim HELD)
+pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:ef4a24537a0562cc6b7cd9f1647ec5c761f7967c6050da50791ad94521c8e6e6 bytes:20738 (unchanged this entry)
+pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:e281984805ac98a4338436d0eb254a29139804055a2a0ceeb99b0cdfeb9cc6bf bytes:16834 (at 625dc1b; entry covers scrub + this entry)
+post-edit: (recorded at commit 1f6b710; 1 file, +20/-3)
+
+## 2026-10-07 decode-viewer lanes/decode-viewer (entry 9: CR-021 export inventory)
+inputs:
+- dyld_info -all_dyld_cache -exports (macOS 27.0.1, arm64e) first-hand -> WS aa-exports.txt + aa-block.txt (409MB full dump deleted post-extract)
+- lanes/vendor-docs docs/API-SYMBOLS-L2.txt (232 names, read first-hand; setdiff EMPTY both ways own)
+- own lane docs/RECON-DECODE.md CR-002/003 import enumerations (re-confirmed resolving)
+not-consulted: patent contents, encode-side lanes, reference/port sources,
+  decompiler output (none), writer worktree files, liblzraven src/*.c internals
+outputs: +1 clause (CR-021 SYMBOL), tag mix total MEASURED 16 / SYMBOL 3 / INFERRED 2; NOTE-27
+findings:
+- dylib public surface fully enumerated (232 = 185 AA + 47 AEA); three-way cross-check exact; full public decode surface listed (CLIs bind a subset)
+- joint DONE not reached (writers/sweep active, no DONEs; claim HELD)
+pre-edit: spec/CLAUSES-DECODE-VIEWER.md sha256:ef4a24537a0562cc6b7cd9f1647ec5c761f7967c6050da50791ad94521c8e6e6 bytes:20738
+pre-edit: spec/DERIVATION-DECODE-VIEWER.md sha256:7117916cf132579ab38308d905d3d82873e5247ceb8fe865e0d1dac1d3ffd31c bytes:18613
 post-edit: (recorded at commit; see commit 2nd line stats)
