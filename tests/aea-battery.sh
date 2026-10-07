@@ -337,6 +337,26 @@ python3 -c "import sys;p=sys.argv[1];b=bytearray(open(p,'rb').read());b[158]^=0x
 if aea decrypt -password-value "$PW" -i "$WORK/e-flip.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
 if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/e-flip.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
 if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-pad-flipe"; else bad "err-pad-flipe"; fi
+# 9f. pad-verify across profiles (p0 has no pad: none==default 18796, vacuous skip)
+aea encrypt -profile 1 -key "$WORK/key32.bin" -a none -i "$WORK/msg.txt" -o "$WORK/pp1.aea" 2>/dev/null
+aea encrypt -profile 2 -key "$WORK/key32.bin" -sign-priv "$WORK/ec-priv.pem" -a none -i "$WORK/msg.txt" -o "$WORK/pp2.aea" 2>/dev/null
+aea encrypt -profile 3 -recipient-pub "$WORK/ec-pub.pem" -a none -i "$WORK/msg.txt" -o "$WORK/pp3.aea" 2>/dev/null
+aea encrypt -profile 4 -recipient-pub "$WORK/ec-pub.pem" -sign-priv "$WORK/ec-priv.pem" -a none -i "$WORK/msg.txt" -o "$WORK/pp4.aea" 2>/dev/null
+for p in 1 2 3 4; do
+  case $p in
+    1) OC="-key $WORK/key32.bin"; PC="--key $WORK/key32.bin";;
+    2) OC="-key $WORK/key32.bin -sign-pub $WORK/ec-pub.pem"; PC="--key $WORK/key32.bin --sign-pub $WORK/ec-pub.pem";;
+    3) OC="-recipient-priv $WORK/ec-priv.pem"; PC="--recipient-priv $WORK/ec-priv.pem";;
+    4) OC="-recipient-priv $WORK/ec-priv.pem -sign-pub $WORK/ec-pub.pem"; PC="--recipient-priv $WORK/ec-priv.pem --sign-pub $WORK/ec-pub.pem";;
+  esac
+  cp "$WORK/pp$p.aea" "$WORK/ppf$p.aea"
+  python3 -c "import sys;p=sys.argv[1];b=bytearray(open(p,'rb').read());b[-1]^=0x01;open(p,'wb').write(bytes(b))" "$WORK/ppf$p.aea"
+  # shellcheck disable=SC2086
+  if aea decrypt $OC -i "$WORK/ppf$p.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
+  # shellcheck disable=SC2086
+  if "$AEAD_PY" "$REPO/proto/aead.py" decrypt $PC -i "$WORK/ppf$p.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
+  if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-padflip-p$p"; else bad "err-padflip-p$p"; fi
+done
 # 9d. A-017 R1/R2 regression bed (8 tag/data flips; both sides reject via real HMAC checks)
 aea encrypt -profile 5 -password-value "$PW" -a none -padding none -checksum sha256 -i "$WORK/msg.txt" -o "$WORK/a17.aea" 2>/dev/null
 for off in 50 80 130 200 10396 10428 10460 18620; do
