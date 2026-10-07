@@ -186,6 +186,15 @@ print(o)")
   chk "m-$tag" sha "$h" "$s"
 }
 MIX mix-rav lzraven; MIX mix-bm lzbitmap; MIX mix-lz lzfse
+rm -rf "$IN/txt"; mkdir -p "$IN/txt"
+python3 -c "import random; r=random.Random(77); w='the quick brown fox jumps over the lazy dog apple archive compression benchmark text data '.split(); open('$IN/txt/f.txt','w').write('\n'.join(' '.join(r.choices(w,k=r.randint(8,20))) for _ in range(4000))+'\n')"
+touch -t 202001010000 "$IN/txt/f.txt" "$IN/txt"
+set -- $(AAR "m-txt-raw" txt raw)
+for a in lzfse lzma lz4 zlib lzraven lzbitmap; do
+  set -- $(AAR "m-txt-$a" txt "$a"); s=$2 h=$3
+  chk "m-txt-$a-rule" str "$(rule_of "m-txt-$a" "$WORK/m-txt-raw.aar")" "$s"
+  chk "m-txt-$a" sha "$h" "$s"
+done
 echo "== AEA =="
 AEA=${AEA:-/usr/bin/aea}
 PW="0123456789abcdef0123456789abcdef"
