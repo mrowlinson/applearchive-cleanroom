@@ -113,6 +113,10 @@ a-app-size,size,18820,18820,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-rt-append,str,RT-OK,0,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-id-fmt,str,IDHEX,0,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-nondet,str,char 13,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-t-1-none,str,SIZE-EQ,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-t-1-lzfse,str,SIZE-EQ,19456,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-t-5-none,str,SIZE-EQ,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-t-5-lzfse,str,SIZE-EQ,19456,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-pw19,rc,1,0,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-pw20,rc,0,0,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-kv-bare,rc,1,0,test_outer2.sh,27.0.1,oracle-adapter.sh

@@ -253,6 +253,17 @@ chk "a-id-fmt" str "$v" 0
 set -- $(AEAa "a-nd1" 1 hex none "a5000.bin"); set -- $(AEAa "a-nd2" 1 hex none "a5000.bin")
 if cmp -s "$WORK/a-nd1.aea" "$WORK/a-nd2.aea"; then v=SAME; else v=$(cmp "$WORK/a-nd1.aea" "$WORK/a-nd2.aea" 2>&1 | grep -o 'char [0-9]*' || echo DIFF); fi
 chk "a-nondet" str "$v" 0
+for P in 1 5; do
+  for A in none lzfse; do
+    case $P in 1) K="-key $WORK/key32.bin";; 5) K="-password-value $PW";; esac
+    # shellcheck disable=SC2086
+    if "$AEA" encrypt -profile $P $K -a $A -t 1 -i "$IN/a5000.bin" -o "$WORK/a-t$P$A-1.aea" 2>/dev/null && \
+       "$AEA" encrypt -profile $P $K -a $A -t 18 -i "$IN/a5000.bin" -o "$WORK/a-t$P$A-18.aea" 2>/dev/null; then
+      [ "$(sz "$WORK/a-t$P$A-1.aea")" = "$(sz "$WORK/a-t$P$A-18.aea")" ] && v=SIZE-EQ || v=SIZE-DIFF
+      chk "a-t-$P-$A" str "$v" "$(sz "$WORK/a-t$P$A-1.aea")"
+    else echo "FAIL a-t-$P-$A rc"; FAIL=1; fi
+  done
+done
 for L in 19 20; do
   P=$(head -c "$L" /dev/zero | tr '\0' p)
   if sh "$ADAPTER" aea-encrypt --profile 5 --password "$P" --alg none --threads 1 "$IN/a100.bin" "$WORK/a-pw$L.aea" 2>/dev/null; then rc=0; else rc=$?; fi
