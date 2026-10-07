@@ -39,6 +39,7 @@ Notation: P# = probe id. Passwords/keys: `testpw32....` (38ch), `test-password-f
 
 - Nondet from byte 13 (1-based) own, all modes/threads (salt/nonce region).
 - `aea id`: deterministic 64-hex/file; auth-data changes it.
+- `aea id` requires FULL prologue: trunc keep<156 FAIL (`0xb9045000`); keep>=156 prints full id (auth12B: 167 FAIL / 168 OK). Proto enforces len<n (cells err-id-trunc100/155, id-trunc156).
 
 ## Errors (own chains, exit 1 unless noted)
 

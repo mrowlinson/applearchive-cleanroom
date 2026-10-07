@@ -105,6 +105,8 @@ aea encrypt -profile 5 -password-value "$PW" -a none -padding none -auth-data-ke
 cell auth-kv --password "$PW" -i "$WORK/authkv.aea"
 aea encrypt -profile 5 -password-value "$PW" -a none -padding none -auth-data-value hex:aa -auth-data-value hex:bbcc -auth-data-value hex:dd -i "$WORK/msg.txt" -o "$WORK/auth3.aea" 2>/dev/null
 cell auth-raw3 --password "$PW" -i "$WORK/auth3.aea"
+aea encrypt -profile 5 -password-value "$PW" -a none -padding none -auth-data-key k1 -auth-data-value hex:aa -auth-data-key k2 -auth-data-value hex:bb -i "$WORK/msg.txt" -o "$WORK/authkv2.aea" 2>/dev/null
+cell auth-kv2 --password "$PW" -i "$WORK/authkv2.aea"
 
 # 6. empty
 : > "$WORK/empty.bin"
@@ -122,12 +124,23 @@ cell range-off-only --password "$PW" --range-offset 6 -i "$WORK/p5.aea"
 aea decrypt -password-value "$PW" -range-offset 6 -range-size 0 -i "$WORK/p5.aea" -o "$WORK/rg-ora0.bin" 2>/dev/null
 EXP=$WORK/rg-ora0.bin
 cell range-size0 --password "$PW" --range-offset 6 --range-size 0 -i "$WORK/p5.aea"
+aea decrypt -password-value "$PW" -range-offset 6 -range-size 5 -i "$WORK/pad-def.aea" -o "$WORK/rg-padora.bin" 2>/dev/null
+EXP=$WORK/rg-padora.bin
+cell range-pad --password "$PW" --range-offset 6 --range-size 5 -i "$WORK/pad-def.aea"
 OID=$(aea id -i "$WORK/p5.aea" 2>/dev/null)
 PID=$("$AEAD_PY" "$REPO/proto/aead.py" id -i "$WORK/p5.aea" 2>/dev/null)
 if [ "$OID" = "$PID" ] && [ -n "$OID" ]; then ok "id"; else bad "id"; fi
 OIDP=$(aea id -i "$WORK/pad-def.aea" 2>/dev/null)
 PIDP=$("$AEAD_PY" "$REPO/proto/aead.py" id -i "$WORK/pad-def.aea" 2>/dev/null)
 if [ "$OIDP" = "$PIDP" ] && [ -n "$OIDP" ]; then ok "id-pad"; else bad "id-pad"; fi
+head -c 100 "$WORK/p5.aea" > "$WORK/id-tr100.aea"
+if "$AEAD_PY" "$REPO/proto/aead.py" id -i "$WORK/id-tr100.aea" 2>/dev/null; then bad "err-id-trunc100"; else ok "err-id-trunc100"; fi
+head -c 155 "$WORK/p5.aea" > "$WORK/id-tr155.aea"
+if "$AEAD_PY" "$REPO/proto/aead.py" id -i "$WORK/id-tr155.aea" 2>/dev/null; then bad "err-id-trunc155"; else ok "err-id-trunc155"; fi
+head -c 156 "$WORK/p5.aea" > "$WORK/id-tr156.aea"
+OIDT=$(aea id -i "$WORK/id-tr156.aea" 2>/dev/null)
+PIDT=$("$AEAD_PY" "$REPO/proto/aead.py" id -i "$WORK/id-tr156.aea" 2>/dev/null)
+if [ "$OIDT" = "$PIDT" ] && [ "$PIDT" = "$OID" ] && [ -n "$OIDT" ]; then ok "id-trunc156"; else bad "id-trunc156"; fi
 
 # 8b. thread-count indifference (oracle -t 1 vs default; proto single-threaded)
 aea encrypt -profile 5 -password-value "$PW" -a lzma -t 1 -padding none -i "$WORK/bigtext.bin" -o "$WORK/thr1.aea" 2>/dev/null
