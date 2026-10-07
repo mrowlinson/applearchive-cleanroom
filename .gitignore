@@ -6,4 +6,7 @@ __pycache__/
 *.so
 .DS_Store
 tmp/scratch/*
+tmp/scratch-*/
 !tmp/scratch/.gitkeep
+__pycache__/
+*.pyc
