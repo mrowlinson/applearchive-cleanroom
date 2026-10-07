@@ -8,7 +8,8 @@
 # exit 0 GATE-PASS / 1 GATE-FAIL. all work under /Volumes/NVME only.
 # v2: PIN-STALE-NAME + UNPINNED-AAR, SMOKE-IMPL/IMPL2, committed-.aea WARN,
 # OUTER2 battery + PINS-OUTER2 setdiff leg, dual-suffix (.got.aar/.got.aea) pin legs,
-# C-BUILD + RAWENC-C/PBZE-C + PINS-*-C (ENC_BIN parity), HYGIENE tmp/scratch- (PARENT-005).
+# C-BUILD + RAWENC-C/PBZE-C + PINS-*-C (ENC_BIN parity), HYGIENE tmp/scratch- (PARENT-005),
+# RUN_BIG rawenc legs + PIN-ATTESTED log cross-check, LIBCOMPRESSION deny (A-12 pending parent).
 set -u
 REV=${1:?usage: gate-tip.sh <rev> <ws-outdir>}
 OUT=${2:?usage: gate-tip.sh <rev> <ws-outdir>}
@@ -52,7 +53,7 @@ if [ -e "$OUT/tree/src/c/Makefile" ]; then
     say C-BUILD "PASS warnings=$nw"
   else fail=1; say C-BUILD "FAIL (see work-C-BUILD.log)"; tail -20 "$OUT/work-C-BUILD.log" | sed 's/^/  /'; fi
 else say C-BUILD "SKIP no-c-port"; fi
-runb RAWENC tests/test_rawenc.sh sh "$OUT/tree/tests/test_rawenc.sh" "$OUT/work/rawenc"
+runb RAWENC tests/test_rawenc.sh env RUN_BIG=1 sh "$OUT/tree/tests/test_rawenc.sh" "$OUT/work/rawenc"
 runb PBZE tests/test_pbze.sh sh "$OUT/tree/tests/test_pbze.sh" "$OUT/work/pbze"
 runb SMOKE tests/smoke.sh sh "$OUT/tree/tests/smoke.sh" "$OUT/work/smoke"
 runb OUTER2 tests/test_outer2.sh sh "$OUT/tree/tests/test_outer2.sh" "$OUT/work/outer2"
@@ -62,13 +63,17 @@ runb UNITS tests/test_units.py python3 "$OUT/tree/tests/test_units.py"
 # 3b. C parity batteries (ENC_BIN override; c11/c13 bypass _IMP -> manual supplements at verdict)
 if [ -e "$OUT/tree/src/c/aae.c" ]; then
   if [ -x "$OUT/build/aae" ]; then
-    runb RAWENC-C tests/test_rawenc.sh env ENC_BIN="$OUT/build/aae" sh "$OUT/tree/tests/test_rawenc.sh" "$OUT/work/rawenc-c"
+    runb RAWENC-C tests/test_rawenc.sh env RUN_BIG=1 ENC_BIN="$OUT/build/aae" sh "$OUT/tree/tests/test_rawenc.sh" "$OUT/work/rawenc-c"
     runb PBZE-C tests/test_pbze.sh env ENC_BIN="$OUT/build/aae" sh "$OUT/tree/tests/test_pbze.sh" "$OUT/work/pbze-c"
   else fail=1; say RAWENC-C "FAIL no-c-binary"; say PBZE-C "FAIL no-c-binary"; fi
 else say RAWENC-C "SKIP no-c-port"; say PBZE-C "SKIP no-c-port"; fi
 
 # 4. PINS: each csv row vs fresh got.aar (full sha256 + bytes)
-pinleg() { # $1=csv-in-tree $2=workdir $3=leg
+# $4 (optional): battery log for attestation — rows whose artifacts the
+# battery cleans in-band (RUN_BIG c13) PASS iff the log shows an exact
+# bytes + sha-prefix match. trust basis: batteries read first-hand (honest
+# cmp+shasum in code); attestation values must match the pin EXACTLY.
+pinleg() { # $1=csv-in-tree $2=workdir $3=leg [$4=battery-log]
   [ -f "$OUT/tree/$1" ] || { say "$3" "SKIP no-csv"; return; }
   n=0; bad=0
   while IFS=, read -r name sha bytes rest; do
@@ -79,10 +84,18 @@ pinleg() { # $1=csv-in-tree $2=workdir $3=leg
       got=$(shasum -a 256 "$f" | cut -d' ' -f1); sz=$(stat -f %z "$f")
       [ "$got" = "$sha" ] && [ "$sz" = "$bytes" ] || { bad=$((bad+1)); echo "  PIN-MISMATCH $name got=$got/$sz want=$sha/$bytes"; }
     else
-      cands=$(ls "$2/$name."*.got.aar "$2/$name."*.got.aea 2>/dev/null | sed "s|^$2/||" | tr '\n' ' ')
-      bad=$((bad+1))
-      if [ -n "$cands" ]; then echo "  PIN-STALE-NAME $name (no such artifact; candidates: $cands)";
-      else echo "  PIN-MISSING-AAR $name"; fi
+      att=$(grep -E "^PASS $name bytes=" "${4:-/dev/null}" 2>/dev/null | head -1)
+      attb=$(printf '%s' "$att" | sed -n 's/.*bytes=\([0-9]*\).*/\1/p')
+      atts=$(printf '%s' "$att" | sed -n 's/.*sha=\([0-9a-f]*\).*/\1/p')
+      case "$sha" in "$atts"*) attm=1;; *) attm=0;; esac
+      if [ -n "$att" ] && [ -n "$atts" ] && [ "$attb" = "$bytes" ] && [ "$attm" -eq 1 ]; then
+        echo "  PIN-ATTESTED $name (in-band battery PASS, sha16+bytes match)"
+      else
+        cands=$(ls "$2/$name."*.got.aar "$2/$name."*.got.aea 2>/dev/null | sed "s|^$2/||" | tr '\n' ' ')
+        bad=$((bad+1))
+        if [ -n "$cands" ]; then echo "  PIN-STALE-NAME $name (no such artifact; candidates: $cands)";
+        else echo "  PIN-MISSING-AAR $name"; fi
+      fi
     fi
   done < "$OUT/tree/$1"
   for af in "$2"/*.got.aar "$2"/*.got.aea; do
@@ -97,11 +110,11 @@ pinleg() { # $1=csv-in-tree $2=workdir $3=leg
   done
   [ "$bad" -eq 0 ] && say "$3" "PASS $n/$n" || { fail=1; say "$3" "FAIL bad=$bad/$n"; }
 }
-pinleg vectors/rawenc-PINS.csv "$OUT/work/rawenc" PINS-RAWENC
-pinleg vectors/pbze-PINS.csv "$OUT/work/pbze" PINS-PBZE
+pinleg vectors/rawenc-PINS.csv "$OUT/work/rawenc" PINS-RAWENC "$OUT/work-RAWENC.log"
+pinleg vectors/pbze-PINS.csv "$OUT/work/pbze" PINS-PBZE "$OUT/work-PBZE.log"
 if [ -x "$OUT/build/aae" ]; then
-  pinleg vectors/rawenc-PINS.csv "$OUT/work/rawenc-c" PINS-RAWENC-C
-  pinleg vectors/pbze-PINS.csv "$OUT/work/pbze-c" PINS-PBZE-C
+  pinleg vectors/rawenc-PINS.csv "$OUT/work/rawenc-c" PINS-RAWENC-C "$OUT/work-RAWENC-C.log"
+  pinleg vectors/pbze-PINS.csv "$OUT/work/pbze-c" PINS-PBZE-C "$OUT/work-PBZE-C.log"
 else say PINS-RAWENC-C "SKIP no-c-binary"; say PINS-PBZE-C "SKIP no-c-binary"; fi
 # 4b. PINSET: schema-agnostic pin coverage — battery-reported PASS set must
 # equal the csv row set exactly (catches skipped/renamed/unpinned cells
@@ -133,6 +146,12 @@ for _f in $(echo "$OHIT" | cut -d: -f1 | sort -u); do
 done
 if [ -n "$ONEW" ]; then fail=1; say OSS "FAIL new-oss:$ONEW"; echo "$OHIT" | sed 's/^/  /';
 elif [ -n "$OHIT" ]; then say OSS "PASS lzfse-only"; else say OSS "PASS none"; fi
+
+# 5b. LIBCOMPRESSION (A-12: beds-OK, src-use REFUSE-recommended, parent has
+# final call -> deny in src/harness until a grant lands in quiz).
+LHIT=$(grep -rniE -I 'libcompression|COMPRESSION_LZMA|COMPRESSION_LZ4|compression_encode_buffer|compression_decode_buffer' "$OUT/tree/src" "$OUT/tree/harness" 2>/dev/null || true)
+if [ -n "$LHIT" ]; then fail=1; say LIBCOMPRESSION "FAIL ungranted-src-use:"; echo "$LHIT" | sed 's/^/  /';
+else say LIBCOMPRESSION "PASS zero-refs"; fi
 
 # 6. ADOPT: A-1 pins vs lanes/harness-oracle (best-effort)
 if git -C "$REPO" rev-parse -q --verify lanes/harness-oracle >/dev/null; then
