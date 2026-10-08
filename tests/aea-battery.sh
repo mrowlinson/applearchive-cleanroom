@@ -446,5 +446,99 @@ if (cd "$WORK" && aea decrypt -password-value "$PW" -i "$WORK/p5.aea" -o - 2>/de
    && cmp -s "$WORK/-" "$WORK/msg.txt"; then ok "ora-dash-o-literal"; else bad "ora-dash-o-literal"; fi
 rm -f "$WORK/-"
 
+# 11. A-019 G1: multi-cluster cells (p5/-a none/sha256/pad-none; own APROBE-103 walk)
+head -c 268435457 /dev/zero > "$WORK/z2.bin"
+aea encrypt -profile 5 -password-value "$PW" -a none -padding none -checksum sha256 -i "$WORK/z2.bin" -o "$WORK/mc2.aea" 2>/dev/null
+if [ "$(wc -c < "$WORK/mc2.aea" | tr -d ' ')" -eq 268472541 ]; then ok "mc2-size"; else bad "mc2-size"; fi
+EXP=$WORK/z2.bin
+cell mc2-happy --password "$PW" -i "$WORK/mc2.aea"
+oracmp mc2-happy -password-value "$PW" -i "$WORK/mc2.aea"
+# C1 = [0,268454076): prologue 156 + table 18464 + 256MiB payload; C2 hdr follows
+cp "$WORK/mc2.aea" "$WORK/mc2f-hdr.aea"
+python3 -c "import sys;p=sys.argv[1];b=bytearray(open(p,'rb').read());b[5000]^=0x01;open(p,'wb').write(bytes(b))" "$WORK/mc2f-hdr.aea"
+if aea decrypt -password-value "$PW" -i "$WORK/mc2f-hdr.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/mc2f-hdr.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
+if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-mc2-c1hdr"; else bad "err-mc2-c1hdr"; fi
+cp "$WORK/mc2.aea" "$WORK/mc2f-seg.aea"
+python3 -c "import sys;p=sys.argv[1];b=bytearray(open(p,'rb').read());b[1067195]^=0x01;open(p,'wb').write(bytes(b))" "$WORK/mc2f-seg.aea"
+if aea decrypt -password-value "$PW" -i "$WORK/mc2f-seg.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/mc2f-seg.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
+if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-mc2-c1seg"; else bad "err-mc2-c1seg"; fi
+cp "$WORK/mc2.aea" "$WORK/mc2f-end.aea"
+python3 -c "import sys;p=sys.argv[1];b=bytearray(open(p,'rb').read());b[268454075]^=0x01;open(p,'wb').write(bytes(b))" "$WORK/mc2f-end.aea"
+if aea decrypt -password-value "$PW" -i "$WORK/mc2f-end.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/mc2f-end.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
+if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-mc2-c1end"; else bad "err-mc2-c1end"; fi
+# MT thread-shape: default-threads MT stanza (0x9e05cc00) vs -t1 single-thread (0xde108400); exits agree
+aea decrypt -password-value "$PW" -i "$WORK/mc2f-hdr.aea" -o "$WORK/out.bin" 2>"$WORK/mt-def.err"; edef=$?
+aea decrypt -t 1 -password-value "$PW" -i "$WORK/mc2f-hdr.aea" -o "$WORK/out.bin" 2>"$WORK/mt-t1.err"; et1=$?
+if [ $edef -eq 1 ] && [ $et1 -eq 1 ] \
+   && grep -q '0x9e05cc00' "$WORK/mt-def.err" && grep -q '0xde108400' "$WORK/mt-t1.err" \
+   && ! cmp -s "$WORK/mt-def.err" "$WORK/mt-t1.err"; then ok "ora-mt-threadshape"; else bad "ora-mt-threadshape"; fi
+head -c 536870913 /dev/zero > "$WORK/z3.bin"
+aea encrypt -profile 5 -password-value "$PW" -a none -padding none -checksum sha256 -i "$WORK/z3.bin" -o "$WORK/mc3.aea" 2>/dev/null
+if [ "$(wc -c < "$WORK/mc3.aea" | tr -d ' ')" -eq 536926461 ]; then ok "mc3-size"; else bad "mc3-size"; fi
+EXP=$WORK/z3.bin
+cell mc3-happy --password "$PW" -i "$WORK/mc3.aea"
+oracmp mc3-happy -password-value "$PW" -i "$WORK/mc3.aea"
+
+# 12. A-019 G2: conforming-but-unpinned shapes
+cp "$WORK/p5.aea" "$WORK/pf6.aea" && printf '\006' | dd of="$WORK/pf6.aea" bs=1 seek=4 conv=notrunc 2>/dev/null
+if aea decrypt -password-value "$PW" -i "$WORK/pf6.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/pf6.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
+if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-profile6"; else bad "err-profile6"; fi
+cp "$WORK/p5.aea" "$WORK/pad-plus1u.aea" && printf 'Z' >> "$WORK/pad-plus1u.aea"
+EXP=$WORK/msg.txt
+cell pad-plus1-unpadded --password "$PW" -i "$WORK/pad-plus1u.aea"
+oracmp pad-plus1-unpadded -password-value "$PW" -i "$WORK/pad-plus1u.aea"
+EXP=$WORK/empty.bin
+cell range-past-eof --password "$PW" --range-offset 999999999 -i "$WORK/p5.aea"
+oracmp range-past-eof -password-value "$PW" -range-offset 999999999 -i "$WORK/p5.aea"
+EXP=$WORK/msg.txt
+cell range-huge --password "$PW" --range-offset 0 --range-size 999999 -i "$WORK/p5.aea"
+oracmp range-huge -password-value "$PW" -range-offset 0 -range-size 999999 -i "$WORK/p5.aea"
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/p5.aea" -o /dev/null 2>/dev/null; then ok "devnull"; else bad "devnull"; fi
+if aea decrypt -password-value "$PW" -i "$WORK/p5.aea" -o /dev/null 2>/dev/null; then ok "ora-devnull"; else bad "ora-devnull"; fi
+cp "$WORK/p5.aea" "$WORK/segf-null.aea"
+python3 -c "import sys;p=sys.argv[1];b=bytearray(open(p,'rb').read());b[200]^=0x01;open(p,'wb').write(bytes(b))" "$WORK/segf-null.aea"
+if aea decrypt -password-value "$PW" -i "$WORK/segf-null.aea" -o /dev/null 2>/dev/null; then ora=0; else ora=1; fi
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/segf-null.aea" -o /dev/null 2>/dev/null; then pro=0; else pro=1; fi
+if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-devnull-segf"; else bad "err-devnull-segf"; fi
+aea encrypt -profile 5 -password-value "$PW" -a none -padding none -auth-data-value hex:deadbeef -i "$WORK/empty.bin" -o "$WORK/eauth.aea" 2>/dev/null
+EXP=$WORK/empty.bin
+cell empty-auth --password "$PW" -i "$WORK/eauth.aea"
+oracmp empty-auth -password-value "$PW" -i "$WORK/eauth.aea"
+for aoff in 20 100 150; do
+  cp "$WORK/auth2.aea" "$WORK/authf.aea"
+  python3 -c "import sys;p=sys.argv[1];o=int(sys.argv[2]);b=bytearray(open(p,'rb').read());b[o]^=0x01;open(p,'wb').write(bytes(b))" "$WORK/authf.aea" "$aoff"
+  if aea decrypt -password-value "$PW" -i "$WORK/authf.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
+  if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/authf.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
+  if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-authflip-$aoff"; else bad "err-authflip-$aoff"; fi
+done
+for soff in 1000 5000; do
+  cp "$WORK/p0.aea" "$WORK/p0f.aea"
+  python3 -c "import sys;p=sys.argv[1];o=int(sys.argv[2]);b=bytearray(open(p,'rb').read());b[o]^=0x01;open(p,'wb').write(bytes(b))" "$WORK/p0f.aea" "$soff"
+  if aea decrypt -sign-pub "$WORK/ec-pub.pem" -i "$WORK/p0f.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
+  if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --sign-pub "$WORK/ec-pub.pem" -i "$WORK/p0f.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
+  if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-p0sig-$soff"; else bad "err-p0sig-$soff"; fi
+done
+cp "$WORK/p0.aea" "$WORK/p0sp.aea"
+python3 -c "import sys;p=sys.argv[1];b=bytearray(open(p,'rb').read());b[100]^=0x01;open(p,'wb').write(bytes(b))" "$WORK/p0sp.aea"
+EXP=$WORK/msg.txt
+cell p0-spare-100 --sign-pub "$WORK/ec-pub.pem" -i "$WORK/p0sp.aea"
+oracmp p0-spare-100 -sign-pub "$WORK/ec-pub.pem" -i "$WORK/p0sp.aea"
+# -t1 decrypt invariance (single-cluster): exits + stderr + bytes identical, 5 shapes
+cp "$WORK/p5.aea" "$WORK/t1-segf.aea"
+python3 -c "import sys;p=sys.argv[1];b=bytearray(open(p,'rb').read());b[200]^=0x01;open(p,'wb').write(bytes(b))" "$WORK/t1-segf.aea"
+cp "$WORK/pad-def.aea" "$WORK/t1-padf.aea"
+python3 -c "import sys;p=sys.argv[1];o=int(sys.argv[2]);b=bytearray(open(p,'rb').read());b[o]^=0x01;open(p,'wb').write(bytes(b))" "$WORK/t1-padf.aea" "$PSTART"
+for shape in happy:p5.aea:good wrongpw:p5.aea:bad trunc8:tr8.aea:good segflip:t1-segf.aea:good padflip:t1-padf.aea:good; do
+  nm=${shape%%:*}; rest=${shape#*:}; fn=${rest%%:*}; pwk=${rest##*:}
+  if [ "$pwk" = bad ]; then PWA=WRONG; else PWA=$PW; fi
+  aea decrypt -password-value "$PWA" -i "$WORK/$fn" -o "$WORK/t1-o1.bin" 2>"$WORK/t1-s1"; e1=$?
+  aea decrypt -t 1 -password-value "$PWA" -i "$WORK/$fn" -o "$WORK/t1-o2.bin" 2>"$WORK/t1-s2"; e2=$?
+  if [ $e1 -eq $e2 ] && cmp -s "$WORK/t1-s1" "$WORK/t1-s2" && cmp -s "$WORK/t1-o1.bin" "$WORK/t1-o2.bin" 2>/dev/null; then ok "ora-t1-ident-$nm"; else bad "ora-t1-ident-$nm"; fi
+done
+
 echo "PASS=$PASS FAIL=$FAIL"
 [ "$FAIL" -eq 0 ]
