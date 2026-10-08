@@ -422,6 +422,32 @@ _T6E3T = ("f22b4b70f0", "f22f4bc8f0", "f2ed4d74f3", "f2f14dccf3",
           "f2c75810f2", "f2cb5868f2", "f2375bdcf0", "d28f5b98fd")
 _T6E3K = ("d6224664f9e24e6b", "1d230684b9e74667",
           "142246d499e6a86c", "1e23c64401e14667")
+# T6F tables (quiet-256): 16-tabs b40-43 + k2 segs b32-35
+# + b5 edges @783/911.
+_T6FT40 = (0xea, 0x4b, 0xeb, 0xfc, 0x44, 0x94, 0xf5, 0x06,
+           0x67, 0x9e, 0xff, 0x10, 0xb0, 0x00, 0x09, 0xa9)
+_T6FT41 = (0x5f, 0x5c, 0xd9, 0x5c, 0x5a, 0x5e, 0x5a, 0xde,
+           0xda, 0xdf, 0xdb, 0x5f, 0xdc, 0x5a, 0x5d, 0xda)
+_T6FT42 = (0xc1, 0xc6, 0x17, 0x1c, 0x39, 0x8a, 0x8f, 0x93,
+           0x98, 0x01, 0x06, 0x0b, 0x5c, 0x5d, 0x7e, 0xcf)
+_T6FT43 = (0xbf, 0xbf, 0xc0, 0xc0, 0xc0, 0xc0, 0xc0, 0xc0,
+           0xc0, 0xc1, 0xc1, 0xc1, 0xc1, 0xc1, 0xc1, 0xc1)
+_T6FK = ("1cfc5796", "32fc5f96", "ddfcdb9b", "f3fce39b",
+         "22fc939c", "eafc2fa1", "00fd37a1", "b6bfb7a6",
+         "ccbfbfa6", "77fc3bac", "8dfc43ac", "60bfe3b0",
+         "84fc8fb1", "9afc97b1", "37fc6fb6", "66bf1fb7")
+_T6FC = ((0, 0x5e), (1, 0x21), (2, 0x02), (3, 0x00), (6, 0x3c),
+         (7, 0xdb), (8, 0x77), (9, 0xbd), (10, 0x60),
+         (11, 0x86), (12, 0x00), (13, 0x32), (14, 0x3c),
+         (15, 0xc8), (16, 0x15), (17, 0xfb), (18, 0x5a),
+         (19, 0x1c), (20, 0x56), (21, 0xdb), (22, 0x84),
+         (23, 0x22), (24, 0x8e), (25, 0x58), (26, 0x19),
+         (27, 0xe6), (28, 0xb2), (29, 0x13), (30, 0x8d),
+         (31, 0x67), (36, 0x53), (37, 0x82), (38, 0x2d),
+         (39, 0x0b), (44, 0x6f), (45, 0x3b), (46, 0xd0),
+         (47, 0xc6), (48, 0x2d), (49, 0x8a), (50, 0x5d),
+         (51, 0x7b), (52, 0xad), (53, 0xa0), (54, 0xf7),
+         (55, 0xa5))
 _T6E3C = ((2, 0x00), (3, 0x00), (6, 0x3c), (7, 0xdb), (8, 0x77),
           (9, 0xbd), (10, 0x60), (12, 0x00), (13, 0x32),
           (14, 0x3c), (15, 0xc8), (16, 0x15), (17, 0xfb),
@@ -2018,6 +2044,27 @@ def main():
             if pay[b] != v:
                 return fail("T6E3 const %d" % b)
         print("CLOSED T6E3 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 4904:  # T6F: quiet-256, tabs b40-43 + k2 b32-35
+        off = n - 3953
+        if len(pay) != 56:
+            return fail("T6F paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if grp(pay, tuple(range(32, 42))) != l10:
+            return fail("T6F lencode")
+        m = (off - 696) & 15
+        k2 = (off - 696) >> 4
+        if pay[5] != (0x24 + (off >= 783) + (off >= 911)):
+            return fail("T6F b5")
+        if pay[32:36].hex() != _T6FK[k2]:
+            return fail("T6F k2")
+        if pay[40] != _T6FT40[m] or pay[41] != _T6FT41[m] or \
+                pay[42] != _T6FT42[m] or pay[43] != _T6FT43[m]:
+            return fail("T6F tab")
+        for b, v in _T6FC:
+            if pay[b] != v:
+                return fail("T6F const %d" % b)
+        print("CLOSED T6F N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
