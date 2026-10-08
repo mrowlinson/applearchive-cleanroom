@@ -80,6 +80,25 @@ _T4HT34 = (0x80, 0x80, 0xc0, 0x00, 0x00, 0x40, 0x40, 0x80, 0xc0, 0xc0,
            0x00, 0x00, 0x40, 0x80, 0x80, 0xc0)
 _T4HT35 = (0x6c, 0x7c, 0x71, 0x67, 0x77, 0x6c, 0x7c, 0x71, 0x66, 0x76,
            0x6c, 0x7c, 0x71, 0x66, 0x76, 0x6b)
+# T4J singletons N=2121/2122 (literals; 2121 zeros-only per PRE-021b).
+_T4JSING = ("4847040093408a0df0e2418c00a0fcc3eeaa36d708aeeec124fc228b"
+            "0976c7ef69014cd724a7d63e83c6434d0667a6fc",
+            "947f180195408a0df0e201006e44228b57b5b916088e845fe94416f8"
+            "b07d7f47e9b4fc774aa1a9b5683cd4940667a6fc")
+# T4J c4 bytes40-45 rows, off 1318..1327 (literal table, formula OPEN).
+_T4JC4 = ("e07cb2bfeb08", "b03cb2356b08", "d57c75f20b08", "a7bc027aab08",
+          "e6fca4b0cb07", "c93c78f20b08", "f1bcb6356b08", "97bcb7356b08",
+          "c47c82f20b08", "6b7c83f20b08")
+# T4J c5 bytes40/41/46/47 16-table, key (off-1328)&15 (OPEN why).
+_T4JT5 = ("6ba2e8fe", "eba2437b", "aba3b4be", "0ba4f8ff", "eba4807e",
+          "4ba5c4bf", "cba51f3c", "8ba6907f", "eba6ebfb", "6ba72f3d",
+          "2ba8b7bb", "8ba8fbfc", "6ba9837b", "cba9c7bc", "2baa0bfe",
+          "0bab937c")
+# T4J c5 band consts (b2/3/27/37/38/39/44), key (off-1328)>>4 (OPEN why).
+_T4JBAND = ((0x78, 0x8d, 0x81, 0x60, 0x92, 0x3f, 0x43),
+            (0xb8, 0xbc, 0x01, 0x00, 0x97, 0xa7, 0x40),
+            (0x98, 0x9e, 0x21, 0x40, 0x91, 0x4f, 0x45),
+            (0x18, 0x9c, 0x21, 0x40, 0x9c, 0x2f, 0x3c))
 
 
 def bit(p, i):
@@ -748,6 +767,82 @@ def main():
             if pay[b] != v:
                 return fail("T4I const %d" % b)
         print("CLOSED T4I N=%d off=%d" % (n, off))
+        return 0
+    if n <= 2212:  # T4 tail J (NOTE-w2s7-23: singletons + c3/c4/c5)
+        if len(pay) != 48:
+            return fail("T4J paylen")
+        off = n - 821
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if grp(pay, tuple(range(32, 42))) != l10:
+            return fail("T4J lencode")
+        if off <= 1301:
+            if pay.hex() != _T4JSING[off - 1300]:
+                return fail("T4J sing")
+            print("CLOSED T4JS N=%d off=%d" % (n, off))
+            return 0
+        if pay[5] != (0x40 | (l10 >> 8)):
+            return fail("T4J b5")
+        if off <= 1317:
+            if off <= 1304:
+                ok = (pay[40], pay[41]) == (0xB8, 0x3C) and \
+                    pay[42] == 0x76 + (off - 1302)
+            elif off <= 1312:
+                ok = (pay[40], pay[41]) == (0xC0, 0xBC) and \
+                    pay[42] == 0x80 + (off - 1305)
+            else:
+                ok = (pay[40], pay[41]) == (0xC8, 0x3C) and \
+                    pay[42] == 0x90 + (off - 1313)
+            if not ok:
+                return fail("T4J c3")
+            consts = ((0, 0x94), (1, 0x7f), (2, 0xf8), (3, 0x11),
+                      (6, 0x8a), (7, 0x0d), (8, 0xf0), (9, 0xe2),
+                      (10, 0x01), (11, 0), (12, 0xee), (13, 0xaa),
+                      (14, 0x26), (15, 0x8b), (16, 0xe6), (17, 0x5a),
+                      (18, 0x8c), (19, 0x48), (20, 0x08), (21, 0x8e),
+                      (22, 0x84), (23, 0x5f), (24, 0x09), (25, 0xf6),
+                      (26, 0x68), (27, 0xbd), (28, 0xbe), (29, 0xbf),
+                      (30, 0xa3), (31, 0x13), (32, 0xe9), (33, 0xf4),
+                      (34, 0x2d), (35, 0xb7), (36, 0xea), (37, 0xa1),
+                      (38, 0x9f), (39, 0x5a), (43, 0x4d), (44, 0x2a),
+                      (45, 0x71), (46, 0x66), (47, 0xca))
+            tag = "T4J3"
+        elif off <= 1327:
+            if pay[40:46].hex() != _T4JC4[off - 1318]:
+                return fail("T4J c4")
+            consts = ((0, 0x94), (1, 0x7f), (2, 0xf8), (3, 0x08),
+                      (6, 0x8a), (7, 0x0d), (8, 0xf0), (9, 0xe2),
+                      (10, 0x01), (11, 0), (12, 0xee), (13, 0xaa),
+                      (14, 0x26), (15, 0x8b), (16, 0xe6), (17, 0x5a),
+                      (18, 0x8c), (19, 0x48), (20, 0x08), (21, 0x8e),
+                      (22, 0x84), (23, 0x5f), (24, 0x09), (25, 0x36),
+                      (26, 0x9e), (27, 0xd1), (28, 0xbe), (29, 0xbf),
+                      (30, 0xa3), (31, 0x13), (32, 0xe9), (33, 0x34),
+                      (34, 0xad), (35, 0xb7), (36, 0x48), (37, 0xe0),
+                      (38, 0x4f), (39, 0xad), (46, 0xcc), (47, 0x94))
+            tag = "T4J4"
+        else:
+            m = (off - 1328) & 15
+            k = (off - 1328) >> 4
+            if bytes((pay[40], pay[41], pay[46], pay[47])).hex() != \
+                    _T4JT5[m]:
+                return fail("T4J c5tab")
+            if (pay[2], pay[3], pay[27], pay[37], pay[38], pay[39],
+                    pay[44]) != _T4JBAND[k]:
+                return fail("T4J c5band")
+            consts = ((0, 0x94), (1, 0x7f), (6, 0x8a), (7, 0x0d),
+                      (8, 0xf0), (9, 0xe2), (10, 0x01), (11, 0),
+                      (12, 0xee), (13, 0xaa), (14, 0x26), (15, 0x8b),
+                      (16, 0xe6), (17, 0x5a), (18, 0x8c), (19, 0x48),
+                      (20, 0x08), (21, 0x8e), (22, 0x84), (23, 0x5f),
+                      (24, 0x09), (25, 0x36), (26, 0x9e), (28, 0xbe),
+                      (29, 0xbf), (30, 0xa3), (31, 0x13), (32, 0xe9),
+                      (33, 0x34), (34, 0xad), (35, 0xb7), (36, 0x48),
+                      (42, 0xd6), (43, 0x3e), (45, 0x60))
+            tag = "T4J5"
+        for b, v in consts:
+            if pay[b] != v:
+                return fail("%s const %d" % (tag, b))
+        print("CLOSED %s N=%d off=%d" % (tag, n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
