@@ -3422,6 +3422,31 @@ _T9P1QC = ((3, 0x1b), (5, 0x00), (6, 0x96), (7, 0xc6), (8, 0xc7),
           (52, 0x93), (53, 0x0f), (54, 0xa1), (55, 0xf1), (56, 0x5d),
           (57, 0x7e), (58, 0xa8), (59, 0x84), (60, 0x7f), (61, 0xd9),
           (62, 0x85), (63, 0xaa))
+# T10HEAD: 16x16 72B tab (b24,68-71) + 7B words (b9,10,17-21) + b5.
+_T10HT = ("bd1c8c2bfa", "c152c1f69c", "c363136a6c", "c3c944566d",
+          "c332602e6f", "c4fb159a59", "c756ccf34c", "c7c05edfb8",
+          "cf30c026fc", "d036cb644d", "d340c3059e", "d51704ad6d",
+          "d5398e0a82", "d55e5720ac", "d5f00edbbf", "d53c05cdc4")
+_T10HB5 = (0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
+           0x01, 0x01, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02)
+_T10HB = ("d1a916eac5de86", "21d176cc3d5e99", "a1fea6d1f57e99",
+          "f11a86c8059e99", "41de56c76d3e9b", "319b76d5d57ea4",
+          "319e16bf0d7ea4", "910b56acb5fea4", "e11646cd3d9eb4",
+          "61d8e6b2b5feb4", "d1d8c6fcedfeb4", "712dc6b5ad1eb5",
+          "a12d96c56d1eb5", "d10d96d8ddfebf", "813b86e8fd1ec0",
+          "018ac6c4351ec0")
+_T10HC = ((0, 0x01), (1, 0x00), (2, 0x00), (3, 0x00), (6, 0x96),
+          (7, 0xc6), (8, 0xa7), (11, 0xae), (12, 0x66), (13, 0x00),
+          (14, 0x2a), (15, 0xaf), (16, 0xc7), (22, 0x0e), (23, 0xd1),
+          (25, 0xbc), (26, 0x83), (27, 0xf2), (28, 0x40), (29, 0x87),
+          (30, 0xff), (31, 0xcf), (32, 0x1c), (33, 0xde), (34, 0x49),
+          (35, 0x47), (36, 0xd5), (37, 0xa5), (38, 0x5e), (39, 0x7c),
+          (40, 0xd2), (41, 0xda), (42, 0x23), (43, 0x7b), (44, 0x39),
+          (45, 0xf1), (46, 0x48), (47, 0x70), (48, 0xdc), (49, 0x6f),
+          (50, 0x97), (51, 0x7d), (52, 0x93), (53, 0x0f), (54, 0xa1),
+          (55, 0xf1), (56, 0x5d), (57, 0x7e), (58, 0xa8), (59, 0x84),
+          (60, 0x7f), (61, 0xd9), (62, 0x85), (63, 0xaa), (64, 0x3e),
+          (65, 0x3c), (66, 0xe8), (67, 0xf2))
 _T7CC = ((0, 0x75), (1, 0x01), (2, 0x00), (3, 0x00), (6, 0xc1),
          (7, 0x6b), (8, 0xfa), (9, 0xf6), (10, 0xcf),
          (11, 0x25), (12, 0x00), (13, 0xad), (14, 0xfc),
@@ -3841,7 +3866,7 @@ def main():
             return fail("stored content not zeros")
         print("CLOSED stored N=%d" % n)
         return 0
-    if len(pay) not in (44, 48, 52, 56, 60, 64, 68):
+    if len(pay) not in (44, 48, 52, 56, 60, 64, 68, 72):
         return fail("paylen %d" % len(pay))
     if n <= 127:  # T0
         if len(pay) != 44:
@@ -8258,6 +8283,29 @@ def main():
             if pay[b] != v:
                 return fail("T9P1Q const %d" % b)
         print("CLOSED T9P1Q N=%d off=%d" % (n, off))
+        return 0
+    if n <= 16736:  # T10HEAD: 16x16 tab b24,68-71 + 7B words + b5
+        off = n - 16481
+        if len(pay) != 72:
+            return fail("T10HEAD paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if pay[4] != (l10 & 0xFF):
+            return fail("T10HEAD lencode")
+        m = off & 15
+        q = off >> 4
+        if pay[5] != _T10HB5[q] + (m == 15 and q in (1, 9)):
+            return fail("T10HEAD b5")
+        blk = bytes((pay[9], pay[10], pay[17], pay[18], pay[19],
+                     pay[20], pay[21])).hex()
+        if blk != _T10HB[q]:
+            return fail("T10HEAD blk")
+        if bytes((pay[24], pay[68], pay[69], pay[70],
+                   pay[71])).hex() != _T10HT[m]:
+            return fail("T10HEAD tab")
+        for b, v in _T10HC:
+            if pay[b] != v:
+                return fail("T10HEAD const %d" % b)
+        print("CLOSED T10HEAD N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
