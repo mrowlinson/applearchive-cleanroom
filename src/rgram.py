@@ -3323,6 +3323,24 @@ _T9N1QC = ((0, 0x68), (1, 0xd6), (2, 0x33), (3, 0x02), (6, 0xc3),
           (42, 0x48), (43, 0x30), (48, 0xc0), (51, 0xbb), (56, 0x5d),
           (57, 0x5d), (58, 0xdd), (59, 0x9d), (60, 0x5a), (61, 0xbc),
           (62, 0x92), (63, 0xbb))
+# T9O1Q: 7x16 tab (b5,6,7,56-59) + N1QT words (b49,50,52-55).
+_T9O1QT = ("fefa9b20dab01c", "3efb9baedcfb01", "3efb9b555e5069",
+           "7efb9bad5880bd", "befd9b935b0eaf", "fefd9b1ddc072e",
+           "fefd9be358432e", "be009ce15a0f1a", "3e019c2ddd7dfc",
+           "3e039c795c8bb7", "3e039ca75c8fbe", "3e039c25dcfed4",
+           "fe039c95dcf2df", "fe039c6cdc1fe1", "3e049caddca164",
+           "7e099cb15c9186")
+_T9O1QC = ((0, 0x85), (1, 0x66), (2, 0x3d), (3, 0x23), (8, 0xe9),
+          (9, 0x33), (10, 0x40), (11, 0xe9), (12, 0xa2), (13, 0x49),
+          (14, 0xef), (15, 0xb1), (16, 0x1a), (17, 0xf5), (18, 0x10),
+          (19, 0xed), (20, 0x01), (21, 0xfc), (22, 0xa7), (23, 0x7d),
+          (24, 0x5c), (25, 0x7f), (26, 0x07), (27, 0xe5), (28, 0x3a),
+          (29, 0xfc), (30, 0x7f), (31, 0xae), (32, 0xbc), (33, 0xba),
+          (34, 0xd4), (35, 0x8b), (36, 0xd2), (37, 0xda), (38, 0x23),
+          (39, 0x7b), (40, 0x39), (41, 0xf1), (42, 0x48), (43, 0x30),
+          (44, 0x1f), (45, 0x7c), (46, 0xd5), (47, 0x2b), (48, 0xc0),
+          (51, 0xbb), (60, 0x5a), (61, 0xbc), (62, 0x92), (63, 0xbb),
+          (64, 0x45), (65, 0x0e), (66, 0xd1), (67, 0x64))
 _T7CC = ((0, 0x75), (1, 0x01), (2, 0x00), (3, 0x00), (6, 0xc1),
          (7, 0x6b), (8, 0xfa), (9, 0xf6), (10, 0xcf),
          (11, 0x25), (12, 0x00), (13, 0xad), (14, 0xfc),
@@ -8045,6 +8063,27 @@ def main():
             if pay[b] != v:
                 return fail("T9N1Q const %d" % b)
         print("CLOSED T9N1Q N=%d off=%d" % (n, off))
+        return 0
+    if n <= 16244:  # T9O1Q: 7x16 tab b5,6,7,56-59 + N1QT words
+        off = n - 16133
+        if len(pay) != 68:
+            return fail("T9O1Q paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if pay[4] != (l10 & 0xFF):
+            return fail("T9O1Q lencode")
+        m = off & 15
+        q = off >> 4
+        if bytes((pay[5], pay[6], pay[7], pay[56], pay[57],
+                   pay[58], pay[59])).hex() != _T9O1QT[m]:
+            return fail("T9O1Q tab")
+        blk = bytes((pay[49], pay[50], pay[52], pay[53], pay[54],
+                     pay[55])).hex()
+        if blk != _T9N1QT[q]:
+            return fail("T9O1Q blk")
+        for b, v in _T9O1QC:
+            if pay[b] != v:
+                return fail("T9O1Q const %d" % b)
+        print("CLOSED T9O1Q N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
