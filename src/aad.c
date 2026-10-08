@@ -481,8 +481,9 @@ static int parse_inner(const Buf *inner, Item **items, size_t *nitems,
         if (p != end) { cls = PF_ENDMISMATCH; goto itfail; }
         size_t blen = 0;
         for (size_t i = 0; i < it.nents; i++)
-            if (it.ents[i].st == 'A' || it.ents[i].st == 'B' ||
-                it.ents[i].st == 'C')
+            if ((it.ents[i].st == 'A' || it.ents[i].st == 'B' ||
+                 it.ents[i].st == 'C') &&
+                memcmp(it.ents[i].key, "TYP", 3))
                 blen += (size_t)it.ents[i].num;
         if (end + blen > n) {
             /* Short-blob item: append flagged (midchain makes an empty
@@ -536,6 +537,7 @@ static const unsigned char *blob_for(const Item *it, const char key[3],
     for (size_t i = 0; i < it->nents; i++) {
         const Entry *e = &it->ents[i];
         if (e->st != 'A' && e->st != 'B' && e->st != 'C') continue;
+        if (!memcmp(e->key, "TYP", 3)) continue; /* CR-053: bare, no blob */
         if (!memcmp(e->key, key, 3)) {
             *len = (size_t)e->num;
             return it->blobs + off;
@@ -837,6 +839,7 @@ static int extract(const Item *items, size_t nitems, const char *root,
             case '*': tn = 0; break;
             case 'F': case 'G': case 'H': case 'I': case 'J':
                 tn = 3; break; /* hash family (H probed) */
+            case 'A': case 'B': case 'C': tn = 5; break; /* CR-053 */
             default: break; /* blob: content-fragile, internal line */
             }
             if (tn >= 0) {

@@ -974,5 +974,23 @@ if [ "$ORC" -eq 0 ] && [ ! -s "$WORK/ho.err" ] && [ -f "$WORK/ho/hello/greet.txt
 [ ! -L "$WORK/hc/hello" ] && [ -d "$WORK/hc/hello" ] && [ -z "$(ls "$WORK/hc/hello")" ] && pass "g9h-ctree" || fail "g9h-ctree"
 diff -r "$WORK/hc" "$WORK/hp" >/dev/null 2>&1 && pass "g9h-cplock" || fail "g9h-cplock"
 
+echo "== cell typ5-abc (CR-053 class-5 + desync cascade, PRE-009) =="
+python3 "$HERE/craft.py" settyprec "$V/aar/hello-raw.aar" "$WORK/ta0.aar" 1 545950410000 || die "craft-ta0"
+python3 "$HERE/craft.py" settyprec "$V/aar/hello-raw.aar" "$WORK/tb0.aar" 1 5459504200000000 || die "craft-tb0"
+python3 "$HERE/craft.py" settyprec "$V/aar/hello-raw.aar" "$WORK/tc0.aar" 1 545950430000000000000000 || die "craft-tc0"
+python3 "$HERE/craft.py" settyprec "$V/aar/hello-raw.aar" "$WORK/taF.aar" 1 545950410000FF || die "craft-taF"
+python3 "$HERE/craft.py" settyprec "$V/aar/hello-raw.aar" "$WORK/taZ.aar" 1 5459504100000000 || die "craft-taZ"
+python3 "$HERE/craft.py" settyprec "$V/aar/hello-raw.aar" "$WORK/taB5.aar" 1 5459504205000000 || die "craft-taB5"
+for n in ta0 tb0 tc0 taF taZ taB5; do
+  rm -rf "$WORK/t5o-$n" "$WORK/t5c-$n" "$WORK/t5p-$n"
+  ORC=0; sh "$ADAPTER" aar-decode "$WORK/$n.aar" "$WORK/t5o-$n" 2>"$WORK/t5o-$n.err" >/dev/null || ORC=$?
+  CRC=0; "$AAD" "$WORK/$n.aar" "$WORK/t5c-$n" 2>"$WORK/t5c-$n.err" >/dev/null || CRC=$?
+  PRC=0; python3 "$ROOT/proto/aad.py" "$WORK/$n.aar" "$WORK/t5p-$n" 2>"$WORK/t5p-$n.err" >/dev/null || PRC=$?
+  [ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && [ "$PRC" -eq 1 ] && pass "t5$n-exit" || fail "t5$n-exit"
+  diff "$WORK/t5o-$n.err" "$WORK/t5c-$n.err" >/dev/null 2>&1 && pass "t5$n-cbytes" || fail "t5$n-cbytes"
+  grep -v '^blocks:' "$WORK/t5p-$n.err" | diff "$WORK/t5o-$n.err" - >/dev/null 2>&1 && pass "t5$n-pbytes" || fail "t5$n-pbytes"
+  diff -r "$WORK/t5o-$n" "$WORK/t5c-$n" >/dev/null 2>&1 && diff -r "$WORK/t5c-$n" "$WORK/t5p-$n" >/dev/null 2>&1 && pass "t5$n-tree" || fail "t5$n-tree"
+done
+
 [ "$FAIL" -eq 0 ] && echo CBATTERY-GREEN || echo CBATTERY-RED
 exit "$FAIL"

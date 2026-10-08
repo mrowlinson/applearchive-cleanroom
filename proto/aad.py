@@ -358,6 +358,8 @@ def parse_inner(data):
         bad = False
         for key, st, val in entries:
             if st in BLOB_W:
+                if key == b"TYP":
+                    continue  # CR-053: TYP A/B/C bare, no blob.
                 if bp + val > len(data):
                     fcls, bad = PF_BLOBOVERRUN, True
                     break
@@ -574,7 +576,8 @@ def extract(items, root, fcls=0, fsub=0, shortidx=-1, midchain=False,
         if tst not in UINT_W:
             tn = {ord("P"): 2, ord("S"): 4, ord("T"): 4, ord("*"): 0,
                   ord("F"): 3, ord("G"): 3, ord("H"): 3, ord("I"): 3,
-                  ord("J"): 3}.get(tst)
+                  ord("J"): 3, ord("A"): 5, ord("B"): 5,
+                  ord("C"): 5}.get(tst)
             if tn is not None:
                 print("Extraction failed\nextract failedError 0xe509b400\n"
                       "invalid type %d, expected UINT\n"
@@ -617,6 +620,8 @@ def extract(items, root, fcls=0, fsub=0, shortidx=-1, midchain=False,
                 for key, st, val in entries:
                     if st not in BLOB_W:
                         continue
+                    if key == b"TYP":
+                        continue  # CR-053: bare, no blob.
                     if key == b"DAT":
                         doff = off
                         dln = val
