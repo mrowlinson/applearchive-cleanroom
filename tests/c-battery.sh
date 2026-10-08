@@ -784,5 +784,56 @@ python3 "$HERE/../proto/aad.py" "$WORK/g6.aar" "$WORK/g6p" >/dev/null 2>&1 || tr
 [ "$(stat -f %p "$WORK/g6p/dd")" = "100644" ] && [ "$(cat "$WORK/g6p/dd")" = "keepme" ] && pass "g6p-keep" || fail "g6p-keep"
 [ ! -e "$WORK/g6o/dd/kid" ] && [ ! -e "$WORK/g6c/dd/kid" ] && [ ! -e "$WORK/g6p/dd/kid" ] && pass "g6-nokid" || fail "g6-nokid"
 
+echo "== cell m3-exactness (unclo/unchi/paylo/stored decoder shapes) =="
+mkm3() { # $1=base $2=rawd $3=payd $4=name
+  M3H=$(python3 -c "import struct; d=open('$V/aar/$1.aar','rb').read(); raw,pay=struct.unpack('>QQ',d[12:28]); print((struct.pack('>Q',raw+($2))+struct.pack('>Q',pay+($3))).hex())") || die "m3$4 walk"
+  python3 "$HERE/craft.py" setblk "$V/aar/$1.aar" "$WORK/m3$4.aar" 0 "$M3H" || die "craft-m3$4"
+}
+runm3() { # $1=name $2=ucflag
+  ORC=0; sh "$ADAPTER" aar-decode "$WORK/m3$1.aar" "$WORK/o-m3$1" >/dev/null 2>"$WORK/m3$1-o.err" || ORC=$?
+  mkdir -p "$WORK/c-m3$1" "$WORK/p-m3$1"
+  CRC=0; "$AAD" "$WORK/m3$1.aar" "$WORK/c-m3$1" 2>"$WORK/m3$1.err" || CRC=$?
+  PRC=0; python3 "$HERE/../proto/aad.py" "$WORK/m3$1.aar" "$WORK/p-m3$1" >/dev/null 2>&1 || PRC=$?
+  [ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && [ "$PRC" -eq 1 ] && pass "m3$1-exit" || fail "m3$1-exit"
+  if [ "$2" = "uc" ]; then
+    mcnorm "$WORK/m3$1-o.err" > "$WORK/m3$1-o.n"; mcnorm "$WORK/m3$1.err" > "$WORK/m3$1.n"
+    diff "$WORK/m3$1-o.n" "$WORK/m3$1.n" >/dev/null 2>&1 && pass "m3$1-shape" || fail "m3$1-shape"
+    [ "$(grep -c '1 entries failed' "$WORK/m3$1-o.err")" = "1" ] && [ "$(grep -c '1 entries failed' "$WORK/m3$1.err")" = "1" ] && pass "m3$1-count" || fail "m3$1-count"
+  else
+    diff "$WORK/m3$1-o.err" "$WORK/m3$1.err" >/dev/null 2>&1 && pass "m3$1-shape" || fail "m3$1-shape"
+  fi
+  diff -r "$WORK/c-m3$1" "$WORK/p-m3$1" >/dev/null 2>&1 && pass "m3$1-lock" || fail "m3$1-lock"
+}
+empty3() { # $1=name
+  [ -z "$(find "$WORK/o-m3$1" "$WORK/c-m3$1" -type f 2>/dev/null)" ] && pass "m3$1-empty" || fail "m3$1-empty"
+  diff -r "$WORK/o-m3$1" "$WORK/c-m3$1" >/dev/null 2>&1 && pass "m3$1-tree" || fail "m3$1-tree"
+}
+mkm3 hello-lzfse -10 0 uc10; runm3 uc10 uc
+cmp -s "$WORK/o-m3uc10/hello/repeat.txt" "$WORK/c-m3uc10/hello/repeat.txt" && pass "uc10-repeat" || fail "uc10-repeat"
+cmp -s "$WORK/o-m3uc10/hello/greet.txt" "$WORK/c-m3uc10/hello/greet.txt" && pass "uc10-greet" || fail "uc10-greet"
+[ "$(stat -f %p "$WORK/o-m3uc10/hello/repeat.txt")" = "$(stat -f %p "$WORK/c-m3uc10/hello/repeat.txt")" ] && pass "uc10-mode" || fail "uc10-mode"
+xattr -l "$WORK/o-m3uc10/hello/repeat.txt" > "$WORK/uc10o.x" 2>&1; xattr -l "$WORK/c-m3uc10/hello/repeat.txt" > "$WORK/uc10c.x" 2>&1
+cmp -s "$WORK/uc10o.x" "$WORK/uc10c.x" && pass "uc10-xattr" || fail "uc10-xattr"
+mkm3 hello-lzfse -25 0 uc25; runm3 uc25 uc
+cmp -s "$WORK/o-m3uc25/hello/repeat.txt" "$WORK/c-m3uc25/hello/repeat.txt" && pass "uc25-repeat" || fail "uc25-repeat"
+mkm3 hello-lzfse -36 0 uc36; runm3 uc36 uc
+cmp -s "$WORK/o-m3uc36/hello/repeat.txt" "$WORK/c-m3uc36/hello/repeat.txt" && pass "uc36-repeat" || fail "uc36-repeat"
+mkm3 hello-lzfse -37 0 uc37; runm3 uc37 uc
+cmp -s "$WORK/o-m3uc37/hello/greet.txt" "$WORK/c-m3uc37/hello/greet.txt" && pass "uc37-greet" || fail "uc37-greet"
+[ ! -e "$WORK/o-m3uc37/hello/repeat.txt" ] && [ ! -e "$WORK/c-m3uc37/hello/repeat.txt" ] && pass "uc37-absent" || fail "uc37-absent"
+mkm3 hello-lzfse -100 0 uc100; runm3 uc100 uc
+cmp -s "$WORK/o-m3uc100/hello/greet.txt" "$WORK/c-m3uc100/hello/greet.txt" && pass "uc100-greet" || fail "uc100-greet"
+[ ! -e "$WORK/o-m3uc100/hello/repeat.txt" ] && [ ! -e "$WORK/c-m3uc100/hello/repeat.txt" ] && pass "uc100-absent" || fail "uc100-absent"
+mkm3 hello-lzfse 10 0 uh10; runm3 uh10 x; empty3 uh10
+mkm3 hello-lzfse 500 0 uh500; runm3 uh500 x; empty3 uh500
+mkm3 hello-lzfse 0 -1 pl1; runm3 pl1 x; empty3 pl1
+mkm3 hello-lzfse 0 -4 pl4; runm3 pl4 x; empty3 pl4
+mkm3 hello-lzfse 0 -5 pl5; runm3 pl5 x; empty3 pl5
+mkm3 hello-lzfse 0 -10 pl10; runm3 pl10 x; empty3 pl10
+mkm3 hello-lzfse 0 -100 pl100; runm3 pl100 x; empty3 pl100
+mkm3 hello-lzfse 0 1 phi; runm3 phi x; empty3 phi
+mkm3 empty-lzfse 1 0 sthi; runm3 sthi x; empty3 sthi
+mkm3 empty-lzfse -1 0 stlo; runm3 stlo x; empty3 stlo
+
 [ "$FAIL" -eq 0 ] && echo CBATTERY-GREEN || echo CBATTERY-RED
 exit "$FAIL"

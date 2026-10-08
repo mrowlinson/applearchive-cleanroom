@@ -40,11 +40,13 @@ class _PFail(Exception):
 
 
 CTOOL = "/usr/bin/compression_tool"
-CTOOL_ALG = {b"pbze": "lzfse", b"pbz4": "lz4", b"pbzm": "lzraven"}
+CTOOL_ALG = {b"pbz4": "lz4", b"pbzm": "lzraven"}
 _zbm = None
+_lzd = None
 
 
 def _zbm_dec(payload, unc):
+    """-> (bytes|None, got). None+0 = undecodable; None+got = mismatch."""
     global _zbm
     if _zbm is None:
         path = os.environ.get("ZBM_DYLIB")
@@ -55,28 +57,59 @@ def _zbm_dec(payload, unc):
                                         ctypes.c_void_p, ctypes.c_size_t,
                                         ctypes.POINTER(ctypes.c_size_t)]
         _zbm.zbm_decompress.restype = ctypes.c_int
-    out = ctypes.create_string_buffer(unc)
+    out = ctypes.create_string_buffer(unc if unc else 1)
     n = ctypes.c_size_t(0)
     r = _zbm.zbm_decompress(out, unc, payload, len(payload), ctypes.byref(n))
-    if r != 0 or n.value != unc:
-        raise FmtErr("zbm decode r=%d n=%d unc=%d" % (r, n.value, unc))
-    return bytes(out.raw)
+    if r != 0 or not n.value:
+        return None, 0
+    if n.value != unc:
+        return None, n.value
+    return bytes(out.raw), unc
+
+
+def _lib_dec(payload, unc):
+    """lzfse via system buffer API (same primitive as C decode_block).
+    -> (bytes|None, got)."""
+    global _lzd
+    if _lzd is None:
+        _lzd = ctypes.CDLL("/usr/lib/libcompression.dylib")
+        _lzd.compression_decode_buffer.argtypes = [ctypes.c_void_p,
+                                                   ctypes.c_size_t,
+                                                   ctypes.c_void_p,
+                                                   ctypes.c_size_t,
+                                                   ctypes.c_void_p,
+                                                   ctypes.c_int]
+        _lzd.compression_decode_buffer.restype = ctypes.c_size_t
+        _lzd.compression_decode_scratch_buffer_size.argtypes = [ctypes.c_int]
+        _lzd.compression_decode_scratch_buffer_size.restype = ctypes.c_size_t
+    out = ctypes.create_string_buffer(unc if unc else 1)
+    scr = ctypes.create_string_buffer(
+        _lzd.compression_decode_scratch_buffer_size(2049))
+    got = _lzd.compression_decode_buffer(out, unc, bytes(payload),
+                                         len(payload), scr, 2049)
+    if got == unc and unc:
+        return bytes(out.raw[:got]), got
+    if got:
+        return None, got
+    return None, 0
 
 
 def _ctool_dec(payload, alg, unc):
+    """-> (bytes|None, got)."""
     p = subprocess.run([CTOOL, "-decode", "-a", alg], input=payload,
                        capture_output=True)
     if p.returncode != 0:
-        raise FmtErr("compression_tool %s exit %d" % (alg, p.returncode))
+        return None, 0
     if len(p.stdout) != unc:
-        raise FmtErr("ctool %s size %d != %d" % (alg, len(p.stdout), unc))
-    return p.stdout
+        return None, len(p.stdout)
+    return p.stdout, unc
 
 
 def decode_block(magic, payload, unc, comp):
-    """Decode one block payload -> inner bytes (A-007 frame rule)."""
+    """Decode one block payload -> (bytes|None, got) tri-state (C mirror).
+    None+0 = undecodable (outSize -1); None+got = size mismatch."""
     if comp == unc:
-        return bytes(payload)
+        return bytes(payload), unc
     if magic == b"pbzz":
         try:
             raw = zlib.decompress(bytes(payload))
@@ -85,18 +118,25 @@ def decode_block(magic, payload, unc, comp):
                 # adler-broken streams decode (case188: oracle exit 0)
                 raw = zlib.decompress(bytes(payload[2:]), -15)
             except zlib.error:
-                raise FmtErr("codec pbzz decode")
-    elif magic == b"pbzx":
-        raw = lzma.decompress(bytes(payload))
-    elif magic in CTOOL_ALG:
+                return None, 0
+        if len(raw) != unc:
+            return None, len(raw)
+        return raw, unc
+    if magic == b"pbzx":
+        try:
+            raw = lzma.decompress(bytes(payload))
+        except lzma.LZMAError:
+            return None, 0
+        if len(raw) != unc:
+            return None, len(raw)
+        return raw, unc
+    if magic == b"pbze":
+        return _lib_dec(bytes(payload), unc)
+    if magic in CTOOL_ALG:
         return _ctool_dec(bytes(payload), CTOOL_ALG[magic], unc)
-    elif magic == b"pbzb":
+    if magic == b"pbzb":
         return _zbm_dec(bytes(payload), unc)
-    else:
-        raise FmtErr("unknown codec %r" % magic)
-    if len(raw) != unc:
-        raise FmtErr("codec %r size %d != %d" % (magic, len(raw), unc))
-    return raw
+    raise FmtErr("unknown codec %r" % magic)
 
 
 STREAM_TAIL = ("Extraction failed\nextract failedError 0xbd011800\n"
@@ -138,7 +178,7 @@ def _badval(pay, raw, bsize, blob=0):
             "stream cancelled" % (pay, raw, bsize))
 
 
-def _decfail(k, pay, raw, blob=0):
+def _decfail(k, pay, raw, out=-1, blob=0, have2=0):
     head = ("Extraction failed\nextract failedError 0xbd009800\n"
             "istream read error\n")
     if blob:
@@ -146,12 +186,14 @@ def _decfail(k, pay, raw, blob=0):
                  "archive stream read error (blob)\n")
     else:
         head += ("refill buffer\narchive stream read error (header)\n")
-    return (head + "flushing shared buffer\n"
-            "invalid output size/decoder error: block=%d, inSize=%d, "
-            "outSize=-1, expectedOutSize=%d\n"
+    s = head + "flushing shared buffer\n"
+    if not blob and 1 <= have2 <= 4:
+        s += "Truncated block header (%d/16 bytes read)\n" % have2
+    return (s + "invalid output size/decoder error: block=%d, inSize=%d, "
+            "outSize=%d, expectedOutSize=%d\n"
             "worker proc reported an error\nThreads reported errors\n"
             "ThreadPipelineDestroy\nprocessStream\ndecoder failed\n"
-            "stream cancelled" % (k, pay, raw))
+            "stream cancelled" % (k, pay, out, raw))
 
 
 def _midblob(mid):
@@ -162,7 +204,7 @@ def _midblob(mid):
         return _trunc("payload", a, b, 1)
     if kind == "badval":
         return _badval(a, b, c, 1)
-    return _decfail(a, b, c, 1)
+    return _decfail(a, b, c, mid.get("out", -1), 1)
 
 
 KNOWN_PBZ = (b"pbze", b"pbz4", b"pbzm", b"pbzb", b"pbzx", b"pbzz")
@@ -217,15 +259,21 @@ def parse_chain(data):
                                          "whole": len(inner), "kcut": k}
         payload = bytes(data[off + 16:off + 16 + comp])
         try:
-            inner += decode_block(magic, payload, unc, comp)
+            blk, got = decode_block(magic, payload, unc, comp)
         except FmtErr as e:
             if "ZBM_DYLIB" in str(e):
                 raise
+            raise
+        if blk is None:
+            out = got if got else -1
+            have2 = len(data) - off - 16 - comp
             if not blob:
-                raise FmtErr(_decfail(k, comp, unc))
+                raise FmtErr(_decfail(k, comp, unc, out, 0, have2))
             return bytes(inner), metas, {"kind": "decfail", "a": k,
                                          "b": comp, "c": unc,
-                                         "whole": len(inner), "kcut": k}
+                                         "whole": len(inner), "kcut": k,
+                                         "out": out}
+        inner += blk
         metas.append({"alg": magic.decode("ascii"), "stored": comp == unc,
                       "unc": unc, "comp": comp, "bsize": bsize})
         off += 16 + comp
@@ -517,7 +565,22 @@ def extract(items, root, fcls=0, fsub=0, shortidx=-1, midchain=False,
             if not midchain:
                 continue
             if typ == ord("F"):
-                if not shortpresent:
+                doff = None
+                dln = 0
+                off = 0
+                for key, st, val in entries:
+                    if st not in BLOB_W:
+                        continue
+                    if key == b"DAT":
+                        doff = off
+                        dln = val
+                        break
+                    off += val
+                dav = 0
+                if doff is not None:
+                    dav = max(len(inner) - (shortend + doff), 0)
+                datcomplete = doff is not None and dav >= dln
+                if not shortpresent and not datcomplete:
                     break
                 nch = (whole - 786432) // 262144 + 1 if whole >= 786432 else 0
                 hch = 0
@@ -527,19 +590,7 @@ def extract(items, root, fcls=0, fsub=0, shortidx=-1, midchain=False,
                     else:
                         break
                 want = hch * 262144
-                doff = None
-                off = 0
-                for key, st, val in entries:
-                    if st not in BLOB_W:
-                        continue
-                    if key == b"DAT":
-                        doff = off
-                        break
-                    off += val
-                dav = 0
-                if doff is not None:
-                    dav = max(len(inner) - (shortend + doff), 0)
-                wlen = min(want, dav)
+                wlen = dln if datcomplete else min(want, dav)
                 wbytes = (bytes(inner[shortend + doff:
                                       shortend + doff + wlen])
                           if doff is not None else b"")
@@ -601,9 +652,12 @@ def extract(items, root, fcls=0, fsub=0, shortidx=-1, midchain=False,
                     failed += 1
                     hdr[0] = True
                     break
-            elif b"DAT" not in blobs:
+            elif not any(kk == b"DAT" for kk, st, v in entries):
                 fsts.append(entries)
                 failed += 1
+                continue
+            elif b"DAT" not in blobs:
+                # DAT-short (normal-path shortidx dropped): silent skip.
                 continue
             else:
                 if os.path.islink(target):

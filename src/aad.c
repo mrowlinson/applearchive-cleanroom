@@ -63,22 +63,27 @@ static int read_file(const char *path, Buf *out) {
     return 0;
 }
 
-/* ---- block payload decode (one outer block) ---- */
+/* ---- block payload decode (one outer block) ----
+ * Tri-state: 0 ok (got==unc, out set); 1 size-mismatch (0<got<unc,
+ * out discarded, *got = actual); -1 undecodable (*got = 0). */
 static int decode_block(const unsigned char magic[4],
                         const unsigned char *pay, size_t comp,
-                        uint32_t unc, Buf *out) {
+                        uint32_t unc, Buf *out, size_t *got) {
+    *got = 0;
     if (comp == unc) { /* stored */
         unsigned char *d = malloc(comp ? comp : 1);
         memcpy(d, pay, comp);
         out->data = d; out->len = comp;
+        *got = comp;
         return 0;
     }
     if (!memcmp(magic, "pbzz", 4)) {
         unsigned char *d = malloc(unc ? unc : 1);
         uLongf dl = unc;
-        if (uncompress(d, &dl, pay, comp) == Z_OK && dl == unc) {
-            out->data = d; out->len = dl;
-            return 0;
+        if (uncompress(d, &dl, pay, comp) == Z_OK) {
+            *got = dl;
+            if (dl == unc) { out->data = d; out->len = dl; return 0; }
+            free(d); return 1;
         }
         /* oracle decodes adler-broken streams (case188): raw fallback */
         if (comp > 2) {
@@ -90,11 +95,12 @@ static int decode_block(const unsigned char magic[4],
                 zs.next_out = d;
                 zs.avail_out = unc;
                 int r = inflate(&zs, Z_FINISH);
-                int ok = (r == Z_STREAM_END && zs.total_out == unc);
+                size_t tot = zs.total_out;
                 inflateEnd(&zs);
-                if (ok) {
-                    out->data = d; out->len = unc;
-                    return 0;
+                if (r == Z_STREAM_END) {
+                    *got = tot;
+                    if (tot == unc) { out->data = d; out->len = unc; return 0; }
+                    free(d); return 1;
                 }
             }
         }
@@ -111,11 +117,12 @@ static int decode_block(const unsigned char magic[4],
     else { return -1; } /* unreachable: known_pbz gated */
     unsigned char *d = malloc(unc ? unc : 1);
     void *scr = malloc(compression_decode_scratch_buffer_size(alg));
-    size_t got = compression_decode_buffer(d, unc, pay, comp, scr, alg);
+    size_t g = compression_decode_buffer(d, unc, pay, comp, scr, alg);
     free(scr);
-    if (!got || got != unc) { free(d); return -1; }
-    out->data = d; out->len = got;
-    return 0;
+    *got = g;
+    if (g == unc && unc) { out->data = d; out->len = g; return 0; }
+    free(d);
+    return g ? 1 : -1;
 }
 
 /* ---- outer chain: length ladder + 12B prefix + [16B hdr + comp]* ---- */
@@ -186,7 +193,8 @@ static void emit_badval(unsigned long long pay, unsigned long long raw,
 }
 
 static void emit_decfail(unsigned long long k, unsigned long long pay,
-                         unsigned long long raw, int blob) {
+                         unsigned long long raw, long long out, int blob,
+                         unsigned long long have2) {
     fprintf(stderr, "Extraction failed\n"
             "extract failedError 0xbd009800\n"
             "istream read error\n");
@@ -196,16 +204,19 @@ static void emit_decfail(unsigned long long k, unsigned long long pay,
     else
         fprintf(stderr, "refill buffer\n"
                 "archive stream read error (header)\n");
-    fprintf(stderr, "flushing shared buffer\n"
-            "invalid output size/decoder error: block=%llu, inSize=%llu, "
-            "outSize=-1, expectedOutSize=%llu\n"
+    fprintf(stderr, "flushing shared buffer\n");
+    if (!blob && have2 >= 1 && have2 <= 4)
+        fprintf(stderr, "Truncated block header (%llu/16 bytes read)\n",
+                have2);
+    fprintf(stderr, "invalid output size/decoder error: block=%llu, inSize=%llu, "
+            "outSize=%lld, expectedOutSize=%llu\n"
             "worker proc reported an error\n"
             "Threads reported errors\n"
             "ThreadPipelineDestroy\n"
             "processStream\n"
             "decoder failed\n"
             "stream cancelled\n",
-            k, pay, raw);
+            k, pay, out, raw);
 }
 
 /* mid-chain soft failure: (blob) path extracts the decoded prefix. */
@@ -215,6 +226,7 @@ typedef struct {
     unsigned long long a, b, c; /* have/need | pay/raw/bsize | k/pay/raw */
     unsigned long long whole;   /* decoded bytes before failing block */
     unsigned long long kcut;    /* failing block index */
+    long long out;              /* decfail actual outSize, -1 undecodable */
 } MidFail;
 
 static void emit_midblob(const MidFail *mf) {
@@ -229,7 +241,7 @@ static void emit_midblob(const MidFail *mf) {
         emit_badval(mf->a, mf->b, mf->c, 1);
         break;
     case MF_DECFAIL:
-        emit_decfail(mf->a, mf->b, mf->c, 1);
+        emit_decfail(mf->a, mf->b, mf->c, mf->out, 1, 0);
         break;
     }
 }
@@ -319,10 +331,15 @@ static int parse_chain(const Buf *file, Buf *inner, MidFail *mf) {
             return 1;
         }
         Buf blk = { NULL, 0 };
-        if (decode_block(magic, d + off + 16, comp, unc, &blk)) {
+        size_t got = 0;
+        int dr = decode_block(magic, d + off + 16, comp, unc, &blk, &got);
+        if (dr) {
+            long long out = dr > 0 ? (long long)got : -1;
+            unsigned long long have2 =
+                (unsigned long long)(n - off - 16 - comp);
             if (!blob) {
                 emit_decfail(k, (unsigned long long)pay,
-                             (unsigned long long)raw, 0);
+                             (unsigned long long)raw, out, 0, have2);
                 fails = 1;
                 goto err;
             }
@@ -331,6 +348,7 @@ static int parse_chain(const Buf *file, Buf *inner, MidFail *mf) {
             mf->c = (unsigned long long)raw;
             mf->whole = (unsigned long long)acc.len;
             mf->kcut = k;
+            mf->out = out;
             *inner = acc;
             return 1;
         }
@@ -762,19 +780,24 @@ static int extract(const Item *items, size_t nitems, const char *root,
         if (midchain && shortidx == (size_t)-1 && nitems > 0 &&
             k == nitems - 1)
             continue; /* midchain clean parse: last item dropped (E4) */
-        if (k == shortidx) {
-            if (!midchain) continue; /* normal: wrapper reports overrun */
-            if (t->num == 'F') {
-                /* midchain short file: absent unless present-rule;
-                 * else held 256K chunks of DAT prefix (DPROBE-10). */
-                if (!shortpresent) break; /* absent */
-                unsigned long long nch = whole >= 786432 ?
-                    (whole - 786432) / 262144 + 1 : 0;
-                unsigned long long hch = 0;
-                for (unsigned long long j = 0; j < nch; j++) {
-                    if (shortend + 0ULL <= (nch - j) * 262144ULL) hch++;
-                    else break;
-                }
+        /* DAT-complete short files take the normal path (unclo FULL). */
+        int shortfull = 0;
+        if (k == shortidx && !midchain && t->num == 'F') {
+            size_t sdl = 0;
+            const unsigned char *sdd = blob_for(it, "DAT", &sdl);
+            if (!sdd) { fsts[nfsts++] = k; fails++; continue; }
+            size_t sdoff = (size_t)(sdd - it->blobs);
+            size_t sdav = sdoff <= it->bloblen ? it->bloblen - sdoff : 0;
+            if (sdav < sdl) continue; /* DAT-short: silent skip + wrapper */
+            shortfull = 1; /* DAT-complete: normal F path (FULL write) */
+        }
+        if (k == shortidx && !shortfull) {
+            if (!midchain) {
+                /* non-F short: normal create once, then stop */
+                shortstop = 1;
+            } else if (t->num == 'F') {
+                /* midchain short file: absent unless present-rule or
+                 * DAT-complete; FULL DAT if complete else 256K chunks. */
                 size_t dl = 0;
                 const unsigned char *dd = blob_for(it, "DAT", &dl);
                 size_t doff = 0, dav = 0;
@@ -782,8 +805,18 @@ static int extract(const Item *items, size_t nitems, const char *root,
                     doff = (size_t)(dd - it->blobs);
                     dav = doff <= it->bloblen ? it->bloblen - doff : 0;
                 }
+                int datcomplete = dd && dav >= dl;
+                if (!shortpresent && !datcomplete) break; /* absent */
+                unsigned long long nch = whole >= 786432 ?
+                    (whole - 786432) / 262144 + 1 : 0;
+                unsigned long long hch = 0;
+                for (unsigned long long j = 0; j < nch; j++) {
+                    if (shortend + 0ULL <= (nch - j) * 262144ULL) hch++;
+                    else break;
+                }
                 unsigned long long want = hch * 262144ULL;
-                size_t wlen = want < dav ? (size_t)want : dav;
+                size_t wlen = datcomplete ? dl :
+                    (want < dav ? (size_t)want : dav);
                 char *sl = strrchr(target, '/');
                 if (sl) {
                     *sl = 0;
@@ -812,8 +845,9 @@ static int extract(const Item *items, size_t nitems, const char *root,
                 memcpy(files[nfiles].path, target, strlen(target) + 1);
                 files[nfiles].idx = k; files[nfiles].islink = 0; nfiles++;
                 break; /* rest skipped */
+            } else {
+                shortstop = 1;
             }
-            shortstop = 1; /* non-F short: normal create once, then stop */
         }
         if (t->num == 'D') {
             if (mkdirs(target)) {
