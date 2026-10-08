@@ -61,6 +61,25 @@ _T4F2526 = ("7c76", "7c77", "3c80", "3c81", "3c82", "3c83", "3c84", "3c85",
 _T4F2429 = ("3cfc276a6b0c", "833c48262b0c", "19bca3e3cb0b", "ecbc51262b0c",
             "943c33a28b0b", "387ca6e3cb0b", "ed3ca7e3cb0b", "c07c55262b0c",
             "56fcb0e3cb0b", "1dfc37a28b0b")
+# T4G D2b1 band consts (b14/15/21/22/23/28), key (off-980)>>4 (OPEN why).
+_T4GBAND = ((0x5a, 0x26, 0xee, 0x9b, 0x07, 0x61),
+            (0xb2, 0xe3, 0xae, 0x8e, 0x77, 0x5e),
+            (0x62, 0x26, 0x0e, 0x89, 0x3f, 0x61),
+            (0x02, 0x62, 0x8e, 0x82, 0x8f, 0x5a))
+# T4G D2b1 16-tables for b29/b30/b31, key (off-980)&15 (OPEN why).
+_T4GB29 = (0x30, 0xe0, 0x90, 0x40, 0xf0, 0xa0, 0x50, 0x00, 0xb0, 0x60,
+           0x10, 0xc0, 0x70, 0x20, 0xd0, 0x80)
+_T4GB30 = (0xfc, 0xfc, 0xfd, 0xfe, 0xfe, 0xff, 0xe0, 0xe1, 0xe1, 0xe2,
+           0xe3, 0xe3, 0xe4, 0xe5, 0xe5, 0xe6)
+_T4GB31 = (0x1d, 0x5d, 0x9d, 0xdd, 0x1d, 0x5d, 0x9f, 0xdf, 0x1f, 0x5f,
+           0x9f, 0xdf, 0x1f, 0x5f, 0x9f, 0xdf)
+# T4H D2b2 16-tables for b26/b34/b35, key (off-1044)&15 (OPEN why).
+_T4HT26 = (0xd3, 0xd3, 0xd5, 0xd7, 0xd7, 0xd9, 0xd9, 0xdb, 0xdd, 0xdd,
+           0xdf, 0xdf, 0xe1, 0xe3, 0xe3, 0xe5)
+_T4HT34 = (0x80, 0x80, 0xc0, 0x00, 0x00, 0x40, 0x40, 0x80, 0xc0, 0xc0,
+           0x00, 0x00, 0x40, 0x80, 0x80, 0xc0)
+_T4HT35 = (0x6c, 0x7c, 0x71, 0x67, 0x77, 0x6c, 0x7c, 0x71, 0x66, 0x76,
+           0x6c, 0x7c, 0x71, 0x66, 0x76, 0x6b)
 
 
 def bit(p, i):
@@ -634,6 +653,101 @@ def main():
             if pay[b] != v:
                 return fail("%s const %d" % (tag, b))
         print("CLOSED %s N=%d off=%d" % (tag, n, off))
+        return 0
+    if n <= 1864:  # T4 plateau G = D2b1 (NOTE-w2s7-20: bands + 16-tabs)
+        if len(pay) != 48:
+            return fail("T4G paylen")
+        off = n - 821
+        if grp(pay, tuple(range(32, 42))) != (((n << 1) | 1) & 0x3FF):
+            return fail("T4G lencode")
+        if pay[5] != 0x26:
+            return fail("T4G b5")
+        k = (off - 980) >> 4
+        m = (off - 980) & 15
+        if (pay[14], pay[15], pay[21], pay[22], pay[23],
+                pay[28]) != _T4GBAND[k]:
+            return fail("T4G band")
+        if pay[24] != (0x4B, 0x6B, 0x8B, 0xAB)[m >> 2]:
+            return fail("T4G b24")
+        if pay[29] != _T4GB29[m] or pay[30] != _T4GB30[m] or \
+                pay[31] != _T4GB31[m]:
+            return fail("T4G tab16")
+        for b, v in ((0, 0xca), (1, 0x3f), (2, 0x8c), (3, 0), (6, 0xc5),
+                     (7, 0x86), (8, 0x6f), (9, 0xf1), (10, 0), (11, 0),
+                     (12, 0x6e), (13, 0x44), (16, 0x57), (17, 0xb5),
+                     (18, 0xb9), (19, 0x16), (20, 0x08), (25, 0xdd),
+                     (26, 0x8d), (27, 0x8f), (32, 0x6d), (33, 0x16),
+                     (34, 0xc0), (35, 0x74), (36, 0x24), (37, 0xa7),
+                     (38, 0xd6), (39, 0x3e), (40, 0x83), (41, 0xc6),
+                     (42, 0x43), (43, 0x4d), (44, 0x06), (45, 0x5f),
+                     (46, 0xa6), (47, 0xfc)):
+            if pay[b] != v:
+                return fail("T4G const %d" % b)
+        print("CLOSED T4G N=%d off=%d" % (n, off))
+        return 0
+    if n <= 2047:  # T4 plateau H = D2b2 (NOTE-w2s7-21: tabs + counters)
+        if len(pay) != 48:
+            return fail("T4H paylen")
+        off = n - 821
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if grp(pay, tuple(range(32, 42))) != l10:
+            return fail("T4H lencode")
+        if pay[5] != (0x24 | (l10 >> 8)):
+            return fail("T4H b5")
+        k2 = (off - 1044) >> 4
+        m = (off - 1044) & 15
+        if pay[26] != _T4HT26[m] or pay[34] != _T4HT34[m] or \
+                pay[35] != _T4HT35[m]:
+            return fail("T4H tab16")
+        if pay[28] != ((0x86 + k2 * 0x16) & 0xFF) or \
+                pay[30] != ((0x43 + k2 * 8) & 0xFF):
+            return fail("T4H ctr")
+        if pay[29] != (0xFC if k2 >= 6 else 0xBF):
+            return fail("T4H b29")
+        for b, v in ((0, 0xca), (1, 0x3f), (2, 0xcc), (3, 0x08), (6, 0xc5),
+                     (7, 0x86), (8, 0x6f), (9, 0xf1), (10, 0), (11, 0),
+                     (12, 0xee), (13, 0xaa), (14, 0x66), (15, 0x26),
+                     (16, 0xe6), (17, 0x5a), (18, 0x8c), (19, 0x48),
+                     (20, 0x08), (21, 0x6e), (22, 0x96), (23, 0x77),
+                     (24, 0x2b), (25, 0x0c), (27, 0xf8), (31, 0xdd),
+                     (32, 0x6d), (33, 0x16), (36, 0x48), (37, 0x66),
+                     (38, 0x6a), (39, 0xed), (40, 0x68), (41, 0x3c),
+                     (42, 0xd4), (43, 0x94), (44, 0x06), (45, 0x5f),
+                     (46, 0xa6), (47, 0xfc)):
+            if pay[b] != v:
+                return fail("T4H const %d" % b)
+        print("CLOSED T4H N=%d off=%d" % (n, off))
+        return 0
+    if n <= 2120:  # T4 plateau I = D2c1 (NOTE-w2s7-22: H-regime cont)
+        if len(pay) != 48:
+            return fail("T4I paylen")
+        off = n - 821
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if grp(pay, tuple(range(32, 42))) != l10:
+            return fail("T4I lencode")
+        if pay[5] != (0x40 | (l10 >> 8)) or pay[29] != 0xFC:
+            return fail("T4I b5b29")
+        m = (off - 1044) & 15
+        k2 = (off - 1044) >> 4
+        if pay[26] != _T4HT26[m] or pay[34] != _T4HT34[m] or \
+                pay[35] != _T4HT35[m]:
+            return fail("T4I tab16")
+        if pay[28] != ((0x86 + k2 * 0x16) & 0xFF) or \
+                pay[30] != ((0x43 + k2 * 8) & 0xFF):
+            return fail("T4I ctr")
+        for b, v in ((0, 0x94), (1, 0x7f), (2, 0x98), (3, 0x11), (6, 0x8a),
+                     (7, 0x0d), (8, 0xf0), (9, 0xe2), (10, 0x01),
+                     (11, 0), (12, 0xee), (13, 0xaa), (14, 0x66),
+                     (15, 0x26), (16, 0xe6), (17, 0x5a), (18, 0x8c),
+                     (19, 0x48), (20, 0x08), (21, 0x6e), (22, 0x96),
+                     (23, 0x77), (24, 0x2b), (25, 0x0c), (27, 0xf8),
+                     (31, 0xdd), (32, 0x6d), (33, 0x16), (36, 0x48),
+                     (37, 0x66), (38, 0x6a), (39, 0xed), (40, 0x68),
+                     (41, 0x3c), (42, 0xd4), (43, 0x94), (44, 0x06),
+                     (45, 0x67), (46, 0xa6), (47, 0xfc)):
+            if pay[b] != v:
+                return fail("T4I const %d" % b)
+        print("CLOSED T4I N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
