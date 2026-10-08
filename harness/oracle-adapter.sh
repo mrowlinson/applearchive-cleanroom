@@ -47,10 +47,12 @@ case "$cmd" in
     # PARENT-024 (a): always -t 1 (deterministic block-layer
     # error-path mirror target; default threading races failure
     # cosmetics machine-dependently).
+    # PARENT-025: also -wt 1 (pins midchain flush-timing prefix
+    # sizes at race-SET MAX; proven 16/16 + x10 per cell).
     [ $# -eq 2 ] || die "usage: aar-decode IN.aar OUTDIR"
     need_file "$1"
     mkdir -p "$2"
-    exec "$AA" extract -t 1 -i "$1" -d "$2"
+    exec "$AA" extract -t 1 -wt 1 -i "$1" -d "$2"
     ;;
   aar-list)
     # adapter aar-list IN.aar  (bytes-in, text-out)

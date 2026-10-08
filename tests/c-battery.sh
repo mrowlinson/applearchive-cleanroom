@@ -14,6 +14,10 @@ die() { echo "HARNESS-ERROR $*" >&2; exit 2; }
 t1pin() { # $1=oracle-stderr $2=tag: -t shape pin (PARENT-024: every outer cell proves -t-1 oracle)
   grep -q '0x9403' "$1" && pass "$2-t1pin" || fail "$2-t1pin"
 }
+freeze() { # $1=srcdir: fixed mtimes (DPROBE-17) so self-generated
+  # crafts are byte-identical run to run (mtimes embed in stream).
+  find "$1" -exec touch -h -t 202001020304.05 {} + 2>/dev/null || true
+}
 
 command -v cc >/dev/null || die "no cc"
 make -C "$ROOT" OUTDIR="$WORK/build" >/dev/null 2>&1 || die "make failed"
@@ -37,6 +41,7 @@ printf 'sub\n' > "$WORK/src/sub/g.txt"
 xattr -w com.example.tag "TAGBYTES" "$WORK/src/f.txt" 2>/dev/null || die "xattr"
 touch -t 202001020304.05 "$WORK/src/f.txt" "$WORK/src/sub/g.txt"
 for a in lzfse lzma lzraven zlib lz4 lzbitmap raw; do
+  freeze "$WORK/src"
   sh "$ADAPTER" aar-encode --alg "$a" --threads 1 "$WORK/src" "$WORK/$a.aar" >/dev/null 2>&1 || { fail "enc-$a"; continue; }
   sh "$ADAPTER" aar-decode "$WORK/$a.aar" "$WORK/o-$a" >/dev/null 2>&1 || { fail "odec-$a"; continue; }
   "$AAD" "$WORK/$a.aar" "$WORK/c-$a" 2>/dev/null || { fail "cdec-$a"; continue; }
@@ -67,9 +72,10 @@ for i in range(20):
   p += '/nest%d' % i; os.makedirs(p, exist_ok=True)
 open(p + '/deep.txt', 'w').write('deep\n')
 open(d + '/odd name;with&chars().txt', 'w').write('odd\n')
-open(d + '/big.bin', 'wb').write(os.urandom(2000000))
+import random as _r; open(d + '/big.bin', 'wb').write(_r.Random(777001).randbytes(2000000))
 "
 for a in lzfse zlib raw; do
+  freeze "$WORK/wsrc"
   sh "$ADAPTER" aar-encode --alg "$a" --threads 1 "$WORK/wsrc" "$WORK/w-$a.aar" >/dev/null 2>&1 || { fail "wenc-$a"; continue; }
   sh "$ADAPTER" aar-decode "$WORK/w-$a.aar" "$WORK/wo-$a" >/dev/null 2>&1 || { fail "wodec-$a"; continue; }
   "$AAD" "$WORK/w-$a.aar" "$WORK/wc-$a" 2>/dev/null || { fail "wcdec-$a"; continue; }
@@ -79,6 +85,7 @@ done
 echo "== cell multiblock =="
 python3 -c "open('$WORK/big.bin','wb').write(b'Q'*300000)"
 mkdir -p "$WORK/bsrc"; mv "$WORK/big.bin" "$WORK/bsrc/"
+freeze "$WORK/bsrc"
 sh "$ADAPTER" aar-encode --alg lzfse --block 64k --threads 1 "$WORK/bsrc" "$WORK/mb.aar" >/dev/null 2>&1 || die "mb encode"
 sh "$ADAPTER" aar-decode "$WORK/mb.aar" "$WORK/o-mb" >/dev/null 2>&1 || die "mb oracle"
 "$AAD" "$WORK/mb.aar" "$WORK/c-mb" 2>/dev/null || fail "mb-cdec"
@@ -89,6 +96,7 @@ mkdir -p "$WORK/hsrc"
 printf 'AAA-group0\n' > "$WORK/hsrc/a1.txt"; ln "$WORK/hsrc/a1.txt" "$WORK/hsrc/a2.txt"; ln "$WORK/hsrc/a1.txt" "$WORK/hsrc/a3.txt"
 printf 'BBB-group1\n' > "$WORK/hsrc/b1.txt"; ln "$WORK/hsrc/b1.txt" "$WORK/hsrc/b2.txt"
 printf 'lonely\n' > "$WORK/hsrc/solo.txt"
+freeze "$WORK/hsrc"
 sh "$ADAPTER" aar-encode --alg lzfse --threads 1 "$WORK/hsrc" "$WORK/hl.aar" >/dev/null 2>&1 || die "hl encode"
 sh "$ADAPTER" aar-decode "$WORK/hl.aar" "$WORK/o-hl" >/dev/null 2>&1 || die "hl oracle"
 "$AAD" "$WORK/hl.aar" "$WORK/c-hl" 2>/dev/null || fail "hl-cdec"
@@ -110,6 +118,7 @@ echo "== cell special-types =="
 mkdir -p "$WORK/ssrc"
 python3 -c "import socket; s=socket.socket(socket.AF_UNIX); s.bind('$WORK/ssrc/sock.s'); s.close()" || die "socket mksock"
 printf 'keepme\n' > "$WORK/ssrc/keep.txt"
+freeze "$WORK/ssrc"
 sh "$ADAPTER" aar-encode --alg lzfse --threads 1 "$WORK/ssrc" "$WORK/sk.aar" >/dev/null 2>&1 || die "sk encode"
 ORC=0; sh "$ADAPTER" aar-decode "$WORK/sk.aar" "$WORK/o-sk" >/dev/null 2>&1 || ORC=$?
 CRC=0; "$AAD" "$WORK/sk.aar" "$WORK/c-sk" 2>/dev/null || CRC=$?
@@ -192,7 +201,7 @@ diff -r "$WORK/o-bd" "$WORK/c-bd" >/dev/null 2>&1 && pass "bd-tree" || fail "bd-
 grep -q "not implemented yet" "$WORK/sx.err" && grep -q "1 entries failed to extract" "$WORK/sx.err" && pass "sx-tokens" || fail "sx-tokens"
 
 echo "== cell errors =="
-head -c 100 /dev/urandom > "$WORK/corrupt.aar"
+python3 -c "import random; open('$WORK/corrupt.aar','wb').write(random.Random(777005).randbytes(100))"
 "$AAD" "$WORK/corrupt.aar" "$WORK/c-cor" 2>/dev/null && fail "corrupt-exit" || pass "corrupt-exit"
 head -c 20 "$V/aar/hello-lzfse.aar" > "$WORK/trunc.aar"
 "$AAD" "$WORK/trunc.aar" "$WORK/c-tru" 2>/dev/null && fail "trunc-exit" || pass "trunc-exit"
@@ -297,6 +306,7 @@ grep -q "process dirs" "$WORK/xd.err" && ! grep -q "entries failed" "$WORK/xd.er
 
 echo "== cell xat-2dirs (continue, one trailer, no count) =="
 mkdir -p "$WORK/x2src/a/b"; printf 'x\n' > "$WORK/x2src/a/b/f.txt"; printf 'y\n' > "$WORK/x2src/a/g.txt"
+freeze "$WORK/x2src"
 sh "$ADAPTER" aar-encode --alg raw --threads 1 "$WORK/x2src" "$WORK/x2.aar" >/dev/null 2>&1 || die "x2 encode"
 python3 "$HERE/craft.py" killxatpat "$WORK/x2.aar" "$WORK/xd2.aar" a a/b || die "craft-xd2"
 ORC=0; sh "$ADAPTER" aar-decode "$WORK/xd2.aar" "$WORK/o-x2" >/dev/null 2>&1 || ORC=$?
@@ -401,7 +411,8 @@ CRC=0; "$AAD" "$WORK/f3.aar" "$WORK/c-po" 2>"$WORK/po.err" || CRC=$?
 diff -r "$WORK/o-po" "$WORK/c-po" >/dev/null 2>&1 && pass "po-tree" || fail "po-tree"
 
 echo "== cell parse-blobover-long (clean A-028 create: n6c-class) =="
-mkdir -p "$WORK/po6src"; dd if=/dev/urandom of="$WORK/po6src/big1" bs=1024 count=500 2>/dev/null; dd if=/dev/urandom of="$WORK/po6src/big2" bs=1024 count=400 2>/dev/null
+mkdir -p "$WORK/po6src"; python3 -c "import random; r=random.Random(777002); open('$WORK/po6src/big1','wb').write(r.randbytes(500*1024)); open('$WORK/po6src/big2','wb').write(r.randbytes(400*1024))"
+freeze "$WORK/po6src"
 sh "$ADAPTER" aar-encode --alg lzfse --block 128k --threads 1 "$WORK/po6src" "$WORK/po6c-base.aar" >/dev/null 2>&1 || die "po6 encode"
 python3 "$HERE/craft.py" setbloblen "$WORK/po6c-base.aar" "$WORK/po6c.aar" big2 DAT 2000000 || die "craft-po6c"
 ORC=0; sh "$ADAPTER" aar-decode "$WORK/po6c.aar" "$WORK/o-po6" >/dev/null 2>"$WORK/po6-o.err" || ORC=$?
@@ -508,6 +519,7 @@ diff "$WORK/dd-o.err" "$WORK/dd.err" >/dev/null 2>&1 && pass "dd-shape" || fail 
 
 echo "== cell tri-class (S + nodat + dirXAT) =="
 mkdir -p "$WORK/trisrc/a/b"; printf 'x\n' > "$WORK/trisrc/a/b/f.txt"; printf 'y\n' > "$WORK/trisrc/a/g.txt"
+freeze "$WORK/trisrc"
 sh "$ADAPTER" aar-encode --alg raw --threads 1 "$WORK/trisrc" "$WORK/tri0.aar" >/dev/null 2>&1 || die "tri encode"
 python3 "$HERE/craft.py" blankdat "$WORK/tri0.aar" "$WORK/tri1.aar" a/b/f.txt || die "craft-tri"
 python3 "$HERE/craft.py" settyppat "$WORK/tri1.aar" "$WORK/tri2.aar" a/g.txt S || die "craft-tri2"
@@ -641,7 +653,8 @@ done
 [ ! -e "$WORK/c-m1f/hello/greet.txt" ] && pass "m1f-skip" || fail "m1f-skip"
 
 echo "== cell midchain-blob (whole>=256K: (blob) + partial, normalized) =="
-mkdir -p "$WORK/mcsrc"; dd if=/dev/urandom of="$WORK/mcsrc/big1" bs=1024 count=400 2>/dev/null; dd if=/dev/urandom of="$WORK/mcsrc/big2" bs=1024 count=300 2>/dev/null
+mkdir -p "$WORK/mcsrc"; python3 -c "import random; r=random.Random(777003); open('$WORK/mcsrc/big1','wb').write(r.randbytes(400*1024)); open('$WORK/mcsrc/big2','wb').write(r.randbytes(300*1024))"
+freeze "$WORK/mcsrc"
 sh "$ADAPTER" aar-encode --alg lzfse --block 128k --threads 1 "$WORK/mcsrc" "$WORK/mc.aar" >/dev/null 2>&1 || die "mc encode"
 MCOFF1=$(python3 -c "import struct,sys; d=open('$WORK/mc.aar','rb').read(); o=12; bs=[];
 while o < len(d):
@@ -711,6 +724,7 @@ cmp -s "$WORK/mcsrc/big1" "$WORK/o-mc4/big1" && pass "mc4-big1full" || fail "mc4
 
 echo "== cell midchain-decfail (decode fail both flavors) =="
 mkdir -p "$WORK/mzsrc"; dd if=/dev/zero of="$WORK/mzsrc/f" bs=1024 count=600 2>/dev/null
+freeze "$WORK/mzsrc"
 sh "$ADAPTER" aar-encode --alg lzfse --block 256k --threads 1 "$WORK/mzsrc" "$WORK/mz.aar" >/dev/null 2>&1 || die "mz encode"
 MZ1=$(python3 -c "import struct; d=open('$WORK/mz.aar','rb').read(); o=12; bs=[];
 while o < len(d):
@@ -751,11 +765,11 @@ echo "== cell midchain-content (presence + 256K chunks, stable zones) =="
 mkcx() { # $1=b1KB(0=single) $2=cutblock $3=name
   rm -rf "$WORK/cx$3src"; mkdir -p "$WORK/cx$3src"
   if [ "$1" -gt 0 ]; then
-    dd if=/dev/urandom of="$WORK/cx$3src/b1" bs=1024 count="$1" 2>/dev/null
-    dd if=/dev/urandom of="$WORK/cx$3src/b2" bs=1024 count=1024 2>/dev/null
+    python3 -c "import random; r=random.Random(777004); open('$WORK/cx$3src/b1','wb').write(r.randbytes($1*1024)); open('$WORK/cx$3src/b2','wb').write(r.randbytes(1024*1024))"
   else
-    dd if=/dev/urandom of="$WORK/cx$3src/big" bs=1024 count=1024 2>/dev/null
+    python3 -c "import random; r=random.Random(777004); open('$WORK/cx$3src/big','wb').write(r.randbytes(1024*1024))"
   fi
+  freeze "$WORK/cx$3src"
   sh "$ADAPTER" aar-encode --alg lzfse --block 128k --threads 1 "$WORK/cx$3src" "$WORK/cx$3.aar" >/dev/null 2>&1 || die "cx$3 encode"
   CXC=$(python3 -c "import struct; d=open('$WORK/cx$3.aar','rb').read(); o=12; bs=[];
 while o < len(d):
@@ -817,6 +831,7 @@ cmp -s "$WORK/cxHsrc/b1" "$WORK/o-cxH/b1" && pass "cxH-b1full" || fail "cxH-b1fu
 
 echo "== cell g-collision (G3 symlink-occupant + G5 missing-parents + G6 replace-modal) =="
 mkdir -p "$WORK/gsrc"; printf 'A1-content' > "$WORK/gsrc/victim"; printf 'A2-content' > "$WORK/gsrc/vdir"
+freeze "$WORK/gsrc"
 sh "$ADAPTER" aar-encode --alg raw --threads 1 "$WORK/gsrc" "$WORK/g.aar" >/dev/null 2>&1 || die "g encode"
 for S in o c p; do rm -rf "$WORK/g$S"; mkdir -p "$WORK/g$S"; printf 'old' > "$WORK/g$S/elsewhere"; ln -s elsewhere "$WORK/g$S/victim"; mkdir -p "$WORK/g$S/somedir"; ln -s somedir "$WORK/g$S/vdir"; done
 ORC=0; sh "$ADAPTER" aar-decode "$WORK/g.aar" "$WORK/go" >/dev/null 2>"$WORK/g-o.err" || ORC=$?
@@ -839,6 +854,7 @@ diff -r "$WORK/g5o/sub" "$WORK/g5c/sub" >/dev/null 2>&1 && pass "g5mk-tree" || f
 diff -r "$WORK/g5c/sub" "$WORK/g5p/sub" >/dev/null 2>&1 && pass "g5mk-lock" || fail "g5mk-lock"
 [ ! -s "$WORK/g5-o.err" ] && [ ! -s "$WORK/g5.err" ] && pass "g5mk-silent" || fail "g5mk-silent"
 mkdir -p "$WORK/g6src/dd"; printf 'kid-bytes' > "$WORK/g6src/dd/kid"; chmod 700 "$WORK/g6src/dd"
+freeze "$WORK/g6src"
 sh "$ADAPTER" aar-encode --alg raw --threads 1 "$WORK/g6src" "$WORK/g6.aar" >/dev/null 2>&1 || die "g6 encode"
 for S in o c p; do rm -rf "$WORK/g6$S"; mkdir -p "$WORK/g6$S"; printf 'keepme' > "$WORK/g6$S/dd"; chmod 644 "$WORK/g6$S/dd"; done
 ORC=0; sh "$ADAPTER" aar-decode "$WORK/g6.aar" "$WORK/g6o" 2>"$WORK/g6-o.err" >/dev/null || ORC=$?
@@ -899,6 +915,7 @@ mkm3 empty-lzfse -1 0 stlo; runm3 stlo; empty3 stlo
 echo "== cell g9-traversal (sym/file/dangling planted parent) =="
 mkdir -p "$WORK/g9src/a" "$WORK/g9src/b/deep"
 printf 'hello-f\n' > "$WORK/g9src/a/f.txt"; ln -s f.txt "$WORK/g9src/a/l.lnk"; printf 'deep-g\n' > "$WORK/g9src/b/deep/g.txt"
+freeze "$WORK/g9src"
 sh "$ADAPTER" aar-encode --alg raw --threads 1 "$WORK/g9src" "$WORK/g9.aar" >/dev/null 2>&1 || die "g9 encode"
 cat > "$WORK/g9modal.err" <<'EOF'
 Error 0x83058800
@@ -1050,6 +1067,7 @@ echo "== cell m2clean-cuts (PRE-007 unified short rule, self-gen) =="
 mkdir -p "$WORK/m2src"
 python3 -c "import random; r=random.Random(40608); open('$WORK/m2src/big1','wb').write(r.randbytes(500*1024)); open('$WORK/m2src/big2','wb').write(r.randbytes(3*1024*1024))"
 for blk in 1m 512k 128k; do
+  freeze "$WORK/m2src"
   sh "$ADAPTER" aar-encode --alg lzfse --block "$blk" --threads 1 "$WORK/m2src" "$WORK/m2-$blk.aar" >/dev/null 2>&1 || die "m2 encode $blk"
 done
 cat > "$WORK/m2wrap.err" <<'EOF'
@@ -1111,10 +1129,14 @@ done
 echo "== cell m2dev-truncpay (dev-formula + trunchdr-cap + A-028, self-gen) =="
 mkdir -p "$WORK/dsrcA" "$WORK/dsrcB" "$WORK/dsrcC" "$WORK/dsrc511" "$WORK/dsrc512" "$WORK/dsrc750" "$WORK/dsrc800" "$WORK/dsrc600" "$WORK/dsrc350"
 python3 -c "import random; r=random.Random(91827); open('$WORK/dsrcA/big1','wb').write(r.randbytes(500*1024)); open('$WORK/dsrcA/big2','wb').write(r.randbytes(2*1024*1024)); open('$WORK/dsrcB/big1','wb').write(r.randbytes(500*1024)); open('$WORK/dsrcB/big2','wb').write(r.randbytes(3*1024*1024)); open('$WORK/dsrcC/big1','wb').write(r.randbytes(500*1024)); open('$WORK/dsrcC/big2','wb').write(r.randbytes(2*1024*1024)); open('$WORK/dsrc511/big1','wb').write(r.randbytes(511*1024)); open('$WORK/dsrc511/big2','wb').write(r.randbytes(1024*1024)); open('$WORK/dsrc512/big1','wb').write(r.randbytes(512*1024)); open('$WORK/dsrc512/big2','wb').write(r.randbytes(1024*1024)); open('$WORK/dsrc750/big1','wb').write(r.randbytes(750*1024)); open('$WORK/dsrc750/big2','wb').write(r.randbytes(1024*1024)); open('$WORK/dsrc800/big1','wb').write(r.randbytes(800*1024)); open('$WORK/dsrc800/big2','wb').write(r.randbytes(1024*1024)); open('$WORK/dsrc600/big1','wb').write(r.randbytes(600*1024)); open('$WORK/dsrc600/big2','wb').write(r.randbytes(1024*1024)); open('$WORK/dsrc350/big1','wb').write(r.randbytes(350*1024)); open('$WORK/dsrc350/big2','wb').write(r.randbytes(300*1024))"
+freeze "$WORK/dsrcA"
 sh "$ADAPTER" aar-encode --alg lzfse --block 128k --threads 1 "$WORK/dsrcA" "$WORK/dv-128k.aar" >/dev/null 2>&1 || die "dev encode 128k"
+freeze "$WORK/dsrcB"
 sh "$ADAPTER" aar-encode --alg lzfse --block 1m --threads 1 "$WORK/dsrcB" "$WORK/dv-1m.aar" >/dev/null 2>&1 || die "dev encode 1m"
+freeze "$WORK/dsrcC"
 sh "$ADAPTER" aar-encode --alg lzfse --block 256k --threads 1 "$WORK/dsrcC" "$WORK/dv-256k.aar" >/dev/null 2>&1 || die "dev encode 256k"
 for e in 511 512 750 800 600 350; do
+  freeze "$WORK/dsrc$e"
   sh "$ADAPTER" aar-encode --alg lzfse --block 128k --threads 1 "$WORK/dsrc$e" "$WORK/dv-edge$e.aar" >/dev/null 2>&1 || die "dev encode edge$e"
 done
 # spec blk:k:fracN:fracD:kind:expC:oset  (kind=pay|hdr|hard; oset=oracle sizes, 0=empty-file)
@@ -1194,6 +1216,7 @@ d = bytearray(open('$WORK/chV2base.aar', 'rb').read())
 d[33:49] = bytes(16)
 open('$WORK/chV2.aar', 'wb').write(bytes(d))" || die "craft-chV2"
 mkdir -p "$WORK/chmzsrc"; dd if=/dev/zero of="$WORK/chmzsrc/f" bs=1024 count=600 2>/dev/null
+freeze "$WORK/chmzsrc"
 sh "$ADAPTER" aar-encode --alg lzfse --block 256k --threads 1 "$WORK/chmzsrc" "$WORK/chmz.aar" >/dev/null 2>&1 || die "chmz encode"
 CHMZ1=$(python3 -c "import struct; d=open('$WORK/chmz.aar','rb').read(); o=12; bs=[];
 while o < len(d):
@@ -1223,8 +1246,11 @@ mkdir -p "$WORK/t2src/big" "$WORK/t2m2" "$WORK/t2dsrcB"
 python3 -c "import random; r=random.Random(112358); open('$WORK/t2src/big/r500k.bin','wb').write(r.randbytes(500000)); open('$WORK/t2src/big/z3m.bin','wb').write(bytes(3000000))"
 python3 -c "import random; r=random.Random(40608); open('$WORK/t2m2/big1','wb').write(r.randbytes(500*1024)); open('$WORK/t2m2/big2','wb').write(r.randbytes(3*1024*1024))"
 python3 -c "import random; r=random.Random(91827); a1=r.randbytes(500*1024); a2=r.randbytes(2*1024*1024); open('$WORK/t2dsrcB/big1','wb').write(r.randbytes(500*1024)); open('$WORK/t2dsrcB/big2','wb').write(r.randbytes(3*1024*1024))"
+freeze "$WORK/t2src"
 sh "$ADAPTER" aar-encode --alg lzfse --block 1m --threads 1 "$WORK/t2src" "$WORK/t2mb.aar" >/dev/null 2>&1 || die "t2mb encode"
+freeze "$WORK/t2m2"
 sh "$ADAPTER" aar-encode --alg lzfse --block 1m --threads 1 "$WORK/t2m2" "$WORK/t2m2.aar" >/dev/null 2>&1 || die "t2m2 encode"
+freeze "$WORK/t2dsrcB"
 sh "$ADAPTER" aar-encode --alg lzfse --block 1m --threads 1 "$WORK/t2dsrcB" "$WORK/t2dsrcB.aar" >/dev/null 2>&1 || die "t2dsrcB encode"
 t2cut() { # $1=base $2=pyexpr $3=name
   CB=$(python3 -c "
