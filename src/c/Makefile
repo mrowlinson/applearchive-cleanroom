@@ -11,9 +11,9 @@ LDLIBS = -lz $(LZMA_DYLIB)
 
 all: $(BUILDDIR)/aae
 
-$(BUILDDIR)/aae: aae.c
+$(BUILDDIR)/aae: aae.c lz4c.c lz4c.h
 	mkdir -p $(BUILDDIR)
-	$(CC) $(CFLAGS) -o $@ $< $(LDLIBS)
+	$(CC) $(CFLAGS) -o $@ aae.c lz4c.c $(LDLIBS)
 
 clean:
 	rm -f $(BUILDDIR)/aae
