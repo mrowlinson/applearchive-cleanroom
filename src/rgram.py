@@ -105,6 +105,8 @@ _T5DIP = ("947f38024b438a0df0e201006e44228b57b5b916088e845fe9049ef1b"
           "07d7f47e934adb748e0536b08fc164b492833e5",
           "00e51ffe4d8388cd164d09016e44228b57b5b916088e845fe9049e51b"
           "07d7f47e934adb748e0a75608fc164b49285bfb")
+_T5DIP604 = ("747c52fc0356ef9d5337800091251d59e65a8c48088e845fe9049e51b"
+             "07d7f47e934adb748e0a75608fc164b49285bfb")
 _T5ET5H = (0x20, 0x20, 0x40, 0x60, 0x60, 0x80, 0x80, 0xa0, 0xa0, 0xc0,
            0xc0, 0xe0, 0xe0, 0x00, 0x00, 0x20)
 _T5ET6 = (0xb9, 0xf9, 0xc0, 0x87, 0xc7, 0x8e, 0xce, 0x95, 0xd5, 0x9c,
@@ -1021,8 +1023,9 @@ def main():
                 return fail("T5F3 const %d" % b)
         print("CLOSED T5F3 N=%d off=%d" % (n, off))
         return 0
-    if n <= 2700:  # T5F4: 16-tabs + F3-walk + b11 cycle3 + b5 flip
+    if n <= 2816:  # T5F4/F5: unified tabs+walk+b11; F5 cont F4
         off = n - 2213
+        tag = "T5F4" if off <= 487 else "T5F5"
         if len(pay) != 52:
             return fail("T5F4 paylen")
         l10 = (((n << 1) | 1) & 0x3FF)
@@ -1030,7 +1033,7 @@ def main():
             return fail("T5F4 lencode")
         m = (off - 348) & 15
         k2 = (off - 348) >> 4
-        if pay[5] != (84 + (off >= 475)):
+        if pay[5] != (84 + (off >= 475) + (off == 603)):
             return fail("T5F4 b5")
         q = (off - 348) >> 2
         pauses = ((q - 2) >> 2) + 1 if q >= 2 else 0
@@ -1045,8 +1048,13 @@ def main():
             return fail("T5F4 tab")
         for b, v in _T5F4C:
             if pay[b] != v:
-                return fail("T5F4 const %d" % b)
-        print("CLOSED T5F4 N=%d off=%d" % (n, off))
+                return fail("%s const %d" % (tag, b))
+        print("CLOSED %s N=%d off=%d" % (tag, n, off))
+        return 0
+    if n == 2817:  # 48B short-form dip (off=604)
+        if len(pay) != 48 or pay.hex() != _T5DIP604:
+            return fail("T5DIP604")
+        print("CLOSED T5DIP604 N=2817")
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
