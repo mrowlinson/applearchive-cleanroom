@@ -1139,7 +1139,12 @@ print(bs[$k][0]+16+bs[$k][2]*$fn//$fd)") || die "dev cut $spec"
   if [ "$kind" = "hard" ]; then
     [ -z "$(ls "$WORK/dvo-$T")" ] && [ -z "$(ls "$WORK/dvc-$T")" ] && pass "$T-empty" || fail "$T-empty"
   else
-    if [ "$blk" = "edge800" ]; then pass "$T-big1"; else cmp -s "$WORK/dvo-$T/big1" "$WORK/dvc-$T/big1" && pass "$T-big1" || fail "$T-big1"; fi # edge800-big1 OPEN Q-029 (oracle {ABSENT,512K-partial} vs C FULL; rule unknown)
+    if [ "$blk" = "edge800" ]; then # A-029 race-pin (Q-029 CLOSED): oracle big1 modal-vs-minority {FULL,524288-partial,ABSENT}; C modal FULL; partial = byte-prefix
+      OSZ1=$([ -f "$WORK/dvo-$T/big1" ] && stat -f %z "$WORK/dvo-$T/big1" || echo ABS)
+      case ",819200,524288,ABS," in *,"$OSZ1,"*) pass "$T-big1";; *) fail "$T-big1";; esac
+      if [ -f "$WORK/dvo-$T/big1" ]; then head -c "$OSZ1" "$WORK/dsrc800/big1" | cmp -s - "$WORK/dvo-$T/big1" && pass "$T-oprefix" || fail "$T-oprefix"; else pass "$T-oprefix"; fi
+      cmp -s "$WORK/dsrc800/big1" "$WORK/dvc-$T/big1" && pass "$T-cbig1full" || fail "$T-cbig1full"
+    else cmp -s "$WORK/dvo-$T/big1" "$WORK/dvc-$T/big1" && pass "$T-big1" || fail "$T-big1"; fi
     case ",$oset," in *,"$OSZ,"*) pass "$T-oshape";; *) fail "$T-oshape";; esac
     if [ -f "$WORK/dvo-$T/big2" ] && [ -f "$WORK/dvc-$T/big2" ]; then
       [ "$(stat -f %p "$WORK/dvo-$T/big2")" = "$(stat -f %p "$WORK/dvc-$T/big2")" ] && pass "$T-mode" || fail "$T-mode"
