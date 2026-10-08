@@ -115,6 +115,17 @@ def lz4_encode(inner, buckets=2048, slots=5, hashmode="shift"):
             occ = None
             if gpos >= 16 and gpos + 4 <= FBOUND:
                 occ = lookup(gpos)
+                # chunk-start tail rescan (miss-only): at ip==0 of
+                # chunk ci>=1 with table miss, scan prev tail
+                # [gpos-8,gpos-5] nearest-first for 4B match.
+                # bed-derived (bis c2-pos0 needs c1-end-8; +1/-0).
+                if occ is None and ip == 0 and ci >= 1:
+                    _g = bytes(inner[gpos:gpos + 4])
+                    for _o in range(gpos - 4, gpos - 9, -1):
+                        if _o + 4 <= gpos and \
+                                bytes(inner[_o:_o + 4]) == _g:
+                            occ = _o
+                            break
             LIM = base + n - 121
             if occ is not None:
                 # u64 extension: 1st u64 unconditional; rest iff
