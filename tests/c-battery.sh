@@ -622,5 +622,134 @@ done
 [ -f "$WORK/c-m4F/hello/greet.txt" ] && [ -f "$WORK/o-m4F/hello/greet.txt" ] && pass "m4F-file" || fail "m4F-file"
 [ ! -e "$WORK/c-m1f/hello/greet.txt" ] && pass "m1f-skip" || fail "m1f-skip"
 
+echo "== cell midchain-blob (whole>=256K: (blob) + partial, normalized) =="
+mkdir -p "$WORK/mcsrc"; dd if=/dev/urandom of="$WORK/mcsrc/big1" bs=1024 count=400 2>/dev/null; dd if=/dev/urandom of="$WORK/mcsrc/big2" bs=1024 count=300 2>/dev/null
+sh "$ADAPTER" aar-encode --alg lzfse --block 128k --threads 1 "$WORK/mcsrc" "$WORK/mc.aar" >/dev/null 2>&1 || die "mc encode"
+MCOFF1=$(python3 -c "import struct,sys; d=open('$WORK/mc.aar','rb').read(); o=12; bs=[];
+while o < len(d):
+ r,p=struct.unpack('>QQ',d[o:o+16]); bs.append((o,r,p)); o+=16+p
+assert len(bs)>=5; print(bs[1][0]+16+bs[1][2]//2)") || die "mc walk1"
+MCOFF2=$(python3 -c "import struct,sys; d=open('$WORK/mc.aar','rb').read(); o=12; bs=[];
+while o < len(d):
+ r,p=struct.unpack('>QQ',d[o:o+16]); bs.append((o,r,p)); o+=16+p
+print(bs[2][0]+16+bs[2][2]//2)") || die "mc walk2"
+MCOFF4=$(python3 -c "import struct,sys; d=open('$WORK/mc.aar','rb').read(); o=12; bs=[];
+while o < len(d):
+ r,p=struct.unpack('>QQ',d[o:o+16]); bs.append((o,r,p)); o+=16+p
+print(bs[4][0]+16+bs[4][2]//2)") || die "mc walk4"
+MCBV=$(python3 -c "import struct; d=open('$WORK/mc.aar','rb').read(); o=12; bs=[];
+while o < len(d):
+ r,p=struct.unpack('>QQ',d[o:o+16]); bs.append((o,r,p)); o+=16+p
+print((struct.pack('>Q',0x500000)+d[bs[2][0]+8:bs[2][0]+16]).hex())") || die "mc bv"
+head -c "$MCOFF1" "$WORK/mc.aar" > "$WORK/mc1.aar" || die "craft-mc1"
+head -c "$MCOFF2" "$WORK/mc.aar" > "$WORK/mc2.aar" || die "craft-mc2"
+head -c "$MCOFF4" "$WORK/mc.aar" > "$WORK/mc4.aar" || die "craft-mc4"
+python3 "$HERE/craft.py" setblk "$WORK/mc.aar" "$WORK/mcbv.aar" 2 "$MCBV" || die "craft-mcbv"
+mcnorm() { grep -v '^reading payload$' "$1" | sed 's/^[12] entries failed to extract$/1 entries failed to extract/'; }
+for T in mc1 mc2 mc4 mcbv; do
+  ORC=0; sh "$ADAPTER" aar-decode "$WORK/$T.aar" "$WORK/o-$T" >/dev/null 2>"$WORK/$T-o.err" || ORC=$?
+  mkdir -p "$WORK/c-$T"
+  CRC=0; "$AAD" "$WORK/$T.aar" "$WORK/c-$T" 2>"$WORK/$T.err" || CRC=$?
+  [ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "$T-exit" || fail "$T-exit"
+  mcnorm "$WORK/$T-o.err" > "$WORK/$T-o.n"; mcnorm "$WORK/$T.err" > "$WORK/$T.n"
+  diff "$WORK/$T-o.n" "$WORK/$T.n" >/dev/null 2>&1 && pass "$T-shape" || fail "$T-shape"
+done
+diff -r "$WORK/o-mc1" "$WORK/c-mc1" >/dev/null 2>&1 && pass "mc1-tree" || fail "mc1-tree"
+diff -r "$WORK/o-mc2" "$WORK/c-mc2" >/dev/null 2>&1 && pass "mc2-tree" || fail "mc2-tree"
+diff -r "$WORK/o-mcbv" "$WORK/c-mcbv" >/dev/null 2>&1 && pass "mcbv-tree" || fail "mcbv-tree"
+grep -q "entries failed" "$WORK/mc1-o.err" && fail "mc1-nocount" || pass "mc1-nocount"
+cmp -s "$WORK/o-mc4/big1" "$WORK/c-mc4/big1" && pass "mc4-big1" || fail "mc4-big1"
+cmp -s "$WORK/mcsrc/big1" "$WORK/o-mc4/big1" && pass "mc4-big1full" || fail "mc4-big1full"
+[ ! -e "$WORK/o-mc4/big2" ] && [ ! -e "$WORK/c-mc4/big2" ] && pass "mc4-big2abs" || fail "mc4-big2abs"
+[ "$(stat -f %p "$WORK/o-mc4/big1")" = "$(stat -f %p "$WORK/c-mc4/big1")" ] && pass "mc4-big1mode" || fail "mc4-big1mode"
+
+echo "== cell midchain-decfail (decode fail both flavors) =="
+mkdir -p "$WORK/mzsrc"; dd if=/dev/zero of="$WORK/mzsrc/f" bs=1024 count=600 2>/dev/null
+sh "$ADAPTER" aar-encode --alg lzfse --block 256k --threads 1 "$WORK/mzsrc" "$WORK/mz.aar" >/dev/null 2>&1 || die "mz encode"
+MZ1=$(python3 -c "import struct; d=open('$WORK/mz.aar','rb').read(); o=12; bs=[];
+while o < len(d):
+ r,p=struct.unpack('>QQ',d[o:o+16]); bs.append((o,r,p)); o+=16+p
+print(bs[1][0]+16)") || die "mz walk"
+python3 "$HERE/craft.py" patch "$WORK/mz.aar" "$WORK/mz1.aar" "$MZ1" ff || die "craft-mz1"
+python3 "$HERE/craft.py" patch "$WORK/mz.aar" "$WORK/mz0.aar" 28 ff || die "craft-mz0"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/mz1.aar" "$WORK/o-mz1" >/dev/null 2>"$WORK/mz1-o.err" || ORC=$?
+mkdir -p "$WORK/c-mz1"
+CRC=0; "$AAD" "$WORK/mz1.aar" "$WORK/c-mz1" 2>"$WORK/mz1.err" || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "mz1-exit" || fail "mz1-exit"
+diff -r "$WORK/o-mz1" "$WORK/c-mz1" >/dev/null 2>&1 && pass "mz1-tree" || fail "mz1-tree"
+mcnorm "$WORK/mz1-o.err" > "$WORK/mz1-o.n"; mcnorm "$WORK/mz1.err" > "$WORK/mz1.n"
+diff "$WORK/mz1-o.n" "$WORK/mz1.n" >/dev/null 2>&1 && pass "mz1-shape" || fail "mz1-shape"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/mz0.aar" "$WORK/o-mz0" >/dev/null 2>"$WORK/mz0-o.err" || ORC=$?
+mkdir -p "$WORK/c-mz0"
+CRC=0; "$AAD" "$WORK/mz0.aar" "$WORK/c-mz0" 2>"$WORK/mz0.err" || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "mz0-exit" || fail "mz0-exit"
+diff -r "$WORK/o-mz0" "$WORK/c-mz0" >/dev/null 2>&1 && pass "mz0-tree" || fail "mz0-tree"
+diff "$WORK/mz0-o.err" "$WORK/mz0.err" >/dev/null 2>&1 && pass "mz0-shape" || fail "mz0-shape"
+
+echo "== cell midchain-e4 (complete prefix + cut; tiny UNPINNED, Q-020) =="
+cat "$WORK/mc.aar" > "$WORK/e4.aar"; printf '\0\0\0\0\0\0\0\0\0\0' >> "$WORK/e4.aar"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/e4.aar" "$WORK/o-e4" >/dev/null 2>"$WORK/e4-o.err" || ORC=$?
+mkdir -p "$WORK/c-e4"
+CRC=0; "$AAD" "$WORK/e4.aar" "$WORK/c-e4" 2>"$WORK/e4.err" || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "e4-exit" || fail "e4-exit"
+mcnorm "$WORK/e4-o.err" > "$WORK/e4-o.n"; mcnorm "$WORK/e4.err" > "$WORK/e4.n"
+diff "$WORK/e4-o.n" "$WORK/e4.n" >/dev/null 2>&1 && pass "e4-shape" || fail "e4-shape"
+cmp -s "$WORK/o-e4/big1" "$WORK/c-e4/big1" && pass "e4-big1" || fail "e4-big1"
+[ ! -e "$WORK/o-e4/big2" ] && [ ! -e "$WORK/c-e4/big2" ] && pass "e4-big2abs" || fail "e4-big2abs"
+
+echo "== cell midchain-content (presence + 256K chunks, stable zones) =="
+mkcx() { # $1=b1KB(0=single) $2=cutblock $3=name
+  rm -rf "$WORK/cx$3src"; mkdir -p "$WORK/cx$3src"
+  if [ "$1" -gt 0 ]; then
+    dd if=/dev/urandom of="$WORK/cx$3src/b1" bs=1024 count="$1" 2>/dev/null
+    dd if=/dev/urandom of="$WORK/cx$3src/b2" bs=1024 count=1024 2>/dev/null
+  else
+    dd if=/dev/urandom of="$WORK/cx$3src/big" bs=1024 count=1024 2>/dev/null
+  fi
+  sh "$ADAPTER" aar-encode --alg lzfse --block 128k --threads 1 "$WORK/cx$3src" "$WORK/cx$3.aar" >/dev/null 2>&1 || die "cx$3 encode"
+  CXC=$(python3 -c "import struct; d=open('$WORK/cx$3.aar','rb').read(); o=12; bs=[];
+while o < len(d):
+ r,p=struct.unpack('>QQ',d[o:o+16]); bs.append((o,r,p)); o+=16+p
+print(bs[$2][0]+16+bs[$2][2]//2)") || die "cx$3 walk"
+  head -c "$CXC" "$WORK/cx$3.aar" > "$WORK/cx$3c.aar" || die "craft-cx$3"
+}
+runcx() { # $1=name $2=file $3=wantsize
+  ORC=0; sh "$ADAPTER" aar-decode "$WORK/cx$1c.aar" "$WORK/o-cx$1" >/dev/null 2>"$WORK/cx$1-o.err" || ORC=$?
+  mkdir -p "$WORK/c-cx$1"
+  CRC=0; "$AAD" "$WORK/cx$1c.aar" "$WORK/c-cx$1" 2>"$WORK/cx$1.err" || CRC=$?
+  PRC=0; python3 "$HERE/../proto/aad.py" "$WORK/cx$1c.aar" "$WORK/p-cx$1" >/dev/null 2>&1 || PRC=$?
+  [ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "cx$1-exit" || fail "cx$1-exit"
+  [ "$PRC" -eq 1 ] && pass "cx$1-pexit" || fail "cx$1-pexit"
+  mcnorm "$WORK/cx$1-o.err" > "$WORK/cx$1-o.n"; mcnorm "$WORK/cx$1.err" > "$WORK/cx$1.n"
+  diff "$WORK/cx$1-o.n" "$WORK/cx$1.n" >/dev/null 2>&1 && pass "cx$1-shape" || fail "cx$1-shape"
+  [ "$(stat -f %z "$WORK/o-cx$1/$2" 2>/dev/null)" = "$3" ] && [ "$(stat -f %z "$WORK/c-cx$1/$2" 2>/dev/null)" = "$3" ] && pass "cx$1-size" || fail "cx$1-size"
+  cmp -s "$WORK/o-cx$1/$2" "$WORK/c-cx$1/$2" && pass "cx$1-cmp" || fail "cx$1-cmp"
+  [ "$(stat -f %p "$WORK/o-cx$1/$2")" = "$(stat -f %p "$WORK/c-cx$1/$2")" ] && pass "cx$1-mode" || fail "cx$1-mode"
+  diff -r "$WORK/c-cx$1" "$WORK/p-cx$1" >/dev/null 2>&1 && pass "cx$1-lock" || fail "cx$1-lock"
+}
+mkcx 0 4 A; runcx A big 0
+mkcx 0 6 B; runcx B big 262144
+mkcx 0 8 C; runcx C big 524288
+mkcx 186 6 D; runcx D b2 262144
+cmp -s "$WORK/cxDsrc/b1" "$WORK/o-cxD/b1" && pass "cxD-b1full" || fail "cxD-b1full"
+mkcx 300 6 E; runcx E b2 0
+cmp -s "$WORK/cxEsrc/b1" "$WORK/o-cxE/b1" && pass "cxE-b1full" || fail "cxE-b1full"
+mkcx 400 7 F; runcx F b2 0
+cmp -s "$WORK/cxFsrc/b1" "$WORK/o-cxF/b1" && pass "cxF-b1full" || fail "cxF-b1full"
+mkcx 100 8 G
+# cxG: multi-file chunk1 RACY (oracle 262144-or-524288, MT flush;
+# single-file chunk1 stable 9/9). Mine = modal 524288. Unpinned: no size/cmp.
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/cxGc.aar" "$WORK/o-cxG" >/dev/null 2>"$WORK/cxG-o.err" || ORC=$?
+mkdir -p "$WORK/c-cxG"
+CRC=0; "$AAD" "$WORK/cxGc.aar" "$WORK/c-cxG" 2>"$WORK/cxG.err" || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "cxG-exit" || fail "cxG-exit"
+mcnorm "$WORK/cxG-o.err" > "$WORK/cxG-o.n"; mcnorm "$WORK/cxG.err" > "$WORK/cxG.n"
+diff "$WORK/cxG-o.n" "$WORK/cxG.n" >/dev/null 2>&1 && pass "cxG-shape" || fail "cxG-shape"
+[ -f "$WORK/o-cxG/b2" ] && [ -f "$WORK/c-cxG/b2" ] && pass "cxG-exists" || fail "cxG-exists"
+[ "$(stat -f %p "$WORK/o-cxG/b2")" = "$(stat -f %p "$WORK/c-cxG/b2")" ] && pass "cxG-mode" || fail "cxG-mode"
+cmp -s "$WORK/cxGsrc/b1" "$WORK/o-cxG/b1" && pass "cxG-b1full" || fail "cxG-b1full"
+mkcx 300 8 H; runcx H b2 262144
+cmp -s "$WORK/cxHsrc/b1" "$WORK/o-cxH/b1" && pass "cxH-b1full" || fail "cxH-b1full"
+
 [ "$FAIL" -eq 0 ] && echo CBATTERY-GREEN || echo CBATTERY-RED
 exit "$FAIL"

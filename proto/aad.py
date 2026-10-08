@@ -107,28 +107,77 @@ NONSUPP = ("Extraction failed\nextract failedError 0xbd035000\n"
            "archive stream read error (header)\nstream cancelled")
 
 
-def _trunc(what, have, need):
+def _trunc(what, have, need, blob=0):
+    if not blob:
+        return ("Extraction failed\nextract failedError 0xbd009800\n"
+                "istream read error\nrefill buffer\n"
+                "archive stream read error (header)\nflushing shared buffer\n"
+                "Truncated block %s (%d/%d bytes read)\n"
+                "NOP received\nprocessStream\ndecoder failed\n"
+                "stream cancelled" % (what, have, need))
     return ("Extraction failed\nextract failedError 0xbd009800\n"
-            "istream read error\nrefill buffer\n"
-            "archive stream read error (header)\nflushing shared buffer\n"
+            "istream read error\nRefill buffer failed\nread error\n"
+            "archive stream read error (blob)\nflushing shared buffer\n"
             "Truncated block %s (%d/%d bytes read)\n"
             "NOP received\nprocessStream\ndecoder failed\n"
             "stream cancelled" % (what, have, need))
+
+
+def _badval(pay, raw, bsize, blob=0):
+    head = ("Extraction failed\nextract failedError 0xbd009800\n"
+            "istream read error\n")
+    if blob:
+        head += ("Refill buffer failed\nread error\n"
+                 "archive stream read error (blob)\n")
+    else:
+        head += ("refill buffer\narchive stream read error (header)\n")
+    return (head + "flushing shared buffer\n"
+            "Invalid block header payload=0x%x raw=0x%x block=0x%x\n"
+            "\n"
+            "NOP received\nprocessStream\ndecoder failed\n"
+            "stream cancelled" % (pay, raw, bsize))
+
+
+def _decfail(k, pay, raw, blob=0):
+    head = ("Extraction failed\nextract failedError 0xbd009800\n"
+            "istream read error\n")
+    if blob:
+        head += ("Refill buffer failed\nread error\n"
+                 "archive stream read error (blob)\n")
+    else:
+        head += ("refill buffer\narchive stream read error (header)\n")
+    return (head + "flushing shared buffer\n"
+            "invalid output size/decoder error: block=%d, inSize=%d, "
+            "outSize=-1, expectedOutSize=%d\n"
+            "worker proc reported an error\nThreads reported errors\n"
+            "ThreadPipelineDestroy\nprocessStream\ndecoder failed\n"
+            "stream cancelled" % (k, pay, raw))
+
+
+def _midblob(mid):
+    kind, a, b, c = mid["kind"], mid["a"], mid["b"], mid["c"]
+    if kind == "trunchdr":
+        return _trunc("header", a, b, 1)
+    if kind == "truncpay":
+        return _trunc("payload", a, b, 1)
+    if kind == "badval":
+        return _badval(a, b, c, 1)
+    return _decfail(a, b, c, 1)
 
 
 KNOWN_PBZ = (b"pbze", b"pbz4", b"pbzm", b"pbzb", b"pbzx", b"pbzz")
 
 
 def parse_chain(data):
-    """-> (inner_bytes, metas). Length ladder + 12B prefix + chain."""
+    """-> (inner_bytes, metas, mid). mid=None ok; else (blob)-path dict."""
     if len(data) == 0:
         return b"", [{"alg": "raw", "stored": True,
-                      "unc": 0, "comp": 0}]
+                      "unc": 0, "comp": 0}], None
     if len(data) < 6:
         raise FmtErr(STREAM_TAIL)
     if bytes(data[:4]) in INNER_MAGICS:
         return bytes(data), [{"alg": "raw", "stored": True,
-                              "unc": len(data), "comp": len(data)}]
+                              "unc": len(data), "comp": len(data)}], None
     if len(data) < 12:
         raise FmtErr(NONSUPP)
     magic = bytes(data[:4])
@@ -141,34 +190,49 @@ def parse_chain(data):
                      "extract failedError 0x9404c000\n"
                      "invalid block size")
     inner, metas, off = bytearray(), [], 12
+    k = 0
     while off < len(data):
+        blob = len(inner) >= 262144
         if off + 16 > len(data):
-            raise FmtErr(_trunc("header", len(data) - off, 16))
+            if not blob:
+                raise FmtErr(_trunc("header", len(data) - off, 16))
+            return bytes(inner), metas, {"kind": "trunchdr",
+                                         "a": len(data) - off, "b": 16,
+                                         "c": 0, "whole": len(inner),
+                                         "kcut": k}
         raw, pay = struct.unpack(">QQ", data[off:off + 16])
         if raw > bsize or pay > bsize:
-            raise FmtErr("Extraction failed\n"
-                         "extract failedError 0xbd009800\n"
-                         "istream read error\n"
-                         "refill buffer\n"
-                         "archive stream read error (header)\n"
-                         "flushing shared buffer\n"
-                         "Invalid block header payload=0x%x raw=0x%x block=0x%x\n"
-                         "\n"
-                         "NOP received\n"
-                         "processStream\n"
-                         "decoder failed\n"
-                         "stream cancelled" % (pay, raw, bsize))
+            if not blob:
+                raise FmtErr(_badval(pay, raw, bsize))
+            return bytes(inner), metas, {"kind": "badval", "a": pay,
+                                         "b": raw, "c": bsize,
+                                         "whole": len(inner), "kcut": k}
         unc, comp = raw, pay
         if off + 16 + comp > len(data):
-            raise FmtErr(_trunc("payload", len(data) - off - 16, comp))
+            if not blob:
+                raise FmtErr(_trunc("payload", len(data) - off - 16, comp))
+            return bytes(inner), metas, {"kind": "truncpay",
+                                         "a": len(data) - off - 16,
+                                         "b": comp, "c": 0,
+                                         "whole": len(inner), "kcut": k}
         payload = bytes(data[off + 16:off + 16 + comp])
-        inner += decode_block(magic, payload, unc, comp)
+        try:
+            inner += decode_block(magic, payload, unc, comp)
+        except FmtErr as e:
+            if "ZBM_DYLIB" in str(e):
+                raise
+            if not blob:
+                raise FmtErr(_decfail(k, comp, unc))
+            return bytes(inner), metas, {"kind": "decfail", "a": k,
+                                         "b": comp, "c": unc,
+                                         "whole": len(inner), "kcut": k}
         metas.append({"alg": magic.decode("ascii"), "stored": comp == unc,
                       "unc": unc, "comp": comp, "bsize": bsize})
         off += 16 + comp
+        k += 1
     if off != len(data):
         raise FmtErr("chain overrun")
-    return bytes(inner), metas
+    return bytes(inner), metas, None
 
 
 def parse_header(data, pos):
@@ -232,8 +296,10 @@ def parse_header(data, pos):
 
 
 def parse_inner(data):
-    """-> (items, fcls, fsub). Prefix kept on failure."""
+    """-> (items, fcls, fsub, shortidx, shortavail, shortend). Short item
+    appended flagged; shortavail/end = its blob-region bytes/start."""
     items, pos, fcls, fsub = [], 0, PF_OK, 0
+    shortidx, shortavail, shortend = -1, 0, 0
     while pos < len(data):
         try:
             entries, end = parse_header(data, pos)
@@ -250,10 +316,14 @@ def parse_inner(data):
                 blobs[key] = bytes(data[bp:bp + val])
                 bp += val
         if bad:
+            shortidx = len(items)
+            shortavail = len(data) - end
+            shortend = end
+            items.append((entries, blobs))
             break
         items.append((entries, blobs))
         pos = bp
-    return items, fcls, fsub
+    return items, fcls, fsub, shortidx, shortavail, shortend
 
 
 def _get(entries, key):
@@ -370,7 +440,8 @@ def eisdir_err(done, path):
           % (b, a, a), file=sys.stderr)
 
 
-def extract(items, root, fcls=0, fsub=0):
+def extract(items, root, fcls=0, fsub=0, shortidx=-1, midchain=False,
+            shortpresent=False, whole=0, shortend=0, inner=b""):
     os.makedirs(root, exist_ok=True)
     files = []
     dirs = []
@@ -384,6 +455,7 @@ def extract(items, root, fcls=0, fsub=0):
     hdr = [False]
     dirfail = False
     aborted = False
+    shortstop = False
 
     def abort(msg):
         if msg:
@@ -391,8 +463,8 @@ def extract(items, root, fcls=0, fsub=0):
         return True
 
     # phase 1: create everything, forward. aborts stop creation only.
-    for entries, blobs in items:
-        if aborted:
+    for k, (entries, blobs) in enumerate(items):
+        if aborted or shortstop:
             break
         tst, typ = _get(entries, b"TYP")
         pst, pat = _get(entries, b"PAT")
@@ -426,7 +498,7 @@ def extract(items, root, fcls=0, fsub=0):
             continue
         if len(pat) == 0:
             if typ == ord("D"):
-                dirs.append((root, entries, blobs))
+                dirs.append((root, entries, blobs, k))
             elif typ == ord("F"):
                 eis.append(root)
                 failed += 1
@@ -439,6 +511,63 @@ def extract(items, root, fcls=0, fsub=0):
             failed += 1
             hdr[0] = True
             break
+        if midchain and shortidx == -1 and items and k == len(items) - 1:
+            continue  # midchain clean parse: last item dropped (E4)
+        if k == shortidx:
+            if not midchain:
+                continue
+            if typ == ord("F"):
+                if not shortpresent:
+                    break
+                nch = (whole - 786432) // 262144 + 1 if whole >= 786432 else 0
+                hch = 0
+                for j in range(nch):
+                    if shortend <= (nch - j) * 262144:
+                        hch += 1
+                    else:
+                        break
+                want = hch * 262144
+                doff = None
+                off = 0
+                for key, st, val in entries:
+                    if st not in BLOB_W:
+                        continue
+                    if key == b"DAT":
+                        doff = off
+                        break
+                    off += val
+                dav = 0
+                if doff is not None:
+                    dav = max(len(inner) - (shortend + doff), 0)
+                wlen = min(want, dav)
+                wbytes = (bytes(inner[shortend + doff:
+                                      shortend + doff + wlen])
+                          if doff is not None else b"")
+                parent = os.path.dirname(target)
+                if parent:
+                    try:
+                        os.makedirs(parent, exist_ok=True)
+                    except OSError:
+                        aborted = abort("aad: mkdir %s" % target)
+                        failed += 1
+                        hdr[0] = True
+                        break
+                try:
+                    with open(target, "wb") as f:
+                        f.write(wbytes)
+                except IsADirectoryError:
+                    eis.append(target)
+                    failed += 1
+                    scount += 1
+                    break
+                except OSError:
+                    aborted = abort("aad: open %s" % target)
+                    failed += 1
+                    hdr[0] = True
+                    break
+                files.append((target, entries, blobs, False, k))
+                break
+            shortstop = True
         if typ == ord("D"):
             try:
                 os.makedirs(target, exist_ok=True)
@@ -447,7 +576,7 @@ def extract(items, root, fcls=0, fsub=0):
                 failed += 1
                 hdr[0] = True
                 break
-            dirs.append((target, entries, blobs))
+            dirs.append((target, entries, blobs, k))
         elif typ == ord("F"):
             parent = os.path.dirname(target)
             if parent:
@@ -489,7 +618,7 @@ def extract(items, root, fcls=0, fsub=0):
                     break
                 if hlc is not None:
                     hlc_first[hlc] = target
-            files.append((target, entries, blobs, False))
+            files.append((target, entries, blobs, False, k))
         elif typ == ord("L"):
             _, lnk = _get(entries, b"LNK")
             if lnk is None:
@@ -516,7 +645,7 @@ def extract(items, root, fcls=0, fsub=0):
                 failed += 1
                 hdr[0] = True
                 break
-            files.append((target, entries, blobs, True))
+            files.append((target, entries, blobs, True, k))
         elif typ == ord("P"):
             parent = os.path.dirname(target)
             if parent:
@@ -536,7 +665,7 @@ def extract(items, root, fcls=0, fsub=0):
                 failed += 1
                 hdr[0] = True
                 break
-            files.append((target, entries, blobs, False))
+            files.append((target, entries, blobs, False, k))
         elif typ == ord("S"):
             scols.append(entries)
             failed += 1
@@ -564,7 +693,7 @@ def extract(items, root, fcls=0, fsub=0):
         else:
             pass  # unknown TYP: silent skip (oracle parity, measured)
     # parse-fail wrapper (after phase 1, before meta; not on abort)
-    if fcls and not aborted:
+    if fcls and not aborted and not midchain:
         failed += 1
         hdr[0] = True
         if fcls == PF_TAIL:
@@ -618,7 +747,10 @@ def extract(items, root, fcls=0, fsub=0):
                   file=sys.stderr)
             scount += 1
     # phase 2: files meta, strict reverse
-    for target, entries, blobs, islink in reversed(files):
+    for target, entries, blobs, islink, kk in reversed(files):
+        if kk == shortidx:
+            apply_rest(target, entries, blobs, islink)
+            continue
         try:
             apply_xattr_only(target, entries, blobs, islink)
         except FmtErr:
@@ -685,7 +817,10 @@ def extract(items, root, fcls=0, fsub=0):
     if hfailed:
         print("process hlinks", file=sys.stderr)
     # phase 3: dirs meta, reverse (children-first); root=outdir in place
-    for target, entries, blobs in reversed(dirs):
+    for target, entries, blobs, kk in reversed(dirs):
+        if kk == shortidx:
+            apply_rest(target, entries, blobs, False)
+            continue
         try:
             apply_xattr_only(target, entries, blobs, False)
         except FmtErr:
@@ -698,7 +833,7 @@ def extract(items, root, fcls=0, fsub=0):
             apply_rest(target, entries, blobs, False)
     if dirfail:
         print("process dirs", file=sys.stderr)
-    if scount:
+    if scount and not midchain:
         print("%d entries failed to extract" % scount, file=sys.stderr)
     return 1 if failed else 0
 
@@ -710,10 +845,19 @@ def main(argv):
     with open(argv[1], "rb") as f:
         data = f.read()
     try:
-        inner, metas = parse_chain(data)
+        inner, metas, mid = parse_chain(data)
         print("blocks:", len(metas), metas[0] if metas else {},
               file=sys.stderr)
-        items, fcls, fsub = parse_inner(inner)
+        items, fcls, fsub, shortidx, shortavail, shortend = \
+            parse_inner(inner)
+        if mid is not None:
+            present = (shortidx != -1 and mid["whole"] >= 524288 and
+                       shortavail >= max(mid["kcut"] - 1, 0) * 65536)
+            extract(items, argv[2], fcls, fsub, shortidx, True, present,
+                    mid["whole"], shortend, inner)
+            print(_midblob(mid), file=sys.stderr)
+            print("1 entries failed to extract", file=sys.stderr)
+            return 1
         return extract(items, argv[2], fcls, fsub)
     except FmtErr as e:
         print("%s" % e, file=sys.stderr)
