@@ -2456,6 +2456,27 @@ _T9T1C = ((0, 0x07), (1, 0x00), (2, 0x00), (3, 0x00), (8, 0x47),
           (47, 0x5a), (48, 0x66), (49, 0x3c), (50, 0xd3), (51, 0x96),
           (52, 0x98), (53, 0x9d), (54, 0xf9), (55, 0x57), (56, 0xee),
           (57, 0xbd), (58, 0x37), (59, 0x9d))
+_T9U1T = ("612ba5db0c5bd9", "612bf65b125bd9", "812efe5e39bbda",
+           "012cb65d683bdb", "b12fcddcd73bdb", "1121335cd45bdb",
+           "112184dcd95bdb", "1121d55cdf5bdb", "71265edd0f5bdb",
+           "e12552da5c3bdd", "e125a35a623bdd", "312739dfea3bdd",
+           "412709de5e3bdd", "712083dd1afbdd", "7120d45d20fbdd",
+           "a1201a5d3afbdd")
+_T9U1B = ("88083cb4fa", "88edfc91fd", "89727cd71c", "9639fce6a9",
+           "9c063cd347", "9e8fbc4302", "9e8fbc4402", "9e8e3ca58e",
+           "9eabbc18b0", "af67bcf691", "b18dbc634f", "b1f4fc95d9",
+           "b3c8fc8595", "b315fc3596", "bad6bc9526", "baadfce4cd")
+_T9U1C = ((0, 0x70), (1, 0x00), (2, 0x00), (3, 0x00), (6, 0x51),
+          (7, 0x94), (8, 0xc7), (11, 0x8f), (12, 0x00), (14, 0x81),
+          (15, 0x85), (16, 0xc3), (22, 0x40), (23, 0x4d), (24, 0xb7),
+          (25, 0x3c), (26, 0x51), (27, 0xa5), (28, 0x99), (29, 0x34),
+          (30, 0xc8), (31, 0x5d), (32, 0xf3), (33, 0xbf), (34, 0xbb),
+          (35, 0x4c), (36, 0xfa), (37, 0xee), (38, 0xa4), (39, 0x19),
+          (40, 0xa4), (41, 0x5c), (42, 0x40), (43, 0x31), (44, 0x36),
+          (45, 0xf8), (46, 0x6d), (47, 0x5a), (48, 0x66), (49, 0x3c),
+          (50, 0xd3), (51, 0x96), (52, 0x98), (53, 0x9d), (54, 0xf9),
+          (55, 0x57), (56, 0xee), (57, 0xbd), (58, 0x37), (59, 0x9d),
+          (60, 0xf5), (61, 0xde), (62, 0xae), (63, 0x36))
 _T7CC = ((0, 0x75), (1, 0x01), (2, 0x00), (3, 0x00), (6, 0xc1),
          (7, 0x6b), (8, 0xfa), (9, 0xf6), (10, 0xcf),
          (11, 0x25), (12, 0x00), (13, 0xad), (14, 0xfc),
@@ -6299,6 +6320,29 @@ def main():
             if pay[b] != v:
                 return fail("T9T1 const %d" % b)
         print("CLOSED T9T1 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 12908:  # T9U1: 16x16 tab b9,10,b17-21 + 5B block words
+        off = n - 12653
+        if len(pay) != 68:
+            return fail("T9U1 paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if pay[4] != (l10 & 0xFF):
+            return fail("T9U1 lencode")
+        m = off & 15
+        q = off >> 4
+        if pay[5] != 0x62 + (off >= 19) + (off >= 147):
+            return fail("T9U1 b5")
+        if bytes((pay[9], pay[10], pay[17], pay[18], pay[19], pay[20],
+                   pay[21])).hex() != _T9U1T[m]:
+            return fail("T9U1 tab")
+        blk = bytes((pay[13], pay[64], pay[65], pay[66],
+                     pay[67])).hex()
+        if blk != _T9U1B[q]:
+            return fail("T9U1 blk")
+        for b, v in _T9U1C:
+            if pay[b] != v:
+                return fail("T9U1 const %d" % b)
+        print("CLOSED T9U1 N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
