@@ -44,6 +44,11 @@ _T4D1 = ("06000000230300006c003c84000000c00e00f0e160dd170dc4007808"
 _T4D3TAB = ("231db8f00fc2", "633648f006c2", "7b5448f006c2", "937248f006c2",
             "5b8000f0fdc1", "7b9e00f0fdc1", "ebcc48f006c2", "03eb48f006c2",
             "1b094af006c2", "4b18ded0f4c1")
+# T4E1 b11/b19 16-periodic tables, key (off-696)&15 (OPEN why).
+_T4E1T11 = (0xc5, 0xcd, 0xd5, 0xd5, 0xdd, 0xe5, 0xe5, 0xed, 0xf5, 0xf5,
+            0xfd, 0x05, 0x0d, 0x0d, 0x15, 0x1d)
+_T4E1T19 = (0x51, 0x6a, 0x83, 0x83, 0x9c, 0xb5, 0xb5, 0xce, 0xe7, 0xe7,
+            0x00, 0x19, 0x32, 0x32, 0x4b, 0x64)
 
 
 def bit(p, i):
@@ -536,6 +541,39 @@ def main():
             if pay[b] != v:
                 return fail("%s const %d" % (tag, b))
         print("CLOSED %s N=%d off=%d" % (tag, n, off))
+        return 0
+    if n <= 1772:  # T4 plateau E1 (NOTE-w2s7-18: 7-field + slip-16)
+        if len(pay) != 48:
+            return fail("T4E1 paylen")
+        off = n - 821
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if grp(pay, tuple(range(32, 42))) != l10:
+            return fail("T4E1 lencode")
+        i = off - 696
+        if pay[0] != (0x18 if (i & 15) >= 11 else 0x17):
+            return fail("T4E1 b0")
+        if pay[5] != ((l10 >> 8) | (0xC8 if off <= 714 else 0xCC)):
+            return fail("T4E1 b5")
+        s = 0 if i < 10 else ((i - 10) >> 4) + 1
+        if pay[10] != (0xE2, 0xC2, 0xA2)[(i - s) % 3]:
+            return fail("T4E1 b10")
+        if pay[11] != _T4E1T11[i & 15] or pay[19] != _T4E1T19[i & 15]:
+            return fail("T4E1 b1119")
+        if pay[15] != (i >> 4):
+            return fail("T4E1 b15")
+        for b, v in ((1, 0x8d), (2, 0x08), (3, 0), (6, 0xbd), (7, 0x4a),
+                     (8, 0xf0), (9, 0x06), (12, 0), (13, 0), (14, 0x3c),
+                     (16, 0x12), (17, 0), (18, 0), (20, 0x08),
+                     (21, 0xcc), (22, 0x3d), (23, 0xf8), (24, 0),
+                     (25, 0x3c), (26, 0x04), (27, 0x1f), (28, 0x86),
+                     (29, 0xef), (30, 0xf8), (31, 0xbd), (32, 0x69),
+                     (33, 0x01), (34, 0x4c), (35, 0xd7), (36, 0x24),
+                     (37, 0xa7), (38, 0xd6), (39, 0x3e), (40, 0x83),
+                     (41, 0xc6), (42, 0x43), (43, 0x4d), (44, 0x06),
+                     (45, 0x5f), (46, 0xa6), (47, 0xfc)):
+            if pay[b] != v:
+                return fail("T4E1 const %d" % b)
+        print("CLOSED T4E1 N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
