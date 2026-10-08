@@ -2888,6 +2888,26 @@ _T9F2QC = ((0, 0x76), (1, 0x68), (2, 0x00), (3, 0x00), (7, 0x2a),
           (43, 0x8d), (44, 0xd7), (45, 0x75), (46, 0x5a), (47, 0x9c),
           (52, 0xf7), (53, 0xf8), (54, 0x20), (55, 0x70), (64, 0x34),
           (65, 0x3c), (66, 0x88), (67, 0x75))
+# T9G2: 16x16 quiet, 6B tab (b10,11,b64-67) + b5[q] + F2QT-rot words.
+_T9G2T = ("20c1a73c48ed", "40c3adbc6043", "40c3633c27cf",
+          "a0c3c83cb431", "a0c3257c4038", "a0c3e5bc2853",
+          "c0c3463ce0f4", "80c4ca3c3292", "80c999bcc1c1",
+          "80cbaf3ce4fc", "a0cb8a3c48a4", "e0cbd6bc54a5",
+          "20cce7bcc1a7", "c0ccdc3ca69d", "c0cc963c16c2",
+          "e0d1727ce713")
+_T9G2B5 = (0x30, 0x70, 0x70, 0x70, 0x70, 0xb1, 0x71, 0x31,
+           0x31, 0x31, 0x31, 0x31, 0x31, 0x32, 0xb2, 0xb2)
+_T9G2C = ((0, 0x60), (1, 0x67), (2, 0x07), (3, 0x00), (7, 0x2a),
+          (8, 0x88), (9, 0x13), (12, 0x85), (13, 0xe4), (14, 0x8d),
+          (15, 0x41), (16, 0x77), (17, 0x5b), (18, 0xac), (19, 0x6d),
+          (20, 0xb8), (21, 0xe5), (22, 0x17), (23, 0x5a), (24, 0xdc),
+          (25, 0x3c), (26, 0x35), (27, 0x20), (28, 0xfb), (29, 0xac),
+          (30, 0x6c), (31, 0xc3), (32, 0x0b), (33, 0xfc), (34, 0x83),
+          (35, 0x28), (36, 0x5b), (37, 0x64), (38, 0xfd), (39, 0x76),
+          (40, 0xed), (41, 0xde), (42, 0xcf), (43, 0x8d), (44, 0xd7),
+          (45, 0x75), (46, 0x5a), (47, 0x9c), (48, 0xfb), (49, 0x85),
+          (50, 0xa7), (51, 0xbc), (52, 0xf7), (53, 0xf8), (54, 0x20),
+          (55, 0x70), (56, 0x55), (57, 0x7f), (58, 0x76), (59, 0x51))
 _T7CC = ((0, 0x75), (1, 0x01), (2, 0x00), (3, 0x00), (6, 0xc1),
          (7, 0x6b), (8, 0xfa), (9, 0xf6), (10, 0xcf),
          (11, 0x25), (12, 0x00), (13, 0xad), (14, 0xfc),
@@ -7180,7 +7200,7 @@ def main():
                 return fail("T9F2C const %d" % b)
         print("CLOSED T9F2C N=%d off=%d" % (n, off))
         return 0
-    if n <= 14381:  # T9F2Q: 3x16+4 tab b6,b60-63 + b5 + 8B words, k15 carry
+    if n <= 14392:  # T9F2Q: 3x16+15 tab b6,b60-63 + b5 + 8B words, k15 carry
         off = n - 14330
         if len(pay) != 68:
             return fail("T9F2Q paylen")
@@ -7202,6 +7222,30 @@ def main():
             if pay[b] != v:
                 return fail("T9F2Q const %d" % b)
         print("CLOSED T9F2Q N=%d off=%d" % (n, off))
+        return 0
+    if n <= 14648:  # T9G2: 16x16 tab b10,11,b64-67 + b5[q] + F2QT-rot words
+        off = n - 14393
+        if len(pay) != 68:
+            return fail("T9G2 paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if pay[4] != (l10 & 0xFF):
+            return fail("T9G2 lencode")
+        m = off & 15
+        q = off >> 4
+        if pay[5] != _T9G2B5[q] + (m >= 7 and q in (4, 12)):
+            return fail("T9G2 b5")
+        _f = _T9F2QT[(q + 15) & 15]
+        if pay[6] != int(_f[0:2], 16):
+            return fail("T9G2 b6")
+        if bytes((pay[60], pay[61], pay[62], pay[63])).hex() != _f[2:]:
+            return fail("T9G2 blk")
+        if bytes((pay[10], pay[11], pay[64], pay[65], pay[66],
+                   pay[67])).hex() != _T9G2T[m]:
+            return fail("T9G2 tab")
+        for b, v in _T9G2C:
+            if pay[b] != v:
+                return fail("T9G2 const %d" % b)
+        print("CLOSED T9G2 N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
