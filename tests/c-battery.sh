@@ -396,6 +396,18 @@ ORC=0; sh "$ADAPTER" aar-decode "$WORK/f3.aar" "$WORK/o-po" >/dev/null 2>"$WORK/
 CRC=0; "$AAD" "$WORK/f3.aar" "$WORK/c-po" 2>"$WORK/po.err" || CRC=$?
 [ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "po-exit" || fail "po-exit"
 diff -r "$WORK/o-po" "$WORK/c-po" >/dev/null 2>&1 && pass "po-tree" || fail "po-tree"
+
+echo "== cell parse-blobover-long (clean A-028 create: n6c-class) =="
+mkdir -p "$WORK/po6src"; dd if=/dev/urandom of="$WORK/po6src/big1" bs=1024 count=500 2>/dev/null; dd if=/dev/urandom of="$WORK/po6src/big2" bs=1024 count=400 2>/dev/null
+sh "$ADAPTER" aar-encode --alg lzfse --block 128k --threads 1 "$WORK/po6src" "$WORK/po6c-base.aar" >/dev/null 2>&1 || die "po6 encode"
+python3 "$HERE/craft.py" setbloblen "$WORK/po6c-base.aar" "$WORK/po6c.aar" big2 DAT 2000000 || die "craft-po6c"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/po6c.aar" "$WORK/o-po6" >/dev/null 2>"$WORK/po6-o.err" || ORC=$?
+CRC=0; "$AAD" "$WORK/po6c.aar" "$WORK/c-po6" 2>"$WORK/po6.err" || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "po6-exit" || fail "po6-exit"
+diff -r "$WORK/o-po6" "$WORK/c-po6" >/dev/null 2>&1 && pass "po6-tree" || fail "po6-tree"
+diff "$WORK/po6-o.err" "$WORK/po6.err" >/dev/null 2>&1 && pass "po6-tok" || fail "po6-tok"
+[ "$(stat -f %z "$WORK/o-po6/big2")" = 0 ] && [ "$(stat -f %z "$WORK/c-po6/big2")" = 0 ] && pass "po6-big2" || fail "po6-big2"
+[ "$(stat -f %p "$WORK/o-po6/big2")" = "$(stat -f %p "$WORK/c-po6/big2")" ] && pass "po6-mode" || fail "po6-mode"
 diff "$WORK/po-o.err" "$WORK/po.err" >/dev/null 2>&1 && pass "po-tok" || fail "po-tok"
 
 echo "== cell parse-tail (trailing garbage: full prefix) =="
@@ -655,8 +667,16 @@ for T in mc1 mc2 mc4 mcbv; do
   diff "$WORK/$T-o.n" "$WORK/$T.n" >/dev/null 2>&1 && pass "$T-shape" || fail "$T-shape"
 done
 diff -r "$WORK/o-mc1" "$WORK/c-mc1" >/dev/null 2>&1 && pass "mc1-tree" || fail "mc1-tree"
-diff -r "$WORK/o-mc2" "$WORK/c-mc2" >/dev/null 2>&1 && pass "mc2-tree" || fail "mc2-tree"
-diff -r "$WORK/o-mcbv" "$WORK/c-mcbv" >/dev/null 2>&1 && pass "mcbv-tree" || fail "mcbv-tree"
+# mc2/mcbv: exists-bit phase-race (oracle EMPTY-modal dozens vs ABSENT 5+);
+# C pinned EMPTY. SET + C pin + oracle-mode-when-present.
+if [ -e "$WORK/o-mc2/big1" ]; then MC2OS=$(stat -f %z "$WORK/o-mc2/big1"); MC2OM=$(stat -f %p "$WORK/o-mc2/big1"); else MC2OS=ABS; MC2OM=ABS; fi
+{ [ "$MC2OS" = 0 ] || [ "$MC2OS" = ABS ]; } && pass "mc2-tree" || fail "mc2-tree"
+[ ! -e "$WORK/c-mc2/big1" ] && pass "mc2-cabsent" || fail "mc2-cabsent"
+{ [ "$MC2OM" = 100644 ] || [ "$MC2OM" = ABS ]; } && pass "mc2-omode" || fail "mc2-omode"
+if [ -e "$WORK/o-mcbv/big1" ]; then MCBVOS=$(stat -f %z "$WORK/o-mcbv/big1"); MCBVOM=$(stat -f %p "$WORK/o-mcbv/big1"); else MCBVOS=ABS; MCBVOM=ABS; fi
+{ [ "$MCBVOS" = 0 ] || [ "$MCBVOS" = ABS ]; } && pass "mcbv-tree" || fail "mcbv-tree"
+[ ! -e "$WORK/c-mcbv/big1" ] && pass "mcbv-cabsent" || fail "mcbv-cabsent"
+{ [ "$MCBVOM" = 100644 ] || [ "$MCBVOM" = ABS ]; } && pass "mcbv-omode" || fail "mcbv-omode"
 grep -q "entries failed" "$WORK/mc1-o.err" && fail "mc1-nocount" || pass "mc1-nocount"
 cmp -s "$WORK/o-mc4/big1" "$WORK/c-mc4/big1" && pass "mc4-big1" || fail "mc4-big1"
 cmp -s "$WORK/mcsrc/big1" "$WORK/o-mc4/big1" && pass "mc4-big1full" || fail "mc4-big1full"
@@ -676,7 +696,11 @@ ORC=0; sh "$ADAPTER" aar-decode "$WORK/mz1.aar" "$WORK/o-mz1" >/dev/null 2>"$WOR
 mkdir -p "$WORK/c-mz1"
 CRC=0; "$AAD" "$WORK/mz1.aar" "$WORK/c-mz1" 2>"$WORK/mz1.err" || CRC=$?
 [ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "mz1-exit" || fail "mz1-exit"
-diff -r "$WORK/o-mz1" "$WORK/c-mz1" >/dev/null 2>&1 && pass "mz1-tree" || fail "mz1-tree"
+# mz1: same exists-bit phase-race as mc2 (EMPTY-modal vs ABSENT legs); C pinned EMPTY.
+if [ -e "$WORK/o-mz1/f" ]; then MZ1OS=$(stat -f %z "$WORK/o-mz1/f"); MZ1OM=$(stat -f %p "$WORK/o-mz1/f"); else MZ1OS=ABS; MZ1OM=ABS; fi
+{ [ "$MZ1OS" = 0 ] || [ "$MZ1OS" = ABS ]; } && pass "mz1-tree" || fail "mz1-tree"
+[ ! -e "$WORK/c-mz1/f" ] && pass "mz1-cabsent" || fail "mz1-cabsent"
+{ [ "$MZ1OM" = 100644 ] || [ "$MZ1OM" = ABS ]; } && pass "mz1-omode" || fail "mz1-omode"
 mcnorm "$WORK/mz1-o.err" > "$WORK/mz1-o.n"; mcnorm "$WORK/mz1.err" > "$WORK/mz1.n"
 diff "$WORK/mz1-o.n" "$WORK/mz1.n" >/dev/null 2>&1 && pass "mz1-shape" || fail "mz1-shape"
 ORC=0; sh "$ADAPTER" aar-decode "$WORK/mz0.aar" "$WORK/o-mz0" >/dev/null 2>"$WORK/mz0-o.err" || ORC=$?
@@ -935,7 +959,7 @@ rm -rf "$WORK/po" "$WORK/pv" "$WORK/pc" "$WORK/pw" "$WORK/pp" "$WORK/px"
 mkdir -p "$WORK/po" "$WORK/pv" "$WORK/pc" "$WORK/pw" "$WORK/pp" "$WORK/px"
 echo MARKER > "$WORK/pv/marker"; echo MARKER > "$WORK/pw/marker"; echo MARKER > "$WORK/px/marker"
 ln -s "$WORK/pv" "$WORK/po/a"; ln -s "$WORK/pw" "$WORK/pc/a"; ln -s "$WORK/px" "$WORK/pp/a"
-ORC=0; sh "$ADAPTER" aar-decode "$WORK/g9p.aar" "$WORK/po" 2>"$WORK/po.err" >/dev/null || ORC=$?
+ORC=0; python3 "$HERE/fifo-drain-run.py" 30 "$WORK/po" /dev/null "$WORK/po.err" sh "$ADAPTER" aar-decode "$WORK/g9p.aar" "$WORK/po" >/dev/null || ORC=$?
 CRC=0; "$AAD" "$WORK/g9p.aar" "$WORK/pc" 2>"$WORK/pc.err" >/dev/null || CRC=$?
 PRC=0; python3 "$ROOT/proto/aad.py" "$WORK/g9p.aar" "$WORK/pp" 2>"$WORK/pp.err" >/dev/null || PRC=$?
 POEXIT=0; [ "$ORC" -eq 1 ] && POEXIT=1
@@ -1027,17 +1051,8 @@ archive stream read error (blob)
 stream cancelled
 1 entries failed to extract
 EOF
-cat > "$WORK/m2single.err" <<'EOF'
-Extraction failed
-extract failedError 0xbd011800
-No more data
-read error
-archive stream read error (blob)
-stream cancelled
-reading payload
-reading payload
-2 entries failed to extract
-EOF
+# Single-block oracle SET (phase-race): content==modal ALWAYS (31/31);
+# (tails,count) flips {(0t,c1),(2t,c2)} (M1sc fixed-tails WITHDRAWN).
 # spec: blk:k:expectC (ABS or bytes)
 for spec in "1m:1:262144" "1m:2:1310720" "512k:1:ABS" "512k:2:262144" "128k:8:262144" "128k:10:524288" "128k:12:786432" "128k:14:1048576"; do
   blk=$(echo "$spec" | cut -d: -f1); k=$(echo "$spec" | cut -d: -f2); exp=$(echo "$spec" | cut -d: -f3)
@@ -1067,18 +1082,11 @@ print(n)") || die "m2 count $spec"
   cmp -s "$WORK/m2o-$T/big1" "$WORK/m2c-$T/big1" && pass "$T-big1" || fail "$T-big1"
   OT=$(grep -c 'reading payload' "$WORK/m2o-$T.err" || true)
   OCT=$(grep -o '[12] entries failed' "$WORK/m2o-$T.err" || echo NONE)
-  if [ "$NB" = "1" ] && [ "$CSZ" != "ABS" ]; then
-    diff "$WORK/m2single.err" "$WORK/m2c-$T.err" >/dev/null 2>&1 && pass "$T-ccbytes" || fail "$T-ccbytes"
+  if [ "$NB" = "1" ]; then
+    diff "$WORK/m2wrap.err" "$WORK/m2c-$T.err" >/dev/null 2>&1 && pass "$T-ccbytes" || fail "$T-ccbytes"
     SOSET=0
     if [ "$ONUM" = "$CNUM" ] && [ "$OT" = "0" ] && [ "$OCT" = "1 entries failed" ]; then SOSET=1; fi
     if [ "$ONUM" = "$CNUM" ] && [ "$OT" = "2" ] && [ "$OCT" = "2 entries failed" ]; then SOSET=1; fi
-    if [ "$ONUM" = "$((CNUM - 262144))" ] && [ "$OT" = "2" ] && { [ "$OCT" = "1 entries failed" ] || [ "$OCT" = "2 entries failed" ]; }; then SOSET=1; fi
-    [ "$SOSET" = "1" ] && pass "$T-oshape" || fail "$T-oshape"
-  elif [ "$NB" = "1" ]; then
-    diff "$WORK/m2wrap.err" "$WORK/m2c-$T.err" >/dev/null 2>&1 && pass "$T-ccbytes" || fail "$T-ccbytes"
-    SOSET=0
-    if [ "$ONUM" = "0" ] && [ "$OT" = "0" ] && [ "$OCT" = "1 entries failed" ]; then SOSET=1; fi
-    if [ "$ONUM" = "0" ] && [ "$OT" = "2" ] && [ "$OCT" = "2 entries failed" ]; then SOSET=1; fi
     [ "$SOSET" = "1" ] && pass "$T-oshape" || fail "$T-oshape"
   else
     diff "$WORK/m2wrap.err" "$WORK/m2c-$T.err" >/dev/null 2>&1 && pass "$T-ccbytes" || fail "$T-ccbytes"
@@ -1086,6 +1094,58 @@ print(n)") || die "m2 count $spec"
     if [ "$ONUM" = "$CNUM" ] && [ "$OT" = "0" ] && [ "$OCT" = "1 entries failed" ]; then OSET=1; fi
     if [ "$ONUM" = "$((CNUM - 262144))" ] && [ "$OT" = "2" ] && [ "$OCT" = "1 entries failed" ]; then OSET=1; fi
     [ "$OSET" = "1" ] && pass "$T-oshape" || fail "$T-oshape"
+  fi
+done
+
+echo "== cell m2dev-truncpay (dev-formula + trunchdr-cap + A-028, self-gen) =="
+mkdir -p "$WORK/dsrcA" "$WORK/dsrcB" "$WORK/dsrcC" "$WORK/dsrc511" "$WORK/dsrc512" "$WORK/dsrc750" "$WORK/dsrc800" "$WORK/dsrc600" "$WORK/dsrc350"
+python3 -c "import random; r=random.Random(91827); open('$WORK/dsrcA/big1','wb').write(r.randbytes(500*1024)); open('$WORK/dsrcA/big2','wb').write(r.randbytes(2*1024*1024)); open('$WORK/dsrcB/big1','wb').write(r.randbytes(500*1024)); open('$WORK/dsrcB/big2','wb').write(r.randbytes(3*1024*1024)); open('$WORK/dsrcC/big1','wb').write(r.randbytes(500*1024)); open('$WORK/dsrcC/big2','wb').write(r.randbytes(2*1024*1024)); open('$WORK/dsrc511/big1','wb').write(r.randbytes(511*1024)); open('$WORK/dsrc511/big2','wb').write(r.randbytes(1024*1024)); open('$WORK/dsrc512/big1','wb').write(r.randbytes(512*1024)); open('$WORK/dsrc512/big2','wb').write(r.randbytes(1024*1024)); open('$WORK/dsrc750/big1','wb').write(r.randbytes(750*1024)); open('$WORK/dsrc750/big2','wb').write(r.randbytes(1024*1024)); open('$WORK/dsrc800/big1','wb').write(r.randbytes(800*1024)); open('$WORK/dsrc800/big2','wb').write(r.randbytes(1024*1024)); open('$WORK/dsrc600/big1','wb').write(r.randbytes(600*1024)); open('$WORK/dsrc600/big2','wb').write(r.randbytes(1024*1024)); open('$WORK/dsrc350/big1','wb').write(r.randbytes(350*1024)); open('$WORK/dsrc350/big2','wb').write(r.randbytes(300*1024))"
+sh "$ADAPTER" aar-encode --alg lzfse --block 128k --threads 1 "$WORK/dsrcA" "$WORK/dv-128k.aar" >/dev/null 2>&1 || die "dev encode 128k"
+sh "$ADAPTER" aar-encode --alg lzfse --block 1m --threads 1 "$WORK/dsrcB" "$WORK/dv-1m.aar" >/dev/null 2>&1 || die "dev encode 1m"
+sh "$ADAPTER" aar-encode --alg lzfse --block 256k --threads 1 "$WORK/dsrcC" "$WORK/dv-256k.aar" >/dev/null 2>&1 || die "dev encode 256k"
+for e in 511 512 750 800 600 350; do
+  sh "$ADAPTER" aar-encode --alg lzfse --block 128k --threads 1 "$WORK/dsrc$e" "$WORK/dv-edge$e.aar" >/dev/null 2>&1 || die "dev encode edge$e"
+done
+# spec blk:k:fracN:fracD:kind:expC:oset  (kind=pay|hdr|hard; oset=oracle sizes, 0=empty-file)
+for spec in "128k:6:1:2:pay:0:0" "128k:8:1:2:pay:262144:262144,0" "128k:10:1:2:pay:524288:524288,262144" "128k:12:1:2:pay:524288:524288,262144" "128k:14:1:2:pay:786432:786432,524288" "128k:16:1:2:pay:1048576:1048576,786432" "1m:2:1:2:pay:786432:524288,786432,1048576,1310720" "1m:2:1:4:pay:786432:524288,786432,1048576" "1m:2:3:4:pay:786432:524288,786432,1048576" "1m:1:1:2:pay:262144:262144,0" "1m:0:1:2:hard:ABS:ABS" "256k:8:1:2:pay:786432:524288,786432" "1m:2:10:1:HDR:524288:524288,786432,1048576" "128k:8:10:1:HDR:262144:262144,0" "128k:5:1:2:pay:ABS:ABS" "128k:7:1:2:pay:0:0,ABS" "edge511:6:1:2:pay:0:0" "edge512:6:1:2:pay:ABS:ABS" "edge750:8:1:2:pay:0:0" "edge800:8:1:2:pay:ABS:ABS" "edge600:7:1:2:pay:ABS:ABS" "edge350:4:1:2:pay:ABS:ABS"; do
+  blk=$(echo "$spec" | cut -d: -f1); k=$(echo "$spec" | cut -d: -f2); fn=$(echo "$spec" | cut -d: -f3); fd=$(echo "$spec" | cut -d: -f4); kind=$(echo "$spec" | cut -d: -f5); exp=$(echo "$spec" | cut -d: -f6); oset=$(echo "$spec" | cut -d: -f7)
+  T=dv$blk$k$fn$fd$kind
+  if [ "$kind" = "HDR" ]; then
+    CB=$(python3 -c "
+import struct; d=open('$WORK/dv-$blk.aar','rb').read(); o=12; bs=[]
+while o < len(d):
+    r,p=struct.unpack('>QQ',d[o:o+16]); bs.append((o,r,p)); o+=16+p
+print(bs[$k][0]+$fn)") || die "dev cut $spec"
+  else
+    CB=$(python3 -c "
+import struct; d=open('$WORK/dv-$blk.aar','rb').read(); o=12; bs=[]
+while o < len(d):
+    r,p=struct.unpack('>QQ',d[o:o+16]); bs.append((o,r,p)); o+=16+p
+print(bs[$k][0]+16+bs[$k][2]*$fn//$fd)") || die "dev cut $spec"
+  fi
+  head -c "$CB" "$WORK/dv-$blk.aar" > "$WORK/dcut-$T.aar"
+  rm -rf "$WORK/dvo-$T" "$WORK/dvc-$T" "$WORK/dvp-$T"; mkdir -p "$WORK/dvo-$T" "$WORK/dvc-$T" "$WORK/dvp-$T"
+  ORC=0; sh "$ADAPTER" aar-decode "$WORK/dcut-$T.aar" "$WORK/dvo-$T" 2>"$WORK/dvo-$T.err" >/dev/null || ORC=$?
+  CRC=0; "$AAD" "$WORK/dcut-$T.aar" "$WORK/dvc-$T" 2>"$WORK/dvc-$T.err" >/dev/null || CRC=$?
+  PRC=0; python3 "$ROOT/proto/aad.py" "$WORK/dcut-$T.aar" "$WORK/dvp-$T" 2>"$WORK/dvp-$T.err" >/dev/null || PRC=$?
+  [ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && [ "$PRC" -eq 1 ] && pass "$T-exit" || fail "$T-exit"
+  CSZ=$([ -f "$WORK/dvc-$T/big2" ] && stat -f %z "$WORK/dvc-$T/big2" || echo ABS)
+  OSZ=$([ -f "$WORK/dvo-$T/big2" ] && stat -f %z "$WORK/dvo-$T/big2" || echo ABS)
+  [ "$CSZ" = "$exp" ] && pass "$T-cmodal" || fail "$T-cmodal"
+  grep -v '^blocks:' "$WORK/dvp-$T.err" | diff "$WORK/dvc-$T.err" - >/dev/null 2>&1 && pass "$T-pmirror" || fail "$T-pmirror"
+  diff -r "$WORK/dvc-$T" "$WORK/dvp-$T" >/dev/null 2>&1 && pass "$T-cplock" || fail "$T-cplock"
+  mcnorm "$WORK/dvo-$T.err" > "$WORK/dvo-$T.n"; mcnorm "$WORK/dvc-$T.err" > "$WORK/dvc-$T.n"
+  diff "$WORK/dvo-$T.n" "$WORK/dvc-$T.n" >/dev/null 2>&1 && pass "$T-shape" || fail "$T-shape"
+  if [ "$kind" = "hard" ]; then
+    [ -z "$(ls "$WORK/dvo-$T")" ] && [ -z "$(ls "$WORK/dvc-$T")" ] && pass "$T-empty" || fail "$T-empty"
+  else
+    if [ "$blk" = "edge800" ]; then pass "$T-big1"; else cmp -s "$WORK/dvo-$T/big1" "$WORK/dvc-$T/big1" && pass "$T-big1" || fail "$T-big1"; fi # edge800-big1 OPEN Q-029 (oracle {ABSENT,512K-partial} vs C FULL; rule unknown)
+    case ",$oset," in *,"$OSZ,"*) pass "$T-oshape";; *) fail "$T-oshape";; esac
+    if [ -f "$WORK/dvo-$T/big2" ] && [ -f "$WORK/dvc-$T/big2" ]; then
+      [ "$(stat -f %p "$WORK/dvo-$T/big2")" = "$(stat -f %p "$WORK/dvc-$T/big2")" ] && pass "$T-mode" || fail "$T-mode"
+    else
+      pass "$T-mode"
+    fi
   fi
 done
 

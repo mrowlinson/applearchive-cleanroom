@@ -102,13 +102,30 @@ def load(path):
     unc = struct.unpack(">I", d[16:20])[0]
     comp = struct.unpack(">I", d[24:28])[0]
     assert unc == comp, "stored only"
-    assert 28 + comp == len(d), "single block only"
-    return d, bytearray(d[28:28 + comp]), True
+    if 28 + comp == len(d):
+        return d, bytearray(d[28:28 + comp]), True
+    # multiblock all-stored: raw = inner concat + scatter map
+    bs = blocks_of(d)
+    for _, r, p in bs:
+        assert r == p, "stored only"
+    raw = bytearray()
+    amap = []
+    for off, _, pay in bs:
+        amap.append((off + 16, pay))
+        raw += d[off + 16:off + 16 + pay]
+    return d, raw, amap
 
 
 def save(d, raw, stored, path):
     if not stored:
         open(path, "wb").write(bytes(raw))
+        return
+    if isinstance(stored, list):
+        assert sum(p for _, p in stored) == len(raw), "width-kept only"
+        for off, pay in stored:
+            d[off:off + pay] = bytes(raw[:pay])
+            del raw[:pay]
+        open(path, "wb").write(bytes(d))
         return
     d[28:28 + (len(d) - 28)] = bytes(raw)
     struct.pack_into(">I", d, 16, len(raw))

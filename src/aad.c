@@ -257,9 +257,11 @@ static int known_pbz(const unsigned char *d) {
  * nblocks = decoded outer-block count (raw/empty single-piece = 1);
  * clean-path presence gate uses (innerlen, nblocks) as (whole, kcut). */
 static int parse_chain(const Buf *file, Buf *inner, MidFail *mf,
-                       size_t *nblocks) {
+                       size_t *nblocks, unsigned long long *bsize_out) {
     const unsigned char *d = file->data;
     size_t n = file->len;
+    *nblocks = 1;
+    *bsize_out = 0;
     if (n == 0) { /* empty archive: silent empty (tr-0, q4) */
         inner->data = malloc(1); inner->len = 0;
         *nblocks = 1;
@@ -279,6 +281,7 @@ static int parse_chain(const Buf *file, Buf *inner, MidFail *mf,
     memcpy(magic, d, 4);
     /* prefix = magic(4) + bsize u64be; no zero fields (DPROBE-08). */
     uint64_t bsize = rd64be(d + 4);
+    *bsize_out = (unsigned long long)bsize;
     if (bsize == 0 || bsize > 0x8000000ULL) {
         fprintf(stderr, "Failed to create decompression stream\n"
                 "Error creating input stream\n"
@@ -780,7 +783,7 @@ static int safe_join(const char *root, const unsigned char *rel, size_t rlen,
 static int extract(const Item *items, size_t nitems, const char *root,
                      int fcls, int fsub, size_t shortidx, int midchain,
                      int shortpresent, unsigned long long whole,
-                     size_t shortend, size_t nblocks) {
+                     size_t shortend, unsigned long long obs, int mfkind) {
     char (*repl)[4096] = malloc(REPLC * sizeof *repl);
     size_t nrepl = 0;
     { /* root gated on scratch repl (a replaced root must not taint all) */
@@ -823,7 +826,7 @@ static int extract(const Item *items, size_t nitems, const char *root,
         }
     }
     unsigned fails = 0, sfails = 0;
-    int hdr = 0, dirfail = 0, aborted = 0, shortstop = 0, wrote_short = 0;
+    int hdr = 0, dirfail = 0, aborted = 0, shortstop = 0;
     /* phase 1: create everything, forward. aborts stop creation only. */
     for (size_t k = 0; k < nitems && !aborted && !shortstop; k++) {
         const Item *it = &items[k];
@@ -907,20 +910,43 @@ static int extract(const Item *items, size_t nitems, const char *root,
                     dav = doff <= it->bloblen ? it->bloblen - doff : 0;
                 }
                 int datcomplete = dd && dav >= dl;
-                if (!shortpresent && !datcomplete) break; /* absent */
                 unsigned long long nch = whole >= 786432 ?
                     (whole - 786432) / 262144 + 1 : 0;
+                if (!shortpresent && !datcomplete &&
+                    (nch < 1 || shortend / 262144ULL > nch))
+                    break; /* absent (A-028 LONG-only: create iff
+                            * nch>=1 && floor(end/256K) <= nch; SHORT
+                            * nch-0 never creates below-gate: po/uc/
+                            * mc2-class 20+ absent legs). */
                 unsigned long long hch = 0;
                 for (unsigned long long j = 0; j < nch; j++) {
                     if (shortend + 0ULL <= (nch - j) * 262144ULL) hch++;
                     else break;
                 }
+                /* M2-dev (NOTE-060, verified 10/10): truncpay LONG
+                 * (nch>=2, !datcomplete): held -= dev; big
+                 * (bsize>=192K): dev = nch/2-1; small: dev =
+                 * (nch>=4). Trunchdr: held capped at 2ch. w3
+                 * (n>=10) + frac + tr6-creation stay OPEN. */
+                if (midchain && !datcomplete && nch >= 2 &&
+                    mfkind == MF_TRUNCPAY) {
+                    unsigned long long dev = obs >= 196608ULL ?
+                        nch / 2 - 1 : (nch >= 4 ? 1 : 0);
+                    if (dev > hch) dev = hch;
+                    hch -= dev;
+                } else if (midchain && !datcomplete &&
+                           mfkind == MF_TRUNCHDR && hch > 2) {
+                    hch = 2;
+                }
                 unsigned long long want = hch * 262144ULL;
                 size_t wlen = datcomplete ? dl :
                     (want < dav ? (size_t)want : dav);
-                if (!datcomplete && wlen == 0 && !midchain)
-                    break; /* clean want-0: absent, no file (v512b1).
-                            * midchain want-0: EMPTY file kept (cxA/E/F). */
+                if (!datcomplete && wlen == 0 && !midchain &&
+                    (shortpresent || shortend / 262144ULL > nch))
+                    break; /* clean want-0: absent (v512b1), EXCEPT
+                            * below-gate A-028-EMPTY (n6c) which falls
+                            * through. Midchain want-0: EMPTY (cxA/E/F,
+                            * tr6-class via A-028). */
                 char *sl = strrchr(target, '/');
                 if (sl) {
                     *sl = 0;
@@ -955,7 +981,6 @@ static int extract(const Item *items, size_t nitems, const char *root,
                 fclose(f);
                 memcpy(files[nfiles].path, target, strlen(target) + 1);
                 files[nfiles].idx = k; files[nfiles].islink = 0; nfiles++;
-                if (wlen > 0) wrote_short = 1;
                 break; /* rest skipped */
             } else {
                 shortstop = 1;
@@ -1216,13 +1241,9 @@ static int extract(const Item *items, size_t nitems, const char *root,
             break;
         }
     }
-    if (fcls == PF_BLOBOVERRUN && !aborted && !midchain && nblocks == 1 &&
-        wrote_short) {
-        /* single-block short-content: fixed 2 tails + silent second
-         * count (M1sc 4/4; mechanism unknown, bytes pinned). */
-        fprintf(stderr, "reading payload\nreading payload\n");
-        fails++; sfails++;
-    }
+    /* M1 tails: NEVER emitted (modal is rp0/fc1 everywhere; tails race
+     * phase-dependently, incl single-block — M1sc fixed-tails claim
+     * WITHDRAWN after in-session flip to 0t/c1 4/4, NOTE-061). */
     /* phase 2: files meta, strict reverse (bad2, Q1 re-probe) */
     for (size_t i = nfiles; i-- > 0;) {
         const Item *it = &items[files[i].idx];
@@ -1360,9 +1381,10 @@ int main(int argc, char **argv) {
     MidFail mf;
     memset(&mf, 0, sizeof mf);
     size_t nblocks = 1;
+    unsigned long long obs = 0;
     int rc = 1;
     if (read_file(argv[1], &file)) goto out;
-    int cr = parse_chain(&file, &inner, &mf, &nblocks);
+    int cr = parse_chain(&file, &inner, &mf, &nblocks, &obs);
     if (cr < 0) goto out;
     int fcls = 0, fsub = 0;
     if (parse_inner(&inner, &items, &nitems, &fcls, &fsub, &shortidx,
@@ -1374,7 +1396,7 @@ int main(int argc, char **argv) {
                       shortavail + 0ULL >= (mf.kcut > 0 ? mf.kcut - 1 : 0) *
                       65536ULL;
         extract(items, nitems, argv[2], fcls, fsub, shortidx, 1, present,
-                mf.whole, shortend, nblocks);
+                mf.whole, shortend, obs, mf.kind);
         emit_midblob(&mf);
         fprintf(stderr, "1 entries failed to extract\n");
         fails = 1;
@@ -1386,7 +1408,7 @@ int main(int argc, char **argv) {
                       shortavail + 0ULL >= (nblocks > 0 ? nblocks - 1 : 0) *
                       65536ULL;
         if (extract(items, nitems, argv[2], fcls, fsub, shortidx, 0, present,
-                    (unsigned long long)inner.len, shortend, nblocks))
+                    (unsigned long long)inner.len, shortend, obs, -1))
             goto out;
     }
     rc = 0;

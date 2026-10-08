@@ -529,7 +529,7 @@ def _under_repl(target, repl):
 
 def extract(items, root, fcls=0, fsub=0, shortidx=-1, midchain=False,
             shortpresent=False, whole=0, shortend=0, inner=b"",
-            nblocks=1):
+            obs=0, mfkind=None):
     _mkparents(os.path.abspath(root), [])  # scratch repl: root never taints
     files = []
     dirs = []
@@ -553,7 +553,6 @@ def extract(items, root, fcls=0, fsub=0, shortidx=-1, midchain=False,
     dirfail = False
     aborted = False
     shortstop = False
-    wrote_short = False
 
     def abort(msg):
         if msg:
@@ -657,20 +656,35 @@ def extract(items, root, fcls=0, fsub=0, shortidx=-1, midchain=False,
                 if doff is not None:
                     dav = max(len(inner) - (shortend + doff), 0)
                 datcomplete = doff is not None and dav >= dln
-                if not shortpresent and not datcomplete:
-                    break
                 nch = (whole - 786432) // 262144 + 1 if whole >= 786432 else 0
+                if not shortpresent and not datcomplete and \
+                        (nch < 1 or shortend // 262144 > nch):
+                    break  # Absent (A-028 LONG-only: create iff
+                           # floor(end/256K) <= nch).
                 hch = 0
                 for j in range(nch):
                     if shortend <= (nch - j) * 262144:
                         hch += 1
                     else:
                         break
+                # M2-dev (NOTE-060): truncpay LONG (nch>=2,
+                # !datcomplete): held -= dev; big (bsize>=192K):
+                # dev = nch//2-1; small: dev = (nch>=4).
+                # Trunchdr: held capped at 2ch.
+                if midchain and not datcomplete and nch >= 2 and \
+                        mfkind == "truncpay":
+                    dev = (nch // 2 - 1 if obs >= 196608
+                           else (1 if nch >= 4 else 0))
+                    hch = max(hch - dev, 0)
+                elif midchain and not datcomplete and \
+                        mfkind == "trunchdr" and hch > 2:
+                    hch = 2
                 want = hch * 262144
                 wlen = dln if datcomplete else min(want, dav)
-                if not datcomplete and wlen == 0 and not midchain:
-                    break  # Clean want-0: absent (v512b1). Midchain
-                           # want-0: EMPTY file kept (cxA/E/F).
+                if not datcomplete and wlen == 0 and not midchain and \
+                        (shortpresent or shortend // 262144 > nch):
+                    break  # Clean want-0: absent (v512b1), EXCEPT
+                           # below-gate A-028-EMPTY (n6c).
                 wbytes = (bytes(inner[shortend + doff:
                                       shortend + doff + wlen])
                           if doff is not None else b"")
@@ -704,8 +718,6 @@ def extract(items, root, fcls=0, fsub=0, shortidx=-1, midchain=False,
                     hdr[0] = True
                     break
                 files.append((target, entries, blobs, False, k))
-                if wlen > 0:
-                    wrote_short = True
                 break
             shortstop = True
         if typ == ord("D"):
@@ -926,13 +938,8 @@ def extract(items, root, fcls=0, fsub=0, shortidx=-1, midchain=False,
                   "archive stream read error (blob)\nstream cancelled",
                   file=sys.stderr)
             scount += 1
-    if (fcls == PF_BLOBOVERRUN and not aborted and not midchain and
-            nblocks == 1 and wrote_short):
-        # Single-block short-content: fixed 2 tails + silent second
-        # count (M1sc 4/4; mechanism unknown, bytes pinned).
-        print("reading payload\nreading payload", file=sys.stderr)
-        failed += 1
-        scount += 1
+    # M1 tails: NEVER emitted (modal rp0/fc1; tails race by phase,
+    # incl single-block — M1sc fixed-tails WITHDRAWN, NOTE-061).
     # phase 2: files meta, strict reverse
     for target, entries, blobs, islink, kk in reversed(files):
         if kk == shortidx:
@@ -1064,7 +1071,9 @@ def main(argv):
             present = (shortidx != -1 and mid["whole"] >= 524288 and
                        shortavail >= max(mid["kcut"] - 1, 0) * 65536)
             extract(items, argv[2], fcls, fsub, shortidx, True, present,
-                    mid["whole"], shortend, inner, len(metas))
+                    mid["whole"], shortend, inner,
+                    metas[0].get("bsize", 0) if metas else 0,
+                    mid["kind"])
             print(_midblob(mid), file=sys.stderr)
             print("1 entries failed to extract", file=sys.stderr)
             return 1
@@ -1072,7 +1081,8 @@ def main(argv):
         present = (shortidx != -1 and len(inner) >= 524288 and
                    shortavail >= max(len(metas) - 1, 0) * 65536)
         return extract(items, argv[2], fcls, fsub, shortidx, False, present,
-                       len(inner), shortend, inner, len(metas))
+                       len(inner), shortend, inner,
+                       metas[0].get("bsize", 0) if metas else 0, None)
     except FmtErr as e:
         print("%s" % e, file=sys.stderr)
         return 1
