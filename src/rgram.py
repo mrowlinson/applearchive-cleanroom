@@ -2969,6 +2969,29 @@ _T9H3QC = ((0, 0xc4), (2, 0x02), (3, 0x00), (6, 0x24), (7, 0xfe),
           (57, 0xca), (58, 0xbf), (59, 0xf2), (60, 0x8f), (61, 0x5c),
           (62, 0x3a), (63, 0xde), (64, 0xe7), (65, 0x7c), (66, 0x53),
           (67, 0xf9))
+# T9I1: 16x16 tab (b32-38) + H3QT-rot words + b28/29[q] + b5 rule.
+_T9I1T = ("42fc7b6e9fddd4", "23fcbf739fddd4", "bdfc1b1abfddd4",
+          "08fd7bb21fead4", "4dfcbbda3febd4", "13fca7055febd4",
+          "d5fc97ec5febd4", "6abf271a5f0ad5", "15fc2b349f0bd5",
+          "2bfc33349f0bd5", "f8fce393ff0bd5", "29fc97731f18d5",
+          "99fc9b9b3f19d5", "5ffc87c63f19d5", "01fc7326bf19d5",
+          "77bfaf35bf38d5")
+_T9I1B5 = (0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x74,
+           0x74, 0x74, 0x74, 0x74, 0x74, 0x74, 0x74, 0x75)
+_T9I1W = ("c54d", "384e", "3a4e", "674e", "694e", "694e", "6e4e",
+          "c44f", "c54f", "c64f", "c94f", "da4f", "da4f", "0450",
+          "3151", "3251")
+_T9I1C = ((0, 0xc4), (1, 0x61), (2, 0x22), (3, 0x00), (6, 0x24),
+          (7, 0xfe), (8, 0xa4), (9, 0x01), (10, 0x02), (11, 0x09),
+          (12, 0x02), (13, 0x0e), (14, 0xef), (15, 0x91), (16, 0xdd),
+          (17, 0x31), (18, 0xdb), (19, 0xd8), (24, 0x7f), (25, 0x5b),
+          (26, 0x7c), (27, 0x67), (30, 0xb6), (31, 0xe1), (39, 0x6f),
+          (40, 0xed), (41, 0xde), (42, 0xcf), (43, 0x8d), (44, 0xd7),
+          (45, 0x75), (46, 0x5a), (47, 0x4c), (48, 0xa9), (49, 0xbc),
+          (50, 0x31), (51, 0x68), (52, 0xfb), (53, 0x1e), (54, 0x1f),
+          (55, 0x04), (56, 0xae), (57, 0xca), (58, 0xbf), (59, 0xf2),
+          (60, 0x8f), (61, 0x5c), (62, 0x3a), (63, 0xde), (64, 0xe7),
+          (65, 0x7c), (66, 0x53), (67, 0xf9))
 _T7CC = ((0, 0x75), (1, 0x01), (2, 0x00), (3, 0x00), (6, 0xc1),
          (7, 0x6b), (8, 0xfa), (9, 0xf6), (10, 0xcf),
          (11, 0x25), (12, 0x00), (13, 0xad), (14, 0xfc),
@@ -7363,6 +7386,30 @@ def main():
             if pay[b] != v:
                 return fail("T9H3Q const %d" % b)
         print("CLOSED T9H3Q N=%d off=%d" % (n, off))
+        return 0
+    if n <= 14996:  # T9I1: 16x16 tab b32-38 + H3QT words + b28/29 + b5
+        off = n - 14741
+        if len(pay) != 68:
+            return fail("T9I1 paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if pay[4] != (l10 & 0xFF):
+            return fail("T9I1 lencode")
+        m = off & 15
+        q = off >> 4
+        if pay[5] != _T9I1B5[q] + (m >= 11 and q in (6, 14)):
+            return fail("T9I1 b5")
+        if bytes((pay[20], pay[21], pay[22],
+                   pay[23])).hex() != _T9H3QT[q][0:8]:
+            return fail("T9I1 blk")
+        if bytes((pay[28], pay[29])).hex() != _T9I1W[q]:
+            return fail("T9I1 w")
+        if bytes((pay[32], pay[33], pay[34], pay[35], pay[36],
+                   pay[37], pay[38])).hex() != _T9I1T[m]:
+            return fail("T9I1 tab")
+        for b, v in _T9I1C:
+            if pay[b] != v:
+                return fail("T9I1 const %d" % b)
+        print("CLOSED T9I1 N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
