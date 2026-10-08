@@ -9,11 +9,15 @@ LZMA_DYLIB ?= /opt/homebrew/Cellar/xz/5.8.4/lib/liblzma.5.dylib
 CFLAGS += -I$(LZMA_PREFIX)/include
 LDLIBS = -lz $(LZMA_DYLIB)
 
-all: $(BUILDDIR)/aae
+all: $(BUILDDIR)/aae $(BUILDDIR)/rgramc
 
 $(BUILDDIR)/aae: aae.c lz4c.c lz4c.h
 	mkdir -p $(BUILDDIR)
 	$(CC) $(CFLAGS) -o $@ aae.c lz4c.c $(LDLIBS)
 
+$(BUILDDIR)/rgramc: rgramc.c rgramc.h
+	mkdir -p $(BUILDDIR)
+	$(CC) $(CFLAGS) -o $@ rgramc.c
+
 clean:
-	rm -f $(BUILDDIR)/aae
+	rm -f $(BUILDDIR)/aae $(BUILDDIR)/rgramc

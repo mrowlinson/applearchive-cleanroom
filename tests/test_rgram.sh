@@ -15,6 +15,7 @@ GEN=test_rgram.sh
 OS=$(sw_vers -productVersion 2>/dev/null || echo unknown)
 CT=${CT:-/usr/bin/compression_tool}
 RG=$ROOT/src/rgram.py
+_RG=${RGRAM_BIN:-python3 "$RG"}
 command -v python3 >/dev/null || { echo "need python3" >&2; exit 2; }
 mkdir -p "$WORK" "$ROOT/vectors"
 pin_get() { grep "^$1," "$PINS" | head -1 | cut -d, -f3; }
@@ -41,7 +42,7 @@ GCELL() { # nbytes : closed + sha pins
   n=$1
   head -c "$n" /dev/zero > "$WORK/g$n.bin" 2>/dev/null || : > "$WORK/g$n.bin"
   "$CT" -encode -a lzraven -i "$WORK/g$n.bin" -o "$WORK/g$n.rav" 2>/dev/null || { echo "FAIL g$n ct rc"; FAIL=1; return; }
-  if v=$(python3 "$RG" "$WORK/g$n.rav" "$n" 2>"$WORK/g$n.rgram"); then
+  if v=$($_RG "$WORK/g$n.rav" "$n" 2>"$WORK/g$n.rgram"); then
     case "$v" in
       *CLOSED*) c=CLOSED;; *) c=BAD;;
     esac
