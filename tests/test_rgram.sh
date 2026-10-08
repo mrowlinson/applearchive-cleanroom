@@ -49,8 +49,8 @@ GCELL() { # nbytes : closed + sha pins
     chk "g-z$n" sha "$(sha "$WORK/g$n.rav")" "$(sz "$WORK/g$n.rav")"
   else echo "FAIL g$n rgram: $(head -1 "$WORK/g$n.rgram")"; FAIL=1; fi
 }
-echo "== rgram zeros-N (stored + T0 + edge + T1 + T2 + T3a) =="
-for s in 0 1 63 64 65 124 125 126 127 128 129 189 253 255 256 257 380 381 384 409 473 474 511 512 521 537 601 640 665 728; do
+echo "== rgram zeros-N (stored + T0 + edge + T1 + T2 + T3) =="
+for s in 0 1 63 64 65 124 125 126 127 128 129 189 253 255 256 257 380 381 384 409 473 474 511 512 521 537 601 640 665 728 729 730 731 746 747 748 756 757 758 772 773 789 805 820; do
   GCELL "$s"
 done
 [ -n "${RECORD:-}" ] && mv "$PINS.new" "$PINS" && echo "RECORDED $PINS"
