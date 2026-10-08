@@ -307,6 +307,129 @@ _T5L3T43 = (0x78, 0xf8, 0x79, 0xf8, 0x79, 0xf9, 0xf8, 0xf9,
             0xf8, 0x78, 0xf9, 0xf9, 0xf9, 0x78, 0x78, 0x78)
 _T5L3K = ("3c5ea2ce4cfb", "495ee5feecf8", "5edeab3e8cfc",
           "495e839fccf7")
+# T6A tables (56-tier head off 0..142): 16-tabs b52-55
+# (PRE-025b concur EXACT) + k2 segs b38/39/46/47 + b5 edge.
+_T6AT52 = (0x8c, 0x0c, 0x0c, 0x6c, 0xec, 0xec, 0x4c, 0xac,
+           0xcc, 0x2c, 0x2c, 0x8c, 0x0c, 0x0c, 0x8c, 0xcc)
+_T6AT53 = (0x85, 0xae, 0x7f, 0xc2, 0xea, 0xbb, 0xff, 0x8a,
+           0xf8, 0xa0, 0x71, 0x98, 0xdd, 0xae, 0xd6, 0x7c)
+_T6AT54 = (0xc7, 0x2f, 0xff, 0x77, 0xdf, 0xaf, 0x27, 0x97,
+           0x5f, 0xcf, 0x9f, 0x17, 0x7f, 0x4f, 0xb7, 0x37)
+_T6AT55 = (0x84, 0x85, 0x85, 0x95, 0x95, 0x96, 0xa6, 0xa6,
+           0xa7, 0xb2, 0xb3, 0xb8, 0xc3, 0xc4, 0xc4, 0xd4)
+_T6AK = ("0229b578", "b22c55f8", "22444779", "e246d7f8",
+         "525ec979", "026269f9", "82784bf8", "327cebf9",
+         "b292cdf8")
+# T6B tables: post-4096 reframe. b53/54/55 tabs SHARED with A;
+# b52 post-tab (PRE-025b concur, rotated to off&15 key); body
+# = PRE-024b reframe values; k2 segs continue k2=9..15.
+_T6BT52 = (0x8d, 0x0d, 0x0d, 0x6d, 0xed, 0xed, 0x4d, 0xad,
+           0xcd, 0x2d, 0x2d, 0x8d, 0x0d, 0x0d, 0x8d, 0xcd)
+_T6BK = ("b292cdf8", "72966d78", "e2ac4ff9", "f2c6d1f9",
+         "02c8e1f9", "22e26378", "42e26378", "52fce578")
+_T6DIP256 = ("04f10e05e3e0236bf59be700b480e618898cf6be4b927faa823c45b6"
+             "cd3d27f42fd8129718db42bcab03dbbccccdddad2ddc06fc")
+# T6C tables (cluster C): 2 transition literals + 15-row C1
+# + 10-row C2 + C3-6 shared 16-tab b13-17 + k2 b5-11.
+_T6C0 = ("03000000e5e0236b15f10e0ddf3c07203491d180ef5b40734b927faa"
+         "823c45b6cd3d27f42fd802cf18db42bcab036dbc2d8a75eccdf61fd1",
+         "31000000e780530b19bf790e0041bc433491d180ef5b40734b927faa"
+         "823c45b6cd3d27f42fd802cf18db42bcab036dbc2d8a61ae2dd44fda")
+_T6C1T = ("e0908b19", "40ce0b39", "805c1b39", "e0999b39",
+          "40d71b59", "80652b59", "80cfcb99", "201b5bb9",
+          "8058dbb9", "e0955bd9", "20246bd9", "8061ebd9",
+          "e19e6bf9", "212d7bf9", "816afbf9")
+_T6C1C = ((0, 0x31), (1, 0x00), (2, 0x00), (3, 0x00), (9, 0xbf),
+          (10, 0x79), (11, 0x0e), (12, 0x00), (13, 0x41),
+          (14, 0xbc), (15, 0x43), (16, 0x34), (17, 0x91),
+          (18, 0xd1), (19, 0x80), (20, 0xef), (21, 0x5b),
+          (22, 0x40), (23, 0x73), (24, 0x4b), (25, 0x92),
+          (26, 0x7f), (27, 0xaa), (28, 0x82), (29, 0x3c),
+          (30, 0x45), (31, 0xb6), (32, 0xcd), (33, 0x3d),
+          (34, 0x27), (35, 0xf4), (36, 0x2f), (37, 0xd8),
+          (38, 0x02), (39, 0xcf), (40, 0x18), (41, 0xdb),
+          (42, 0x42), (43, 0xbc), (44, 0xab), (45, 0x03),
+          (46, 0x6d), (47, 0xbc), (48, 0x2d), (49, 0x8a),
+          (50, 0x61), (51, 0xae), (52, 0x2d), (53, 0xd4),
+          (54, 0x4f), (55, 0xda))
+_T6C2T = ("c1abfb7d1af6", "61fe4be7a8f1", "4161fbe9a8f1",
+          "c1c1eb5d8bf2", "c1f37beaa8f1", "c18a5b9be5ef",
+          "61b71b618bf2", "815eabfec6f0", "c1359beba8f1",
+          "a1aeabffc6f0")
+_T6C2C = ((0, 0x04), (1, 0x00), (2, 0x00), (3, 0x00), (8, 0x59),
+          (9, 0x10), (10, 0xef), (11, 0x50), (15, 0x00),
+          (16, 0xb4), (17, 0x80), (18, 0xe6), (19, 0x00),
+          (20, 0x89), (21, 0x8c), (22, 0xf6), (23, 0xbe),
+          (24, 0x4b), (25, 0x92), (26, 0x7f), (27, 0xaa),
+          (28, 0x82), (29, 0x3c), (30, 0x45), (31, 0xb6),
+          (32, 0xcd), (33, 0x3d), (34, 0x27), (35, 0xf4),
+          (36, 0x2f), (37, 0xd8), (38, 0x02), (39, 0xcf),
+          (40, 0x18), (41, 0xdb), (42, 0x42), (43, 0xbc),
+          (44, 0xab), (45, 0x03), (46, 0x6d), (47, 0xbc),
+          (48, 0x2d), (49, 0x8a), (50, 0x5d), (51, 0x7b),
+          (52, 0xad), (53, 0xa0), (54, 0xf7), (55, 0xa5))
+_T6C3T = ("7abca4d811", "7abca5d811", "c77c55f811", "e37c72f811",
+          "307c221812", "307c231812", "7d3cd31812", "7d3cd41812",
+          "cafc833812", "e6fca03812", "33fc505812", "33fc515812",
+          "80bc017812", "80bc027812", "cd7cb27812", "d13cc87812")
+_T6C3K = ("01eb2b596c511e", "814f3b19e0181e", "41357b59cc6d1e",
+          "41affbb9b3fc1d")
+# T6D tables (quiet-256): 16-tabs b20-23 + b13-17 walk the
+# C3 tab by k2 (full 16, reuse) + b5 edges @399/527.
+_T6DT20 = (0xf1, 0x42, 0xbe, 0x0f, 0x60, 0xfb, 0x7e, 0xcf,
+           0x6d, 0xbe, 0x41, 0xdc, 0x2d, 0x7e, 0xfa, 0x4b)
+_T6DT21 = (0xdd, 0x5e, 0xdd, 0x5e, 0xde, 0x5f, 0x5a, 0xda,
+           0x5f, 0xdf, 0xda, 0x5b, 0xdc, 0x5c, 0xdb, 0x5c)
+_T6DT22 = (0xdd, 0xe3, 0x7d, 0x83, 0x88, 0x28, 0x2e, 0x33,
+           0xa7, 0xac, 0xb2, 0x52, 0x57, 0x5d, 0xf7, 0xfd)
+_T6DT23 = (0x2d, 0x2d, 0x2e, 0x2e, 0x2e, 0x2f, 0x2f, 0x2f,
+           0x2f, 0x2f, 0x2f, 0x30, 0x30, 0x30, 0x30, 0x30)
+_T6DC = ((0, 0x40), (1, 0x04), (2, 0x00), (3, 0x00), (6, 0x45),
+         (7, 0x6b), (8, 0x79), (9, 0xe0), (10, 0x18),
+         (11, 0x5e), (12, 0x00), (18, 0x19), (19, 0x4d),
+         (24, 0xef), (25, 0x24), (26, 0xf9), (27, 0xa7),
+         (28, 0x82), (29, 0x3c), (30, 0x45), (31, 0xb6),
+         (32, 0xcd), (33, 0x3d), (34, 0x27), (35, 0xf4),
+         (36, 0x2f), (37, 0xd8), (38, 0x02), (39, 0xcf),
+         (40, 0x18), (41, 0xdb), (42, 0x42), (43, 0xbc),
+         (44, 0xab), (45, 0x03), (46, 0x6d), (47, 0xbc),
+         (48, 0x2d), (49, 0x8a), (50, 0x5d), (51, 0x7b),
+         (52, 0xad), (53, 0xa0), (54, 0xf7), (55, 0xa5))
+_T6C3C = ((0, 0x44), (1, 0x00), (2, 0x00), (3, 0x00), (12, 0x00),
+          (18, 0x19), (19, 0x0d), (20, 0xef), (21, 0x5b),
+          (22, 0x40), (23, 0x73), (24, 0x4b), (25, 0x92),
+          (26, 0x7f), (27, 0xaa), (28, 0x82), (29, 0x3c),
+          (30, 0x45), (31, 0xb6), (32, 0xcd), (33, 0x3d),
+          (34, 0x27), (35, 0xf4), (36, 0x2f), (37, 0xd8),
+          (38, 0x02), (39, 0xcf), (40, 0x18), (41, 0xdb),
+          (42, 0x42), (43, 0xbc), (44, 0xab), (45, 0x03),
+          (46, 0x6d), (47, 0xbc), (48, 0x2d), (49, 0x8a),
+          (50, 0x5d), (51, 0x7b), (52, 0xad), (53, 0xa0),
+          (54, 0xf7), (55, 0xa5))
+_T6BC = ((0, 0x0d), (1, 0x00), (2, 0x00), (3, 0x00), (5, 0xe0),
+         (6, 0x23), (7, 0x6b), (8, 0x15), (9, 0xf1),
+         (10, 0x0e), (11, 0xb1), (12, 0xdf), (13, 0x3c),
+         (14, 0x07), (15, 0x20), (16, 0x34), (17, 0x91),
+         (18, 0xd1), (19, 0x8a), (20, 0xef), (21, 0x5b),
+         (22, 0x40), (23, 0x73), (24, 0x4b), (25, 0x92),
+         (26, 0x82), (27, 0x3c), (28, 0x6d), (29, 0xaa),
+         (30, 0xc8), (31, 0x56), (32, 0xee), (33, 0x39),
+         (34, 0xa1), (35, 0xff), (36, 0x2f), (37, 0xd8),
+         (40, 0xe2), (41, 0xdf), (42, 0xee), (43, 0xfe),
+         (44, 0xec), (45, 0xf8), (48, 0x70), (49, 0x5a),
+         (50, 0xd8), (51, 0xdd))
+_T6AC = ((0, 0x06), (1, 0x00), (2, 0x00), (3, 0x00), (6, 0x91),
+         (7, 0xb5), (8, 0x94), (9, 0x78), (10, 0x87),
+         (11, 0xd8), (12, 0x6f), (13, 0x9e), (14, 0x03),
+         (15, 0x10), (16, 0x34), (17, 0x91), (18, 0xd1),
+         (19, 0x8a), (20, 0xef), (21, 0x5b), (22, 0x40),
+         (23, 0x73), (24, 0x4b), (25, 0x92), (26, 0x82),
+         (27, 0x3c), (28, 0x6d), (29, 0xaa), (30, 0xc8),
+         (31, 0x56), (32, 0xee), (33, 0x39), (34, 0xa1),
+         (35, 0xff), (36, 0x2f), (37, 0xd8), (40, 0xe2),
+         (41, 0xdf), (42, 0xee), (43, 0xfe), (44, 0xec),
+         (45, 0xf8), (48, 0x70), (49, 0x5a), (50, 0xd8),
+         (51, 0xdd))
 _T5L3C = ((0, 0x82), (1, 0x78), (2, 0x87), (3, 0x54), (5, 0xfe),
           (6, 0x91), (7, 0xb5), (8, 0xf4), (9, 0xcd),
           (10, 0x73), (11, 0x00), (12, 0x34), (13, 0x91),
@@ -529,7 +652,7 @@ def main():
             return fail("stored content not zeros")
         print("CLOSED stored N=%d" % n)
         return 0
-    if len(pay) not in (44, 48, 52):
+    if len(pay) not in (44, 48, 52, 56):
         return fail("paylen %d" % len(pay))
     if n <= 127:  # T0
         if len(pay) != 44:
@@ -1651,6 +1774,132 @@ def main():
             if pay[b] != v:
                 return fail("T5L3 const %d" % b)
         print("CLOSED T5L3 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 4095:  # T6A: 56-tier head, tabs b52-55 + k2 segs
+        off = n - 3953
+        if len(pay) != 56:
+            return fail("T6A paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if grp(pay, tuple(range(32, 42))) != l10:
+            return fail("T6A lencode")
+        m = off & 15
+        k2 = off >> 4
+        if pay[5] != (0xfe + (off >= 15)):
+            return fail("T6A b5")
+        krow = bytes((pay[38], pay[39], pay[46], pay[47])).hex()
+        if krow != _T6AK[k2]:
+            return fail("T6A k2")
+        if pay[52] != _T6AT52[m] or pay[53] != _T6AT53[m] or \
+                pay[54] != _T6AT54[m] or pay[55] != _T6AT55[m]:
+            return fail("T6A tab")
+        for b, v in _T6AC:
+            if pay[b] != v:
+                return fail("T6A const %d" % b)
+        print("CLOSED T6A N=%d off=%d" % (n, off))
+        return 0
+    if n <= 4208:  # T6B: post-reframe, shared tabs + new segs
+        off = n - 3953
+        if len(pay) != 56:
+            return fail("T6B paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if grp(pay, tuple(range(32, 42))) != l10:
+            return fail("T6B lencode")
+        m = off & 15
+        k2 = off >> 4
+        krow = bytes((pay[38], pay[39], pay[46], pay[47])).hex()
+        if krow != _T6BK[k2 - 8]:
+            return fail("T6B k2")
+        if pay[52] != _T6BT52[m] or pay[53] != _T6AT53[m] or \
+                pay[54] != _T6AT54[m] or pay[55] != _T6AT55[m]:
+            return fail("T6B tab")
+        for b, v in _T6BC:
+            if pay[b] != v:
+                return fail("T6B const %d" % b)
+        print("CLOSED T6B N=%d off=%d" % (n, off))
+        return 0
+    if n == 4209:  # 52B short-form dip (off=256, +256 rule)
+        if len(pay) != 52 or pay.hex() != _T6DIP256:
+            return fail("T6DIP256")
+        print("CLOSED T6DIP256 N=4209")
+        return 0
+    if n <= 4211:  # T6C0: 2 transition literals (off=257/258)
+        off = n - 3953
+        if len(pay) != 56 or pay.hex() != _T6C0[off - 257]:
+            return fail("T6C0")
+        print("CLOSED T6C0 N=%d" % n)
+        return 0
+    if n <= 4226:  # T6C1: 15-row b5-8 tab
+        off = n - 3953
+        if len(pay) != 56:
+            return fail("T6C1 paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if grp(pay, tuple(range(32, 42))) != l10:
+            return fail("T6C1 lencode")
+        if pay[5:9].hex() != _T6C1T[off - 259]:
+            return fail("T6C1 row")
+        for b, v in _T6C1C:
+            if pay[b] != v:
+                return fail("T6C1 const %d" % b)
+        print("CLOSED T6C1 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 4236:  # T6C2: 10-row tab b5-7/b12-14
+        off = n - 3953
+        if len(pay) != 56:
+            return fail("T6C2 paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if grp(pay, tuple(range(32, 42))) != l10:
+            return fail("T6C2 lencode")
+        cells = bytes((pay[5], pay[6], pay[7], pay[12], pay[13],
+                       pay[14])).hex()
+        if cells != _T6C2T[off - 274]:
+            return fail("T6C2 row")
+        for b, v in _T6C2C:
+            if pay[b] != v:
+                return fail("T6C2 const %d" % b)
+        print("CLOSED T6C2 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 4300:  # T6C3-6: shared b13-17 tab + k2 b5-11
+        off = n - 3953
+        if len(pay) != 56:
+            return fail("T6C3 paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if grp(pay, tuple(range(32, 42))) != l10:
+            return fail("T6C3 lencode")
+        m = (off - 284) & 15
+        k2 = (off - 284) >> 4
+        if pay[5:12].hex() != _T6C3K[k2]:
+            return fail("T6C3 k2")
+        cells = bytes((pay[13], pay[14], pay[15], pay[16],
+                       pay[17])).hex()
+        if cells != _T6C3T[m]:
+            return fail("T6C3 tab")
+        for b, v in _T6C3C:
+            if pay[b] != v:
+                return fail("T6C3 const %d" % b)
+        print("CLOSED T6C3 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 4556:  # T6D: quiet-256, tabs + C3-walk + b5 edges
+        off = n - 3953
+        if len(pay) != 56:
+            return fail("T6D paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if grp(pay, tuple(range(32, 42))) != l10:
+            return fail("T6D lencode")
+        m = (off - 348) & 15
+        k2 = (off - 348) >> 4
+        if pay[5] != (0x21 + (off >= 399) + (off >= 527)):
+            return fail("T6D b5")
+        cells = bytes((pay[13], pay[14], pay[15], pay[16],
+                       pay[17])).hex()
+        if cells != _T6C3T[k2]:
+            return fail("T6D walk")
+        if pay[20] != _T6DT20[m] or pay[21] != _T6DT21[m] or \
+                pay[22] != _T6DT22[m] or pay[23] != _T6DT23[m]:
+            return fail("T6D tab")
+        for b, v in _T6DC:
+            if pay[b] != v:
+                return fail("T6D const %d" % b)
+        print("CLOSED T6D N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
