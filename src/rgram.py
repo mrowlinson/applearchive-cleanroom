@@ -488,6 +488,29 @@ _T6G3T51 = ("5dcd88a70e", "5d4db10f0f", "5d4d6a7f5e",
             "5eedd12715")
 _T6G3K = ("2fec9c244df131bf", "3fef6c5569f2517b",
           "afef5c31b5f13103", "afeebcf129f09159")
+# T6H tables (run-256): 16-tabs b5-9 (b5 +edges @1167/1295)
+# + b52-55 walk G3-tab by k2 (reuse) + b50/b51 k2-bands.
+_T6HT5 = (0xc7, 0xc7, 0x27, 0xc7, 0x47, 0x87, 0xe7, 0x47,
+          0xa7, 0x07, 0x67, 0x27, 0x27, 0x67, 0xc7, 0x87)
+_T6HT6 = (0x34, 0x9e, 0xdc, 0x27, 0xb2, 0x40, 0x7d, 0xbb,
+          0x80, 0xbe, 0xfb, 0x94, 0xfe, 0x8c, 0xc9, 0x62)
+_T6HT7 = (0x8b, 0x2b, 0xab, 0x3b, 0x9b, 0xab, 0x2b, 0xab,
+          0x3b, 0xbb, 0x3b, 0xab, 0x4b, 0x5b, 0xdb, 0x4b)
+_T6HT8 = (0x1b, 0x7b, 0x7b, 0x9b, 0x7b, 0x7b, 0x9b, 0x9b,
+          0xdb, 0xdb, 0xfb, 0xdb, 0x3b, 0x3b, 0x3b, 0x3b)
+_T6HT9 = (0xd2, 0xd2, 0xd2, 0xd2, 0xd3, 0xd3, 0xd3, 0xd3,
+          0xd4, 0xd4, 0xd4, 0xd5, 0xd6, 0xd6, 0xd6, 0xd7)
+_T6HC = ((0, 0x82), (1, 0x26), (2, 0x11), (3, 0x00), (10, 0x0b),
+         (11, 0x66), (12, 0x00), (13, 0x32), (14, 0x3c),
+         (15, 0xc8), (16, 0x15), (17, 0xfb), (18, 0x5a),
+         (19, 0xb4), (20, 0x56), (21, 0xdb), (22, 0x84),
+         (23, 0x22), (24, 0x8e), (25, 0x58), (26, 0xd9),
+         (27, 0xe7), (28, 0xcf), (29, 0x5a), (30, 0x6f),
+         (31, 0xee), (32, 0xc6), (33, 0xbf), (34, 0xbf),
+         (35, 0x8e), (36, 0xef), (37, 0xa1), (38, 0xec),
+         (39, 0xd9), (40, 0x5b), (41, 0x5f), (42, 0xe5),
+         (43, 0xa8), (44, 0x0d), (45, 0x9d), (46, 0xfd),
+         (47, 0xf3), (48, 0x31), (49, 0x9d))
 _T6G3C = ((0, 0x68), (1, 0x12), (2, 0x01), (3, 0x00), (6, 0x3c),
           (7, 0xdb), (8, 0x77), (9, 0xbd), (10, 0x60),
           (11, 0x26), (12, 0x00), (13, 0x32), (14, 0x3c),
@@ -2189,6 +2212,31 @@ def main():
             if pay[b] != v:
                 return fail("T6G3 const %d" % b)
         print("CLOSED T6G3 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 5252:  # T6H: run-256, tabs + G3-walk + bands
+        off = n - 3953
+        if len(pay) != 56:
+            return fail("T6H paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if grp(pay, tuple(range(32, 42))) != l10:
+            return fail("T6H lencode")
+        m = (off - 1044) & 15
+        k2 = (off - 1044) >> 4
+        if pay[5] != ((_T6HT5[m] + (off >= 1167) + (off >= 1295)) & 0xff):
+            return fail("T6H b5")
+        if pay[6] != _T6HT6[m] or pay[7] != _T6HT7[m] or \
+                pay[8] != _T6HT8[m] or pay[9] != _T6HT9[m]:
+            return fail("T6H tab")
+        if pay[50] != (0xad, 0xed, 0x2d)[(k2 >= 7) + (k2 >= 14)]:
+            return fail("T6H b50")
+        if pay[51] != (0x5d + (k2 >= 14)):
+            return fail("T6H b51")
+        if pay[52:56].hex() != _T6G3T51[k2][2:]:
+            return fail("T6H walk")
+        for b, v in _T6HC:
+            if pay[b] != v:
+                return fail("T6H const %d" % b)
+        print("CLOSED T6H N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
