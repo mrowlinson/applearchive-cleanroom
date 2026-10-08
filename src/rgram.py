@@ -3086,6 +3086,68 @@ _T9J2QC = ((0, 0xc4), (1, 0xeb), (2, 0x01), (3, 0x01), (6, 0x24),
           (42, 0x4d), (43, 0x64), (50, 0xf1), (51, 0x41), (54, 0x7c),
           (55, 0x67), (60, 0x8f), (61, 0x5c), (62, 0x3a), (63, 0xde),
           (64, 0xe7), (65, 0x7c), (66, 0x53), (67, 0xf9))
+# T9K1 storm singles (literals, formula OPEN).
+_T9K1S1 = "c4110000e37724fea4010209625b7c67747515a919b789b3df7c0746dcd1ea0a2efc0bf63c19e81a8a5ca24a789a9497a9bc3168fb1e1f04aecabff28f5c3adee77c53f9"
+_T9K1S2 = "c4eb0700e57724fea401020982aeae2239df8151b84d9cbf5cf817ec8e5657e01cb94495c940d7a8988fa05dd3a4bc621b53d52b0e9bf7258f5c3adee77c53f9a07bd239"
+_T9K1S3 = "40bc7e00e7f740e2e81b209082aeae2239df8151b84d9cbf5cf817ec8e5657e01cb94495c940d7a8988fa05dd3a4bc621b53d52b0e9bf725b9dd815ce77c53f9347cd239"
+_T9K1S4 = "81b80700077886e5a937402062c647d0747515a919b789b3df7c0746dcd1ea0a2efc0bf63c19e81a8a5ca24a789a94575be05d1898aa5e71597e748ba6ddc545e77c53f9"
+_T9K1S5 = "81b80700093821738934402062c647d0747515a919b789b3df7c0746dcd1ea0a2efc0bf63c19e81a8a5ca24a789a94575be05d1898aa5e71597e748b5ddbb348e77c53f9"
+# T9K1-A 15-row tab (b5,6,56-59), off 0..14.
+_T9K1AT = ("37418259ed29", "37414c5ae248", "3741f3db36b0",
+           "3741b95872b0", "37416edfb3b1", "b7432edef23f",
+           "b74392d9b9ee", "f7432bda2a6b", "f74352d96c6c",
+           "b744f45e0795", "374671dc0d9d", "77469ed83903",
+           "7846d9d961d2", "b846805bb639", "7847025f9c39")
+_T9K1AC = ((0, 0x40), (1, 0xbc), (2, 0x7e), (3, 0x00), (7, 0xe2),
+          (8, 0xe8), (9, 0x1b), (10, 0x20), (11, 0x90), (12, 0x82),
+          (13, 0xae), (14, 0xae), (15, 0x22), (16, 0x39), (17, 0xdf),
+          (18, 0x81), (19, 0x51), (20, 0xb8), (21, 0x4d), (22, 0x9c),
+          (23, 0xbf), (24, 0x5c), (25, 0xf8), (26, 0x17), (27, 0xec),
+          (28, 0x8e), (29, 0x56), (30, 0x57), (31, 0xe0), (32, 0x1c),
+          (33, 0xb9), (34, 0x44), (35, 0x95), (36, 0xc9), (37, 0x40),
+          (38, 0xd7), (39, 0xa8), (40, 0x98), (41, 0x8f), (42, 0xa0),
+          (43, 0x5d), (44, 0xd3), (45, 0xa4), (46, 0xbc), (47, 0x62),
+          (48, 0x1b), (49, 0x53), (50, 0xd5), (51, 0x2b), (52, 0x0e),
+          (53, 0x9b), (54, 0xf7), (55, 0x25), (60, 0xe7), (61, 0x7c),
+          (62, 0x53), (63, 0xf9), (64, 0x34), (65, 0x7c), (66, 0xd2),
+          (67, 0x39))
+# T9K1-B 8-row tab (b5-9,60-63), off 0..7.
+_T9K1BT = ("7803af4934905b8635", "7803af4934a05d8635",
+           "78f138c9349859eb11", "b89daf6933d4583b00",
+           "38f238c934e159be30", "f8f16ca9336f5d32d0",
+           "38f238c934d959eb31", "78a0ec09342dde64ee")
+_T9K1BC = ((0, 0x81), (1, 0xb8), (2, 0x07), (3, 0x00), (10, 0x40),
+          (11, 0x20), (12, 0x62), (13, 0xc6), (14, 0x47), (15, 0xd0),
+          (16, 0x74), (17, 0x75), (18, 0x15), (19, 0xa9), (20, 0x19),
+          (21, 0xb7), (22, 0x89), (23, 0xb3), (24, 0xdf), (25, 0x7c),
+          (26, 0x07), (27, 0x46), (28, 0xdc), (29, 0xd1), (30, 0xea),
+          (31, 0x0a), (32, 0x2e), (33, 0xfc), (34, 0x0b), (35, 0xf6),
+          (36, 0x3c), (37, 0x19), (38, 0xe8), (39, 0x1a), (40, 0x8a),
+          (41, 0x5c), (42, 0xa2), (43, 0x4a), (44, 0x78), (45, 0x9a),
+          (46, 0x94), (47, 0x57), (48, 0x5b), (49, 0xe0), (50, 0x5d),
+          (51, 0x18), (52, 0x98), (53, 0xaa), (54, 0x5e), (55, 0x71),
+          (56, 0x59), (57, 0x7e), (58, 0x74), (59, 0x8b), (64, 0xe7),
+          (65, 0x7c), (66, 0x53), (67, 0xf9))
+# T9K1Q: 4x16 tab (b10,11,64-67) + 9B words (b5-9,60-63).
+_T9K1QT = ("40b534fc80c0", "40b534fc81c0", "80b9a57ce0a0",
+           "80b97d3cd0bb", "00d651fcc7e3", "00d66dfce4e3",
+           "c0d75fbcd774", "00d829bc9000", "40d8323c28bd",
+           "80d8787c128e", "00ddbdfcb360", "80f90dfcb3a6",
+           "80f92a7c27c8", "40faaffcd431", "80fe6bfcb213",
+           "80fe6fbcc813")
+_T9K1QB = ("b8f338c934c0d847c0", "f8ef2be93380d84df6",
+           "f8f338c93452de20d5", "f89faf6933cbda60fe")
+_T9K1QC = ((0, 0x10), (1, 0x48), (2, 0x7b), (3, 0x00), (12, 0xc6),
+          (13, 0x61), (14, 0x7c), (15, 0x04), (16, 0x5d), (17, 0x5d),
+          (18, 0x45), (19, 0xea), (20, 0x19), (21, 0xb7), (22, 0x89),
+          (23, 0xb3), (24, 0xdf), (25, 0x7c), (26, 0x07), (27, 0x46),
+          (28, 0xdc), (29, 0xd1), (30, 0xea), (31, 0x0a), (32, 0x2e),
+          (33, 0xfc), (34, 0x0b), (35, 0xf6), (36, 0x3c), (37, 0x19),
+          (38, 0xe8), (39, 0x1a), (40, 0x8a), (41, 0x5c), (42, 0xa2),
+          (43, 0x4a), (44, 0x78), (45, 0x9a), (46, 0x94), (47, 0x57),
+          (48, 0x5b), (49, 0xe0), (50, 0x5d), (51, 0x18), (52, 0x98),
+          (53, 0xaa), (54, 0x5e), (55, 0x71), (56, 0x59), (57, 0x7e),
+          (58, 0x74), (59, 0x8b))
 _T7CC = ((0, 0x75), (1, 0x01), (2, 0x00), (3, 0x00), (6, 0xc1),
          (7, 0x6b), (8, 0xfa), (9, 0xf6), (10, 0xcf),
          (11, 0x25), (12, 0x00), (13, 0xad), (14, 0xfc),
@@ -7585,6 +7647,60 @@ def main():
             if pay[b] != v:
                 return fail("T9J2Q const %d" % b)
         print("CLOSED T9J2Q N=%d off=%d" % (n, off))
+        return 0
+    if n <= 15372:  # T9K1: 5 singles + A 15-row + B 8-row
+        if len(pay) != 68:
+            return fail("T9K1 paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if pay[4] != (l10 & 0xFF):
+            return fail("T9K1 lencode")
+        _s = {15345: _T9K1S1, 15346: _T9K1S2, 15347: _T9K1S3,
+              15363: _T9K1S4, 15364: _T9K1S5}
+        if n in _s:
+            if pay.hex() != _s[n]:
+                return fail("T9K1S lit")
+            print("CLOSED T9K1S N=%d" % n)
+            return 0
+        if n <= 15362:
+            off = n - 15348
+            if bytes((pay[5], pay[6], pay[56], pay[57], pay[58],
+                       pay[59])).hex() != _T9K1AT[off]:
+                return fail("T9K1A tab")
+            for b, v in _T9K1AC:
+                if pay[b] != v:
+                    return fail("T9K1A const %d" % b)
+            print("CLOSED T9K1A N=%d off=%d" % (n, off))
+            return 0
+        off = n - 15365
+        if bytes((pay[5], pay[6], pay[7], pay[8], pay[9], pay[60],
+                   pay[61], pay[62], pay[63])).hex() != _T9K1BT[off]:
+            return fail("T9K1B tab")
+        for b, v in _T9K1BC:
+            if pay[b] != v:
+                return fail("T9K1B const %d" % b)
+        print("CLOSED T9K1B N=%d off=%d" % (n, off))
+        return 0
+    if n <= 15436:  # T9K1Q: 4x16 tab b10,11,64-67 + 9B words
+        off = n - 15373
+        if len(pay) != 68:
+            return fail("T9K1Q paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if pay[4] != (l10 & 0xFF):
+            return fail("T9K1Q lencode")
+        m = off & 15
+        q = off >> 4
+        if bytes((pay[10], pay[11], pay[64], pay[65], pay[66],
+                   pay[67])).hex() != _T9K1QT[m]:
+            return fail("T9K1Q tab")
+        blk = bytes((pay[5], pay[6], pay[7], pay[8], pay[9],
+                     pay[60], pay[61], pay[62],
+                     pay[63])).hex()
+        if blk != _T9K1QB[q]:
+            return fail("T9K1Q blk")
+        for b, v in _T9K1QC:
+            if pay[b] != v:
+                return fail("T9K1Q const %d" % b)
+        print("CLOSED T9K1Q N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
