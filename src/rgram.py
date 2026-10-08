@@ -2423,6 +2423,22 @@ _T9D3C = ((0, 0x0c), (1, 0x00), (2, 0x00), (3, 0x00), (7, 0x91),
           (53, 0x04), (54, 0x30), (55, 0x24), (56, 0xec), (57, 0xcc),
           (58, 0xbf), (59, 0x8e), (60, 0xee), (61, 0x7f), (62, 0x78),
           (63, 0x57))
+_T9D4T = ("e22e4627029f5e1da9", "62de56c701775c0d2b",
+           "62de56c701b45c112b", "62de56c701065f112b",
+           "a2f9d1c7019fdddc2b", "a27aea8701e15c71be",
+           "a2f9d1c701a458e12b", "22c39fa701d6da1278",
+           "e25094c701c9def9e2", "2297dca701ef59f987")
+_T9D4C = ((0, 0x47), (1, 0xdf), (2, 0x8f), (3, 0x70), (10, 0x60),
+          (11, 0xc9), (12, 0xbf), (13, 0x56), (14, 0x04), (15, 0x0b),
+          (16, 0x8d), (17, 0x5c), (18, 0x8f), (19, 0x89), (20, 0xf7),
+          (21, 0x0d), (22, 0xd4), (23, 0x24), (24, 0xb7), (25, 0x3c),
+          (26, 0x51), (27, 0xa5), (28, 0x99), (29, 0x34), (30, 0xc8),
+          (31, 0x5d), (32, 0xf3), (33, 0xbf), (34, 0xbb), (35, 0x4c),
+          (36, 0xfa), (37, 0xee), (38, 0xa4), (39, 0x19), (40, 0xa4),
+          (41, 0x5c), (42, 0x40), (43, 0x31), (44, 0x36), (45, 0xf8),
+          (46, 0x6d), (47, 0x5a), (48, 0x66), (49, 0x3c), (50, 0xd3),
+          (51, 0x96), (52, 0x98), (53, 0x9d), (54, 0xf9), (55, 0x57),
+          (56, 0xee), (57, 0xbd), (58, 0x37), (59, 0x9d))
 _T7CC = ((0, 0x75), (1, 0x01), (2, 0x00), (3, 0x00), (6, 0xc1),
          (7, 0x6b), (8, 0xfa), (9, 0xf6), (10, 0xcf),
          (11, 0x25), (12, 0x00), (13, 0xad), (14, 0xfc),
@@ -6230,6 +6246,21 @@ def main():
             if pay[b] != v:
                 return fail("T9D3R const %d" % b)
         print("CLOSED T9D3R N=%d off=%d" % (n, off))
+        return 0
+    if n <= 12588:  # T9D4: 10-row dip band tab b5-9,b60-63 (paylen 64)
+        off = n - 12579
+        if len(pay) != 64:
+            return fail("T9D4 paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if pay[4] != (l10 & 0xFF):
+            return fail("T9D4 lencode")
+        if bytes((pay[5], pay[6], pay[7], pay[8], pay[9], pay[60], pay[61],
+                   pay[62], pay[63])).hex() != _T9D4T[off]:
+            return fail("T9D4 tab")
+        for b, v in _T9D4C:
+            if pay[b] != v:
+                return fail("T9D4 const %d" % b)
+        print("CLOSED T9D4 N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
