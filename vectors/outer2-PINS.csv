@@ -254,7 +254,7 @@ a-ab-m-eq,str,EQ,0,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-ab-r-eq,str,EQ,0,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-nd-p0,str,DIFF,0,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-nd-p2,str,char 13,0,test_outer2.sh,27.0.1,oracle-adapter.sh
-a-nd-p3,str,char 14,0,test_outer2.sh,27.0.1,oracle-adapter.sh
+a-nd-p3,str,DIFF,0,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-nd-p4,str,char 13,0,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-eb-b0-rc,rc,0,0,test_outer2.sh,27.0.1,oracle-adapter.sh
 a-eb-b0,size,24576,24576,test_outer2.sh,27.0.1,oracle-adapter.sh
