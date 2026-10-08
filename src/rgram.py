@@ -154,6 +154,44 @@ _T5F2T = ("73bc56c8f31106", "f3bc3068333705", "b37c520093ee04",
           "137c5300f37f05", "d37cb63813a604", "733c555093ee04",
           "f33c3540333705", "933c3600333705", "33fc579893ee04",
           "d3bc586093ee04")
+# T5F3/F4 tables: 16-tabs keyed (off-zone)&15; k2 segs keyed >>4.
+# F4 b20-22 walk the F3 tab (k2=0..8). F4 b11 = cycle3 over a
+# 4-step advance that pauses when (off-348)&15==8 (OPEN why).
+_T5F3T20 = (0xd7, 0x5a, 0xab, 0xfc, 0x4d, 0x9e, 0xef, 0x40,
+            0x91, 0xe2, 0x33, 0x84, 0xd5, 0x26, 0x77, 0xc8)
+_T5F3T21 = (0x5f, 0x5a, 0xda, 0x5a, 0xdb, 0x5b, 0xdb, 0x5c,
+            0xdc, 0x5c, 0xdd, 0x5d, 0xdd, 0x5e, 0xde, 0x5e)
+_T5F3T22 = (0x86, 0x8c, 0x91, 0x97, 0x9c, 0xa2, 0xa7, 0xad,
+            0xb2, 0xb8, 0xbd, 0xc3, 0xc8, 0xce, 0xd3, 0xd9)
+_T5F3K = ("44fc60f37f05", "14fc6193ee04", "74bc62f37f05",
+          "823c87d35d04")
+_T5F3C = ((0, 0x3f), (1, 0x00), (2, 0x00), (3, 0x00), (6, 0xef),
+          (7, 0x9d), (8, 0x53), (9, 0x37), (10, 0x80), (11, 0x16),
+          (12, 0x00), (19, 0x45), (23, 0x88), (24, 0x8c),
+          (25, 0xe0), (26, 0x48), (27, 0xf8), (28, 0xe9),
+          (29, 0x04), (30, 0x9e), (31, 0x51), (32, 0xb0),
+          (33, 0x7d), (34, 0x7f), (35, 0x47), (36, 0xe9),
+          (37, 0x34), (38, 0xad), (39, 0xb7), (40, 0x48),
+          (41, 0xe0), (42, 0xa7), (43, 0x56), (44, 0x08),
+          (45, 0xfc), (46, 0x16), (47, 0x4b), (48, 0x49),
+          (49, 0x28), (50, 0x5b), (51, 0xfb))
+_T5F4T19 = (0x90, 0xcc, 0xce, 0xe0, 0x0d, 0x0f, 0x4c, 0x4e,
+            0x8b, 0x8d, 0xca, 0xcc, 0x08, 0x0a, 0x47, 0x49)
+_T5F4T26 = (0x9a, 0xc8, 0xc8, 0xc8, 0xf6, 0xf6, 0x24, 0x24,
+            0x52, 0x52, 0x80, 0x80, 0xae, 0xae, 0xdc, 0xdc)
+_T5F4T27 = (0x78, 0xf9, 0xf9, 0x79, 0xf8, 0xf8, 0xf8, 0xf8,
+            0x79, 0x79, 0x78, 0x78, 0xf9, 0xf9, 0xf8, 0xf8)
+_T5F4C = ((0, 0xeb), (1, 0x03), (2, 0x00), (3, 0x00), (6, 0xef),
+          (7, 0x9d), (8, 0x53), (9, 0x37), (10, 0x80), (12, 0x00),
+          (13, 0xc4), (14, 0xbc), (15, 0x43), (16, 0x33),
+          (17, 0x37), (18, 0x05), (23, 0x88), (24, 0x8c),
+          (25, 0xe0), (28, 0x0d), (29, 0x61), (30, 0xe3),
+          (31, 0x19), (32, 0xbe), (33, 0xbf), (34, 0xa3),
+          (35, 0x13), (36, 0xe9), (37, 0x34), (38, 0xad),
+          (39, 0xb7), (40, 0x48), (41, 0xe0), (42, 0xa7),
+          (43, 0x56), (44, 0x08), (45, 0xfc), (46, 0x16),
+          (47, 0x4b), (48, 0x49), (49, 0x28), (50, 0x5b),
+          (51, 0xfb))
 
 
 def bit(p, i):
@@ -961,6 +999,54 @@ def main():
             if pay[b] != v:
                 return fail("%s const %d" % (tag, b))
         print("CLOSED %s N=%d off=%d" % (tag, n, off))
+        return 0
+    if n <= 2560:  # T5F3: 16-tabs + k2 b13-18 + b5 edge flip
+        off = n - 2213
+        if len(pay) != 52:
+            return fail("T5F3 paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if grp(pay, tuple(range(32, 42))) != l10:
+            return fail("T5F3 lencode")
+        m = (off - 284) & 15
+        k2 = (off - 284) >> 4
+        if pay[5] != (83 + (off == 347)):
+            return fail("T5F3 b5")
+        if pay[13:19].hex() != _T5F3K[k2]:
+            return fail("T5F3 k2")
+        if pay[20] != _T5F3T20[m] or pay[21] != _T5F3T21[m] or \
+                pay[22] != _T5F3T22[m]:
+            return fail("T5F3 tab")
+        for b, v in _T5F3C:
+            if pay[b] != v:
+                return fail("T5F3 const %d" % b)
+        print("CLOSED T5F3 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 2700:  # T5F4: 16-tabs + F3-walk + b11 cycle3 + b5 flip
+        off = n - 2213
+        if len(pay) != 52:
+            return fail("T5F4 paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if grp(pay, tuple(range(32, 42))) != l10:
+            return fail("T5F4 lencode")
+        m = (off - 348) & 15
+        k2 = (off - 348) >> 4
+        if pay[5] != (84 + (off >= 475)):
+            return fail("T5F4 b5")
+        q = (off - 348) >> 2
+        pauses = ((q - 2) >> 2) + 1 if q >= 2 else 0
+        if pay[11] != (0x63, 0x64, 0x65)[(q - pauses) % 3]:
+            return fail("T5F4 b11")
+        if pay[19] != _T5F4T19[m]:
+            return fail("T5F4 b19")
+        if pay[20] != _T5F3T20[k2] or pay[21] != _T5F3T21[k2] or \
+                pay[22] != _T5F3T22[k2]:
+            return fail("T5F4 walk")
+        if pay[26] != _T5F4T26[m] or pay[27] != _T5F4T27[m]:
+            return fail("T5F4 tab")
+        for b, v in _T5F4C:
+            if pay[b] != v:
+                return fail("T5F4 const %d" % b)
+        print("CLOSED T5F4 N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
