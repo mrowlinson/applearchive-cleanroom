@@ -3549,6 +3549,67 @@ _T10QQC = ((0, 0x09), (1, 0x00), (2, 0x00), (3, 0x00), (6, 0x96),
           (56, 0x7f), (57, 0xd9), (58, 0x85), (59, 0xaa), (60, 0x7c),
           (61, 0x3c), (62, 0xc1), (63, 0x32), (64, 0x87), (65, 0x7b),
           (66, 0x22), (67, 0x1a))
+# T10 dip-2 pair (literals, formula OPEN).
+_T10E1 = "7ab690007b0596c6c70c30a14390de2cbb3c07e2ea6363207df32f318adf1e5d1dbc938ea8e509f4d2da237b39f14870dc6f977d930fa1f15d7ea8847fd985aa7c3cc132"
+_T10E2 = "7ab6b04f7d0596c6c70c30a14390de2c5b7d6c0ca43c07e25df1dba3dafc4b4c1db53c81a7d9c8e419f29ebe95bcf41d03efb7cb5d7ea8847fd985aa7c3cc132510fb884"
+# T10C: 16-row tab (b53-59), off 0..15.
+_T10CT = ("0fcbba407d4f11", "efccbace7e42b1", "efccba56fd48b1",
+          "0fd3baf93f271e", "6fd4ba297f94e6", "efd7baacbf627a",
+          "2fd9ba86bf7608", "cfeaba20be0ecf", "efeabaed3b3a22",
+          "4febba94ff9ad6", "4feeba4a3e6d1f", "4ff6bac63d3344",
+          "4ff6bab97ca05c", "8f0cbb777c1de7", "af0cbb467f704f",
+          "af0cbbcefd764f")
+_T10CC = ((0, 0x04), (1, 0x00), (2, 0x00), (3, 0x00), (5, 0x05),
+          (6, 0x96), (7, 0xc6), (8, 0x67), (9, 0xb6), (10, 0xb0),
+          (11, 0xfb), (12, 0x66), (13, 0x80), (14, 0x09), (15, 0xd5),
+          (16, 0x43), (17, 0x90), (18, 0xde), (19, 0x2c), (20, 0x5b),
+          (21, 0x7d), (22, 0x6c), (23, 0x0c), (24, 0xa4), (25, 0x3c),
+          (26, 0x07), (27, 0xe2), (28, 0x5d), (29, 0xf1), (30, 0xdb),
+          (31, 0xa3), (32, 0xda), (33, 0xfc), (34, 0x4b), (35, 0x4c),
+          (36, 0x1d), (37, 0xb5), (38, 0x3c), (39, 0x81), (40, 0xa7),
+          (41, 0xd9), (42, 0xc8), (43, 0xe4), (44, 0x19), (45, 0xf2),
+          (46, 0x9e), (47, 0x3e), (48, 0x95), (49, 0xbc), (50, 0xf4),
+          (51, 0x1d), (52, 0x03), (60, 0x7f), (61, 0xd9), (62, 0x85),
+          (63, 0xaa), (64, 0x7c), (65, 0x3c), (66, 0xc1), (67, 0x32),
+          (68, 0xdc), (69, 0x0f), (70, 0xb8), (71, 0x84))
+# T10 band-2: 10-row tab (b3,52-55,64-67), off 0..9.
+_T10EHT = ("2b2f639f22177b5489", "294fd7c78d91ba4c4f",
+           "294fd7c78df73c7555", "290fac7fa307bca1ed",
+           "298fa52fcff57a2fd2", "29efad2f4de4bb7590",
+           "298f674fb925fc3d83", "294faf2f4de73b0971",
+           "292fd227e521bccf9a", "29afec27781ebc7c01")
+_T10EHC = ((0, 0x7a), (1, 0xb6), (2, 0xb0), (5, 0x05), (6, 0x96),
+          (7, 0xc6), (8, 0xc7), (9, 0x0c), (10, 0x30), (11, 0xa1),
+          (12, 0x43), (13, 0x90), (14, 0xde), (15, 0x2c), (16, 0x5b),
+          (17, 0x7d), (18, 0x6c), (19, 0x0c), (20, 0xa4), (21, 0x3c),
+          (22, 0x07), (23, 0xe2), (24, 0x5d), (25, 0xf1), (26, 0xdb),
+          (27, 0xa3), (28, 0xda), (29, 0xfc), (30, 0x4b), (31, 0x4c),
+          (32, 0x1d), (33, 0xb5), (34, 0x3c), (35, 0x81), (36, 0xa7),
+          (37, 0xd9), (38, 0xc8), (39, 0xe4), (40, 0x19), (41, 0xf2),
+          (42, 0x9e), (43, 0x3e), (44, 0xe3), (45, 0x7c), (46, 0x15),
+          (47, 0x7a), (48, 0x9d), (49, 0x1f), (50, 0x1b), (51, 0x43),
+          (56, 0x7f), (57, 0xd9), (58, 0x85), (59, 0xaa), (60, 0x7c),
+          (61, 0x3c), (62, 0xc1), (63, 0x32))
+# T10Q2: 2x16 tab (b5,6,60-63) + 8B words (b56-59,68-71).
+_T10Q2T = ("056880de6a8d", "056822d93290", "05723c5ad283",
+           "057368d96519", "05734fdbb520", "8573ed5d9ff3",
+           "8574c259de21", "85774f5d2eb0", "0584b75dc8e6",
+           "8584dc582dac", "8588cddf95f8", "058f7ddfe809",
+           "058faadb1470", "85905d5a5f91", "859303dc3898",
+           "85936dd97aa0")
+_T10Q2B = ("6f684fb9b5fa7014", "afec277810fdaa01")
+_T10Q2C = ((0, 0x02), (1, 0x00), (2, 0x00), (3, 0x00), (7, 0x68),
+          (8, 0xab), (9, 0x67), (10, 0x0b), (11, 0x9b), (12, 0x6c),
+          (13, 0x06), (14, 0x98), (15, 0x50), (16, 0x43), (17, 0x90),
+          (18, 0xde), (19, 0x2c), (20, 0x5b), (21, 0x7d), (22, 0x6c),
+          (23, 0x0c), (24, 0xa4), (25, 0x3c), (26, 0x07), (27, 0xe2),
+          (28, 0x5d), (29, 0xf1), (30, 0xdb), (31, 0xa3), (32, 0xda),
+          (33, 0xfc), (34, 0x4b), (35, 0x4c), (36, 0x1d), (37, 0xb5),
+          (38, 0x3c), (39, 0x81), (40, 0xa7), (41, 0xd9), (42, 0xc8),
+          (43, 0xe4), (44, 0x19), (45, 0xf2), (46, 0x9e), (47, 0x3e),
+          (48, 0xe3), (49, 0x7c), (50, 0x15), (51, 0x7a), (52, 0x9d),
+          (53, 0x1f), (54, 0x1b), (55, 0x43), (64, 0x7c), (65, 0x3c),
+          (66, 0xc1), (67, 0x32))
 _T7CC = ((0, 0x75), (1, 0x01), (2, 0x00), (3, 0x00), (6, 0xc1),
          (7, 0x6b), (8, 0xfa), (9, 0xf6), (10, 0xcf),
          (11, 0x25), (12, 0x00), (13, 0xad), (14, 0xfc),
@@ -8510,6 +8571,65 @@ def main():
             if pay[b] != v:
                 return fail("T10Q const %d" % b)
         print("CLOSED T10Q N=%d off=%d" % (n, off))
+        return 0
+    if n <= 17086:  # T10 dip-2 pair (paylen 68)
+        if len(pay) != 68:
+            return fail("T10E paylen")
+        if pay.hex() != (_T10E1 if n == 17085 else _T10E2):
+            return fail("T10E lit")
+        print("CLOSED T10E N=%d" % n)
+        return 0
+    if n <= 17102:  # T10C: 16-row tab b53-59
+        off = n - 17087
+        if len(pay) != 72:
+            return fail("T10C paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if pay[4] != (l10 & 0xFF):
+            return fail("T10C lencode")
+        if bytes((pay[53], pay[54], pay[55], pay[56], pay[57],
+                   pay[58], pay[59])).hex() != _T10CT[off]:
+            return fail("T10C tab")
+        for b, v in _T10CC:
+            if pay[b] != v:
+                return fail("T10C const %d" % b)
+        print("CLOSED T10C N=%d off=%d" % (n, off))
+        return 0
+    if n <= 17112:  # T10 band-2: 10-row tab b3,52-55,64-67
+        off = n - 17103
+        if len(pay) != 68:
+            return fail("T10EH paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if pay[4] != (l10 & 0xFF):
+            return fail("T10EH lencode")
+        if bytes((pay[3], pay[52], pay[53], pay[54], pay[55],
+                   pay[64], pay[65], pay[66],
+                   pay[67])).hex() != _T10EHT[off]:
+            return fail("T10EH tab")
+        for b, v in _T10EHC:
+            if pay[b] != v:
+                return fail("T10EH const %d" % b)
+        print("CLOSED T10EH N=%d off=%d" % (n, off))
+        return 0
+    if n <= 17144:  # T10Q2: 2x16 tab b5,6,60-63 + 8B words
+        off = n - 17113
+        if len(pay) != 72:
+            return fail("T10Q2 paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if pay[4] != (l10 & 0xFF):
+            return fail("T10Q2 lencode")
+        m = off & 15
+        q = off >> 4
+        if bytes((pay[5], pay[6], pay[60], pay[61], pay[62],
+                   pay[63])).hex() != _T10Q2T[m]:
+            return fail("T10Q2 tab")
+        blk = bytes((pay[56], pay[57], pay[58], pay[59], pay[68],
+                     pay[69], pay[70], pay[71])).hex()
+        if blk != _T10Q2B[q]:
+            return fail("T10Q2 blk")
+        for b, v in _T10Q2C:
+            if pay[b] != v:
+                return fail("T10Q2 const %d" % b)
+        print("CLOSED T10Q2 N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
