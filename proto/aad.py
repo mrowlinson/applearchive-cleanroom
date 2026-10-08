@@ -488,9 +488,46 @@ def eisdir_err(done, path):
           % (b, a, a), file=sys.stderr)
 
 
+def _mkparents(path, repl):
+    """Gated parents (G9 modal, NOTE-048): missing -> mkdir 0755;
+    non-dir occupant -> unlink + mkdir 0755 + record in repl."""
+    prefs = []
+    cur = path
+    while cur and cur != "/" and cur != ".":
+        prefs.append(cur)
+        nxt = os.path.dirname(cur)
+        if nxt == cur:
+            break
+        cur = nxt
+    for prefix in reversed(prefs):
+        try:
+            st = os.lstat(prefix)
+        except FileNotFoundError:
+            try:
+                os.mkdir(prefix, 0o755)
+            except FileExistsError:
+                st = os.lstat(prefix)
+                if not stat.S_ISDIR(st.st_mode):
+                    raise
+            continue
+        if stat.S_ISDIR(st.st_mode):
+            continue
+        os.unlink(prefix)
+        os.mkdir(prefix, 0o755)
+        if prefix not in repl:
+            repl.append(prefix)
+
+
+def _under_repl(target, repl):
+    for prefix in repl:
+        if target.startswith(prefix + os.sep):
+            return True
+    return False
+
+
 def extract(items, root, fcls=0, fsub=0, shortidx=-1, midchain=False,
             shortpresent=False, whole=0, shortend=0, inner=b""):
-    os.makedirs(root, exist_ok=True)
+    _mkparents(os.path.abspath(root), [])  # scratch repl: root never taints
     files = []
     dirs = []
     scols = []
@@ -498,6 +535,15 @@ def extract(items, root, fcls=0, fsub=0, shortidx=-1, midchain=False,
     eis = []
     hlc_first = {}
     hlinks = []
+    repl = []
+    cfails = []
+    # H-target PATs pre-scanned (A-027#2: H-target F fails silently).
+    htargets = set()
+    for entries0, _ in items:
+        tst0, typ0 = _get(entries0, b"TYP")
+        lst0, lnk0 = _get(entries0, b"LNK")
+        if typ0 == ord("H") and lst0 == ord("P") and lnk0:
+            htargets.add(bytes(lnk0))
     failed = 0
     scount = 0
     hdr = [False]
@@ -597,12 +643,19 @@ def extract(items, root, fcls=0, fsub=0, shortidx=-1, midchain=False,
                 parent = os.path.dirname(target)
                 if parent:
                     try:
-                        os.makedirs(parent, exist_ok=True)
+                        _mkparents(parent, repl)
                     except OSError:
                         aborted = abort("aad: mkdir %s" % target)
                         failed += 1
                         hdr[0] = True
                         break
+                if _under_repl(target, repl):
+                    if bytes(pat) in htargets:
+                        break  # H-target F: silent (A-027#2).
+                    cfails.append((_show(pat), False))
+                    failed += 1
+                    scount += 1
+                    break
                 try:
                     with open(target, "wb") as f:
                         f.write(wbytes)
@@ -621,26 +674,36 @@ def extract(items, root, fcls=0, fsub=0, shortidx=-1, midchain=False,
             shortstop = True
         if typ == ord("D"):
             try:
-                if os.path.islink(target):
-                    # G3: symlink occupant = file occupant (loud path).
-                    raise FileExistsError(target)
-                os.makedirs(target, exist_ok=True)
+                _mkparents(target, repl)
             except OSError:
                 aborted = abort("aad: mkdir %s" % target)
                 failed += 1
                 hdr[0] = True
                 break
+            if _under_repl(target, repl):
+                # D-under-replaced: same modal rule (hypothesis).
+                cfails.append((_show(pat), False))
+                failed += 1
+                scount += 1
+                continue
             dirs.append((target, entries, blobs, k))
         elif typ == ord("F"):
             parent = os.path.dirname(target)
             if parent:
                 try:
-                    os.makedirs(parent, exist_ok=True)
+                    _mkparents(parent, repl)
                 except OSError:
                     aborted = abort("aad: mkdir %s" % target)
                     failed += 1
                     hdr[0] = True
                     break
+            if _under_repl(target, repl):
+                if bytes(pat) in htargets:
+                    continue  # H-target F: silent (A-027#2).
+                cfails.append((_show(pat), False))
+                failed += 1
+                scount += 1
+                continue
             _, hlc = _get(entries, b"HLC")
             if hlc is not None and hlc in hlc_first:
                 try:
@@ -693,12 +756,17 @@ def extract(items, root, fcls=0, fsub=0, shortidx=-1, midchain=False,
             parent = os.path.dirname(target)
             if parent:
                 try:
-                    os.makedirs(parent, exist_ok=True)
+                    _mkparents(parent, repl)
                 except OSError:
                     aborted = abort("aad: mkdir %s" % target)
                     failed += 1
                     hdr[0] = True
                     break
+            if _under_repl(target, repl):
+                cfails.append((_show(pat), True))
+                failed += 1
+                scount += 1
+                continue
             try:
                 if os.path.lexists(target):
                     os.remove(target)
@@ -713,12 +781,18 @@ def extract(items, root, fcls=0, fsub=0, shortidx=-1, midchain=False,
             parent = os.path.dirname(target)
             if parent:
                 try:
-                    os.makedirs(parent, exist_ok=True)
+                    _mkparents(parent, repl)
                 except OSError:
                     aborted = abort("aad: mkdir %s" % target)
                     failed += 1
                     hdr[0] = True
                     break
+            if _under_repl(target, repl):
+                # P-under-replaced: triple (A-027#1, non-F rule).
+                cfails.append((_show(pat), True))
+                failed += 1
+                scount += 1
+                continue
             try:
                 if os.path.lexists(target):
                     os.remove(target)
@@ -741,7 +815,7 @@ def extract(items, root, fcls=0, fsub=0, shortidx=-1, midchain=False,
                 failed += 1
                 hdr[0] = True
                 break
-            hlinks.append((target, lnk))
+            hlinks.append((target, lnk, _show(pat)))
         elif typ == ord("B") or typ == ord("C"):
             _, dev = _get(entries, b"DEV")
             if dev is None:
@@ -755,6 +829,13 @@ def extract(items, root, fcls=0, fsub=0, shortidx=-1, midchain=False,
             scount += 1
         else:
             pass  # unknown TYP: silent skip (oracle parity, measured)
+    # G9 modal child-fail flush, archive order (A-026#5).
+    for rel, islink in cfails:
+        print_hdr(hdr, 0x83058800)
+        print("a parent of path is not a directory: %s\ninvalid path: %s"
+              % (rel, rel), file=sys.stderr)
+        if islink:
+            print("creating fs object: %s" % rel, file=sys.stderr)
     # parse-fail wrapper (after phase 1, before meta; not on abort)
     if fcls and not aborted and not midchain:
         failed += 1
@@ -843,7 +924,7 @@ def extract(items, root, fcls=0, fsub=0, shortidx=-1, midchain=False,
               file=sys.stderr)
     # H pass (runs even on abort; trailer iff failure)
     hfailed = False
-    for target, lnk in hlinks:
+    for target, lnk, rel in hlinks:
         try:
             src = safe_join(root, lnk)
         except FmtErr:
@@ -858,6 +939,19 @@ def extract(items, root, fcls=0, fsub=0, shortidx=-1, midchain=False,
         except FileNotFoundError:
             st = None
         if st is None or not stat.S_ISREG(st.st_mode):
+            if _under_repl(src, repl):
+                # H TARGET-side (A-027#2): 83058800 pair on the
+                # TARGET + H diagnostic + trailer + N=1.
+                print_hdr(hdr, 0x83058800)
+                print("a parent of path is not a directory: %s\n"
+                      "invalid path: %s" % (_show(lnk), _show(lnk)),
+                      file=sys.stderr)
+                print("'H' LNK not a regular file: %s" % _show(lnk),
+                      file=sys.stderr)
+                failed += 1
+                scount += 1
+                hfailed = True
+                continue
             print_hdr(hdr, 0xc8104800)
             print("'H' LNK not a regular file: %s" % _show(lnk),
                   file=sys.stderr)
@@ -866,7 +960,17 @@ def extract(items, root, fcls=0, fsub=0, shortidx=-1, midchain=False,
             continue
         parent = os.path.dirname(target)
         if parent:
-            os.makedirs(parent, exist_ok=True)
+            _mkparents(parent, repl)
+        if _under_repl(target, repl):
+            # H PATH-side: inline pair (hypothesis; A-027#2
+            # covers target-side only).
+            print_hdr(hdr, 0x83058800)
+            print("a parent of path is not a directory: %s\ninvalid path: %s"
+                  % (rel, rel), file=sys.stderr)
+            failed += 1
+            scount += 1
+            hfailed = True
+            continue
         if os.path.lexists(target):
             os.remove(target)
         try:

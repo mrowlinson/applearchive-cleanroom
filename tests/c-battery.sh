@@ -751,7 +751,7 @@ cmp -s "$WORK/cxGsrc/b1" "$WORK/o-cxG/b1" && pass "cxG-b1full" || fail "cxG-b1fu
 mkcx 300 8 H; runcx H b2 262144
 cmp -s "$WORK/cxHsrc/b1" "$WORK/o-cxH/b1" && pass "cxH-b1full" || fail "cxH-b1full"
 
-echo "== cell g-collision (G3 symlink-occupant + G5 missing-parents + G6 no-chmod) =="
+echo "== cell g-collision (G3 symlink-occupant + G5 missing-parents + G6 replace-modal) =="
 mkdir -p "$WORK/gsrc"; printf 'A1-content' > "$WORK/gsrc/victim"; printf 'A2-content' > "$WORK/gsrc/vdir"
 sh "$ADAPTER" aar-encode --alg raw --threads 1 "$WORK/gsrc" "$WORK/g.aar" >/dev/null 2>&1 || die "g encode"
 for S in o c p; do rm -rf "$WORK/g$S"; mkdir -p "$WORK/g$S"; printf 'old' > "$WORK/g$S/elsewhere"; ln -s elsewhere "$WORK/g$S/victim"; mkdir -p "$WORK/g$S/somedir"; ln -s somedir "$WORK/g$S/vdir"; done
@@ -777,12 +777,25 @@ diff -r "$WORK/g5c/sub" "$WORK/g5p/sub" >/dev/null 2>&1 && pass "g5mk-lock" || f
 mkdir -p "$WORK/g6src/dd"; printf 'kid-bytes' > "$WORK/g6src/dd/kid"; chmod 700 "$WORK/g6src/dd"
 sh "$ADAPTER" aar-encode --alg raw --threads 1 "$WORK/g6src" "$WORK/g6.aar" >/dev/null 2>&1 || die "g6 encode"
 for S in o c p; do rm -rf "$WORK/g6$S"; mkdir -p "$WORK/g6$S"; printf 'keepme' > "$WORK/g6$S/dd"; chmod 644 "$WORK/g6$S/dd"; done
-sh "$ADAPTER" aar-decode "$WORK/g6.aar" "$WORK/g6o" >/dev/null 2>&1 || true
-"$AAD" "$WORK/g6.aar" "$WORK/g6c" >/dev/null 2>&1 || true
-python3 "$HERE/../proto/aad.py" "$WORK/g6.aar" "$WORK/g6p" >/dev/null 2>&1 || true
-[ "$(stat -f %p "$WORK/g6c/dd")" = "100644" ] && [ "$(cat "$WORK/g6c/dd")" = "keepme" ] && pass "g6c-keep" || fail "g6c-keep"
-[ "$(stat -f %p "$WORK/g6p/dd")" = "100644" ] && [ "$(cat "$WORK/g6p/dd")" = "keepme" ] && pass "g6p-keep" || fail "g6p-keep"
-[ ! -e "$WORK/g6o/dd/kid" ] && [ ! -e "$WORK/g6c/dd/kid" ] && [ ! -e "$WORK/g6p/dd/kid" ] && pass "g6-nokid" || fail "g6-nokid"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/g6.aar" "$WORK/g6o" 2>"$WORK/g6-o.err" >/dev/null || ORC=$?
+CRC=0; "$AAD" "$WORK/g6.aar" "$WORK/g6c" 2>"$WORK/g6.err" >/dev/null || CRC=$?
+PRC=0; python3 "$HERE/../proto/aad.py" "$WORK/g6.aar" "$WORK/g6p" 2>"$WORK/g6p.err" >/dev/null || PRC=$?
+cat > "$WORK/g6modal.err" <<'EOF'
+Error 0x83058800
+a parent of path is not a directory: dd/kid
+invalid path: dd/kid
+1 entries failed to extract
+EOF
+# G6 truth (NOTE-050): oracle ALWAYS replaces file occupant (dir 0700,
+# MOD applied); kid races (HAVE+rc0-silent 2/6 vs ABSENT+stanza+rc1 4/6).
+# Old keep-pin was oracle-false (never verified vs oracle). Ours: modal.
+[ "$(stat -f %p "$WORK/g6o/dd")" = "40700" ] && pass "g6o-repl" || fail "g6o-repl"
+if { [ "$ORC" -eq 0 ] && [ ! -s "$WORK/g6-o.err" ] && cmp -s "$WORK/g6o/dd/kid" "$WORK/g6src/dd/kid"; } || { [ "$ORC" -eq 1 ] && diff "$WORK/g6modal.err" "$WORK/g6-o.err" >/dev/null 2>&1 && [ ! -e "$WORK/g6o/dd/kid" ]; }; then pass "g6o-shape"; else fail "g6o-shape"; fi
+[ "$CRC" -eq 1 ] && [ "$PRC" -eq 1 ] && pass "g6cp-exit" || fail "g6cp-exit"
+diff "$WORK/g6modal.err" "$WORK/g6.err" >/dev/null 2>&1 && pass "g6c-modal" || fail "g6c-modal"
+grep -v '^blocks:' "$WORK/g6p.err" | diff "$WORK/g6.err" - >/dev/null 2>&1 && pass "g6p-mirror" || fail "g6p-mirror"
+[ "$(stat -f %p "$WORK/g6c/dd")" = "40700" ] && [ ! -e "$WORK/g6c/dd/kid" ] && pass "g6c-tree" || fail "g6c-tree"
+[ "$(stat -f %p "$WORK/g6p/dd")" = "40700" ] && [ ! -e "$WORK/g6p/dd/kid" ] && pass "g6p-tree" || fail "g6p-tree"
 
 echo "== cell m3-exactness (unclo/unchi/paylo/stored decoder shapes) =="
 mkm3() { # $1=base $2=rawd $3=payd $4=name
@@ -834,6 +847,132 @@ mkm3 hello-lzfse 0 -100 pl100; runm3 pl100 x; empty3 pl100
 mkm3 hello-lzfse 0 1 phi; runm3 phi x; empty3 phi
 mkm3 empty-lzfse 1 0 sthi; runm3 sthi x; empty3 sthi
 mkm3 empty-lzfse -1 0 stlo; runm3 stlo x; empty3 stlo
+
+echo "== cell g9-traversal (sym/file/dangling planted parent) =="
+mkdir -p "$WORK/g9src/a" "$WORK/g9src/b/deep"
+printf 'hello-f\n' > "$WORK/g9src/a/f.txt"; ln -s f.txt "$WORK/g9src/a/l.lnk"; printf 'deep-g\n' > "$WORK/g9src/b/deep/g.txt"
+sh "$ADAPTER" aar-encode --alg raw --threads 1 "$WORK/g9src" "$WORK/g9.aar" >/dev/null 2>&1 || die "g9 encode"
+cat > "$WORK/g9modal.err" <<'EOF'
+Error 0x83058800
+a parent of path is not a directory: a/f.txt
+invalid path: a/f.txt
+a parent of path is not a directory: a/l.lnk
+invalid path: a/l.lnk
+creating fs object: a/l.lnk
+2 entries failed to extract
+EOF
+# oracle outcome SET (race; NOTE-050): {both-fail either order, f-only
+# (l.lnk present), l-only (f.txt full present)}. C pins modal (above).
+for shape in sym file dangling; do
+  rm -rf "$WORK/go-$shape" "$WORK/gv-$shape" "$WORK/gc-$shape" "$WORK/gw-$shape" "$WORK/gp-$shape" "$WORK/gx-$shape"
+  mkdir -p "$WORK/go-$shape" "$WORK/gv-$shape" "$WORK/gc-$shape" "$WORK/gw-$shape" "$WORK/gp-$shape" "$WORK/gx-$shape"
+  echo MARKER > "$WORK/gv-$shape/marker"; echo MARKER > "$WORK/gw-$shape/marker"; echo MARKER > "$WORK/gx-$shape/marker"
+  case $shape in
+    sym) ln -s "$WORK/gv-$shape" "$WORK/go-$shape/a"; ln -s "$WORK/gw-$shape" "$WORK/gc-$shape/a"; ln -s "$WORK/gx-$shape" "$WORK/gp-$shape/a";;
+    file) echo OCC > "$WORK/go-$shape/a"; echo OCC > "$WORK/gc-$shape/a"; echo OCC > "$WORK/gp-$shape/a";;
+    dangling) ln -s /nonexistent-g9-target "$WORK/go-$shape/a"; ln -s /nonexistent-g9-target "$WORK/gc-$shape/a"; ln -s /nonexistent-g9-target "$WORK/gp-$shape/a";;
+  esac
+  ORC=0; sh "$ADAPTER" aar-decode "$WORK/g9.aar" "$WORK/go-$shape" 2>"$WORK/go-$shape.err" >/dev/null || ORC=$?
+  CRC=0; "$AAD" "$WORK/g9.aar" "$WORK/gc-$shape" 2>"$WORK/gc-$shape.err" >/dev/null || CRC=$?
+  PRC=0; python3 "$ROOT/proto/aad.py" "$WORK/g9.aar" "$WORK/gp-$shape" 2>"$WORK/gp-$shape.err" >/dev/null || PRC=$?
+  [ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && [ "$PRC" -eq 1 ] && pass "g9$shape-exit" || fail "g9$shape-exit"
+  [ "$(ls "$WORK/gv-$shape")" = "marker" ] && [ "$(ls "$WORK/gw-$shape")" = "marker" ] && [ "$(ls "$WORK/gx-$shape")" = "marker" ] && pass "g9$shape-victim" || fail "g9$shape-victim"
+  diff "$WORK/g9modal.err" "$WORK/gc-$shape.err" >/dev/null 2>&1 && pass "g9$shape-cmodal" || fail "g9$shape-cmodal"
+  grep -v '^blocks:' "$WORK/gp-$shape.err" | diff "$WORK/gc-$shape.err" - >/dev/null 2>&1 && pass "g9$shape-pmirror" || fail "g9$shape-pmirror"
+  OSET=0
+  if grep -q '^Error 0x83058800$' "$WORK/go-$shape.err" 2>/dev/null; then
+    N=$(grep -c 'a parent of path is not a directory' "$WORK/go-$shape.err")
+    if [ "$N" = "2" ] && grep -q '2 entries failed' "$WORK/go-$shape.err" \
+       && grep -q 'not a directory: a/f.txt' "$WORK/go-$shape.err" \
+       && grep -q 'not a directory: a/l.lnk' "$WORK/go-$shape.err" \
+       && grep -q 'creating fs object: a/l.lnk' "$WORK/go-$shape.err" \
+       && [ -z "$(ls "$WORK/go-$shape/a")" ]; then OSET=1; fi
+    if [ "$N" = "1" ] && grep -q '1 entries failed' "$WORK/go-$shape.err" \
+       && grep -q 'not a directory: a/f.txt' "$WORK/go-$shape.err" \
+       && [ -L "$WORK/go-$shape/a/l.lnk" ]; then OSET=1; fi
+    if [ "$N" = "1" ] && grep -q '1 entries failed' "$WORK/go-$shape.err" \
+       && grep -q 'not a directory: a/l.lnk' "$WORK/go-$shape.err" \
+       && grep -q 'creating fs object: a/l.lnk' "$WORK/go-$shape.err" \
+       && cmp -s "$WORK/go-$shape/a/f.txt" "$WORK/g9src/a/f.txt"; then OSET=1; fi
+  fi
+  [ "$OSET" = "1" ] && pass "g9$shape-oshape" || fail "g9$shape-oshape"
+  [ ! -L "$WORK/gc-$shape/a" ] && [ -d "$WORK/gc-$shape/a" ] && [ -z "$(ls "$WORK/gc-$shape/a")" ] && [ "$(stat -f %p "$WORK/gc-$shape/a")" = "40755" ] && pass "g9$shape-ctree" || fail "g9$shape-ctree"
+  cmp -s "$WORK/gc-$shape/b/deep/g.txt" "$WORK/g9src/b/deep/g.txt" && pass "g9$shape-sib" || fail "g9$shape-sib"
+  diff -r "$WORK/gc-$shape" "$WORK/gp-$shape" >/dev/null 2>&1 && pass "g9$shape-cplock" || fail "g9$shape-cplock"
+  [ "$(ls "$WORK/gc-$shape" | tr '\n' ',')" = "a,b," ] && pass "g9$shape-top" || fail "g9$shape-top"
+done
+
+echo "== cell g9P-fifo-child (non-F triple, A-027#1) =="
+python3 "$HERE/craft.py" settyppat "$WORK/g9.aar" "$WORK/g9p.aar" a/f.txt P || die "g9p craft"
+cat > "$WORK/g9pmodal.err" <<'EOF'
+Error 0x83058800
+a parent of path is not a directory: a/f.txt
+invalid path: a/f.txt
+creating fs object: a/f.txt
+a parent of path is not a directory: a/l.lnk
+invalid path: a/l.lnk
+creating fs object: a/l.lnk
+2 entries failed to extract
+EOF
+rm -rf "$WORK/po" "$WORK/pv" "$WORK/pc" "$WORK/pw" "$WORK/pp" "$WORK/px"
+mkdir -p "$WORK/po" "$WORK/pv" "$WORK/pc" "$WORK/pw" "$WORK/pp" "$WORK/px"
+echo MARKER > "$WORK/pv/marker"; echo MARKER > "$WORK/pw/marker"; echo MARKER > "$WORK/px/marker"
+ln -s "$WORK/pv" "$WORK/po/a"; ln -s "$WORK/pw" "$WORK/pc/a"; ln -s "$WORK/px" "$WORK/pp/a"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/g9p.aar" "$WORK/po" 2>"$WORK/po.err" >/dev/null || ORC=$?
+CRC=0; "$AAD" "$WORK/g9p.aar" "$WORK/pc" 2>"$WORK/pc.err" >/dev/null || CRC=$?
+PRC=0; python3 "$ROOT/proto/aad.py" "$WORK/g9p.aar" "$WORK/pp" 2>"$WORK/pp.err" >/dev/null || PRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && [ "$PRC" -eq 1 ] && pass "g9p-exit" || fail "g9p-exit"
+[ "$(ls "$WORK/pv")" = "marker" ] && [ "$(ls "$WORK/pw")" = "marker" ] && [ "$(ls "$WORK/px")" = "marker" ] && pass "g9p-victim" || fail "g9p-victim"
+diff "$WORK/g9pmodal.err" "$WORK/pc.err" >/dev/null 2>&1 && pass "g9p-cmodal" || fail "g9p-cmodal"
+grep -v '^blocks:' "$WORK/pp.err" | diff "$WORK/pc.err" - >/dev/null 2>&1 && pass "g9p-pmirror" || fail "g9p-pmirror"
+POSET=0
+if grep -q '^Error 0x83058800$' "$WORK/po.err" 2>/dev/null; then
+  N=$(grep -c 'a parent of path is not a directory' "$WORK/po.err")
+  if [ "$N" = "2" ] && grep -q '2 entries failed' "$WORK/po.err" \
+     && grep -q 'not a directory: a/f.txt' "$WORK/po.err" \
+     && grep -q 'not a directory: a/l.lnk' "$WORK/po.err" \
+     && grep -q 'creating fs object: a/f.txt' "$WORK/po.err" \
+     && grep -q 'creating fs object: a/l.lnk' "$WORK/po.err" \
+     && [ -z "$(ls "$WORK/po/a")" ]; then POSET=1; fi
+  if [ "$N" = "1" ] && grep -q '1 entries failed' "$WORK/po.err" \
+     && grep -q 'not a directory: a/f.txt' "$WORK/po.err" \
+     && grep -q 'creating fs object: a/f.txt' "$WORK/po.err" \
+     && [ -L "$WORK/po/a/l.lnk" ]; then POSET=1; fi
+  if [ "$N" = "1" ] && grep -q '1 entries failed' "$WORK/po.err" \
+     && grep -q 'not a directory: a/l.lnk' "$WORK/po.err" \
+     && grep -q 'creating fs object: a/l.lnk' "$WORK/po.err" \
+     && [ -p "$WORK/po/a/f.txt" ]; then POSET=1; fi
+fi
+[ "$POSET" = "1" ] && pass "g9p-oshape" || fail "g9p-oshape"
+[ ! -L "$WORK/pc/a" ] && [ -d "$WORK/pc/a" ] && [ -z "$(ls "$WORK/pc/a")" ] && pass "g9p-ctree" || fail "g9p-ctree"
+diff -r "$WORK/pc" "$WORK/pp" >/dev/null 2>&1 && pass "g9p-cplock" || fail "g9p-cplock"
+
+echo "== cell g9H-hlink-target (pair+H-line+trailer+N1, A-027#2) =="
+cat > "$WORK/g9hmodal.err" <<'EOF'
+Error 0x83058800
+a parent of path is not a directory: hello/repeat.txt
+invalid path: hello/repeat.txt
+'H' LNK not a regular file: hello/repeat.txt
+process hlinks
+1 entries failed to extract
+EOF
+rm -rf "$WORK/ho" "$WORK/hv" "$WORK/hc" "$WORK/hw" "$WORK/hp" "$WORK/hx"
+mkdir -p "$WORK/ho" "$WORK/hv" "$WORK/hc" "$WORK/hw" "$WORK/hp" "$WORK/hx"
+echo MARKER > "$WORK/hv/marker"; echo MARKER > "$WORK/hw/marker"; echo MARKER > "$WORK/hx/marker"
+ln -s "$WORK/hv" "$WORK/ho/hello"; ln -s "$WORK/hw" "$WORK/hc/hello"; ln -s "$WORK/hx" "$WORK/hp/hello"
+ORC=0; sh "$ADAPTER" aar-decode "$V/aar/hlink-basic.aar" "$WORK/ho" 2>"$WORK/ho.err" >/dev/null || ORC=$?
+CRC=0; "$AAD" "$V/aar/hlink-basic.aar" "$WORK/hc" 2>"$WORK/hc.err" >/dev/null || CRC=$?
+PRC=0; python3 "$ROOT/proto/aad.py" "$V/aar/hlink-basic.aar" "$WORK/hp" 2>"$WORK/hp.err" >/dev/null || PRC=$?
+[ "$CRC" -eq 1 ] && [ "$PRC" -eq 1 ] && pass "g9h-cp-exit" || fail "g9h-cp-exit"
+[ "$(ls "$WORK/hv")" = "marker" ] && [ "$(ls "$WORK/hw")" = "marker" ] && [ "$(ls "$WORK/hx")" = "marker" ] && pass "g9h-victim" || fail "g9h-victim"
+diff "$WORK/g9hmodal.err" "$WORK/hc.err" >/dev/null 2>&1 && pass "g9h-cmodal" || fail "g9h-cmodal"
+grep -v '^blocks:' "$WORK/hp.err" | diff "$WORK/hc.err" - >/dev/null 2>&1 && pass "g9h-pmirror" || fail "g9h-pmirror"
+HOSET=0
+if [ "$ORC" -eq 1 ] && diff "$WORK/g9hmodal.err" "$WORK/ho.err" >/dev/null 2>&1 && [ -z "$(ls "$WORK/ho/hello")" ]; then HOSET=1; fi
+if [ "$ORC" -eq 0 ] && [ ! -s "$WORK/ho.err" ] && [ -f "$WORK/ho/hello/greet.txt" ] && [ -f "$WORK/ho/hello/repeat.txt" ] && [ "$(stat -f %i "$WORK/ho/hello/greet.txt")" = "$(stat -f %i "$WORK/ho/hello/repeat.txt")" ] && [ "$(stat -f %l "$WORK/ho/hello/greet.txt")" = "2" ]; then HOSET=1; fi
+[ "$HOSET" = "1" ] && pass "g9h-oshape" || fail "g9h-oshape"
+[ ! -L "$WORK/hc/hello" ] && [ -d "$WORK/hc/hello" ] && [ -z "$(ls "$WORK/hc/hello")" ] && pass "g9h-ctree" || fail "g9h-ctree"
+diff -r "$WORK/hc" "$WORK/hp" >/dev/null 2>&1 && pass "g9h-cplock" || fail "g9h-cplock"
 
 [ "$FAIL" -eq 0 ] && echo CBATTERY-GREEN || echo CBATTERY-RED
 exit "$FAIL"

@@ -659,7 +659,42 @@ static void apply_rest(const char *target, const Item *it, int islink) {
 }
 
 /* ---- extract ---- */
-static int mkdirs(const char *path) {
+/* Gated parents (G9 modal, NOTE-048): never create through or write
+ * through a non-dir parent. Missing components are created 0755;
+ * existing non-dir components (symlink/file/...) are unlinked +
+ * replaced with a real dir 0755 and recorded in repl[] (dedup).
+ * Children under a replaced prefix fail modally (83058800 pair +
+ * `creating fs object` third line on non-F kinds (L/P per A-027#1;
+ * F never), flushed in archive order post phase-1 per A-026#5);
+ * siblings elsewhere proceed. D-under-replaced takes the F-shape
+ * (hypothesis, unprobed); H PATH-side pair is a hypothesis (A-027#2
+ * covers TARGET-side only). Head/count shared with other classes
+ * (first-failure head, one joint count, A-027#3). */
+#define REPLC 64
+static int repl_add(char repl[][4096], size_t *nrepl, const char *prefix) {
+    for (size_t i = 0; i < *nrepl; i++)
+        if (!strcmp(repl[i], prefix)) return 0;
+    if (*nrepl >= REPLC) return 0; /* cap: replaced but untracked */
+    strcpy(repl[*nrepl], prefix);
+    (*nrepl)++;
+    return 0;
+}
+static int mkone(char *prefix, char repl[][4096], size_t *nrepl) {
+    struct stat st;
+    if (!lstat(prefix, &st)) {
+        if (S_ISDIR(st.st_mode)) return 0;
+        if (unlink(prefix)) return -1;
+        if (mkdir(prefix, 0755)) return -1;
+        return repl_add(repl, nrepl, prefix);
+    }
+    if (mkdir(prefix, 0755)) {
+        if (errno == EEXIST && !lstat(prefix, &st) && S_ISDIR(st.st_mode))
+            return 0;
+        return -1;
+    }
+    return 0;
+}
+static int mkdirs(const char *path, char repl[][4096], size_t *nrepl) {
     char tmp[4096];
     size_t i, n = strlen(path);
     if (n >= sizeof tmp) return -1;
@@ -667,12 +702,46 @@ static int mkdirs(const char *path) {
     for (i = 1; i < n; i++) {
         if (tmp[i] == '/') {
             tmp[i] = 0;
-            if (mkdir(tmp, 0755) && errno != EEXIST) return -1;
+            int r = mkone(tmp, repl, nrepl);
             tmp[i] = '/';
+            if (r) return -1;
         }
     }
-    if (mkdir(tmp, 0755) && errno != EEXIST) return -1;
+    return mkone(tmp, repl, nrepl);
+}
+/* true if any strict parent-prefix of target was replaced */
+static int under_replaced(const char *target, char repl[][4096],
+                          size_t nrepl) {
+    for (size_t i = 0; i < nrepl; i++) {
+        size_t n = strlen(repl[i]);
+        if (!strncmp(target, repl[i], n) && target[n] == '/') return 1;
+    }
     return 0;
+}
+/* H-target PAT (A-027#2: an F under a replaced parent that is an H
+ * LNK target fails SILENTLY — no pair, no count; the H pass draws
+ * the pair-on-target + H diagnostic + trailer + N=1 instead) */
+typedef struct { const unsigned char *raw; size_t len; } Hp;
+static int is_htarget(Hp *hts, size_t nhts,
+                      const unsigned char *raw, size_t len) {
+    for (size_t i = 0; i < nhts; i++)
+        if (hts[i].len == len && !memcmp(hts[i].raw, raw, len)) return 1;
+    return 0;
+}
+/* one G9 modal child fail; rel = archive-rel PAT bytes (may be non-UTF8) */
+typedef struct { char rel[4096]; int islink; } Cf;
+static void rec_cf(Cf *cfs, size_t *ncfs, size_t cap,
+                   const unsigned char *raw, size_t rawlen, int islink,
+                   unsigned *fails, unsigned *sfails) {
+    if (*ncfs < cap) {
+        size_t rl = rawlen < sizeof cfs[0].rel - 1 ? rawlen :
+                    sizeof cfs[0].rel - 1;
+        memcpy(cfs[*ncfs].rel, raw, rl);
+        cfs[*ncfs].rel[rl] = 0;
+        cfs[*ncfs].islink = islink;
+        (*ncfs)++;
+    }
+    (*fails)++; (*sfails)++;
 }
 
 /* join root + rel (no absolute, no ..); out must hold 4096 */
@@ -704,7 +773,15 @@ static int extract(const Item *items, size_t nitems, const char *root,
                      int fcls, int fsub, size_t shortidx, int midchain,
                      int shortpresent, unsigned long long whole,
                      size_t shortend) {
-    if (mkdirs(root)) { FAIL("mkdir %s\n", root); return -1; }
+    char (*repl)[4096] = malloc(REPLC * sizeof *repl);
+    size_t nrepl = 0;
+    { /* root gated on scratch repl (a replaced root must not taint all) */
+        char (*rr)[4096] = malloc(REPLC * sizeof *rr);
+        size_t nr = 0;
+        int ror = mkdirs(root, rr, &nr);
+        free(rr);
+        if (ror) { FAIL("mkdir %s\n", root); free(repl); return -1; }
+    }
     /* deferred dir metadata (children bump dir mtime; apply last) */
     typedef struct { char path[4096]; size_t idx; int islink; } Rec;
     Rec *files = malloc(nitems * sizeof *files);
@@ -723,6 +800,20 @@ static int extract(const Item *items, size_t nitems, const char *root,
     typedef struct { char path[4096]; size_t idx; } Hln;
     Hln *hlns = malloc(nitems * sizeof *hlns);
     size_t nhlns = 0;
+    /* G9 modal child fails (Cf array); archive-order flush post phase-1 */
+    size_t cfcap = nitems ? nitems : 1;
+    Cf *cfs = malloc(cfcap * sizeof *cfs);
+    size_t ncfs = 0;
+    /* H-target PATs pre-scanned (A-027#2 silence rule) */
+    Hp *hts = malloc(cfcap * sizeof *hts);
+    size_t nhts = 0;
+    for (size_t k = 0; k < nitems; k++) {
+        const Entry *tt = find_ent(&items[k], "TYP");
+        const Entry *ll = find_ent(&items[k], "LNK");
+        if (tt && tt->num == 'H' && ll && ll->st == 'P' && ll->rawlen) {
+            hts[nhts].raw = ll->raw; hts[nhts].len = ll->rawlen; nhts++;
+        }
+    }
     unsigned fails = 0, sfails = 0;
     int hdr = 0, dirfail = 0, aborted = 0, shortstop = 0;
     /* phase 1: create everything, forward. aborts stop creation only. */
@@ -820,11 +911,18 @@ static int extract(const Item *items, size_t nitems, const char *root,
                 char *sl = strrchr(target, '/');
                 if (sl) {
                     *sl = 0;
-                    if (mkdirs(target)) {
+                    if (mkdirs(target, repl, &nrepl)) {
                         FAIL("mkdir %s\n", target);
                         fails++; hdr = 1; aborted = 1; break;
                     }
                     *sl = '/';
+                }
+                if (under_replaced(target, repl, nrepl)) {
+                    if (is_htarget(hts, nhts, p->raw, p->rawlen))
+                        break; /* H-target F: silent (A-027#2) */
+                    rec_cf(cfs, &ncfs, cfcap, p->raw, p->rawlen, 0,
+                           &fails, &sfails);
+                    break; /* short rest skipped */
                 }
                 FILE *f = fopen(target, "wb");
                 if (!f) {
@@ -850,25 +948,56 @@ static int extract(const Item *items, size_t nitems, const char *root,
             }
         }
         if (t->num == 'D') {
-            if (mkdirs(target)) {
-                FAIL("mkdir %s\n", target);
-                fails++; hdr = 1; aborted = 1; break;
+            char *sl0 = strrchr(target, '/');
+            if (sl0) {
+                *sl0 = 0;
+                int mdr = mkdirs(target, repl, &nrepl);
+                *sl0 = '/';
+                if (mdr) {
+                    FAIL("mkdir %s\n", target);
+                    fails++; hdr = 1; aborted = 1; break;
+                }
+            }
+            if (under_replaced(target, repl, nrepl)) {
+                /* D-under-replaced: same modal rule (hypothesis) */
+                rec_cf(cfs, &ncfs, cfcap, p->raw, p->rawlen, 0,
+                       &fails, &sfails);
+                continue;
             }
             struct stat dst;
-            if (!lstat(target, &dst) && !S_ISDIR(dst.st_mode))
-                continue; /* G6: occupant failed type-check: keep, no
-                           * chmod (G2 stanza+replace staged on Q-022) */
+            if (!lstat(target, &dst) && !S_ISDIR(dst.st_mode)) {
+                /* G9: non-dir occupant -> unlink + replace 0755
+                 * (silent; D MOD applies via phase 3). G6 keeps
+                 * real-dir occupants only (below, unchanged). */
+                if (unlink(target) || mkdir(target, 0755)) {
+                    FAIL("mkdir %s\n", target);
+                    fails++; hdr = 1; aborted = 1; break;
+                }
+                repl_add(repl, &nrepl, target);
+            } else if (lstat(target, &dst)) {
+                if (mkdir(target, 0755) && errno != EEXIST) {
+                    FAIL("mkdir %s\n", target);
+                    fails++; hdr = 1; aborted = 1; break;
+                }
+            }
             memcpy(dirs[ndirs].path, target, strlen(target) + 1);
             dirs[ndirs].idx = k; dirs[ndirs].islink = 0; ndirs++;
         } else if (t->num == 'F') {
             char *sl = strrchr(target, '/');
             if (sl) {
                 *sl = 0;
-                if (mkdirs(target)) {
+                if (mkdirs(target, repl, &nrepl)) {
                     FAIL("mkdir %s\n", target);
                     fails++; hdr = 1; aborted = 1; break;
                 }
                 *sl = '/';
+            }
+            if (under_replaced(target, repl, nrepl)) {
+                if (is_htarget(hts, nhts, p->raw, p->rawlen))
+                    continue; /* H-target F: silent (A-027#2) */
+                rec_cf(cfs, &ncfs, cfcap, p->raw, p->rawlen, 0,
+                       &fails, &sfails);
+                continue;
             }
             const Entry *h = find_ent(it, "HLC");
             const char *first = NULL;
@@ -924,11 +1053,16 @@ static int extract(const Item *items, size_t nitems, const char *root,
             char *sl = strrchr(target, '/');
             if (sl) {
                 *sl = 0;
-                if (mkdirs(target)) {
+                if (mkdirs(target, repl, &nrepl)) {
                     FAIL("mkdir %s\n", target);
                     fails++; hdr = 1; aborted = 1; break;
                 }
                 *sl = '/';
+            }
+            if (under_replaced(target, repl, nrepl)) {
+                rec_cf(cfs, &ncfs, cfcap, p->raw, p->rawlen, 1,
+                       &fails, &sfails);
+                continue;
             }
             char lbuf[4096];
             if (l->rawlen >= sizeof lbuf) {
@@ -956,11 +1090,17 @@ static int extract(const Item *items, size_t nitems, const char *root,
             char *sl = strrchr(target, '/');
             if (sl) {
                 *sl = 0;
-                if (mkdirs(target)) {
+                if (mkdirs(target, repl, &nrepl)) {
                     FAIL("mkdir %s\n", target);
                     fails++; hdr = 1; aborted = 1; break;
                 }
                 *sl = '/';
+            }
+            if (under_replaced(target, repl, nrepl)) {
+                /* P-under-replaced: triple (A-027#1, non-F rule) */
+                rec_cf(cfs, &ncfs, cfcap, p->raw, p->rawlen, 1,
+                       &fails, &sfails);
+                continue;
             }
             unlink(target);
             if (mkfifo(target, 0600)) {
@@ -983,6 +1123,15 @@ static int extract(const Item *items, size_t nitems, const char *root,
         } else {
             /* unknown TYP: silent skip (oracle parity, measured) */
         }
+    }
+    /* G9 modal child-fail flush, archive order (A-026#5: emit fixed
+     * archive order; oracle order races, batteries SET-pin). */
+    for (size_t i = 0; i < ncfs; i++) {
+        print_hdr(&hdr, 0x83058800);
+        fprintf(stderr, "a parent of path is not a directory: %s\n"
+                "invalid path: %s\n", cfs[i].rel, cfs[i].rel);
+        if (cfs[i].islink)
+            fprintf(stderr, "creating fs object: %s\n", cfs[i].rel);
     }
     /* parse-fail wrapper (after phase 1, before meta; suppressed on abort:
      * a cancelled stream never reaches the later failure) */
@@ -1101,6 +1250,18 @@ static int extract(const Item *items, size_t nitems, const char *root,
             }
             struct stat sb;
             if (lstat(src, &sb) || !S_ISREG(sb.st_mode)) {
+                if (under_replaced(src, repl, nrepl)) {
+                    /* H TARGET-side (A-027#2): 83058800 pair on
+                     * the TARGET + H diagnostic + trailer + N=1 */
+                    print_hdr(&hdr, 0x83058800);
+                    fprintf(stderr, "a parent of path is not a "
+                            "directory: %.*s\ninvalid path: %.*s\n",
+                            (int)l->rawlen, l->raw,
+                            (int)l->rawlen, l->raw);
+                    fprintf(stderr, "'H' LNK not a regular file: "
+                            "%.*s\n", (int)l->rawlen, l->raw);
+                    fails++; sfails++; hfailed = 1; continue;
+                }
                 print_hdr(&hdr, 0xc8104800);
                 fprintf(stderr, "'H' LNK not a regular file: %.*s\n",
                         (int)l->rawlen, l->raw);
@@ -1109,13 +1270,25 @@ static int extract(const Item *items, size_t nitems, const char *root,
             char *sl = strrchr(hlns[i].path, '/');
             if (sl) {
                 *sl = 0;
-                int merr = mkdirs(hlns[i].path);
+                int merr = mkdirs(hlns[i].path, repl, &nrepl);
                 *sl = '/';
                 if (merr) {
                     print_hdr(&hdr, 0xc8104800);
                     FAIL("mkdir for link\n");
                     fails++; hfailed = 1; continue;
                 }
+            }
+            if (under_replaced(hlns[i].path, repl, nrepl)) {
+                /* H PATH-side: inline pair (hypothesis; A-027#2
+                 * covers target-side only) */
+                const Entry *hp =
+                    find_ent(&items[hlns[i].idx], "PAT");
+                print_hdr(&hdr, 0x83058800);
+                fprintf(stderr, "a parent of path is not a directory: "
+                        "%.*s\ninvalid path: %.*s\n",
+                        (int)hp->rawlen, hp->raw,
+                        (int)hp->rawlen, hp->raw);
+                fails++; sfails++; hfailed = 1; continue;
             }
             unlink(hlns[i].path);
             if (link(src, hlns[i].path)) {
@@ -1152,6 +1325,9 @@ static int extract(const Item *items, size_t nitems, const char *root,
     free(eis);
     free(hlcs);
     free(hlns);
+    free(repl);
+    free(cfs);
+    free(hts);
     return fails ? 1 : 0;
 }
 
