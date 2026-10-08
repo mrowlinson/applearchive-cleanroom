@@ -49,6 +49,18 @@ _T4E1T11 = (0xc5, 0xcd, 0xd5, 0xd5, 0xdd, 0xe5, 0xe5, 0xed, 0xf5, 0xf5,
             0xfd, 0x05, 0x0d, 0x0d, 0x15, 0x1d)
 _T4E1T19 = (0x51, 0x6a, 0x83, 0x83, 0x9c, 0xb5, 0xb5, 0xce, 0xe7, 0xe7,
             0x00, 0x19, 0x32, 0x32, 0x4b, 0x64)
+# T4F D2a transition rows, off 952..953 (literals, formula OPEN).
+_T4F12 = ("06040000db25c5866ff1e08b00003c000e0000eb24dc838f06c043f0"
+          "86eff8bd69014cd724a7d63e83c6434d065fa6fc",
+          "d2110100dd25c5866ff1202f00a0fcc3eeaa4ee08a37f7e0003c041f"
+          "86eff8bd69014cd724a7d63e83c6434d065fa6fc")
+# T4F D2a3 bytes25-26 rows, off 954..969 (literal table, formula OPEN).
+_T4F2526 = ("7c76", "7c77", "3c80", "3c81", "3c82", "3c83", "3c84", "3c85",
+            "3c86", "3c87", "3c88", "fc90", "fc91", "fc92", "fc93", "fc94")
+# T4F D2a4 bytes24-29 rows, off 970..979 (literal table, formula OPEN).
+_T4F2429 = ("3cfc276a6b0c", "833c48262b0c", "19bca3e3cb0b", "ecbc51262b0c",
+            "943c33a28b0b", "387ca6e3cb0b", "ed3ca7e3cb0b", "c07c55262b0c",
+            "56fcb0e3cb0b", "1dfc37a28b0b")
 
 
 def bit(p, i):
@@ -574,6 +586,54 @@ def main():
             if pay[b] != v:
                 return fail("T4E1 const %d" % b)
         print("CLOSED T4E1 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 1800:  # T4 plateau F = D2a (NOTE-w2s7-19: transition tables)
+        if len(pay) != 48:
+            return fail("T4F paylen")
+        off = n - 821
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if grp(pay, tuple(range(32, 42))) != l10:
+            return fail("T4F lencode")
+        if off <= 953:
+            if pay.hex() != _T4F12[off - 952]:
+                return fail("T4F12 bytes")
+            print("CLOSED T4F12 N=%d off=%d" % (n, off))
+            return 0
+        if pay[5] != (0x24 | (l10 >> 8)):
+            return fail("T4F b5")
+        if off <= 969:
+            if pay[25:27].hex() != _T4F2526[off - 954]:
+                return fail("T4F2526 tab")
+            consts = ((0, 0xca), (1, 0x3f), (2, 0x1c), (3, 0), (6, 0xc5),
+                      (7, 0x86), (8, 0x6f), (9, 0xf1), (10, 0), (11, 0),
+                      (12, 0xee), (13, 0x22), (14, 0xf5), (15, 0x11),
+                      (16, 0x57), (17, 0xf5), (18, 0x3f), (19, 0x97),
+                      (20, 0x8a), (21, 0xb7), (22, 0x75), (23, 0x0f),
+                      (24, 0), (27, 0xf0), (28, 0x2a), (29, 0xf8),
+                      (30, 0x8e), (31, 0xdf), (32, 0x69), (33, 0x01),
+                      (34, 0x4c), (35, 0xd7), (36, 0x24), (37, 0xa7),
+                      (38, 0xd6), (39, 0x3e), (40, 0x83), (41, 0xc6),
+                      (42, 0x43), (43, 0x4d), (44, 0x06), (45, 0x5f),
+                      (46, 0xa6), (47, 0xfc))
+            tag = "T4F3"
+        else:
+            if pay[24:30].hex() != _T4F2429[off - 970]:
+                return fail("T4F2429 tab")
+            consts = ((0, 0xa4), (1, 0x8f), (2, 0x08), (3, 0), (6, 0xc5),
+                      (7, 0x86), (8, 0x6f), (9, 0xf1), (10, 0x20),
+                      (11, 0x46), (12, 0), (13, 0xa0), (14, 0xfc),
+                      (15, 0xc3), (16, 0xee), (17, 0xaa), (18, 0x36),
+                      (19, 0xd7), (20, 0x08), (21, 0xee), (22, 0xba),
+                      (23, 0x07), (30, 0x1d), (31, 0xbf), (32, 0x69),
+                      (33, 0x01), (34, 0x4c), (35, 0xd7), (36, 0x24),
+                      (37, 0xa7), (38, 0xd6), (39, 0x3e), (40, 0x83),
+                      (41, 0xc6), (42, 0x43), (43, 0x4d), (44, 0x06),
+                      (45, 0x5f), (46, 0xa6), (47, 0xfc))
+            tag = "T4F4"
+        for b, v in consts:
+            if pay[b] != v:
+                return fail("%s const %d" % (tag, b))
+        print("CLOSED %s N=%d off=%d" % (tag, n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
