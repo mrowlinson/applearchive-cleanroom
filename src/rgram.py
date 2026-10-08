@@ -2312,6 +2312,25 @@ _T8F5C = ((0, 0xfa), (1, 0x56), (2, 0x41), (3, 0x17), (5, 0x5d),
           (52, 0x18), (53, 0xd6), (54, 0x6e), (55, 0xee), (56, 0xee),
           (57, 0xd7), (58, 0xd7), (59, 0x24), (60, 0x98), (61, 0x5f),
           (62, 0x5f), (63, 0x5a))
+_T9HT = ("34fc5305bcd2", "4afc5b05bcd2", "babfb715bcd2", "d0bfbf15bcd2",
+          "81fc8f9ddcd2", "7dfcab1efcd7", "d1bf7f3a1cd8", "6bfcdbe01cd8",
+          "9abf8be11cd8", "4bfc3b195cd9", "edbf2779bcd9", "1afca35adcd9",
+          "7ffcf713bcde", "45fce33ebcde", "5bfceb3ebcde", "2ebf8b43bcde")
+_T9HB = ("7b3c27f2fdad", "917ca462fdaf", "67bc85525db3", "167ce77d3db5",
+          "fbfc40bb5db5", "6a7c23037db5", "cd3c33317db5", "5dfcf7afddb5",
+          "a5fcd3405dbb", "32fca3b2bdbb", "1f7cc3f2ddbb", "e9fcf61ffdbb",
+          "ff3c7490ddbd", "ff3c7590ddbd", "c93c5678ddc1", "99bc031bfdc3")
+_T9HC = ((0, 0x01), (1, 0x00), (2, 0x00), (3, 0x00), (6, 0x16),
+          (7, 0x29), (8, 0xe2), (9, 0x36), (10, 0x15), (11, 0x74),
+          (12, 0x01), (13, 0x58), (14, 0xf2), (15, 0xd1), (16, 0xbf),
+          (17, 0x56), (18, 0x04), (19, 0x0b), (20, 0xc9), (21, 0x5f),
+          (22, 0xd0), (23, 0x6e), (24, 0xfa), (25, 0x10), (26, 0xa5),
+          (27, 0x75), (34, 0x79), (35, 0xd4), (42, 0xe2), (43, 0xe1),
+          (44, 0x8b), (45, 0xda), (46, 0xd4), (47, 0xf1), (48, 0x35),
+          (49, 0x77), (50, 0xac), (51, 0x5c), (52, 0x8e), (53, 0xbc),
+          (54, 0x07), (55, 0x83), (56, 0x18), (57, 0xd6), (58, 0x6e),
+          (59, 0xee), (60, 0xee), (61, 0xd7), (62, 0xd7), (63, 0x24),
+          (64, 0x98), (65, 0x5f), (66, 0x5f), (67, 0x5a))
 _T7CC = ((0, 0x75), (1, 0x01), (2, 0x00), (3, 0x00), (6, 0xc1),
          (7, 0x6b), (8, 0xfa), (9, 0xf6), (10, 0xcf),
          (11, 0x25), (12, 0x00), (13, 0xad), (14, 0xfc),
@@ -2731,7 +2750,7 @@ def main():
             return fail("stored content not zeros")
         print("CLOSED stored N=%d" % n)
         return 0
-    if len(pay) not in (44, 48, 52, 56, 60, 64):
+    if len(pay) not in (44, 48, 52, 56, 60, 64, 68):
         return fail("paylen %d" % len(pay))
     if n <= 127:  # T0
         if len(pay) != 44:
@@ -5989,6 +6008,29 @@ def main():
             print("CLOSED T8F5 N=%d off=%d" % (n, off))
             return 0
         return fail("T8F gap %d" % n)
+    if n <= 12212:  # T9HEAD: 16x16 tab b36-41 + 6B block words b28-33
+        off = n - 11957
+        if len(pay) != 68:
+            return fail("T9HEAD paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if pay[4] != (l10 & 0xFF):
+            return fail("T9HEAD lencode")
+        m = off & 15
+        q = off >> 4
+        if pay[5] != 0x5d + (off >= 75) + (off >= 203):
+            return fail("T9HEAD b5")
+        if bytes((pay[36], pay[37], pay[38], pay[39], pay[40],
+                   pay[41])).hex() != _T9HT[m]:
+            return fail("T9HEAD tab")
+        blk = bytes((pay[28], pay[29], pay[30], pay[31], pay[32],
+                     pay[33])).hex()
+        if blk != _T9HB[q]:
+            return fail("T9HEAD blk")
+        for b, v in _T9HC:
+            if pay[b] != v:
+                return fail("T9HEAD const %d" % b)
+        print("CLOSED T9HEAD N=%d off=%d" % (n, off))
+        return 0
     print("N out of scope", file=sys.stderr)
     return 2
 
