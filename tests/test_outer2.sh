@@ -458,7 +458,7 @@ NDP() { # profile : chk a-nd-p<profile> first-diff char (p1=c13 known; NOTE-w2s3
   # shellcheck disable=SC2086
   "$AEA" encrypt -profile $1 $E -a none -t 1 -i "$IN/a5000.bin" -o "$WORK/a-ndp$1-2.aea" 2>/dev/null
   if cmp -s "$WORK/a-ndp$1-1.aea" "$WORK/a-ndp$1-2.aea"; then v=SAME
-  elif [ "$1" = 0 ]; then v=DIFF # p0 ECDSA-unstable (c14/16/17 seen) -> verdict only
+  elif [ "$1" = 0 ] || [ "$1" = 3 ]; then v=DIFF # p0 ECDSA-unstable (c14/16/17), p3 ECIES-unstable (c14/15, NOTE-FLAKE) -> verdict only
   else v=$(cmp "$WORK/a-ndp$1-1.aea" "$WORK/a-ndp$1-2.aea" 2>&1 | grep -o 'char [0-9]*' || echo DIFF); fi
   chk "a-nd-p$1" str "$v" 0
 }
