@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""encode.py SRCDIR OUT.aar [--alg raw|lzfse|zlib] [--block SIZE] [--threads N]
+"""encode.py SRCDIR OUT.aar [--alg raw|lzfse|zlib|lzma|lz4] [--block SIZE] [--threads N]
 Cleanroom AAR encoder (prototype). --threads accepted, single-threaded.
 SIZE: integer + optional b/k/m/g suffix.
 """
@@ -11,6 +11,8 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, _HERE)
 from rawenc import build_inner
 from pbze import wrap_pbze
+from lzmaenc import wrap_pbzx
+from lz4enc import wrap_pbz4
 
 
 def parse_size(s):
@@ -42,12 +44,19 @@ def main(argv):
     if src is None or out is None:
         raise SystemExit("usage: encode.py SRCDIR OUT.aar [--alg raw|lzfse|zlib] [--block SIZE] [--threads N]")
     magics = {"lzfse": b"pbze", "zlib": b"pbzz"}
-    if alg not in ("raw",) + tuple(magics):
-        raise SystemExit("unsupported alg %r (parked: lzma lz4 lzraven lzbitmap)" % alg)
+    if alg not in ("raw", "lzma", "lz4") + tuple(magics):
+        raise SystemExit("unsupported alg %r (parked: lzraven lzbitmap)" % alg)
     if not 1 <= block <= 134217728:
         raise SystemExit("invalid block size %d (oracle range 1..134217728)" % block)
     inner = build_inner(os.fsencode(src))
-    data = inner if alg == "raw" else wrap_pbze(inner, magic=magics[alg], blocksize=block)
+    if alg == "raw":
+        data = inner
+    elif alg == "lzma":
+        data = wrap_pbzx(inner, blocksize=block)
+    elif alg == "lz4":
+        data = wrap_pbz4(inner, blocksize=block)
+    else:
+        data = wrap_pbze(inner, magic=magics[alg], blocksize=block)
     with open(out, "wb") as f:
         f.write(data)
 
