@@ -737,6 +737,30 @@ _T7B3T = ("263c8117b6", "bdbc9717b6", "51fca322b6", "1bbcd74fb6",
           "387cb7dfb6", "02fcf20cd6", "963cf717d6", "2f7cd418d6")
 _T7B3K = ("ecdf1fce536d21", "fadde0ee530e21", "0cdfcc94132c22",
           "2c5d02e8135120")
+# T7C tables (quiet-256): 16-tabs b36-40 + b28-32 walk the
+# B3 tab by k2 (full 16, reuse) + b5 edges @359/487.
+_T7CT36 = (0x4e, 0x14, 0xdc, 0xf2, 0xa8, 0x6e, 0x84, 0x9a,
+           0xff, 0xc5, 0x98, 0x91, 0x59, 0x88, 0x4e, 0x2e)
+_T7CT37 = (0xfc, 0xfc, 0xfc, 0xfc, 0xbf, 0xbf, 0xbf, 0xbf,
+           0xfc, 0xfc, 0xbf, 0xbf, 0xfc, 0xbf, 0xbf, 0xfc)
+_T7CT38 = (0xef, 0xdb, 0x77, 0x7f, 0xff, 0xeb, 0xf3, 0xfb,
+           0x53, 0x3f, 0xdf, 0xc7, 0x63, 0x13, 0xff, 0x3f)
+_T7CT39 = (0x7e, 0xa9, 0xae, 0xae, 0xb3, 0xde, 0xde, 0xde,
+           0xef, 0x1a, 0x1e, 0x1f, 0x24, 0x25, 0x4f, 0x50)
+_T7CT40 = (0xb5, 0xb5, 0xb5, 0xb5, 0xb5, 0xb5, 0xb5, 0xb5,
+           0xb5, 0xd5, 0xd5, 0xd5, 0xd5, 0xd5, 0xd5, 0xd5)
+_T7CC = ((0, 0x75), (1, 0x01), (2, 0x00), (3, 0x00), (6, 0xc1),
+         (7, 0x6b), (8, 0xfa), (9, 0xf6), (10, 0xcf),
+         (11, 0x25), (12, 0x00), (13, 0xad), (14, 0xfc),
+         (15, 0x22), (16, 0x39), (17, 0xcb), (18, 0xd3),
+         (19, 0x8a), (20, 0x4d), (21, 0xdc), (22, 0xdb),
+         (23, 0xd7), (24, 0x53), (25, 0x6d), (26, 0x21),
+         (27, 0x3d), (33, 0x58), (34, 0x8b), (35, 0xc9),
+         (41, 0x78), (42, 0xbf), (43, 0x06), (44, 0x2f),
+         (45, 0xdf), (46, 0x31), (47, 0x6b), (48, 0x4e),
+         (49, 0x25), (50, 0x88), (51, 0xe4), (52, 0x51),
+         (53, 0x14), (54, 0x69), (55, 0x1b), (56, 0x4d),
+         (57, 0xaf), (58, 0xaf), (59, 0x69))
 _T7B3C = ((0, 0x17), (1, 0x00), (2, 0x00), (3, 0x00), (5, 0x51),
           (6, 0xc1), (7, 0x6b), (8, 0x9a), (9, 0x56),
           (10, 0x7e), (11, 0x11), (12, 0xb7), (13, 0x7f),
@@ -2864,6 +2888,28 @@ def main():
             if pay[b] != v:
                 return fail("T7B3 const %d" % b)
         print("CLOSED T7B3 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 6644:  # T7C: quiet-256, tabs b36-40 + B3-walk + b5
+        off = n - 6041
+        if len(pay) != 60:
+            return fail("T7C paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if pay[4] != (l10 & 0xFF):
+            return fail("T7C lencode")
+        m = (off - 348) & 15
+        k2 = (off - 348) >> 4
+        if pay[5] != (0x51 + (off >= 359) + (off >= 487)):
+            return fail("T7C b5")
+        if pay[28:33].hex() != _T7B3T[k2]:
+            return fail("T7C walk")
+        if pay[36] != _T7CT36[m] or pay[37] != _T7CT37[m] or \
+                pay[38] != _T7CT38[m] or pay[39] != _T7CT39[m] or \
+                pay[40] != _T7CT40[m]:
+            return fail("T7C tab")
+        for b, v in _T7CC:
+            if pay[b] != v:
+                return fail("T7C const %d" % b)
+        print("CLOSED T7C N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
