@@ -677,6 +677,38 @@ _T6M3T10 = (0x0d, 0x0d, 0x0d, 0x0d, 0x0d, 0x0d, 0x0e, 0x0e,
             0x0e, 0x0e, 0x0e, 0x0e, 0x0e, 0x0e, 0x0e, 0x0e)
 _T6M3K = ("f115691cadb2af5e", "411569892dd15799",
           "4917296ccd72dff8", "99146904cdc87726")
+# T7A tables (60-tier head off 0..255, PRE-060b concur): 16-tabs
+# b0/9/10/11/20/21 + b6/7 M3-walk + b5 walk+steps + k2 b12.
+_T7AT0 = (0x09, 0x0b, 0x08, 0x0b, 0x0b, 0x09, 0x09, 0x08,
+          0x09, 0x0b, 0x09, 0x09, 0x08, 0x0b, 0x0b, 0x08)
+_T7AT9 = (0x7c, 0xb0, 0x20, 0x54, 0x54, 0xc8, 0xc8, 0xfc,
+          0x6c, 0x80, 0xb4, 0xb4, 0xe8, 0xbc, 0xbc, 0x2c)
+_T7AT10 = (0xf0, 0xf1, 0xf2, 0xf3, 0xf3, 0xf2, 0xf2, 0xf3,
+           0xf0, 0xf1, 0xf2, 0xf2, 0xf3, 0xf3, 0xf3, 0xf0)
+_T7AT11 = (0x0f, 0xce, 0x42, 0x01, 0x05, 0xd1, 0xd5, 0x94,
+           0x09, 0x1c, 0xdb, 0xdf, 0x9e, 0x87, 0x8b, 0x00)
+_T7AT20 = (0xf3, 0xf3, 0xf4, 0xf4, 0xf4, 0xfd, 0xfd, 0xfe,
+           0xfe, 0x04, 0x05, 0x05, 0x06, 0x0e, 0x0e, 0x0f)
+_T7AT21 = (0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
+           0x20, 0x21, 0x21, 0x21, 0x21, 0x21, 0x21, 0x21)
+_T7AK12 = (0xa9, 0xb1, 0xb1, 0xd9, 0xd9, 0xda, 0x02, 0x0a,
+           0x0a, 0x32, 0x32, 0x33, 0x59, 0x62, 0x63, 0x89)
+_T7DIP256 = ("be4e75013371325b79e1e03300363c91f74126119a5f3cf9cec23de39"
+             "2b5983d21bf675391f76b902fdf316b4e2588e45114691b4dafaf69",
+             "8044bec03551c16bfaf6cf251dbe4e7514b59f2a9a5f3cf9cec23de39"
+             "2b5983d21bf675391f76b902fdf316b4e2588e45114691b4dafaf69")
+_T7AC = ((1, 0x00), (2, 0x00), (3, 0x00), (8, 0x1d), (14, 0xf0),
+         (15, 0x19), (16, 0x9b), (17, 0x5f), (18, 0x3c),
+         (19, 0xf9), (22, 0x93), (23, 0xd0), (24, 0x8e),
+         (25, 0xaf), (26, 0x33), (27, 0x6b), (28, 0x16),
+         (29, 0xee), (30, 0x19), (31, 0x0f), (32, 0x92),
+         (33, 0xb5), (34, 0x98), (35, 0x3b), (36, 0x21),
+         (37, 0xbf), (38, 0x67), (39, 0x53), (40, 0x91),
+         (41, 0xf7), (42, 0xeb), (43, 0xcb), (44, 0x4e),
+         (45, 0xee), (46, 0xf1), (47, 0x15), (48, 0x2a),
+         (49, 0x41), (50, 0x24), (51, 0x0f), (52, 0x51),
+         (53, 0x14), (54, 0xa9), (55, 0x1c), (56, 0x2d),
+         (57, 0xe4), (58, 0xcf), (59, 0x5a))
 _T6M3C = ((0, 0xe7), (1, 0x17), (2, 0x4f), (3, 0xbe), (11, 0x3e),
           (12, 0x00), (13, 0x36), (14, 0x3c), (15, 0x91),
           (16, 0xf7), (17, 0x41), (18, 0x26), (19, 0xa1),
@@ -1056,7 +1088,7 @@ def main():
             return fail("stored content not zeros")
         print("CLOSED stored N=%d" % n)
         return 0
-    if len(pay) not in (44, 48, 52, 56):
+    if len(pay) not in (44, 48, 52, 56, 60):
         return fail("paylen %d" % len(pay))
     if n <= 127:  # T0
         if len(pay) != 44:
@@ -2691,6 +2723,41 @@ def main():
             if pay[b] != v:
                 return fail("T6M3 const %d" % b)
         print("CLOSED T6M3 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 6296:  # T7A: 60-tier head, tabs + M3-walk + steps
+        off = n - 6041
+        if len(pay) != 60:
+            return fail("T7A paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if grp(pay, tuple(range(32, 42))) != l10:
+            return fail("T7A lencode")
+        m = off & 15
+        k2 = off >> 4
+        b5bump = 1 + (k2 >= 7) + (k2 == 15) + \
+            (k2 in (6, 14) and m >= 7)
+        if pay[5] != ((_T6M3T5[k2] + b5bump) & 0xff):
+            return fail("T7A b5")
+        if pay[6] != _T6M3T6[k2] or pay[7] != _T6M3T7[k2]:
+            return fail("T7A walk")
+        if pay[0] != _T7AT0[m] or pay[9] != _T7AT9[m] or \
+                pay[10] != _T7AT10[m] or pay[11] != _T7AT11[m]:
+            return fail("T7A tabA")
+        if pay[12] != _T7AK12[k2]:
+            return fail("T7A b12")
+        if pay[13] != (0x6f + (off >= 96)):
+            return fail("T7A b13")
+        if pay[20] != _T7AT20[m] or pay[21] != _T7AT21[m]:
+            return fail("T7A tabB")
+        for b, v in _T7AC:
+            if pay[b] != v:
+                return fail("T7A const %d" % b)
+        print("CLOSED T7A N=%d off=%d" % (n, off))
+        return 0
+    if n <= 6298:  # 56B dip pair (off=256/257, +256 rule)
+        off = n - 6041
+        if len(pay) != 56 or pay.hex() != _T7DIP256[off - 256]:
+            return fail("T7DIP256")
+        print("CLOSED T7DIP256 N=%d" % n)
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
