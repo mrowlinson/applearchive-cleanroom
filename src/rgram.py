@@ -14,6 +14,13 @@ _T3CASC = ("80004208", "68063ef7", "c607beff", "a70bbeff", "880fbeff",
            "ed153ef7", "4b17beff", "2c1bbeff", "0d1fbeff", "72453ef7")
 # T3 bytes16-19 settled states: 245-260, 261-276, 277-292, 293-308.
 _T3P245 = ("d046beff", "b14abeff", "924ebeff", "f7543ef7")
+# T2 g332 scramble rows, off 144..153 (literal table, formula OPEN).
+_T2SCRAM = (0x8dbe, 0x1386, 0x9d42, 0x230a, 0xacc6, 0x328e, 0xbc4a,
+            0x4212, 0xcbce, 0x5196)
+# T2 post-lock window states by kw=min((off-153)>>4,4).
+_T2W32 = (0x5196, 0xdb52, 0x611a, 0xead6, 0x709e)
+_T2W240 = ((0x82, 0x10), (0x72, 0x0f), (0x82, 0x10), (0x72, 0x0f),
+           (0x82, 0x10))
 
 
 def bit(p, i):
@@ -144,6 +151,36 @@ def main():
             if pay[0] != (((off - 217) & 15) << 4) or \
                     (pay[1], pay[2], pay[8]) != (0x00, 0x80, 0x0d):
                 return fail("T2 regC")
+        g240 = grp(pay, tuple(range(240, 248)))
+        g249 = grp(pay, tuple(range(249, 254)))
+        if off == 125:
+            ew = (0x0f, 0x00)
+        elif 143 <= off <= 152:
+            ew = (0x82, 0x10) if off & 1 else (0x72, 0x0f)
+        elif off >= 153:
+            ew = _T2W240[min((off - 153) >> 4, 4)]
+        else:
+            ew = (0x00, 0x00)
+        if (g240, g249) != ew:
+            return fail("T2 window")
+        g332 = grp(pay, (332, 334, 336, 337, 338, 339, 340, 341, 342, 343,
+                         344, 346, 347, 348, 349, 350))
+        if off <= 124:
+            e32 = 0x0001
+        elif off == 125:
+            e32 = 0x0000
+        elif off <= 127:
+            e32 = 0x0002
+        elif off <= 142:
+            e32 = ((off - 127) << 11) | 2
+        elif off == 143:
+            e32 = 0x0402
+        elif off <= 153:
+            e32 = _T2SCRAM[off - 144]
+        else:
+            e32 = _T2W32[min((off - 153) >> 4, 4)]
+        if g332 != e32:
+            return fail("T2 w332")
         print("CLOSED T2 N=%d off=%d" % (n, off))
         return 0
     if n <= 820:  # T3 (NOTE-w2s7-2/3: halted clock C + cascade table)
