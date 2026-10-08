@@ -1387,6 +1387,25 @@ _T8RC = ((0, 0x01), (1, 0x00), (2, 0x00), (3, 0x00),
          (43, 0x86), (44, 0xd2), (45, 0x45), (48, 0x25),
          (49, 0x3c), (50, 0x57), (51, 0xdb), (52, 0x15),
          (53, 0xe7), (54, 0xaa))
+_T8S1T = ("429cf392bf2d", "4264f0147f35", "02d8f1445f36",
+           "620cf3035f36", "620cf3075f36", "0278f2975f4b",
+           "42ecf3c71f4c", "42ecf3cb1f4c", "2280f0469f4f",
+           "2280f04a9f4f", "628cf01f1f61", "2200f24fff61",
+           "2260f10e5f65", "2260f1125f65", "6294f2d15f65",
+           "0200f0c61f7a")
+_T8S1C = ((0, 0x14), (1, 0x00), (2, 0x00), (3, 0x00),
+          (6, 0xf5), (7, 0x5a), (9, 0xf1), (10, 0x87),
+          (11, 0x1d), (12, 0x03), (18, 0xcf), (19, 0xff),
+          (20, 0x95), (21, 0x5a), (22, 0x28), (23, 0xbd),
+          (24, 0x92), (25, 0x30), (26, 0xf2), (27, 0x3b),
+          (28, 0xf6), (29, 0xff), (30, 0xb5), (31, 0xae),
+          (32, 0x63), (33, 0x57), (34, 0x07), (35, 0x25),
+          (36, 0x15), (37, 0xf9), (38, 0xd4), (39, 0xd6),
+          (40, 0xe1), (41, 0x5e), (42, 0xc8), (43, 0x86),
+          (44, 0xd2), (45, 0x45), (46, 0x83), (47, 0xc3),
+          (48, 0x25), (49, 0x3c), (50, 0x57), (51, 0xdb),
+          (52, 0x15), (53, 0xe7), (54, 0xaa), (55, 0xcd),
+          (56, 0x4e), (57, 0x63), (58, 0xaf), (59, 0x8a))
 _T7CC = ((0, 0x75), (1, 0x01), (2, 0x00), (3, 0x00), (6, 0xc1),
          (7, 0x6b), (8, 0xfa), (9, 0xf6), (10, 0xcf),
          (11, 0x25), (12, 0x00), (13, 0xad), (14, 0xfc),
@@ -4158,6 +4177,28 @@ def main():
             if pay[b] != v:
                 return fail("T8R const %d" % b)
         print("CLOSED T8R N=%d off=%d" % (n, off))
+        return 0
+    if n <= 9080:  # T8S1: 16x16 walk T8RT[0..15] + tab b8/13-17
+        off = n - 8735
+        if len(pay) != 64:
+            return fail("T8S1 paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if pay[4] != (l10 & 0xFF):
+            return fail("T8S1 lencode")
+        m = (off - 90) & 15
+        q = (off - 90) >> 4
+        if pay[5] != (0x04 + (off >= 97) + (off >= 225)):
+            return fail("T8S1 b5")
+        if pay[60:64].hex() != _T8RT[q]:
+            return fail("T8S1 walk")
+        tab = bytes((pay[8], pay[13], pay[14], pay[15], pay[16],
+                     pay[17])).hex()
+        if tab != _T8S1T[m]:
+            return fail("T8S1 tab")
+        for b, v in _T8S1C:
+            if pay[b] != v:
+                return fail("T8S1 const %d" % b)
+        print("CLOSED T8S1 N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
