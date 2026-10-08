@@ -7410,6 +7410,27 @@ _T10PYQC = (
         (55, 0x35), (56, 0xc6), (57, 0xd1), (58, 0x1d), (59, 0x81),
         (60, 0xec), (61, 0xfa), (62, 0x3b), (63, 0xb8), (64, 0xbb),
         (65, 0x13), (66, 0x74), (67, 0x6d))
+_T10R33M = ("fbbfcfb6169187", "78fccfb6cfc173",
+           "7afccf0159e71e", "7afccfbd427bd4",
+           "7afccfdd173dd5", "7bfccf6184c452",
+           "93fccf380c034d", "93fccfa2460152",
+           "93fccf299f4dbd", "abfccfdee281b7",
+           "c7fccfe106b807", "f2fccf65cc9311",
+           "fefccf4b1139e5", "4cbfd3ad12a615",
+           "56bfd3459acf16", "56bfd360dcd116")
+_T10R33C = ((0, 0xf1), (1, 0x90), (2, 0x1d), (3, 0x00), (6, 0x12),
+         (7, 0x9b), (8, 0xcd), (9, 0x91), (10, 0x02), (11, 0x24),
+         (12, 0x89), (13, 0x03), (14, 0xf9), (15, 0x28), (16, 0x71),
+         (17, 0x69), (18, 0xb8), (19, 0xda), (20, 0x46), (23, 0xab),
+         (24, 0xa7), (25, 0x68), (26, 0xfd), (27, 0xbb), (31, 0x93),
+         (32, 0x47), (33, 0xc6), (34, 0xe3), (35, 0x65), (36, 0xdf),
+         (37, 0xa4), (38, 0x64), (39, 0xc4), (40, 0xdd), (41, 0xfc),
+         (42, 0x2a), (43, 0x60), (44, 0xc2), (45, 0xc7), (46, 0xb6),
+         (47, 0x47), (48, 0x4e), (49, 0xdf), (50, 0x26), (51, 0x1d),
+         (52, 0xc6), (53, 0xd1), (54, 0x1d), (55, 0x81), (56, 0xec),
+         (57, 0xfa), (58, 0x3b), (59, 0xb8), (60, 0xbb), (61, 0x13),
+         (62, 0x74), (63, 0x6d), (68, 0xfa), (69, 0x94), (70, 0xba),
+         (71, 0x9a))
 _T10P5QC = ((0, 0x1d), (1, 0x02), (2, 0x00), (3, 0x00), (6, 0xc1),
          (7, 0xcc), (8, 0xa8), (9, 0x78), (10, 0xfb), (11, 0x8f),
          (12, 0x00), (13, 0x13), (14, 0x64), (15, 0x0d), (16, 0xc4),
@@ -15659,6 +15680,26 @@ def main():
             if pay[b] != v:
                 return fail("T10PYQ const %d" % b)
         print("CLOSED T10PYQ N=%d off=%d" % (n, off))
+        return 0
+    if n <= 28916:  # T10R33: 16x16 76B-pay, m-tab b28-30,64-67 + q=PYM
+        off = n - 28661
+        if len(pay) != 76:
+            return fail("T10R33 paylen")
+        l16 = (((n << 1) | 1) ^ 0x8000) & 0xFFFF
+        if pay[4] != (l16 & 0xFF) or pay[5] != (l16 >> 8):
+            return fail("T10R33 lencode")
+        m = off & 15
+        q = off >> 4
+        if bytes((pay[28], pay[29], pay[30], pay[64], pay[65],
+                   pay[66], pay[67])).hex() != _T10R33M[m]:
+            return fail("T10R33 mtab")
+        if bytes((pay[21], pay[22], pay[72], pay[73], pay[74],
+                   pay[75])).hex() != _T10PYM[q]:
+            return fail("T10R33 qtab")
+        for b, v in _T10R33C:
+            if pay[b] != v:
+                return fail("T10R33 const %d" % b)
+        print("CLOSED T10R33 N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
