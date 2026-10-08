@@ -965,15 +965,16 @@ static int extract(const Item *items, size_t nitems, const char *root,
                     if (shortend + 0ULL <= (nch - j) * 262144ULL) hch++;
                     else break;
                 }
-                /* M2-dev (NOTE-060, verified 10/10): truncpay LONG
-                 * (nch>=2, !datcomplete): held -= dev; big
-                 * (bsize>=192K): dev = nch/2-1; small: dev =
-                 * (nch>=4). Trunchdr: held capped at 2ch. w3
-                 * (n>=10) + frac + tr6-creation stay OPEN. */
+                /* M2-dev (NOTE-060) + TIP2e whole-step: truncpay
+                 * LONG (nch>=2, !datcomplete): held -= dev; big
+                 * (bsize>=192K): dev = nch/2-1 + (whole>=3M:
+                 * 7500/rnd3m 4ch-locked both contents); small:
+                 * dev = (nch>=4). */
                 if (midchain && !datcomplete && nch >= 2 &&
                     mfkind == MF_TRUNCPAY) {
                     unsigned long long dev = obs >= 196608ULL ?
-                        nch / 2 - 1 : (nch >= 4 ? 1 : 0);
+                        nch / 2 - 1 + (whole >= 3145728ULL ? 1 : 0) :
+                        (nch >= 4 ? 1 : 0);
                     if (dev > hch) dev = hch;
                     hch -= dev;
                 } else if (midchain && !datcomplete &&

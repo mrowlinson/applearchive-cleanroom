@@ -695,14 +695,13 @@ def extract(items, root, fcls=0, fsub=0, shortidx=-1, midchain=False,
                         hch += 1
                     else:
                         break
-                # M2-dev (NOTE-060): truncpay LONG (nch>=2,
-                # !datcomplete): held -= dev; big (bsize>=192K):
-                # dev = nch//2-1; small: dev = (nch>=4).
-                # Trunchdr: held capped at 2ch.
+                # M2-dev (NOTE-060) + TIP2e whole-step: truncpay
+                # LONG: big dev = nch//2-1 + (whole>=3M);
+                # small dev = (nch>=4).
                 if midchain and not datcomplete and nch >= 2 and \
                         mfkind == "truncpay":
-                    dev = (nch // 2 - 1 if obs >= 196608
-                           else (1 if nch >= 4 else 0))
+                    dev = (nch // 2 - 1 + (1 if whole >= 3145728 else 0)
+                           if obs >= 196608 else (1 if nch >= 4 else 0))
                     hch = max(hch - dev, 0)
                 elif midchain and not datcomplete and \
                         mfkind == "trunchdr":
