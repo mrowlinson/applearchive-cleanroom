@@ -2625,6 +2625,87 @@ _T9Y1C = ((0, 0x6e), (1, 0x0e), (2, 0x00), (3, 0x00), (7, 0xf3),
           (43, 0xa4), (44, 0x17), (45, 0x69), (46, 0x39), (47, 0x28),
           (50, 0xe4), (51, 0x11), (52, 0x00), (53, 0x97), (54, 0xd7),
           (55, 0xd1), (64, 0xb8), (65, 0x3c), (66, 0x97), (67, 0x7e))
+_T9Z1T = ("932ada49d8", "932ade49d8", "93a8dd62df", "93735e19e2",
+           "939f5fca0e", "94195e2a09", "94ac5c202c", "941ed9202c",
+           "94405cb0b3", "94e6ddeee8", "940ddd30ea", "94f8de34ea",
+           "94add98b00", "95a8de6b51", "95ab59247a", "95ee58059d")
+_T9Z1B = ("bd5e057cb58d", "bd64cafc842b", "bd640b3d963e",
+           "bd6493bb9c3e", "bd667f7e2246", "bd6647fc9d48",
+           "3d77093ebab5", "bd77e8bface7", "bd792ffb35ef",
+           "3d7a01fc6e27", "3d7c21be2c44")
+_T9Z1HI = (0x2, 0x2, 0x2, 0x2, 0xa, 0x2, 0x6, 0x6,
+            0x6, 0xa, 0xa, 0xa, 0xe, 0xa, 0xa, 0xe)
+_T9Z1LO = (0x8, 0x9, 0x9, 0x9, 0x9, 0x9, 0x9, 0x9, 0x9, 0xa, 0xa)
+_T9Z1C = ((0, 0x6e), (1, 0x0e), (2, 0x00), (3, 0x00), (7, 0xf3),
+          (8, 0x87), (9, 0x96), (10, 0xfc), (11, 0xc6), (12, 0x00),
+          (13, 0x63), (14, 0x4f), (15, 0x16), (16, 0x20), (17, 0x90),
+          (18, 0xbb), (19, 0xee), (20, 0x98), (21, 0x1e), (22, 0x5d),
+          (23, 0x11), (24, 0x6d), (25, 0x7c), (26, 0xc0), (27, 0x6f),
+          (28, 0x5a), (29, 0x38), (30, 0xf6), (31, 0xc9), (32, 0xdd),
+          (33, 0xbf), (34, 0xe7), (35, 0x6d), (36, 0x1a), (37, 0xcc),
+          (38, 0xea), (39, 0x36), (40, 0x7c), (41, 0xd9), (42, 0x72),
+          (43, 0xa4), (44, 0x17), (45, 0x69), (46, 0x39), (47, 0x28),
+          (50, 0xe4), (51, 0x11), (52, 0x00), (53, 0x97),
+          (54, 0xd7), (55, 0xd1), (64, 0xb8), (65, 0x3c), (66, 0x97),
+          (67, 0x7e))
+_T9A2D = "16491ee14b6a394f6300634f2090bbee981e5d516d7cc06f5a38f649ddbfe76d1acceab67cd972a41769396872bc31ab59b884b6eebd379dec5dcba2b83c977e"
+_T9A20 = {13606: "850000004d6ae9378a93643800634f162090bbee981e5db16d7cc06f5a38f649ddbfe76d1acceab67cd972a4176939d872bc31ab59b88476cef017da36d9a56bb83c977e",
+          13607: "530800004f6ae9378a134f860054f6642402b9eb981e5db16d7cc06f5a38f649ddbfe76d1acceab67cd972a4176939d872bc31ab59b88476cef017da83da7fd44fbc5697",
+          13623: "420000006feaa7c2247b329c0037ea17050472d7981e5db16d7cc06f5a38f649ddbfe76d1acceab67cd972a4176939d872bc31ab59b88476cef017da0adf575591fc43e8",
+          13624: "2100000071eaa7c2243d194e0014e05be403b9eb981e5db16d7cc06f5a38f649ddbfe76d1acceab67cd972a4176939d872bc31ab59b88476cef017da0adf57558b3cd6a3",
+          13633: "f002000083eaa7c22401267ce4d6700abfe905bafcccd1156d7cc06f5a38f649ddbfe76d1acceab67cd972a4176939d872bc31ab59b88476cef017da0adf575517bc8077"}
+_T9A2AT = ("5498bcf197", "57f5bc5300", "67d9fc42c7", "69adfc3283",
+           "69fabce283", "6a3dbc1829", "6a55fc2029", "6a32fcd331",
+           "7c60bcd3ce", "7dbbbc1074", "7f4f3c4017", "7fdc7cb030",
+           "9190bcb2d5", "972f7cd435", "97073cc450")
+_T9A2AC = ((0, 0x53), (1, 0x08), (2, 0x00), (3, 0x00), (5, 0x6a),
+          (6, 0xe9), (7, 0x37), (8, 0x8a), (9, 0x13), (10, 0x4f),
+          (11, 0x86), (12, 0x00), (14, 0xf6), (15, 0x64), (16, 0x24),
+          (17, 0x02), (18, 0xb9), (19, 0xeb), (20, 0x98), (21, 0x1e),
+          (22, 0x5d), (23, 0xb1), (24, 0x6d), (25, 0x7c), (26, 0xc0),
+          (27, 0x6f), (28, 0x5a), (29, 0x38), (30, 0xf6), (31, 0x49),
+          (32, 0xdd), (33, 0xbf), (34, 0xe7), (35, 0x6d), (36, 0x1a),
+          (37, 0xcc), (38, 0xea), (39, 0xb6), (40, 0x7c), (41, 0xd9),
+          (42, 0x72), (43, 0xa4), (44, 0x17), (45, 0x69), (46, 0x39),
+          (47, 0xd8), (48, 0x72), (49, 0xbc), (50, 0x31), (51, 0xab),
+          (52, 0x59), (53, 0xb8), (54, 0x84), (55, 0x76), (56, 0xce),
+          (57, 0xf0), (58, 0x17), (59, 0xda), (60, 0x83), (61, 0xda),
+          (62, 0x7f), (63, 0xd4))
+_T9A2BT = ("14e05b9b7cc5be", "0bc44d63bc9393", "ff3d78797c987e",
+           "caf507f8bc8453", "6580862d7c16f9", "8fb231133c156a",
+           "2ae05bbbbc0652", "1ab53f793cf874")
+_T9A2BC = ((0, 0x21), (1, 0x00), (2, 0x00), (3, 0x00), (5, 0xea),
+          (6, 0xa7), (7, 0xc2), (8, 0x24), (9, 0x3d), (10, 0x19),
+          (11, 0x4e), (12, 0x00), (16, 0xe4), (17, 0x03), (18, 0xb9),
+          (19, 0xeb), (20, 0x98), (21, 0x1e), (22, 0x5d), (23, 0xb1),
+          (24, 0x6d), (25, 0x7c), (26, 0xc0), (27, 0x6f), (28, 0x5a),
+          (29, 0x38), (30, 0xf6), (31, 0x49), (32, 0xdd), (33, 0xbf),
+          (34, 0xe7), (35, 0x6d), (36, 0x1a), (37, 0xcc), (38, 0xea),
+          (39, 0xb6), (40, 0x7c), (41, 0xd9), (42, 0x72), (43, 0xa4),
+          (44, 0x17), (45, 0x69), (46, 0x39), (47, 0xd8), (48, 0x72),
+          (49, 0xbc), (50, 0x31), (51, 0xab), (52, 0x59), (53, 0xb8),
+          (54, 0x84), (55, 0x76), (56, 0xce), (57, 0xf0), (58, 0x17),
+          (59, 0xda), (60, 0x0a), (61, 0xdf), (62, 0x57), (63, 0x55))
+_T9A2QT = ("c49fa4ed1c1ccd", "e4efb59526bccf", "04bfc77d57bccf",
+           "24afaa8df23cd0", "c47fd50d4a7cd1", "246fe52d259cd1",
+           "848fc975e59cd1", "e49fe1fde11cd2", "043fdb7589bcd4",
+           "84bfb145d51cd6", "84cfb69dd51cd6", "442fd935593cd6",
+           "24fffd7d579cd6", "c42fa945469cd6", "c43fae9d469cd6",
+           "e4bfe905bafccc")
+_T9A2QB = ("f0267c17bc8077", "634465863ce307", "d4821132bc2029",
+           "2bc0a5a17c5024")
+_T9A2QN = "d48211eb7ca52f"
+_T9A2QC = ((1, 0x02), (2, 0x00), (3, 0x00), (6, 0xa7),
+          (7, 0xc2), (8, 0x24), (9, 0x01), (14, 0x70),
+          (15, 0x0a), (22, 0xd1), (23, 0x15), (24, 0x6d), (25, 0x7c),
+          (26, 0xc0), (27, 0x6f), (28, 0x5a), (29, 0x38), (30, 0xf6),
+          (31, 0x49), (32, 0xdd), (33, 0xbf), (34, 0xe7), (35, 0x6d),
+          (36, 0x1a), (37, 0xcc), (38, 0xea), (39, 0xb6), (40, 0x7c),
+          (41, 0xd9), (42, 0x72), (43, 0xa4), (44, 0x17), (45, 0x69),
+          (46, 0x39), (47, 0xd8), (48, 0x72), (49, 0xbc), (50, 0x31),
+          (51, 0xab), (52, 0x59), (53, 0xb8), (54, 0x84), (55, 0x76),
+          (56, 0xce), (57, 0xf0), (58, 0x17), (59, 0xda), (60, 0x0a),
+          (61, 0xdf), (62, 0x57), (63, 0x55))
 _T7CC = ((0, 0x75), (1, 0x01), (2, 0x00), (3, 0x00), (6, 0xc1),
          (7, 0x6b), (8, 0xfa), (9, 0xf6), (10, 0xcf),
          (11, 0x25), (12, 0x00), (13, 0xad), (14, 0xfc),
@@ -6661,6 +6742,97 @@ def main():
             if pay[b] != v:
                 return fail("T9Y1 const %d" % b)
         print("CLOSED T9Y1 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 13604:  # T9Z1: 11x16 tab b6,b60-63 + 6B words + b5 HI/LO
+        off = n - 13429
+        if len(pay) != 68:
+            return fail("T9Z1 paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if pay[4] != (l10 & 0xFF):
+            return fail("T9Z1 lencode")
+        m = off & 15
+        q = off >> 4
+        lo = _T9Z1LO[q + 1] if m >= 11 and q < 10 else _T9Z1LO[q]
+        if pay[5] != (_T9Z1HI[m] << 4) | lo:
+            return fail("T9Z1 b5")
+        if bytes((pay[6], pay[60], pay[61], pay[62],
+                   pay[63])).hex() != _T9Z1T[m]:
+            return fail("T9Z1 tab")
+        blk = bytes((pay[48], pay[49], pay[56], pay[57], pay[58],
+                     pay[59])).hex()
+        if blk != _T9Z1B[q]:
+            return fail("T9Z1 blk")
+        for b, v in _T9Z1C:
+            if pay[b] != v:
+                return fail("T9Z1 const %d" % b)
+        print("CLOSED T9Z1 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 13633:  # T9A2 storm: dip + 5 singles + A 15-row + B 8-row
+        off = n - 11957
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if pay[4] != (l10 & 0xFF):
+            return fail("T9A2 lencode")
+        if n == 13605:
+            if len(pay) != 64:
+                return fail("T9A2D paylen")
+            if pay.hex() != _T9A2D:
+                return fail("T9A2D lit")
+            print("CLOSED T9A2D N=%d off=%d" % (n, off))
+            return 0
+        if len(pay) != 68:
+            return fail("T9A2 paylen")
+        if n in _T9A20:
+            if pay.hex() != _T9A20[n]:
+                return fail("T9A20 lit %d" % n)
+            print("CLOSED T9A20 N=%d off=%d" % (n, off))
+            return 0
+        if 13608 <= n <= 13622:
+            m = off - 1651
+            if bytes((pay[13], pay[64], pay[65], pay[66],
+                       pay[67])).hex() != _T9A2AT[m]:
+                return fail("T9A2A tab")
+            for b, v in _T9A2AC:
+                if pay[b] != v:
+                    return fail("T9A2A const %d" % b)
+            print("CLOSED T9A2A N=%d off=%d" % (n, off))
+            return 0
+        if 13625 <= n <= 13632:
+            m = off - 1668
+            if bytes((pay[13], pay[14], pay[15], pay[64], pay[65], pay[66],
+                       pay[67])).hex() != _T9A2BT[m]:
+                return fail("T9A2B tab")
+            for b, v in _T9A2BC:
+                if pay[b] != v:
+                    return fail("T9A2B const %d" % b)
+            print("CLOSED T9A2B N=%d off=%d" % (n, off))
+            return 0
+        return fail("T9A2 gap %d" % n)
+    if n <= 13696:  # T9A2Q: 4x16 tab b12,b16-21 + 7B words, k15 edge
+        off = n - 11957
+        if len(pay) != 68:
+            return fail("T9A2Q paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if pay[4] != (l10 & 0xFF):
+            return fail("T9A2Q lencode")
+        m = (off - 1677) & 15
+        q = (off - 1677) >> 4
+        if pay[5] != (0xeb if n >= 13696 else 0xea):
+            return fail("T9A2Q b5")
+        if pay[13] != (0xd6 if m in (1, 4, 11, 15) else 0xd7):
+            return fail("T9A2Q b13")
+        if bytes((pay[12], pay[16], pay[17], pay[18], pay[19], pay[20],
+                   pay[21])).hex() != _T9A2QT[m]:
+            return fail("T9A2Q tab")
+        blk = bytes((pay[0], pay[10], pay[11], pay[64], pay[65], pay[66],
+                     pay[67])).hex()
+        exp = _T9A2QB[q] if m < 15 else (_T9A2QB[q + 1] if q < 3
+                                        else _T9A2QN)
+        if blk != exp:
+            return fail("T9A2Q blk")
+        for b, v in _T9A2QC:
+            if pay[b] != v:
+                return fail("T9A2Q const %d" % b)
+        print("CLOSED T9A2Q N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
