@@ -7,12 +7,24 @@ Usage: craft.py CMD IN OUT ARGS...
   killxat IN OUT IDX...       corrupt 1st XAT record size (items by idx)
   killxatpat IN OUT PAT...    same, items by PAT string
   settyp IN OUT IDX LETTER    set item TYP value byte
+  settyppat IN OUT PAT LETTER set TYP value byte by PAT
   setmod IN OUT PAT OCT       set first MOD u16 of item with PAT (octal)
   setmtm IN OUT PAT EPOCH     set MTM u64 LE of item with PAT
   addxat IN OUT PAT NAME VAL  append XAT record (exact-size; extends blob)
   blanktyp IN OUT N           blank Nth b"TYP" occurrence (0-based)
   blankdat IN OUT PAT         blank DAT key of item with PAT
   zeropat IN OUT PAT          empty PAT (removes bytes, fixes hsize)
+  setmagic IN OUT IDX HEX4    replace item magic (8 hex chars)
+  hsdelta IN OUT IDX D        add signed delta to item hsize
+  setsub IN OUT PAT KEY SUB   flip entry subtype byte in place
+  setbloblen IN OUT PAT KEY N set blob-len field (width-kept)
+  settyprec IN OUT IDX HEX    replace whole TYP record, fix hsize
+  append IN OUT HEX           append raw hex bytes at EOF
+  setbsize IN OUT HEX16       patch outer bsize u64be (16 hex chars)
+  setblk IN OUT BLK HEX32     replace block BLK 16B header (32 hex chars)
+  mbcat IN OUT EXTRA          append EXTRA's blocks to IN (same magic+bsize)
+  sethsize IN OUT IDX U16     set item IDX hsize absolute (inner coords)
+  patch IN OUT OFF HEX        replace bytes at OFF with hex (length-kept)
 """
 import struct
 import sys
@@ -90,13 +102,30 @@ def load(path):
     unc = struct.unpack(">I", d[16:20])[0]
     comp = struct.unpack(">I", d[24:28])[0]
     assert unc == comp, "stored only"
-    assert 28 + comp == len(d), "single block only"
-    return d, bytearray(d[28:28 + comp]), True
+    if 28 + comp == len(d):
+        return d, bytearray(d[28:28 + comp]), True
+    # multiblock all-stored: raw = inner concat + scatter map
+    bs = blocks_of(d)
+    for _, r, p in bs:
+        assert r == p, "stored only"
+    raw = bytearray()
+    amap = []
+    for off, _, pay in bs:
+        amap.append((off + 16, pay))
+        raw += d[off + 16:off + 16 + pay]
+    return d, raw, amap
 
 
 def save(d, raw, stored, path):
     if not stored:
         open(path, "wb").write(bytes(raw))
+        return
+    if isinstance(stored, list):
+        assert sum(p for _, p in stored) == len(raw), "width-kept only"
+        for off, pay in stored:
+            d[off:off + pay] = bytes(raw[:pay])
+            del raw[:pay]
+        open(path, "wb").write(bytes(d))
         return
     d[28:28 + (len(d) - 28)] = bytes(raw)
     struct.pack_into(">I", d, 16, len(raw))
@@ -104,8 +133,53 @@ def save(d, raw, stored, path):
     open(path, "wb").write(bytes(d))
 
 
+def blocks_of(d):
+    assert bytes(d[:3]) == b"pbz" and len(d) >= 12, "outer magic"
+    out, off = [], 12
+    while off < len(d):
+        assert off + 16 <= len(d), "blk hdr"
+        raw, pay = struct.unpack(">QQ", d[off:off + 16])
+        assert off + 16 + pay <= len(d), "blk data"
+        out.append((off, raw, pay))
+        off += 16 + pay
+    assert off == len(d), "chain overrun"
+    return out
+
+
+def outer_cmd(cmd, src, dst, args):
+    d = bytearray(open(src, "rb").read())
+    if cmd == "setbsize":
+        v = bytes.fromhex(args[0])
+        assert len(v) == 8 and len(d) >= 12 and bytes(d[:3]) == b"pbz"
+        d[4:12] = v
+    elif cmd == "setblk":
+        blks = blocks_of(d)
+        off, _, _ = blks[int(args[0])]
+        v = bytes.fromhex(args[1])
+        assert len(v) == 16
+        d[off:off + 16] = v
+    elif cmd == "mbcat":
+        extra = bytearray(open(args[0], "rb").read())
+        assert bytes(extra[:4]) == bytes(d[:4]), "magic match"
+        assert bytes(extra[4:12]) == bytes(d[4:12]), "bsize match"
+        blocks_of(d)
+        blocks_of(extra)
+        d += extra[12:]
+    elif cmd == "patch":
+        off = int(args[0])
+        v = bytes.fromhex(args[1])
+        assert off + len(v) <= len(d), "patch range"
+        d[off:off + len(v)] = v
+    else:
+        raise SystemExit("unknown outer cmd")
+    open(dst, "wb").write(bytes(d))
+
+
 def main():
     cmd, src, dst, args = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4:]
+    if cmd in ("setbsize", "setblk", "mbcat", "patch"):
+        outer_cmd(cmd, src, dst, args)
+        return
     d, raw, stored = load(src)
     items = items_of(raw)
 
@@ -130,8 +204,11 @@ def main():
             assert r, "no XAT"
             bp, _, _, _ = r
             raw[bp:bp + 4] = struct.pack("<I", 0xFFFFFF)
-    elif cmd == "settyp":
-        i, let = int(args[0]), args[1].encode()
+    elif cmd in ("settyp", "settyppat"):
+        if cmd == "settyp":
+            i, let = int(args[0]), args[1].encode()
+        else:
+            i, let = find_pat(args[0].encode()), args[1].encode()
         pos, hsz, ents = items[i]
         for k, st, voff, w in ents:
             if k == b"TYP" and st in UW:
@@ -198,6 +275,86 @@ def main():
                 break
         else:
             raise SystemExit("no PAT")
+    elif cmd == "setmagic":
+        pos, hsz, ents = items[int(args[0])]
+        raw[pos:pos + 4] = bytes.fromhex(args[1])
+    elif cmd == "hsdelta":
+        pos, hsz, ents = items[int(args[0])]
+        raw[pos + 4:pos + 6] = struct.pack("<H", hsz + int(args[1]))
+    elif cmd == "sethsize":
+        pos, hsz, ents = items[int(args[0])]
+        raw[pos + 4:pos + 6] = struct.pack("<H", int(args[1]))
+    elif cmd == "setsub":
+        i = find_pat(args[0].encode())
+        pos, hsz, ents = items[i]
+        p, end = pos + 6, pos + hsz
+        while p + 4 <= end:
+            if bytes(raw[p:p + 3]) == args[1].encode():
+                raw[p + 3] = args[2].encode()[0]
+                break
+            p += 4
+            st = raw[p - 1]
+            if st in UW:
+                p += UW[st]
+            elif st in BW:
+                p += BW[st]
+            elif st in HL:
+                p += HL[st]
+            elif st in TL:
+                p += TL[st]
+            elif st == 0x50:
+                p += 2 + struct.unpack("<H", raw[p:p + 2])[0]
+        else:
+            raise SystemExit("no key")
+    elif cmd == "setbloblen":
+        i = find_pat(args[0].encode())
+        pos, hsz, ents = items[i]
+        for k, st, voff, w in ents:
+            if k == args[1].encode() and st in BW:
+                raw[pos + voff:pos + voff + w] = int(args[2]).to_bytes(
+                    w, "little")
+                break
+        else:
+            raise SystemExit("no blob key")
+    elif cmd == "settyprec":
+        i = int(args[0])
+        pos, hsz, ents = items[i]
+        rec = bytes.fromhex(args[1])
+        p, end = pos + 6, pos + hsz
+        while p + 4 <= end:
+            if bytes(raw[p:p + 3]) == b"TYP":
+                q = p + 4
+                st = raw[p + 3]
+                if st in UW:
+                    q += UW[st]
+                elif st in BW:
+                    q += BW[st]
+                elif st in HL:
+                    q += HL[st]
+                elif st in TL:
+                    q += TL[st]
+                elif st == 0x50:
+                    q += 2 + struct.unpack("<H", raw[q:q + 2])[0]
+                raw[p:q] = rec
+                struct.pack_into("<H", raw, pos + 4,
+                                 hsz + (len(rec) - (q - p)))
+                break
+            p += 4
+            st = raw[p - 1]
+            if st in UW:
+                p += UW[st]
+            elif st in BW:
+                p += BW[st]
+            elif st in HL:
+                p += HL[st]
+            elif st in TL:
+                p += TL[st]
+            elif st == 0x50:
+                p += 2 + struct.unpack("<H", raw[p:p + 2])[0]
+        else:
+            raise SystemExit("no TYP")
+    elif cmd == "append":
+        raw += bytes.fromhex(args[0])
     else:
         raise SystemExit("unknown cmd")
     save(d, raw, stored, dst)

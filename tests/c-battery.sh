@@ -200,7 +200,7 @@ N=0; BAD=0
 while [ "$N" -le "$SZ" ]; do
   if [ "$N" -eq 0 ]; then : > "$WORK/sw.aar"; else head -c "$N" "$V/aar/hello-lzfse.aar" > "$WORK/sw.aar"; fi
   if "$AAD" "$WORK/sw.aar" "$WORK/sw-o" 2>/dev/null; then RC=0; else RC=$?; fi
-  if [ "$RC" -eq 0 ] && [ "$N" -ne "$SZ" ]; then BAD=$((BAD+1)); fi
+  if [ "$RC" -eq 0 ] && [ "$N" -ne "$SZ" ] && [ "$N" -ne 0 ] && [ "$N" -ne 12 ]; then BAD=$((BAD+1)); fi
   if [ "$RC" -gt 1 ]; then BAD=$((BAD+1)); fi
   N=$((N+37))
 done
@@ -358,6 +358,802 @@ CRC=0; "$AAD" "$WORK/mx.aar" "$WORK/c-mr" 2>/dev/null || CRC=$?
 diff -r "$WORK/o-mr" "$WORK/c-mr" >/dev/null 2>&1 && pass "mr-tree" || fail "mr-tree"
 [ "$(stat -f %p "$WORK/o-mr/hello/greet.txt")" = "$(stat -f %p "$WORK/c-mr/hello/greet.txt")" ] && [ "$(stat -f %p "$WORK/c-mr/hello/greet.txt")" = "100644" ] && pass "mr-mode" || fail "mr-mode"
 
+echo "== cell parse-badmagic (prefix + wrapper) =="
+python3 "$HERE/craft.py" setmagic "$V/aar/hello-raw.aar" "$WORK/f1.aar" 1 5A5A5A5A || die "craft-f1"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/f1.aar" "$WORK/o-pm" >/dev/null 2>"$WORK/pm-o.err" || ORC=$?
+CRC=0; "$AAD" "$WORK/f1.aar" "$WORK/c-pm" 2>"$WORK/pm.err" || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "pm-exit" || fail "pm-exit"
+diff -r "$WORK/o-pm" "$WORK/c-pm" >/dev/null 2>&1 && pass "pm-tree" || fail "pm-tree"
+diff "$WORK/pm-o.err" "$WORK/pm.err" >/dev/null 2>&1 && pass "pm-tok" || fail "pm-tok"
+
+echo "== cell parse-hdrend (trailing byte: 2800) =="
+python3 "$HERE/craft.py" hsdelta "$V/aar/hello-raw.aar" "$WORK/f2.aar" 1 1 || die "craft-f2"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/f2.aar" "$WORK/o-ph" >/dev/null 2>"$WORK/ph-o.err" || ORC=$?
+CRC=0; "$AAD" "$WORK/f2.aar" "$WORK/c-ph" 2>"$WORK/ph.err" || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "ph-exit" || fail "ph-exit"
+diff -r "$WORK/o-ph" "$WORK/c-ph" >/dev/null 2>&1 && pass "ph-tree" || fail "ph-tree"
+diff "$WORK/ph-o.err" "$WORK/ph.err" >/dev/null 2>&1 && pass "ph-tok" || fail "ph-tok"
+
+echo "== cell parse-valover (cut value: a400) =="
+python3 "$HERE/craft.py" hsdelta "$V/aar/hello-raw.aar" "$WORK/hs1.aar" 1 -1 || die "craft-hs1"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/hs1.aar" "$WORK/o-pv" >/dev/null 2>"$WORK/pv-o.err" || ORC=$?
+CRC=0; "$AAD" "$WORK/hs1.aar" "$WORK/c-pv" 2>"$WORK/pv.err" || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "pv-exit" || fail "pv-exit"
+diff -r "$WORK/o-pv" "$WORK/c-pv" >/dev/null 2>&1 && pass "pv-tree" || fail "pv-tree"
+diff "$WORK/pv-o.err" "$WORK/pv.err" >/dev/null 2>&1 && pass "pv-tok" || fail "pv-tok"
+
+echo "== cell parse-badsubtype (DAT/K: 75) =="
+python3 "$HERE/craft.py" setsub "$V/aar/hello-raw.aar" "$WORK/f4.aar" hello/greet.txt DAT K || die "craft-f4"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/f4.aar" "$WORK/o-pb" >/dev/null 2>"$WORK/pb-o.err" || ORC=$?
+CRC=0; "$AAD" "$WORK/f4.aar" "$WORK/c-pb" 2>"$WORK/pb.err" || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "pb-exit" || fail "pb-exit"
+diff -r "$WORK/o-pb" "$WORK/c-pb" >/dev/null 2>&1 && pass "pb-tree" || fail "pb-tree"
+diff "$WORK/pb-o.err" "$WORK/pb.err" >/dev/null 2>&1 && pass "pb-tok" || fail "pb-tok"
+
+echo "== cell parse-blobover (DAT huge: counted) =="
+python3 "$HERE/craft.py" setbloblen "$V/aar/hello-raw.aar" "$WORK/f3.aar" hello/greet.txt DAT 32767 || die "craft-f3"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/f3.aar" "$WORK/o-po" >/dev/null 2>"$WORK/po-o.err" || ORC=$?
+CRC=0; "$AAD" "$WORK/f3.aar" "$WORK/c-po" 2>"$WORK/po.err" || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "po-exit" || fail "po-exit"
+diff -r "$WORK/o-po" "$WORK/c-po" >/dev/null 2>&1 && pass "po-tree" || fail "po-tree"
+
+echo "== cell parse-blobover-long (clean A-028 create: n6c-class) =="
+mkdir -p "$WORK/po6src"; dd if=/dev/urandom of="$WORK/po6src/big1" bs=1024 count=500 2>/dev/null; dd if=/dev/urandom of="$WORK/po6src/big2" bs=1024 count=400 2>/dev/null
+sh "$ADAPTER" aar-encode --alg lzfse --block 128k --threads 1 "$WORK/po6src" "$WORK/po6c-base.aar" >/dev/null 2>&1 || die "po6 encode"
+python3 "$HERE/craft.py" setbloblen "$WORK/po6c-base.aar" "$WORK/po6c.aar" big2 DAT 2000000 || die "craft-po6c"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/po6c.aar" "$WORK/o-po6" >/dev/null 2>"$WORK/po6-o.err" || ORC=$?
+CRC=0; "$AAD" "$WORK/po6c.aar" "$WORK/c-po6" 2>"$WORK/po6.err" || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "po6-exit" || fail "po6-exit"
+diff -r "$WORK/o-po6" "$WORK/c-po6" >/dev/null 2>&1 && pass "po6-tree" || fail "po6-tree"
+diff "$WORK/po6-o.err" "$WORK/po6.err" >/dev/null 2>&1 && pass "po6-tok" || fail "po6-tok"
+[ "$(stat -f %z "$WORK/o-po6/big2")" = 0 ] && [ "$(stat -f %z "$WORK/c-po6/big2")" = 0 ] && pass "po6-big2" || fail "po6-big2"
+[ "$(stat -f %p "$WORK/o-po6/big2")" = "$(stat -f %p "$WORK/c-po6/big2")" ] && pass "po6-mode" || fail "po6-mode"
+diff "$WORK/po-o.err" "$WORK/po.err" >/dev/null 2>&1 && pass "po-tok" || fail "po-tok"
+
+echo "== cell parse-tail (trailing garbage: full prefix) =="
+python3 "$HERE/craft.py" append "$V/aar/hello-raw.aar" "$WORK/tail1.aar" 5A || die "craft-tail"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/tail1.aar" "$WORK/o-pt" >/dev/null 2>"$WORK/pt-o.err" || ORC=$?
+CRC=0; "$AAD" "$WORK/tail1.aar" "$WORK/c-pt" 2>"$WORK/pt.err" || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "pt-exit" || fail "pt-exit"
+diff -r "$WORK/o-pt" "$WORK/c-pt" >/dev/null 2>&1 && pass "pt-tree" || fail "pt-tree"
+diff "$WORK/pt-o.err" "$WORK/pt.err" >/dev/null 2>&1 && pass "pt-tok" || fail "pt-tok"
+
+echo "== cell parse-hsbig (hsize overrun: a400) =="
+python3 "$HERE/craft.py" hsdelta "$V/aar/hello-raw.aar" "$WORK/hsbig.aar" 2 1000 || die "craft-hsbig"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/hsbig.aar" "$WORK/o-pg" >/dev/null 2>"$WORK/pg-o.err" || ORC=$?
+CRC=0; "$AAD" "$WORK/hsbig.aar" "$WORK/c-pg" 2>"$WORK/pg.err" || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "pg-exit" || fail "pg-exit"
+diff -r "$WORK/o-pg" "$WORK/c-pg" >/dev/null 2>&1 && pass "pg-tree" || fail "pg-tree"
+diff "$WORK/pg-o.err" "$WORK/pg.err" >/dev/null 2>&1 && pass "pg-tok" || fail "pg-tok"
+
+echo "== cell typ-uint248 (wider uint TYP accepted) =="
+python3 "$HERE/craft.py" settyprec "$V/aar/hello-raw.aar" "$WORK/t2.aar" 1 545950324600 || die "craft-t2"
+python3 "$HERE/craft.py" settyprec "$V/aar/hello-raw.aar" "$WORK/t4.aar" 1 5459503446000000 || die "craft-t4"
+python3 "$HERE/craft.py" settyprec "$V/aar/hello-raw.aar" "$WORK/t8.aar" 1 545950384600000000000000 || die "craft-t8"
+TUOK=1
+for v in t2 t4 t8; do
+  ORC=0; sh "$ADAPTER" aar-decode "$WORK/$v.aar" "$WORK/o-$v" >/dev/null 2>&1 || ORC=$?
+  CRC=0; "$AAD" "$WORK/$v.aar" "$WORK/c-$v" 2>/dev/null || CRC=$?
+  [ "$ORC" -eq 0 ] && [ "$CRC" -eq 0 ] || TUOK=0
+  diff -r "$WORK/o-$v" "$WORK/c-$v" >/dev/null 2>&1 || TUOK=0
+done
+[ "$TUOK" -eq 1 ] && pass "tu-exit" || fail "tu-exit"
+[ "$TUOK" -eq 1 ] && pass "tu-tree" || fail "tu-tree"
+
+echo "== cell typ-enum (non-uint TYP: type-N abort) =="
+python3 "$HERE/craft.py" settyprec "$V/aar/hello-raw.aar" "$WORK/tP.aar" 1 54595050010046 || die "craft-tP"
+python3 "$HERE/craft.py" settyprec "$V/aar/hello-raw.aar" "$WORK/tS.aar" 1 545950534600000000000000 || die "craft-tS"
+python3 "$HERE/craft.py" settyprec "$V/aar/hello-raw.aar" "$WORK/tT.aar" 1 54595054460000000000000000000000 || die "craft-tT"
+python3 "$HERE/craft.py" settyprec "$V/aar/hello-raw.aar" "$WORK/tE.aar" 1 5459502a || die "craft-tE"
+python3 "$HERE/craft.py" settyprec "$V/aar/hello-raw.aar" "$WORK/tH.aar" 1 545950484600000000000000000000000000000000000000000000000000000000000000 || die "craft-tH"
+GHEX=54595047$(python3 -c 'print("00"*20)')
+IHEX=54595049$(python3 -c 'print("00"*48)')
+JHEX=5459504a$(python3 -c 'print("00"*64)')
+python3 "$HERE/craft.py" settyprec "$V/aar/hello-raw.aar" "$WORK/tG.aar" 1 "$GHEX" || die "craft-tG"
+python3 "$HERE/craft.py" settyprec "$V/aar/hello-raw.aar" "$WORK/tI.aar" 1 "$IHEX" || die "craft-tI"
+python3 "$HERE/craft.py" settyprec "$V/aar/hello-raw.aar" "$WORK/tJ.aar" 1 "$JHEX" || die "craft-tJ"
+TEOK=1
+for v in tP tS tT tE tH tG tI tJ; do
+  ORC=0; sh "$ADAPTER" aar-decode "$WORK/$v.aar" "$WORK/o-$v" >/dev/null 2>"$WORK/$v-o.err" || ORC=$?
+  CRC=0; "$AAD" "$WORK/$v.aar" "$WORK/c-$v" 2>"$WORK/$v.err" || CRC=$?
+  [ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] || TEOK=0
+  diff -r "$WORK/o-$v" "$WORK/c-$v" >/dev/null 2>&1 || TEOK=0
+  diff "$WORK/$v-o.err" "$WORK/$v.err" >/dev/null 2>&1 || TEOK=0
+done
+[ "$TEOK" -eq 1 ] && pass "te-exit" || fail "te-exit"
+[ "$TEOK" -eq 1 ] && pass "te-tree" || fail "te-tree"
+[ "$TEOK" -eq 1 ] && pass "te-tok" || fail "te-tok"
+
+echo "== cell eisdir-order (S < EISDIR < nodat) =="
+python3 "$HERE/craft.py" zeropat "$V/aar/hello-raw.aar" "$WORK/es1a.aar" hello/greet.txt || die "craft-es1"
+python3 "$HERE/craft.py" settyp "$WORK/es1a.aar" "$WORK/es1.aar" 2 S || die "craft-es1b"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/es1.aar" "$WORK/o-eo" >/dev/null 2>&1 || ORC=$?
+CRC=0; "$AAD" "$WORK/es1.aar" "$WORK/c-eo" 2>"$WORK/eo.err" || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "eo-exit" || fail "eo-exit"
+diff -r "$WORK/o-eo" "$WORK/c-eo" >/dev/null 2>&1 && pass "eo-tree" || fail "eo-tree"
+ES=$(grep -n "not implemented yet" "$WORK/eo.err" | head -n 1 | cut -d: -f1); EE=$(grep -n "Is a directory" "$WORK/eo.err" | head -n 1 | cut -d: -f1)
+[ "$ES" -lt "$EE" ] && grep -q "2 entries failed to extract" "$WORK/eo.err" && pass "eo-shape" || fail "eo-shape"
+
+echo "== cell wrapper-eisdir (wrapper first, EISDIR bare) =="
+python3 "$HERE/craft.py" zeropat "$V/aar/hello-raw.aar" "$WORK/ef1a.aar" hello/greet.txt || die "craft-ef1"
+python3 "$HERE/craft.py" setmagic "$WORK/ef1a.aar" "$WORK/ef1.aar" 2 5A5A5A5A || die "craft-ef1b"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/ef1.aar" "$WORK/o-ew" >/dev/null 2>&1 || ORC=$?
+CRC=0; "$AAD" "$WORK/ef1.aar" "$WORK/c-ew" 2>"$WORK/ew.err" || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "ew-exit" || fail "ew-exit"
+diff -r "$WORK/o-ew" "$WORK/c-ew" >/dev/null 2>&1 && pass "ew-tree" || fail "ew-tree"
+EW=$(grep -n "invalid header magic" "$WORK/ew.err" | head -n 1 | cut -d: -f1); EE=$(grep -n "Is a directory" "$WORK/ew.err" | head -n 1 | cut -d: -f1)
+[ "$EW" -lt "$EE" ] && grep -q "1 entries failed to extract" "$WORK/ew.err" && pass "ew-shape" || fail "ew-shape"
+
+echo "== cell eisdir-nodat (EISDIR < nodat) =="
+python3 "$HERE/craft.py" blankdat "$V/aar/hello-raw.aar" "$WORK/ne1.aar" hello/greet.txt || die "craft-ne"
+python3 "$HERE/craft.py" zeropat "$WORK/ne1.aar" "$WORK/ne.aar" hello/repeat.txt || die "craft-ne2"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/ne.aar" "$WORK/o-ne" >/dev/null 2>&1 || ORC=$?
+CRC=0; "$AAD" "$WORK/ne.aar" "$WORK/c-ne" 2>"$WORK/ne.err" || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "ne-exit" || fail "ne-exit"
+diff -r "$WORK/o-ne" "$WORK/c-ne" >/dev/null 2>&1 && pass "ne-tree" || fail "ne-tree"
+EE=$(grep -n "Is a directory" "$WORK/ne.err" | head -n 1 | cut -d: -f1); NF=$(grep -n "final state" "$WORK/ne.err" | head -n 1 | cut -d: -f1)
+[ "$EE" -lt "$NF" ] && grep -q "1 entries failed to extract" "$WORK/ne.err" && pass "ne-shape" || fail "ne-shape"
+
+echo "== cell notyp-nodat (dd: no-TYP + bare no-DAT, stderr IDENT) =="
+python3 "$HERE/craft.py" blankdat "$V/aar/hello-raw.aar" "$WORK/dd1.aar" hello/greet.txt || die "craft-dd"
+python3 "$HERE/craft.py" blanktyp "$WORK/dd1.aar" "$WORK/dd.aar" 2 || die "craft-dd2"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/dd.aar" "$WORK/o-dd" >/dev/null 2>"$WORK/dd-o.err" || ORC=$?
+CRC=0; "$AAD" "$WORK/dd.aar" "$WORK/c-dd" 2>"$WORK/dd.err" || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "dd-exit" || fail "dd-exit"
+diff -r "$WORK/o-dd" "$WORK/c-dd" >/dev/null 2>&1 && pass "dd-tree" || fail "dd-tree"
+diff "$WORK/dd-o.err" "$WORK/dd.err" >/dev/null 2>&1 && pass "dd-shape" || fail "dd-shape"
+
+echo "== cell tri-class (S + nodat + dirXAT) =="
+mkdir -p "$WORK/trisrc/a/b"; printf 'x\n' > "$WORK/trisrc/a/b/f.txt"; printf 'y\n' > "$WORK/trisrc/a/g.txt"
+sh "$ADAPTER" aar-encode --alg raw --threads 1 "$WORK/trisrc" "$WORK/tri0.aar" >/dev/null 2>&1 || die "tri encode"
+python3 "$HERE/craft.py" blankdat "$WORK/tri0.aar" "$WORK/tri1.aar" a/b/f.txt || die "craft-tri"
+python3 "$HERE/craft.py" settyppat "$WORK/tri1.aar" "$WORK/tri2.aar" a/g.txt S || die "craft-tri2"
+python3 "$HERE/craft.py" killxatpat "$WORK/tri2.aar" "$WORK/tri.aar" a/b || die "craft-tri3"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/tri.aar" "$WORK/o-tr" >/dev/null 2>&1 || ORC=$?
+CRC=0; "$AAD" "$WORK/tri.aar" "$WORK/c-tr" 2>"$WORK/tr.err" || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "tr-exit" || fail "tr-exit"
+diff -r "$WORK/o-tr" "$WORK/c-tr" >/dev/null 2>&1 && pass "tr-tree" || fail "tr-tree"
+grep -q "not implemented yet" "$WORK/tr.err" && grep -q "final state" "$WORK/tr.err" && grep -q "process dirs" "$WORK/tr.err" && grep -q "1 entries failed to extract" "$WORK/tr.err" && pass "tr-shape" || fail "tr-shape"
+
+echo "== cell nodat-hlink (nodat + H-fail, no count) =="
+python3 "$HERE/craft.py" blankdat "$V/aar/hlink-missing.aar" "$WORK/nh2.aar" hello/repeat.txt || die "craft-nh2"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/nh2.aar" "$WORK/o-nh" >/dev/null 2>&1 || ORC=$?
+CRC=0; "$AAD" "$WORK/nh2.aar" "$WORK/c-nh" 2>"$WORK/nh.err" || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "nh-exit" || fail "nh-exit"
+diff -r "$WORK/o-nh" "$WORK/c-nh" >/dev/null 2>&1 && pass "nh-tree" || fail "nh-tree"
+grep -q "final state" "$WORK/nh.err" && grep -q "process hlinks" "$WORK/nh.err" && ! grep -q "entries failed" "$WORK/nh.err" && pass "nh-shape" || fail "nh-shape"
+
 echo "== $WORK =="
+echo "== cell outer-bsize (u64 bsize rule, stderr IDENT) =="
+python3 "$HERE/craft.py" setbsize "$V/aar/empty-lzfse.aar" "$WORK/bs0.aar" 0000000000000000 || die "craft-bs0"
+python3 "$HERE/craft.py" setbsize "$V/aar/empty-lzfse.aar" "$WORK/bsm.aar" 0000000008000001 || die "craft-bsm"
+python3 "$HERE/craft.py" setbsize "$V/aar/empty-lzfse.aar" "$WORK/bshi.aar" ff00000000400000 || die "craft-bshi"
+for T in bs0 bsm bshi; do
+  ORC=0; sh "$ADAPTER" aar-decode "$WORK/$T.aar" "$WORK/o-$T" >/dev/null 2>"$WORK/$T-o.err" || ORC=$?
+  mkdir -p "$WORK/c-$T"
+  CRC=0; "$AAD" "$WORK/$T.aar" "$WORK/c-$T" 2>"$WORK/$T.err" || CRC=$?
+  [ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "$T-exit" || fail "$T-exit"
+  diff -r "$WORK/o-$T" "$WORK/c-$T" >/dev/null 2>&1 && pass "$T-tree" || fail "$T-tree"
+  diff "$WORK/$T-o.err" "$WORK/$T.err" >/dev/null 2>&1 && pass "$T-shape" || fail "$T-shape"
+done
+
+echo "== cell outer-blkhdr (unc>bsize cascade, stderr IDENT) =="
+python3 "$HERE/craft.py" setbsize "$V/aar/hello-lzfse.aar" "$WORK/oh.aar" 00000000000003e8 || die "craft-oh"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/oh.aar" "$WORK/o-oh" >/dev/null 2>"$WORK/oh-o.err" || ORC=$?
+mkdir -p "$WORK/c-oh"
+CRC=0; "$AAD" "$WORK/oh.aar" "$WORK/c-oh" 2>"$WORK/oh.err" || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "oh-exit" || fail "oh-exit"
+diff -r "$WORK/o-oh" "$WORK/c-oh" >/dev/null 2>&1 && pass "oh-tree" || fail "oh-tree"
+diff "$WORK/oh-o.err" "$WORK/oh.err" >/dev/null 2>&1 && pass "oh-shape" || fail "oh-shape"
+
+echo "== cell outer-raw64 (u64 raw naming, stderr IDENT) =="
+python3 "$HERE/craft.py" setblk "$V/aar/empty-lzfse.aar" "$WORK/r64.aar" 0 01000000000000710000000000000071 || die "craft-r64"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/r64.aar" "$WORK/o-r64" >/dev/null 2>"$WORK/r64-o.err" || ORC=$?
+mkdir -p "$WORK/c-r64"
+CRC=0; "$AAD" "$WORK/r64.aar" "$WORK/c-r64" 2>"$WORK/r64.err" || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "r64-exit" || fail "r64-exit"
+diff -r "$WORK/o-r64" "$WORK/c-r64" >/dev/null 2>&1 && pass "r64-tree" || fail "r64-tree"
+diff "$WORK/r64-o.err" "$WORK/r64.err" >/dev/null 2>&1 && pass "r64-shape" || fail "r64-shape"
+
+echo "== cell outer-multiblock (2-block chains) =="
+python3 "$HERE/craft.py" mbcat "$V/aar/hello-lzfse.aar" "$WORK/mb12.aar" "$V/aar/empty-lzfse.aar" || die "craft-mb12"
+python3 "$HERE/craft.py" mbcat "$V/aar/empty-lzfse.aar" "$WORK/mb21.aar" "$V/aar/hello-lzfse.aar" || die "craft-mb21"
+for T in mb12 mb21; do
+  ORC=0; sh "$ADAPTER" aar-decode "$WORK/$T.aar" "$WORK/o-$T" >/dev/null 2>&1 || ORC=$?
+  CRC=0; "$AAD" "$WORK/$T.aar" "$WORK/c-$T" 2>/dev/null || CRC=$?
+  [ "$ORC" -eq 0 ] && [ "$CRC" -eq 0 ] && pass "$T-exit" || fail "$T-exit"
+  diff -r "$WORK/o-$T" "$WORK/c-$T" >/dev/null 2>&1 && pass "$T-tree" || fail "$T-tree"
+done
+
+echo "== cell mode-suid (chown-before-chmod keeps setgid) =="
+python3 "$HERE/craft.py" setmod "$V/aar/hello-raw.aar" "$WORK/suid.aar" hello/greet.txt 3244 || die "craft-suid"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/suid.aar" "$WORK/o-suid" >/dev/null 2>&1 || ORC=$?
+CRC=0; "$AAD" "$WORK/suid.aar" "$WORK/c-suid" 2>/dev/null || CRC=$?
+[ "$ORC" -eq 0 ] && [ "$CRC" -eq 0 ] && pass "suid-exit" || fail "suid-exit"
+[ "$(stat -f %p "$WORK/o-suid/hello/greet.txt")" = "$(stat -f %p "$WORK/c-suid/hello/greet.txt")" ] && [ "$(stat -f %p "$WORK/c-suid/hello/greet.txt")" = "103244" ] && pass "suid-mode" || fail "suid-mode"
+chmod u+r "$WORK/o-suid/hello/greet.txt" "$WORK/c-suid/hello/greet.txt"
+diff -r "$WORK/o-suid" "$WORK/c-suid" >/dev/null 2>&1 && pass "suid-tree" || fail "suid-tree"
+
+echo "== cell hsize-floor (u16<6: f000 + echo, stderr IDENT) =="
+for NV in 0 2 5; do
+  python3 "$HERE/craft.py" sethsize "$V/aar/hello-raw.aar" "$WORK/hf$NV.aar" 0 "$NV" || die "craft-hf$NV"
+  ORC=0; sh "$ADAPTER" aar-decode "$WORK/hf$NV.aar" "$WORK/o-hf$NV" >/dev/null 2>"$WORK/hf$NV-o.err" || ORC=$?
+  mkdir -p "$WORK/c-hf$NV"
+  CRC=0; "$AAD" "$WORK/hf$NV.aar" "$WORK/c-hf$NV" 2>"$WORK/hf$NV.err" || CRC=$?
+  [ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "hf$NV-exit" || fail "hf$NV-exit"
+  diff -r "$WORK/o-hf$NV" "$WORK/c-hf$NV" >/dev/null 2>&1 && pass "hf$NV-tree" || fail "hf$NV-tree"
+  diff "$WORK/hf$NV-o.err" "$WORK/hf$NV.err" >/dev/null 2>&1 && pass "hf$NV-shape" || fail "hf$NV-shape"
+done
+
+echo "== cell hsize-end (u16 end>n: bd011800, stderr IDENT) =="
+python3 "$HERE/craft.py" sethsize "$V/aar/hello-raw.aar" "$WORK/he1.aar" 0 2446 || die "craft-he1"
+python3 "$HERE/craft.py" sethsize "$V/aar/hello-raw.aar" "$WORK/he2.aar" 0 65535 || die "craft-he2"
+for T in he1 he2; do
+  ORC=0; sh "$ADAPTER" aar-decode "$WORK/$T.aar" "$WORK/o-$T" >/dev/null 2>"$WORK/$T-o.err" || ORC=$?
+  mkdir -p "$WORK/c-$T"
+  CRC=0; "$AAD" "$WORK/$T.aar" "$WORK/c-$T" 2>"$WORK/$T.err" || CRC=$?
+  [ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "$T-exit" || fail "$T-exit"
+  diff -r "$WORK/o-$T" "$WORK/c-$T" >/dev/null 2>&1 && pass "$T-tree" || fail "$T-tree"
+  diff "$WORK/$T-o.err" "$WORK/$T.err" >/dev/null 2>&1 && pass "$T-shape" || fail "$T-shape"
+done
+
+echo "== cell outer-ladder (truncation table, stderr IDENT) =="
+: > "$WORK/L0.aar"
+for L in 1 5 6 11 12 13 27 28 29; do head -c "$L" "$V/aar/hello-lzfse.aar" > "$WORK/L$L.aar" || die "craft-L$L"; done
+printf 'XXXXXXXXXXXX' > "$WORK/LX.aar"
+python3 "$HERE/craft.py" setbsize "$V/aar/hello-lzfse.aar" "$WORK/LBs0f.aar" 0000000000000000 || die "craft-LBs0"
+head -c 12 "$WORK/LBs0f.aar" > "$WORK/LBs0.aar" || die "craft-LBs0t"
+python3 "$HERE/craft.py" patch "$V/aar/hello-lzfse.aar" "$WORK/PQ.aar" 3 51 || die "craft-PQ"
+python3 "$HERE/craft.py" patch "$V/aar/empty-lzfse.aar" "$WORK/Q2.aar" 28 5A5A5A5A || die "craft-Q2"
+python3 "$HERE/craft.py" setblk "$V/aar/empty-lzfse.aar" "$WORK/Q3f.aar" 0 00000000000000030000000000000003 || die "craft-Q3"
+head -c 31 "$WORK/Q3f.aar" > "$WORK/Q3.aar" || die "craft-Q3t"
+python3 "$HERE/craft.py" setblk "$V/aar/empty-lzfse.aar" "$WORK/Q4f.aar" 0 00000000000000000000000000000000 || die "craft-Q4"
+head -c 28 "$WORK/Q4f.aar" > "$WORK/Q4.aar" || die "craft-Q4t"
+for T in L0 L1 L5 L6 L11 L12 L13 L27 L28 L29 LX LBs0 PQ Q2 Q3 Q4; do
+  ORC=0; sh "$ADAPTER" aar-decode "$WORK/$T.aar" "$WORK/o-$T" >/dev/null 2>"$WORK/$T-o.err" || ORC=$?
+  mkdir -p "$WORK/c-$T"
+  CRC=0; "$AAD" "$WORK/$T.aar" "$WORK/c-$T" 2>"$WORK/$T.err" || CRC=$?
+  [ "$ORC" -eq "$CRC" ] && pass "$T-exit" || fail "$T-exit"
+  diff -r "$WORK/o-$T" "$WORK/c-$T" >/dev/null 2>&1 && pass "$T-tree" || fail "$T-tree"
+  diff "$WORK/$T-o.err" "$WORK/$T.err" >/dev/null 2>&1 && pass "$T-shape" || fail "$T-shape"
+done
+
+echo "== cell typ-multibyte (full-uint dispatch, oracle-compared) =="
+python3 "$HERE/craft.py" settyprec "$V/aar/hello-raw.aar" "$WORK/mFA.aar" 1 545950324641 || die "craft-mFA"
+python3 "$HERE/craft.py" settyprec "$V/aar/hello-raw.aar" "$WORK/m44.aar" 1 545950324400 || die "craft-m44"
+python3 "$HERE/craft.py" settyprec "$V/aar/hello-raw.aar" "$WORK/m4F.aar" 1 5459503446000000 || die "craft-m4F"
+python3 "$HERE/craft.py" settyprec "$V/aar/hello-raw.aar" "$WORK/m1f.aar" 1 5459503166 || die "craft-m1f"
+for T in mFA m44 m4F m1f; do
+  ORC=0; sh "$ADAPTER" aar-decode "$WORK/$T.aar" "$WORK/o-$T" >/dev/null 2>&1 || ORC=$?
+  CRC=0; "$AAD" "$WORK/$T.aar" "$WORK/c-$T" 2>/dev/null || CRC=$?
+  [ "$ORC" -eq 0 ] && [ "$CRC" -eq 0 ] && pass "$T-exit" || fail "$T-exit"
+  diff -r "$WORK/o-$T" "$WORK/c-$T" >/dev/null 2>&1 && pass "$T-tree" || fail "$T-tree"
+done
+[ ! -e "$WORK/c-mFA/hello/greet.txt" ] && pass "mFA-skip" || fail "mFA-skip"
+[ -d "$WORK/c-m44/hello/greet.txt" ] && [ -d "$WORK/o-m44/hello/greet.txt" ] && pass "m44-dir" || fail "m44-dir"
+[ -f "$WORK/c-m4F/hello/greet.txt" ] && [ -f "$WORK/o-m4F/hello/greet.txt" ] && pass "m4F-file" || fail "m4F-file"
+[ ! -e "$WORK/c-m1f/hello/greet.txt" ] && pass "m1f-skip" || fail "m1f-skip"
+
+echo "== cell midchain-blob (whole>=256K: (blob) + partial, normalized) =="
+mkdir -p "$WORK/mcsrc"; dd if=/dev/urandom of="$WORK/mcsrc/big1" bs=1024 count=400 2>/dev/null; dd if=/dev/urandom of="$WORK/mcsrc/big2" bs=1024 count=300 2>/dev/null
+sh "$ADAPTER" aar-encode --alg lzfse --block 128k --threads 1 "$WORK/mcsrc" "$WORK/mc.aar" >/dev/null 2>&1 || die "mc encode"
+MCOFF1=$(python3 -c "import struct,sys; d=open('$WORK/mc.aar','rb').read(); o=12; bs=[];
+while o < len(d):
+ r,p=struct.unpack('>QQ',d[o:o+16]); bs.append((o,r,p)); o+=16+p
+assert len(bs)>=5; print(bs[1][0]+16+bs[1][2]//2)") || die "mc walk1"
+MCOFF2=$(python3 -c "import struct,sys; d=open('$WORK/mc.aar','rb').read(); o=12; bs=[];
+while o < len(d):
+ r,p=struct.unpack('>QQ',d[o:o+16]); bs.append((o,r,p)); o+=16+p
+print(bs[2][0]+16+bs[2][2]//2)") || die "mc walk2"
+MCOFF4=$(python3 -c "import struct,sys; d=open('$WORK/mc.aar','rb').read(); o=12; bs=[];
+while o < len(d):
+ r,p=struct.unpack('>QQ',d[o:o+16]); bs.append((o,r,p)); o+=16+p
+print(bs[4][0]+16+bs[4][2]//2)") || die "mc walk4"
+MCBV=$(python3 -c "import struct; d=open('$WORK/mc.aar','rb').read(); o=12; bs=[];
+while o < len(d):
+ r,p=struct.unpack('>QQ',d[o:o+16]); bs.append((o,r,p)); o+=16+p
+print((struct.pack('>Q',0x500000)+d[bs[2][0]+8:bs[2][0]+16]).hex())") || die "mc bv"
+head -c "$MCOFF1" "$WORK/mc.aar" > "$WORK/mc1.aar" || die "craft-mc1"
+head -c "$MCOFF2" "$WORK/mc.aar" > "$WORK/mc2.aar" || die "craft-mc2"
+head -c "$MCOFF4" "$WORK/mc.aar" > "$WORK/mc4.aar" || die "craft-mc4"
+python3 "$HERE/craft.py" setblk "$WORK/mc.aar" "$WORK/mcbv.aar" 2 "$MCBV" || die "craft-mcbv"
+mcnorm() { grep -v '^reading payload$' "$1" | sed 's/^[12] entries failed to extract$/1 entries failed to extract/'; }
+for T in mc1 mc2 mc4 mcbv; do
+  ORC=0; sh "$ADAPTER" aar-decode "$WORK/$T.aar" "$WORK/o-$T" >/dev/null 2>"$WORK/$T-o.err" || ORC=$?
+  mkdir -p "$WORK/c-$T"
+  CRC=0; "$AAD" "$WORK/$T.aar" "$WORK/c-$T" 2>"$WORK/$T.err" || CRC=$?
+  [ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "$T-exit" || fail "$T-exit"
+  mcnorm "$WORK/$T-o.err" > "$WORK/$T-o.n"; mcnorm "$WORK/$T.err" > "$WORK/$T.n"
+  diff "$WORK/$T-o.n" "$WORK/$T.n" >/dev/null 2>&1 && pass "$T-shape" || fail "$T-shape"
+done
+diff -r "$WORK/o-mc1" "$WORK/c-mc1" >/dev/null 2>&1 && pass "mc1-tree" || fail "mc1-tree"
+# mc2/mcbv: exists-bit phase-race (oracle EMPTY-modal dozens vs ABSENT 5+);
+# C pinned EMPTY. SET + C pin + oracle-mode-when-present.
+if [ -e "$WORK/o-mc2/big1" ]; then MC2OS=$(stat -f %z "$WORK/o-mc2/big1"); MC2OM=$(stat -f %p "$WORK/o-mc2/big1"); else MC2OS=ABS; MC2OM=ABS; fi
+{ [ "$MC2OS" = 0 ] || [ "$MC2OS" = ABS ]; } && pass "mc2-tree" || fail "mc2-tree"
+[ ! -e "$WORK/c-mc2/big1" ] && pass "mc2-cabsent" || fail "mc2-cabsent"
+{ [ "$MC2OM" = 100644 ] || [ "$MC2OM" = ABS ]; } && pass "mc2-omode" || fail "mc2-omode"
+if [ -e "$WORK/o-mcbv/big1" ]; then MCBVOS=$(stat -f %z "$WORK/o-mcbv/big1"); MCBVOM=$(stat -f %p "$WORK/o-mcbv/big1"); else MCBVOS=ABS; MCBVOM=ABS; fi
+{ [ "$MCBVOS" = 0 ] || [ "$MCBVOS" = ABS ]; } && pass "mcbv-tree" || fail "mcbv-tree"
+[ ! -e "$WORK/c-mcbv/big1" ] && pass "mcbv-cabsent" || fail "mcbv-cabsent"
+{ [ "$MCBVOM" = 100644 ] || [ "$MCBVOM" = ABS ]; } && pass "mcbv-omode" || fail "mcbv-omode"
+grep -q "entries failed" "$WORK/mc1-o.err" && fail "mc1-nocount" || pass "mc1-nocount"
+cmp -s "$WORK/o-mc4/big1" "$WORK/c-mc4/big1" && pass "mc4-big1" || fail "mc4-big1"
+cmp -s "$WORK/mcsrc/big1" "$WORK/o-mc4/big1" && pass "mc4-big1full" || fail "mc4-big1full"
+[ ! -e "$WORK/o-mc4/big2" ] && [ ! -e "$WORK/c-mc4/big2" ] && pass "mc4-big2abs" || fail "mc4-big2abs"
+[ "$(stat -f %p "$WORK/o-mc4/big1")" = "$(stat -f %p "$WORK/c-mc4/big1")" ] && pass "mc4-big1mode" || fail "mc4-big1mode"
+
+echo "== cell midchain-decfail (decode fail both flavors) =="
+mkdir -p "$WORK/mzsrc"; dd if=/dev/zero of="$WORK/mzsrc/f" bs=1024 count=600 2>/dev/null
+sh "$ADAPTER" aar-encode --alg lzfse --block 256k --threads 1 "$WORK/mzsrc" "$WORK/mz.aar" >/dev/null 2>&1 || die "mz encode"
+MZ1=$(python3 -c "import struct; d=open('$WORK/mz.aar','rb').read(); o=12; bs=[];
+while o < len(d):
+ r,p=struct.unpack('>QQ',d[o:o+16]); bs.append((o,r,p)); o+=16+p
+print(bs[1][0]+16)") || die "mz walk"
+python3 "$HERE/craft.py" patch "$WORK/mz.aar" "$WORK/mz1.aar" "$MZ1" ff || die "craft-mz1"
+python3 "$HERE/craft.py" patch "$WORK/mz.aar" "$WORK/mz0.aar" 28 ff || die "craft-mz0"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/mz1.aar" "$WORK/o-mz1" >/dev/null 2>"$WORK/mz1-o.err" || ORC=$?
+mkdir -p "$WORK/c-mz1"
+CRC=0; "$AAD" "$WORK/mz1.aar" "$WORK/c-mz1" 2>"$WORK/mz1.err" || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "mz1-exit" || fail "mz1-exit"
+# mz1: same exists-bit phase-race as mc2 (EMPTY-modal vs ABSENT legs); C pinned EMPTY.
+if [ -e "$WORK/o-mz1/f" ]; then MZ1OS=$(stat -f %z "$WORK/o-mz1/f"); MZ1OM=$(stat -f %p "$WORK/o-mz1/f"); else MZ1OS=ABS; MZ1OM=ABS; fi
+{ [ "$MZ1OS" = 0 ] || [ "$MZ1OS" = ABS ]; } && pass "mz1-tree" || fail "mz1-tree"
+[ ! -e "$WORK/c-mz1/f" ] && pass "mz1-cabsent" || fail "mz1-cabsent"
+{ [ "$MZ1OM" = 100644 ] || [ "$MZ1OM" = ABS ]; } && pass "mz1-omode" || fail "mz1-omode"
+mcnorm "$WORK/mz1-o.err" > "$WORK/mz1-o.n"; mcnorm "$WORK/mz1.err" > "$WORK/mz1.n"
+diff "$WORK/mz1-o.n" "$WORK/mz1.n" >/dev/null 2>&1 && pass "mz1-shape" || fail "mz1-shape"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/mz0.aar" "$WORK/o-mz0" >/dev/null 2>"$WORK/mz0-o.err" || ORC=$?
+mkdir -p "$WORK/c-mz0"
+CRC=0; "$AAD" "$WORK/mz0.aar" "$WORK/c-mz0" 2>"$WORK/mz0.err" || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "mz0-exit" || fail "mz0-exit"
+diff -r "$WORK/o-mz0" "$WORK/c-mz0" >/dev/null 2>&1 && pass "mz0-tree" || fail "mz0-tree"
+diff "$WORK/mz0-o.err" "$WORK/mz0.err" >/dev/null 2>&1 && pass "mz0-shape" || fail "mz0-shape"
+
+echo "== cell midchain-e4 (complete prefix + cut; tiny UNPINNED, Q-020) =="
+cat "$WORK/mc.aar" > "$WORK/e4.aar"; printf '\0\0\0\0\0\0\0\0\0\0' >> "$WORK/e4.aar"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/e4.aar" "$WORK/o-e4" >/dev/null 2>"$WORK/e4-o.err" || ORC=$?
+mkdir -p "$WORK/c-e4"
+CRC=0; "$AAD" "$WORK/e4.aar" "$WORK/c-e4" 2>"$WORK/e4.err" || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "e4-exit" || fail "e4-exit"
+mcnorm "$WORK/e4-o.err" > "$WORK/e4-o.n"; mcnorm "$WORK/e4.err" > "$WORK/e4.n"
+diff "$WORK/e4-o.n" "$WORK/e4.n" >/dev/null 2>&1 && pass "e4-shape" || fail "e4-shape"
+cmp -s "$WORK/o-e4/big1" "$WORK/c-e4/big1" && pass "e4-big1" || fail "e4-big1"
+[ ! -e "$WORK/o-e4/big2" ] && [ ! -e "$WORK/c-e4/big2" ] && pass "e4-big2abs" || fail "e4-big2abs"
+
+echo "== cell midchain-content (presence + 256K chunks, stable zones) =="
+mkcx() { # $1=b1KB(0=single) $2=cutblock $3=name
+  rm -rf "$WORK/cx$3src"; mkdir -p "$WORK/cx$3src"
+  if [ "$1" -gt 0 ]; then
+    dd if=/dev/urandom of="$WORK/cx$3src/b1" bs=1024 count="$1" 2>/dev/null
+    dd if=/dev/urandom of="$WORK/cx$3src/b2" bs=1024 count=1024 2>/dev/null
+  else
+    dd if=/dev/urandom of="$WORK/cx$3src/big" bs=1024 count=1024 2>/dev/null
+  fi
+  sh "$ADAPTER" aar-encode --alg lzfse --block 128k --threads 1 "$WORK/cx$3src" "$WORK/cx$3.aar" >/dev/null 2>&1 || die "cx$3 encode"
+  CXC=$(python3 -c "import struct; d=open('$WORK/cx$3.aar','rb').read(); o=12; bs=[];
+while o < len(d):
+ r,p=struct.unpack('>QQ',d[o:o+16]); bs.append((o,r,p)); o+=16+p
+print(bs[$2][0]+16+bs[$2][2]//2)") || die "cx$3 walk"
+  head -c "$CXC" "$WORK/cx$3.aar" > "$WORK/cx$3c.aar" || die "craft-cx$3"
+}
+runcx() { # $1=name $2=file $3=wantsize
+  ORC=0; sh "$ADAPTER" aar-decode "$WORK/cx$1c.aar" "$WORK/o-cx$1" >/dev/null 2>"$WORK/cx$1-o.err" || ORC=$?
+  mkdir -p "$WORK/c-cx$1"
+  CRC=0; "$AAD" "$WORK/cx$1c.aar" "$WORK/c-cx$1" 2>"$WORK/cx$1.err" || CRC=$?
+  PRC=0; python3 "$HERE/../proto/aad.py" "$WORK/cx$1c.aar" "$WORK/p-cx$1" >/dev/null 2>&1 || PRC=$?
+  [ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "cx$1-exit" || fail "cx$1-exit"
+  [ "$PRC" -eq 1 ] && pass "cx$1-pexit" || fail "cx$1-pexit"
+  mcnorm "$WORK/cx$1-o.err" > "$WORK/cx$1-o.n"; mcnorm "$WORK/cx$1.err" > "$WORK/cx$1.n"
+  diff "$WORK/cx$1-o.n" "$WORK/cx$1.n" >/dev/null 2>&1 && pass "cx$1-shape" || fail "cx$1-shape"
+  # Race-SET (M1 tails legs): C pinned modal $3; oracle $3 or one chunk
+  # less (0->ABSENT); reduced content is a byte-prefix (verified).
+  CXO=$([ -f "$WORK/o-cx$1/$2" ] && stat -f %z "$WORK/o-cx$1/$2" || echo ABS)
+  CXC=$([ -f "$WORK/c-cx$1/$2" ] && stat -f %z "$WORK/c-cx$1/$2" || echo ABS)
+  CXSET=0
+  if [ "$CXC" = "$3" ]; then
+    if [ "$CXO" = "$3" ]; then CXSET=1; fi
+    if [ "$3" = "0" ] && [ "$CXO" = "ABS" ]; then CXSET=1; fi
+    if [ "$3" != "0" ] && [ "$CXO" = "$(($3 - 262144))" ]; then CXSET=1; fi
+  fi
+  [ "$CXSET" = "1" ] && pass "cx$1-size" || fail "cx$1-size"
+  CXCMP=0
+  if [ "$CXO" = "$CXC" ] && [ "$CXO" != "ABS" ] && cmp -s "$WORK/o-cx$1/$2" "$WORK/c-cx$1/$2"; then CXCMP=1; fi
+  if [ "$CXO" = "ABS" ] && [ "$CXC" = "0" ]; then CXCMP=1; fi
+  if [ "$CXO" != "ABS" ] && [ "$CXO" != "$CXC" ] && head -c "$CXO" "$WORK/c-cx$1/$2" | cmp -s - "$WORK/o-cx$1/$2"; then CXCMP=1; fi
+  [ "$CXCMP" = "1" ] && pass "cx$1-cmp" || fail "cx$1-cmp"
+  if [ "$CXO" = "ABS" ]; then pass "cx$1-mode"; else [ "$(stat -f %p "$WORK/o-cx$1/$2")" = "$(stat -f %p "$WORK/c-cx$1/$2")" ] && pass "cx$1-mode" || fail "cx$1-mode"; fi
+  diff -r "$WORK/c-cx$1" "$WORK/p-cx$1" >/dev/null 2>&1 && pass "cx$1-lock" || fail "cx$1-lock"
+}
+mkcx 0 4 A; runcx A big 0
+mkcx 0 6 B; runcx B big 262144
+mkcx 0 8 C; runcx C big 524288
+mkcx 186 6 D; runcx D b2 262144
+cmp -s "$WORK/cxDsrc/b1" "$WORK/o-cxD/b1" && pass "cxD-b1full" || fail "cxD-b1full"
+mkcx 300 6 E; runcx E b2 0
+cmp -s "$WORK/cxEsrc/b1" "$WORK/o-cxE/b1" && pass "cxE-b1full" || fail "cxE-b1full"
+mkcx 400 7 F; runcx F b2 0
+cmp -s "$WORK/cxFsrc/b1" "$WORK/o-cxF/b1" && pass "cxF-b1full" || fail "cxF-b1full"
+mkcx 100 8 G
+# cxG: multi-file chunk1 RACY (oracle 262144-or-524288, MT flush;
+# single-file chunk1 stable 9/9). Mine = modal 524288. Unpinned: no size/cmp.
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/cxGc.aar" "$WORK/o-cxG" >/dev/null 2>"$WORK/cxG-o.err" || ORC=$?
+mkdir -p "$WORK/c-cxG"
+CRC=0; "$AAD" "$WORK/cxGc.aar" "$WORK/c-cxG" 2>"$WORK/cxG.err" || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "cxG-exit" || fail "cxG-exit"
+mcnorm "$WORK/cxG-o.err" > "$WORK/cxG-o.n"; mcnorm "$WORK/cxG.err" > "$WORK/cxG.n"
+diff "$WORK/cxG-o.n" "$WORK/cxG.n" >/dev/null 2>&1 && pass "cxG-shape" || fail "cxG-shape"
+[ -f "$WORK/o-cxG/b2" ] && [ -f "$WORK/c-cxG/b2" ] && pass "cxG-exists" || fail "cxG-exists"
+[ "$(stat -f %p "$WORK/o-cxG/b2")" = "$(stat -f %p "$WORK/c-cxG/b2")" ] && pass "cxG-mode" || fail "cxG-mode"
+cmp -s "$WORK/cxGsrc/b1" "$WORK/o-cxG/b1" && pass "cxG-b1full" || fail "cxG-b1full"
+mkcx 300 8 H; runcx H b2 262144
+cmp -s "$WORK/cxHsrc/b1" "$WORK/o-cxH/b1" && pass "cxH-b1full" || fail "cxH-b1full"
+
+echo "== cell g-collision (G3 symlink-occupant + G5 missing-parents + G6 replace-modal) =="
+mkdir -p "$WORK/gsrc"; printf 'A1-content' > "$WORK/gsrc/victim"; printf 'A2-content' > "$WORK/gsrc/vdir"
+sh "$ADAPTER" aar-encode --alg raw --threads 1 "$WORK/gsrc" "$WORK/g.aar" >/dev/null 2>&1 || die "g encode"
+for S in o c p; do rm -rf "$WORK/g$S"; mkdir -p "$WORK/g$S"; printf 'old' > "$WORK/g$S/elsewhere"; ln -s elsewhere "$WORK/g$S/victim"; mkdir -p "$WORK/g$S/somedir"; ln -s somedir "$WORK/g$S/vdir"; done
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/g.aar" "$WORK/go" >/dev/null 2>"$WORK/g-o.err" || ORC=$?
+CRC=0; "$AAD" "$WORK/g.aar" "$WORK/gc" 2>"$WORK/g.err" || CRC=$?
+PRC=0; python3 "$HERE/../proto/aad.py" "$WORK/g.aar" "$WORK/gp" >/dev/null 2>"$WORK/gp.err" || PRC=$?
+[ "$ORC" -eq 0 ] && [ "$CRC" -eq 0 ] && [ "$PRC" -eq 0 ] && pass "g3-exit" || fail "g3-exit"
+[ ! -s "$WORK/g-o.err" ] && [ ! -s "$WORK/g.err" ] && pass "g3-silent" || fail "g3-silent"
+for S in o c p; do
+  D=$WORK/g$S; [ "$S" = "o" ] && D=$WORK/go; [ "$S" = "c" ] && D=$WORK/gc; [ "$S" = "p" ] && D=$WORK/gp
+  [ ! -L "$D/victim" ] && [ "$(cat "$D/victim")" = "A1-content" ] && pass "g3a-$S" || fail "g3a-$S"
+  [ ! -L "$D/vdir" ] && [ "$(cat "$D/vdir")" = "A2-content" ] && pass "g3b-$S" || fail "g3b-$S"
+done
+# G5 true bed pending Q-024. Observed: N-level missing roots mkdir -p rc 0
+# all sides (2-level + 4-level first-hand). Pin agreement, not bare.
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/g.aar" "$WORK/g5o/sub" >/dev/null 2>"$WORK/g5-o.err" || ORC=$?
+CRC=0; "$AAD" "$WORK/g.aar" "$WORK/g5c/sub" 2>"$WORK/g5.err" || CRC=$?
+PRC=0; python3 "$HERE/../proto/aad.py" "$WORK/g.aar" "$WORK/g5p/sub" >/dev/null 2>"$WORK/g5p.err" || PRC=$?
+[ "$ORC" -eq 0 ] && [ "$CRC" -eq 0 ] && [ "$PRC" -eq 0 ] && pass "g5mk-exit" || fail "g5mk-exit"
+diff -r "$WORK/g5o/sub" "$WORK/g5c/sub" >/dev/null 2>&1 && pass "g5mk-tree" || fail "g5mk-tree"
+diff -r "$WORK/g5c/sub" "$WORK/g5p/sub" >/dev/null 2>&1 && pass "g5mk-lock" || fail "g5mk-lock"
+[ ! -s "$WORK/g5-o.err" ] && [ ! -s "$WORK/g5.err" ] && pass "g5mk-silent" || fail "g5mk-silent"
+mkdir -p "$WORK/g6src/dd"; printf 'kid-bytes' > "$WORK/g6src/dd/kid"; chmod 700 "$WORK/g6src/dd"
+sh "$ADAPTER" aar-encode --alg raw --threads 1 "$WORK/g6src" "$WORK/g6.aar" >/dev/null 2>&1 || die "g6 encode"
+for S in o c p; do rm -rf "$WORK/g6$S"; mkdir -p "$WORK/g6$S"; printf 'keepme' > "$WORK/g6$S/dd"; chmod 644 "$WORK/g6$S/dd"; done
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/g6.aar" "$WORK/g6o" 2>"$WORK/g6-o.err" >/dev/null || ORC=$?
+CRC=0; "$AAD" "$WORK/g6.aar" "$WORK/g6c" 2>"$WORK/g6.err" >/dev/null || CRC=$?
+PRC=0; python3 "$HERE/../proto/aad.py" "$WORK/g6.aar" "$WORK/g6p" 2>"$WORK/g6p.err" >/dev/null || PRC=$?
+cat > "$WORK/g6modal.err" <<'EOF'
+Error 0x83058800
+a parent of path is not a directory: dd/kid
+invalid path: dd/kid
+1 entries failed to extract
+EOF
+# G6 truth (NOTE-050): oracle ALWAYS replaces file occupant (dir 0700,
+# MOD applied); kid races (HAVE+rc0-silent 2/6 vs ABSENT+stanza+rc1 4/6).
+# Old keep-pin was oracle-false (never verified vs oracle). Ours: modal.
+[ "$(stat -f %p "$WORK/g6o/dd")" = "40700" ] && pass "g6o-repl" || fail "g6o-repl"
+if { [ "$ORC" -eq 0 ] && [ ! -s "$WORK/g6-o.err" ] && cmp -s "$WORK/g6o/dd/kid" "$WORK/g6src/dd/kid"; } || { [ "$ORC" -eq 1 ] && diff "$WORK/g6modal.err" "$WORK/g6-o.err" >/dev/null 2>&1 && [ ! -e "$WORK/g6o/dd/kid" ]; }; then pass "g6o-shape"; else fail "g6o-shape"; fi
+[ "$CRC" -eq 1 ] && [ "$PRC" -eq 1 ] && pass "g6cp-exit" || fail "g6cp-exit"
+diff "$WORK/g6modal.err" "$WORK/g6.err" >/dev/null 2>&1 && pass "g6c-modal" || fail "g6c-modal"
+grep -v '^blocks:' "$WORK/g6p.err" | diff "$WORK/g6.err" - >/dev/null 2>&1 && pass "g6p-mirror" || fail "g6p-mirror"
+[ "$(stat -f %p "$WORK/g6c/dd")" = "40700" ] && [ ! -e "$WORK/g6c/dd/kid" ] && pass "g6c-tree" || fail "g6c-tree"
+[ "$(stat -f %p "$WORK/g6p/dd")" = "40700" ] && [ ! -e "$WORK/g6p/dd/kid" ] && pass "g6p-tree" || fail "g6p-tree"
+
+echo "== cell m3-exactness (unclo/unchi/paylo/stored decoder shapes) =="
+mkm3() { # $1=base $2=rawd $3=payd $4=name
+  M3H=$(python3 -c "import struct; d=open('$V/aar/$1.aar','rb').read(); raw,pay=struct.unpack('>QQ',d[12:28]); print((struct.pack('>Q',raw+($2))+struct.pack('>Q',pay+($3))).hex())") || die "m3$4 walk"
+  python3 "$HERE/craft.py" setblk "$V/aar/$1.aar" "$WORK/m3$4.aar" 0 "$M3H" || die "craft-m3$4"
+}
+runm3() { # $1=name $2=ucflag
+  ORC=0; sh "$ADAPTER" aar-decode "$WORK/m3$1.aar" "$WORK/o-m3$1" >/dev/null 2>"$WORK/m3$1-o.err" || ORC=$?
+  mkdir -p "$WORK/c-m3$1" "$WORK/p-m3$1"
+  CRC=0; "$AAD" "$WORK/m3$1.aar" "$WORK/c-m3$1" 2>"$WORK/m3$1.err" || CRC=$?
+  PRC=0; python3 "$HERE/../proto/aad.py" "$WORK/m3$1.aar" "$WORK/p-m3$1" >/dev/null 2>&1 || PRC=$?
+  [ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && [ "$PRC" -eq 1 ] && pass "m3$1-exit" || fail "m3$1-exit"
+  if [ "$2" = "uc" ]; then
+    mcnorm "$WORK/m3$1-o.err" > "$WORK/m3$1-o.n"; mcnorm "$WORK/m3$1.err" > "$WORK/m3$1.n"
+    diff "$WORK/m3$1-o.n" "$WORK/m3$1.n" >/dev/null 2>&1 && pass "m3$1-shape" || fail "m3$1-shape"
+    [ "$(grep -c '1 entries failed' "$WORK/m3$1-o.err")" = "1" ] && [ "$(grep -c '1 entries failed' "$WORK/m3$1.err")" = "1" ] && pass "m3$1-count" || fail "m3$1-count"
+  else
+    diff "$WORK/m3$1-o.err" "$WORK/m3$1.err" >/dev/null 2>&1 && pass "m3$1-shape" || fail "m3$1-shape"
+  fi
+  diff -r "$WORK/c-m3$1" "$WORK/p-m3$1" >/dev/null 2>&1 && pass "m3$1-lock" || fail "m3$1-lock"
+}
+empty3() { # $1=name
+  [ -z "$(find "$WORK/o-m3$1" "$WORK/c-m3$1" -type f 2>/dev/null)" ] && pass "m3$1-empty" || fail "m3$1-empty"
+  diff -r "$WORK/o-m3$1" "$WORK/c-m3$1" >/dev/null 2>&1 && pass "m3$1-tree" || fail "m3$1-tree"
+}
+mkm3 hello-lzfse -10 0 uc10; runm3 uc10 uc
+cmp -s "$WORK/o-m3uc10/hello/repeat.txt" "$WORK/c-m3uc10/hello/repeat.txt" && pass "uc10-repeat" || fail "uc10-repeat"
+cmp -s "$WORK/o-m3uc10/hello/greet.txt" "$WORK/c-m3uc10/hello/greet.txt" && pass "uc10-greet" || fail "uc10-greet"
+[ "$(stat -f %p "$WORK/o-m3uc10/hello/repeat.txt")" = "$(stat -f %p "$WORK/c-m3uc10/hello/repeat.txt")" ] && pass "uc10-mode" || fail "uc10-mode"
+xattr -l "$WORK/o-m3uc10/hello/repeat.txt" > "$WORK/uc10o.x" 2>&1; xattr -l "$WORK/c-m3uc10/hello/repeat.txt" > "$WORK/uc10c.x" 2>&1
+cmp -s "$WORK/uc10o.x" "$WORK/uc10c.x" && pass "uc10-xattr" || fail "uc10-xattr"
+mkm3 hello-lzfse -25 0 uc25; runm3 uc25 uc
+cmp -s "$WORK/o-m3uc25/hello/repeat.txt" "$WORK/c-m3uc25/hello/repeat.txt" && pass "uc25-repeat" || fail "uc25-repeat"
+mkm3 hello-lzfse -36 0 uc36; runm3 uc36 uc
+cmp -s "$WORK/o-m3uc36/hello/repeat.txt" "$WORK/c-m3uc36/hello/repeat.txt" && pass "uc36-repeat" || fail "uc36-repeat"
+mkm3 hello-lzfse -37 0 uc37; runm3 uc37 uc
+cmp -s "$WORK/o-m3uc37/hello/greet.txt" "$WORK/c-m3uc37/hello/greet.txt" && pass "uc37-greet" || fail "uc37-greet"
+[ ! -e "$WORK/o-m3uc37/hello/repeat.txt" ] && [ ! -e "$WORK/c-m3uc37/hello/repeat.txt" ] && pass "uc37-absent" || fail "uc37-absent"
+mkm3 hello-lzfse -100 0 uc100; runm3 uc100 uc
+cmp -s "$WORK/o-m3uc100/hello/greet.txt" "$WORK/c-m3uc100/hello/greet.txt" && pass "uc100-greet" || fail "uc100-greet"
+[ ! -e "$WORK/o-m3uc100/hello/repeat.txt" ] && [ ! -e "$WORK/c-m3uc100/hello/repeat.txt" ] && pass "uc100-absent" || fail "uc100-absent"
+mkm3 hello-lzfse 10 0 uh10; runm3 uh10 x; empty3 uh10
+mkm3 hello-lzfse 500 0 uh500; runm3 uh500 x; empty3 uh500
+mkm3 hello-lzfse 0 -1 pl1; runm3 pl1 x; empty3 pl1
+mkm3 hello-lzfse 0 -4 pl4; runm3 pl4 x; empty3 pl4
+mkm3 hello-lzfse 0 -5 pl5; runm3 pl5 x; empty3 pl5
+mkm3 hello-lzfse 0 -10 pl10; runm3 pl10 x; empty3 pl10
+mkm3 hello-lzfse 0 -100 pl100; runm3 pl100 x; empty3 pl100
+mkm3 hello-lzfse 0 1 phi; runm3 phi x; empty3 phi
+mkm3 empty-lzfse 1 0 sthi; runm3 sthi x; empty3 sthi
+mkm3 empty-lzfse -1 0 stlo; runm3 stlo x; empty3 stlo
+
+echo "== cell g9-traversal (sym/file/dangling planted parent) =="
+mkdir -p "$WORK/g9src/a" "$WORK/g9src/b/deep"
+printf 'hello-f\n' > "$WORK/g9src/a/f.txt"; ln -s f.txt "$WORK/g9src/a/l.lnk"; printf 'deep-g\n' > "$WORK/g9src/b/deep/g.txt"
+sh "$ADAPTER" aar-encode --alg raw --threads 1 "$WORK/g9src" "$WORK/g9.aar" >/dev/null 2>&1 || die "g9 encode"
+cat > "$WORK/g9modal.err" <<'EOF'
+Error 0x83058800
+a parent of path is not a directory: a/f.txt
+invalid path: a/f.txt
+a parent of path is not a directory: a/l.lnk
+invalid path: a/l.lnk
+creating fs object: a/l.lnk
+2 entries failed to extract
+EOF
+# oracle outcome SET (race; NOTE-050): {both-fail either order, f-only
+# (l.lnk present), l-only (f.txt full present)}. C pins modal (above).
+for shape in sym file dangling; do
+  rm -rf "$WORK/go-$shape" "$WORK/gv-$shape" "$WORK/gc-$shape" "$WORK/gw-$shape" "$WORK/gp-$shape" "$WORK/gx-$shape"
+  mkdir -p "$WORK/go-$shape" "$WORK/gv-$shape" "$WORK/gc-$shape" "$WORK/gw-$shape" "$WORK/gp-$shape" "$WORK/gx-$shape"
+  echo MARKER > "$WORK/gv-$shape/marker"; echo MARKER > "$WORK/gw-$shape/marker"; echo MARKER > "$WORK/gx-$shape/marker"
+  case $shape in
+    sym) ln -s "$WORK/gv-$shape" "$WORK/go-$shape/a"; ln -s "$WORK/gw-$shape" "$WORK/gc-$shape/a"; ln -s "$WORK/gx-$shape" "$WORK/gp-$shape/a";;
+    file) echo OCC > "$WORK/go-$shape/a"; echo OCC > "$WORK/gc-$shape/a"; echo OCC > "$WORK/gp-$shape/a";;
+    dangling) ln -s /nonexistent-g9-target "$WORK/go-$shape/a"; ln -s /nonexistent-g9-target "$WORK/gc-$shape/a"; ln -s /nonexistent-g9-target "$WORK/gp-$shape/a";;
+  esac
+  ORC=0; sh "$ADAPTER" aar-decode "$WORK/g9.aar" "$WORK/go-$shape" 2>"$WORK/go-$shape.err" >/dev/null || ORC=$?
+  CRC=0; "$AAD" "$WORK/g9.aar" "$WORK/gc-$shape" 2>"$WORK/gc-$shape.err" >/dev/null || CRC=$?
+  PRC=0; python3 "$ROOT/proto/aad.py" "$WORK/g9.aar" "$WORK/gp-$shape" 2>"$WORK/gp-$shape.err" >/dev/null || PRC=$?
+  OEXIT=0; [ "$ORC" -eq 1 ] && OEXIT=1
+  if [ "$ORC" -eq 0 ] && [ ! -s "$WORK/go-$shape.err" ] && cmp -s "$WORK/go-$shape/a/f.txt" "$WORK/g9src/a/f.txt" && [ -L "$WORK/go-$shape/a/l.lnk" ]; then OEXIT=1; fi
+  [ "$OEXIT" -eq 1 ] && [ "$CRC" -eq 1 ] && [ "$PRC" -eq 1 ] && pass "g9$shape-exit" || fail "g9$shape-exit"
+  [ "$(ls "$WORK/gv-$shape")" = "marker" ] && [ "$(ls "$WORK/gw-$shape")" = "marker" ] && [ "$(ls "$WORK/gx-$shape")" = "marker" ] && pass "g9$shape-victim" || fail "g9$shape-victim"
+  diff "$WORK/g9modal.err" "$WORK/gc-$shape.err" >/dev/null 2>&1 && pass "g9$shape-cmodal" || fail "g9$shape-cmodal"
+  grep -v '^blocks:' "$WORK/gp-$shape.err" | diff "$WORK/gc-$shape.err" - >/dev/null 2>&1 && pass "g9$shape-pmirror" || fail "g9$shape-pmirror"
+  OSET=0
+  if [ "$ORC" -eq 0 ] && [ ! -s "$WORK/go-$shape.err" ] && cmp -s "$WORK/go-$shape/a/f.txt" "$WORK/g9src/a/f.txt" && [ -L "$WORK/go-$shape/a/l.lnk" ]; then OSET=1; fi
+  if grep -q '^Error 0x83058800$' "$WORK/go-$shape.err" 2>/dev/null; then
+    N=$(grep -c 'a parent of path is not a directory' "$WORK/go-$shape.err" || true)
+    if [ "$N" = "2" ] && grep -q '2 entries failed' "$WORK/go-$shape.err" \
+       && grep -q 'not a directory: a/f.txt' "$WORK/go-$shape.err" \
+       && grep -q 'not a directory: a/l.lnk' "$WORK/go-$shape.err" \
+       && grep -q 'creating fs object: a/l.lnk' "$WORK/go-$shape.err" \
+       && [ -z "$(ls "$WORK/go-$shape/a")" ]; then OSET=1; fi
+    if [ "$N" = "1" ] && grep -q '1 entries failed' "$WORK/go-$shape.err" \
+       && grep -q 'not a directory: a/f.txt' "$WORK/go-$shape.err" \
+       && [ -L "$WORK/go-$shape/a/l.lnk" ]; then OSET=1; fi
+    if [ "$N" = "1" ] && grep -q '1 entries failed' "$WORK/go-$shape.err" \
+       && grep -q 'not a directory: a/l.lnk' "$WORK/go-$shape.err" \
+       && grep -q 'creating fs object: a/l.lnk' "$WORK/go-$shape.err" \
+       && cmp -s "$WORK/go-$shape/a/f.txt" "$WORK/g9src/a/f.txt"; then OSET=1; fi
+  fi
+  [ "$OSET" = "1" ] && pass "g9$shape-oshape" || fail "g9$shape-oshape"
+  [ ! -L "$WORK/gc-$shape/a" ] && [ -d "$WORK/gc-$shape/a" ] && [ -z "$(ls "$WORK/gc-$shape/a")" ] && [ "$(stat -f %p "$WORK/gc-$shape/a")" = "40755" ] && pass "g9$shape-ctree" || fail "g9$shape-ctree"
+  cmp -s "$WORK/gc-$shape/b/deep/g.txt" "$WORK/g9src/b/deep/g.txt" && pass "g9$shape-sib" || fail "g9$shape-sib"
+  diff -r "$WORK/gc-$shape" "$WORK/gp-$shape" >/dev/null 2>&1 && pass "g9$shape-cplock" || fail "g9$shape-cplock"
+  [ "$(ls "$WORK/gc-$shape" | tr '\n' ',')" = "a,b," ] && pass "g9$shape-top" || fail "g9$shape-top"
+done
+
+echo "== cell g9P-fifo-child (non-F triple, A-027#1) =="
+python3 "$HERE/craft.py" settyppat "$WORK/g9.aar" "$WORK/g9p.aar" a/f.txt P || die "g9p craft"
+cat > "$WORK/g9pmodal.err" <<'EOF'
+Error 0x83058800
+a parent of path is not a directory: a/f.txt
+invalid path: a/f.txt
+creating fs object: a/f.txt
+a parent of path is not a directory: a/l.lnk
+invalid path: a/l.lnk
+creating fs object: a/l.lnk
+2 entries failed to extract
+EOF
+rm -rf "$WORK/po" "$WORK/pv" "$WORK/pc" "$WORK/pw" "$WORK/pp" "$WORK/px"
+mkdir -p "$WORK/po" "$WORK/pv" "$WORK/pc" "$WORK/pw" "$WORK/pp" "$WORK/px"
+echo MARKER > "$WORK/pv/marker"; echo MARKER > "$WORK/pw/marker"; echo MARKER > "$WORK/px/marker"
+ln -s "$WORK/pv" "$WORK/po/a"; ln -s "$WORK/pw" "$WORK/pc/a"; ln -s "$WORK/px" "$WORK/pp/a"
+ORC=0; python3 "$HERE/fifo-drain-run.py" 30 "$WORK/po" /dev/null "$WORK/po.err" sh "$ADAPTER" aar-decode "$WORK/g9p.aar" "$WORK/po" >/dev/null || ORC=$?
+CRC=0; "$AAD" "$WORK/g9p.aar" "$WORK/pc" 2>"$WORK/pc.err" >/dev/null || CRC=$?
+PRC=0; python3 "$ROOT/proto/aad.py" "$WORK/g9p.aar" "$WORK/pp" 2>"$WORK/pp.err" >/dev/null || PRC=$?
+POEXIT=0; [ "$ORC" -eq 1 ] && POEXIT=1
+if [ "$ORC" -eq 0 ] && [ ! -s "$WORK/po.err" ] && [ -p "$WORK/po/a/f.txt" ] && [ -L "$WORK/po/a/l.lnk" ]; then POEXIT=1; fi
+[ "$POEXIT" -eq 1 ] && [ "$CRC" -eq 1 ] && [ "$PRC" -eq 1 ] && pass "g9p-exit" || fail "g9p-exit"
+[ "$(ls "$WORK/pv")" = "marker" ] && [ "$(ls "$WORK/pw")" = "marker" ] && [ "$(ls "$WORK/px")" = "marker" ] && pass "g9p-victim" || fail "g9p-victim"
+diff "$WORK/g9pmodal.err" "$WORK/pc.err" >/dev/null 2>&1 && pass "g9p-cmodal" || fail "g9p-cmodal"
+grep -v '^blocks:' "$WORK/pp.err" | diff "$WORK/pc.err" - >/dev/null 2>&1 && pass "g9p-pmirror" || fail "g9p-pmirror"
+POSET=0
+if [ "$ORC" -eq 0 ] && [ ! -s "$WORK/po.err" ] && [ -p "$WORK/po/a/f.txt" ] && [ -L "$WORK/po/a/l.lnk" ]; then POSET=1; fi
+if grep -q '^Error 0x83058800$' "$WORK/po.err" 2>/dev/null; then
+  N=$(grep -c 'a parent of path is not a directory' "$WORK/po.err" || true)
+  if [ "$N" = "2" ] && grep -q '2 entries failed' "$WORK/po.err" \
+     && grep -q 'not a directory: a/f.txt' "$WORK/po.err" \
+     && grep -q 'not a directory: a/l.lnk' "$WORK/po.err" \
+     && grep -q 'creating fs object: a/f.txt' "$WORK/po.err" \
+     && grep -q 'creating fs object: a/l.lnk' "$WORK/po.err" \
+     && [ -z "$(ls "$WORK/po/a")" ]; then POSET=1; fi
+  if [ "$N" = "1" ] && grep -q '1 entries failed' "$WORK/po.err" \
+     && grep -q 'not a directory: a/f.txt' "$WORK/po.err" \
+     && grep -q 'creating fs object: a/f.txt' "$WORK/po.err" \
+     && [ -L "$WORK/po/a/l.lnk" ]; then POSET=1; fi
+  if [ "$N" = "1" ] && grep -q '1 entries failed' "$WORK/po.err" \
+     && grep -q 'not a directory: a/l.lnk' "$WORK/po.err" \
+     && grep -q 'creating fs object: a/l.lnk' "$WORK/po.err" \
+     && [ -p "$WORK/po/a/f.txt" ]; then POSET=1; fi
+fi
+[ "$POSET" = "1" ] && pass "g9p-oshape" || fail "g9p-oshape"
+[ ! -L "$WORK/pc/a" ] && [ -d "$WORK/pc/a" ] && [ -z "$(ls "$WORK/pc/a")" ] && pass "g9p-ctree" || fail "g9p-ctree"
+diff -r "$WORK/pc" "$WORK/pp" >/dev/null 2>&1 && pass "g9p-cplock" || fail "g9p-cplock"
+
+echo "== cell g9H-hlink-target (pair+H-line+trailer+N1, A-027#2) =="
+cat > "$WORK/g9hmodal.err" <<'EOF'
+Error 0x83058800
+a parent of path is not a directory: hello/repeat.txt
+invalid path: hello/repeat.txt
+'H' LNK not a regular file: hello/repeat.txt
+process hlinks
+1 entries failed to extract
+EOF
+rm -rf "$WORK/ho" "$WORK/hv" "$WORK/hc" "$WORK/hw" "$WORK/hp" "$WORK/hx"
+mkdir -p "$WORK/ho" "$WORK/hv" "$WORK/hc" "$WORK/hw" "$WORK/hp" "$WORK/hx"
+echo MARKER > "$WORK/hv/marker"; echo MARKER > "$WORK/hw/marker"; echo MARKER > "$WORK/hx/marker"
+ln -s "$WORK/hv" "$WORK/ho/hello"; ln -s "$WORK/hw" "$WORK/hc/hello"; ln -s "$WORK/hx" "$WORK/hp/hello"
+ORC=0; sh "$ADAPTER" aar-decode "$V/aar/hlink-basic.aar" "$WORK/ho" 2>"$WORK/ho.err" >/dev/null || ORC=$?
+CRC=0; "$AAD" "$V/aar/hlink-basic.aar" "$WORK/hc" 2>"$WORK/hc.err" >/dev/null || CRC=$?
+PRC=0; python3 "$ROOT/proto/aad.py" "$V/aar/hlink-basic.aar" "$WORK/hp" 2>"$WORK/hp.err" >/dev/null || PRC=$?
+[ "$CRC" -eq 1 ] && [ "$PRC" -eq 1 ] && pass "g9h-cp-exit" || fail "g9h-cp-exit"
+[ "$(ls "$WORK/hv")" = "marker" ] && [ "$(ls "$WORK/hw")" = "marker" ] && [ "$(ls "$WORK/hx")" = "marker" ] && pass "g9h-victim" || fail "g9h-victim"
+diff "$WORK/g9hmodal.err" "$WORK/hc.err" >/dev/null 2>&1 && pass "g9h-cmodal" || fail "g9h-cmodal"
+grep -v '^blocks:' "$WORK/hp.err" | diff "$WORK/hc.err" - >/dev/null 2>&1 && pass "g9h-pmirror" || fail "g9h-pmirror"
+HOSET=0
+if [ "$ORC" -eq 1 ] && diff "$WORK/g9hmodal.err" "$WORK/ho.err" >/dev/null 2>&1 && [ -z "$(ls "$WORK/ho/hello")" ]; then HOSET=1; fi
+if [ "$ORC" -eq 0 ] && [ ! -s "$WORK/ho.err" ] && [ -f "$WORK/ho/hello/greet.txt" ] && [ -f "$WORK/ho/hello/repeat.txt" ] && [ "$(stat -f %i "$WORK/ho/hello/greet.txt")" = "$(stat -f %i "$WORK/ho/hello/repeat.txt")" ] && [ "$(stat -f %l "$WORK/ho/hello/greet.txt")" = "2" ]; then HOSET=1; fi
+[ "$HOSET" = "1" ] && pass "g9h-oshape" || fail "g9h-oshape"
+[ ! -L "$WORK/hc/hello" ] && [ -d "$WORK/hc/hello" ] && [ -z "$(ls "$WORK/hc/hello")" ] && pass "g9h-ctree" || fail "g9h-ctree"
+diff -r "$WORK/hc" "$WORK/hp" >/dev/null 2>&1 && pass "g9h-cplock" || fail "g9h-cplock"
+
+echo "== cell typ5-abc (CR-053 class-5 + desync cascade, PRE-009) =="
+python3 "$HERE/craft.py" settyprec "$V/aar/hello-raw.aar" "$WORK/ta0.aar" 1 545950410000 || die "craft-ta0"
+python3 "$HERE/craft.py" settyprec "$V/aar/hello-raw.aar" "$WORK/tb0.aar" 1 5459504200000000 || die "craft-tb0"
+python3 "$HERE/craft.py" settyprec "$V/aar/hello-raw.aar" "$WORK/tc0.aar" 1 545950430000000000000000 || die "craft-tc0"
+python3 "$HERE/craft.py" settyprec "$V/aar/hello-raw.aar" "$WORK/taF.aar" 1 545950410000FF || die "craft-taF"
+python3 "$HERE/craft.py" settyprec "$V/aar/hello-raw.aar" "$WORK/taZ.aar" 1 5459504100000000 || die "craft-taZ"
+python3 "$HERE/craft.py" settyprec "$V/aar/hello-raw.aar" "$WORK/taB5.aar" 1 5459504205000000 || die "craft-taB5"
+for n in ta0 tb0 tc0 taF taZ taB5; do
+  rm -rf "$WORK/t5o-$n" "$WORK/t5c-$n" "$WORK/t5p-$n"
+  ORC=0; sh "$ADAPTER" aar-decode "$WORK/$n.aar" "$WORK/t5o-$n" 2>"$WORK/t5o-$n.err" >/dev/null || ORC=$?
+  CRC=0; "$AAD" "$WORK/$n.aar" "$WORK/t5c-$n" 2>"$WORK/t5c-$n.err" >/dev/null || CRC=$?
+  PRC=0; python3 "$ROOT/proto/aad.py" "$WORK/$n.aar" "$WORK/t5p-$n" 2>"$WORK/t5p-$n.err" >/dev/null || PRC=$?
+  [ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && [ "$PRC" -eq 1 ] && pass "t5$n-exit" || fail "t5$n-exit"
+  diff "$WORK/t5o-$n.err" "$WORK/t5c-$n.err" >/dev/null 2>&1 && pass "t5$n-cbytes" || fail "t5$n-cbytes"
+  grep -v '^blocks:' "$WORK/t5p-$n.err" | diff "$WORK/t5o-$n.err" - >/dev/null 2>&1 && pass "t5$n-pbytes" || fail "t5$n-pbytes"
+  diff -r "$WORK/t5o-$n" "$WORK/t5c-$n" >/dev/null 2>&1 && diff -r "$WORK/t5c-$n" "$WORK/t5p-$n" >/dev/null 2>&1 && pass "t5$n-tree" || fail "t5$n-tree"
+done
+
+echo "== cell m2clean-cuts (PRE-007 unified short rule, self-gen) =="
+mkdir -p "$WORK/m2src"
+python3 -c "import random; r=random.Random(40608); open('$WORK/m2src/big1','wb').write(r.randbytes(500*1024)); open('$WORK/m2src/big2','wb').write(r.randbytes(3*1024*1024))"
+for blk in 1m 512k 128k; do
+  sh "$ADAPTER" aar-encode --alg lzfse --block "$blk" --threads 1 "$WORK/m2src" "$WORK/m2-$blk.aar" >/dev/null 2>&1 || die "m2 encode $blk"
+done
+cat > "$WORK/m2wrap.err" <<'EOF'
+Extraction failed
+extract failedError 0xbd011800
+No more data
+read error
+archive stream read error (blob)
+stream cancelled
+1 entries failed to extract
+EOF
+# Single-block oracle SET (phase-race): content==modal ALWAYS (31/31);
+# (tails,count) flips {(0t,c1),(2t,c2)} (M1sc fixed-tails WITHDRAWN).
+# spec: blk:k:expectC (ABS or bytes)
+for spec in "1m:1:262144" "1m:2:1310720" "512k:1:ABS" "512k:2:262144" "128k:8:262144" "128k:10:524288" "128k:12:786432" "128k:14:1048576"; do
+  blk=$(echo "$spec" | cut -d: -f1); k=$(echo "$spec" | cut -d: -f2); exp=$(echo "$spec" | cut -d: -f3)
+  CB=$(python3 -c "
+import struct; d=open('$WORK/m2-$blk.aar','rb').read(); o=12; bs=[]
+while o < len(d):
+    r,p=struct.unpack('>QQ',d[o:o+16]); bs.append((o,r,p)); o+=16+p
+print(bs[$k][0])") || die "m2 cut $spec"
+  head -c "$CB" "$WORK/m2-$blk.aar" > "$WORK/m2cut-$blk-$k.aar"
+  NB=$(python3 -c "
+import struct; d=open('$WORK/m2cut-$blk-$k.aar','rb').read(); o=12; n=0
+while o < len(d):
+    r,p=struct.unpack('>QQ',d[o:o+16]); o+=16+p; n+=1
+print(n)") || die "m2 count $spec"
+  T=m2$blk$k
+  rm -rf "$WORK/m2o-$T" "$WORK/m2c-$T" "$WORK/m2p-$T"
+  ORC=0; sh "$ADAPTER" aar-decode "$WORK/m2cut-$blk-$k.aar" "$WORK/m2o-$T" 2>"$WORK/m2o-$T.err" >/dev/null || ORC=$?
+  CRC=0; "$AAD" "$WORK/m2cut-$blk-$k.aar" "$WORK/m2c-$T" 2>"$WORK/m2c-$T.err" >/dev/null || CRC=$?
+  PRC=0; python3 "$ROOT/proto/aad.py" "$WORK/m2cut-$blk-$k.aar" "$WORK/m2p-$T" 2>"$WORK/m2p-$T.err" >/dev/null || PRC=$?
+  [ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && [ "$PRC" -eq 1 ] && pass "$T-exit" || fail "$T-exit"
+  CSZ=$([ -f "$WORK/m2c-$T/big2" ] && stat -f %z "$WORK/m2c-$T/big2" || echo ABS)
+  CNUM=$([ -f "$WORK/m2c-$T/big2" ] && stat -f %z "$WORK/m2c-$T/big2" || echo 0)
+  ONUM=$([ -f "$WORK/m2o-$T/big2" ] && stat -f %z "$WORK/m2o-$T/big2" || echo 0)
+  [ "$CSZ" = "$exp" ] && pass "$T-cmodal" || fail "$T-cmodal"
+  grep -v '^blocks:' "$WORK/m2p-$T.err" | diff "$WORK/m2c-$T.err" - >/dev/null 2>&1 && pass "$T-pmirror" || fail "$T-pmirror"
+  diff -r "$WORK/m2c-$T" "$WORK/m2p-$T" >/dev/null 2>&1 && pass "$T-cplock" || fail "$T-cplock"
+  cmp -s "$WORK/m2o-$T/big1" "$WORK/m2c-$T/big1" && pass "$T-big1" || fail "$T-big1"
+  OT=$(grep -c 'reading payload' "$WORK/m2o-$T.err" || true)
+  OCT=$(grep -o '[12] entries failed' "$WORK/m2o-$T.err" || echo NONE)
+  if [ "$NB" = "1" ]; then
+    diff "$WORK/m2wrap.err" "$WORK/m2c-$T.err" >/dev/null 2>&1 && pass "$T-ccbytes" || fail "$T-ccbytes"
+    SOSET=0
+    if [ "$ONUM" = "$CNUM" ] && [ "$OT" = "0" ] && [ "$OCT" = "1 entries failed" ]; then SOSET=1; fi
+    if [ "$ONUM" = "$CNUM" ] && [ "$OT" = "2" ] && [ "$OCT" = "2 entries failed" ]; then SOSET=1; fi
+    [ "$SOSET" = "1" ] && pass "$T-oshape" || fail "$T-oshape"
+  else
+    diff "$WORK/m2wrap.err" "$WORK/m2c-$T.err" >/dev/null 2>&1 && pass "$T-ccbytes" || fail "$T-ccbytes"
+    OSET=0
+    if [ "$ONUM" = "$CNUM" ] && [ "$OT" = "0" ] && [ "$OCT" = "1 entries failed" ]; then OSET=1; fi
+    if [ "$ONUM" = "$((CNUM - 262144))" ] && [ "$OT" = "2" ] && [ "$OCT" = "1 entries failed" ]; then OSET=1; fi
+    [ "$OSET" = "1" ] && pass "$T-oshape" || fail "$T-oshape"
+  fi
+done
+
+echo "== cell m2dev-truncpay (dev-formula + trunchdr-cap + A-028, self-gen) =="
+mkdir -p "$WORK/dsrcA" "$WORK/dsrcB" "$WORK/dsrcC" "$WORK/dsrc511" "$WORK/dsrc512" "$WORK/dsrc750" "$WORK/dsrc800" "$WORK/dsrc600" "$WORK/dsrc350"
+python3 -c "import random; r=random.Random(91827); open('$WORK/dsrcA/big1','wb').write(r.randbytes(500*1024)); open('$WORK/dsrcA/big2','wb').write(r.randbytes(2*1024*1024)); open('$WORK/dsrcB/big1','wb').write(r.randbytes(500*1024)); open('$WORK/dsrcB/big2','wb').write(r.randbytes(3*1024*1024)); open('$WORK/dsrcC/big1','wb').write(r.randbytes(500*1024)); open('$WORK/dsrcC/big2','wb').write(r.randbytes(2*1024*1024)); open('$WORK/dsrc511/big1','wb').write(r.randbytes(511*1024)); open('$WORK/dsrc511/big2','wb').write(r.randbytes(1024*1024)); open('$WORK/dsrc512/big1','wb').write(r.randbytes(512*1024)); open('$WORK/dsrc512/big2','wb').write(r.randbytes(1024*1024)); open('$WORK/dsrc750/big1','wb').write(r.randbytes(750*1024)); open('$WORK/dsrc750/big2','wb').write(r.randbytes(1024*1024)); open('$WORK/dsrc800/big1','wb').write(r.randbytes(800*1024)); open('$WORK/dsrc800/big2','wb').write(r.randbytes(1024*1024)); open('$WORK/dsrc600/big1','wb').write(r.randbytes(600*1024)); open('$WORK/dsrc600/big2','wb').write(r.randbytes(1024*1024)); open('$WORK/dsrc350/big1','wb').write(r.randbytes(350*1024)); open('$WORK/dsrc350/big2','wb').write(r.randbytes(300*1024))"
+sh "$ADAPTER" aar-encode --alg lzfse --block 128k --threads 1 "$WORK/dsrcA" "$WORK/dv-128k.aar" >/dev/null 2>&1 || die "dev encode 128k"
+sh "$ADAPTER" aar-encode --alg lzfse --block 1m --threads 1 "$WORK/dsrcB" "$WORK/dv-1m.aar" >/dev/null 2>&1 || die "dev encode 1m"
+sh "$ADAPTER" aar-encode --alg lzfse --block 256k --threads 1 "$WORK/dsrcC" "$WORK/dv-256k.aar" >/dev/null 2>&1 || die "dev encode 256k"
+for e in 511 512 750 800 600 350; do
+  sh "$ADAPTER" aar-encode --alg lzfse --block 128k --threads 1 "$WORK/dsrc$e" "$WORK/dv-edge$e.aar" >/dev/null 2>&1 || die "dev encode edge$e"
+done
+# spec blk:k:fracN:fracD:kind:expC:oset  (kind=pay|hdr|hard; oset=oracle sizes, 0=empty-file)
+for spec in "128k:6:1:2:pay:0:0" "128k:8:1:2:pay:262144:262144,0" "128k:10:1:2:pay:524288:524288,262144" "128k:12:1:2:pay:524288:524288,262144" "128k:14:1:2:pay:786432:786432,524288" "128k:16:1:2:pay:1048576:1048576,786432" "1m:2:1:2:pay:786432:524288,786432,1048576,1310720" "1m:2:1:4:pay:786432:524288,786432,1048576" "1m:2:3:4:pay:786432:524288,786432,1048576" "1m:1:1:2:pay:262144:262144,0" "1m:0:1:2:hard:ABS:ABS" "256k:8:1:2:pay:786432:524288,786432,1048576" "1m:2:10:1:HDR:524288:524288,786432,1048576" "128k:8:10:1:HDR:262144:262144,0" "128k:5:1:2:pay:ABS:ABS" "128k:7:1:2:pay:0:0,ABS" "edge511:6:1:2:pay:0:0" "edge512:6:1:2:pay:ABS:ABS" "edge750:8:1:2:pay:0:0" "edge800:8:1:2:pay:ABS:ABS" "edge600:7:1:2:pay:ABS:ABS" "edge350:4:1:2:pay:ABS:ABS"; do
+  blk=$(echo "$spec" | cut -d: -f1); k=$(echo "$spec" | cut -d: -f2); fn=$(echo "$spec" | cut -d: -f3); fd=$(echo "$spec" | cut -d: -f4); kind=$(echo "$spec" | cut -d: -f5); exp=$(echo "$spec" | cut -d: -f6); oset=$(echo "$spec" | cut -d: -f7)
+  T=dv$blk$k$fn$fd$kind
+  if [ "$kind" = "HDR" ]; then
+    CB=$(python3 -c "
+import struct; d=open('$WORK/dv-$blk.aar','rb').read(); o=12; bs=[]
+while o < len(d):
+    r,p=struct.unpack('>QQ',d[o:o+16]); bs.append((o,r,p)); o+=16+p
+print(bs[$k][0]+$fn)") || die "dev cut $spec"
+  else
+    CB=$(python3 -c "
+import struct; d=open('$WORK/dv-$blk.aar','rb').read(); o=12; bs=[]
+while o < len(d):
+    r,p=struct.unpack('>QQ',d[o:o+16]); bs.append((o,r,p)); o+=16+p
+print(bs[$k][0]+16+bs[$k][2]*$fn//$fd)") || die "dev cut $spec"
+  fi
+  head -c "$CB" "$WORK/dv-$blk.aar" > "$WORK/dcut-$T.aar"
+  rm -rf "$WORK/dvo-$T" "$WORK/dvc-$T" "$WORK/dvp-$T"; mkdir -p "$WORK/dvo-$T" "$WORK/dvc-$T" "$WORK/dvp-$T"
+  ORC=0; sh "$ADAPTER" aar-decode "$WORK/dcut-$T.aar" "$WORK/dvo-$T" 2>"$WORK/dvo-$T.err" >/dev/null || ORC=$?
+  CRC=0; "$AAD" "$WORK/dcut-$T.aar" "$WORK/dvc-$T" 2>"$WORK/dvc-$T.err" >/dev/null || CRC=$?
+  PRC=0; python3 "$ROOT/proto/aad.py" "$WORK/dcut-$T.aar" "$WORK/dvp-$T" 2>"$WORK/dvp-$T.err" >/dev/null || PRC=$?
+  [ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && [ "$PRC" -eq 1 ] && pass "$T-exit" || fail "$T-exit"
+  CSZ=$([ -f "$WORK/dvc-$T/big2" ] && stat -f %z "$WORK/dvc-$T/big2" || echo ABS)
+  OSZ=$([ -f "$WORK/dvo-$T/big2" ] && stat -f %z "$WORK/dvo-$T/big2" || echo ABS)
+  [ "$CSZ" = "$exp" ] && pass "$T-cmodal" || fail "$T-cmodal"
+  grep -v '^blocks:' "$WORK/dvp-$T.err" | diff "$WORK/dvc-$T.err" - >/dev/null 2>&1 && pass "$T-pmirror" || fail "$T-pmirror"
+  diff -r "$WORK/dvc-$T" "$WORK/dvp-$T" >/dev/null 2>&1 && pass "$T-cplock" || fail "$T-cplock"
+  mcnorm "$WORK/dvo-$T.err" > "$WORK/dvo-$T.n"; mcnorm "$WORK/dvc-$T.err" > "$WORK/dvc-$T.n"
+  diff "$WORK/dvo-$T.n" "$WORK/dvc-$T.n" >/dev/null 2>&1 && pass "$T-shape" || fail "$T-shape"
+  if [ "$kind" = "hard" ]; then
+    [ -z "$(ls "$WORK/dvo-$T")" ] && [ -z "$(ls "$WORK/dvc-$T")" ] && pass "$T-empty" || fail "$T-empty"
+  else
+    if [ "$blk" = "edge800" ] || [ "$blk" = "edge600" ]; then # A-029 race-pin (Q-029 CLOSED): oracle big1 modal-vs-minority {FULL,chunk-partial,ABSENT}; C modal FULL; partial = byte-prefix
+      if [ "$blk" = "edge800" ]; then FULL1=819200; PART1=524288; else FULL1=614400; PART1=262144; fi # edge600 minority 262144 first-hand (sweep GATE-d110318 flake-2; A-029 family)
+      OSZ1=$([ -f "$WORK/dvo-$T/big1" ] && stat -f %z "$WORK/dvo-$T/big1" || echo ABS)
+      case ",$FULL1,$PART1,ABS," in *,"$OSZ1,"*) pass "$T-big1";; *) fail "$T-big1";; esac
+      if [ -f "$WORK/dvo-$T/big1" ]; then head -c "$OSZ1" "$WORK/dsrc${blk#edge}/big1" | cmp -s - "$WORK/dvo-$T/big1" && pass "$T-oprefix" || fail "$T-oprefix"; else pass "$T-oprefix"; fi
+      cmp -s "$WORK/dsrc${blk#edge}/big1" "$WORK/dvc-$T/big1" && pass "$T-cbig1full" || fail "$T-cbig1full"
+    else cmp -s "$WORK/dvo-$T/big1" "$WORK/dvc-$T/big1" && pass "$T-big1" || fail "$T-big1"; fi
+    case ",$oset," in *,"$OSZ,"*) pass "$T-oshape";; *) fail "$T-oshape";; esac
+    if [ -f "$WORK/dvo-$T/big2" ] && [ -f "$WORK/dvc-$T/big2" ]; then
+      [ "$(stat -f %p "$WORK/dvo-$T/big2")" = "$(stat -f %p "$WORK/dvc-$T/big2")" ] && pass "$T-mode" || fail "$T-mode"
+    else
+      pass "$T-mode"
+    fi
+  fi
+done
+
 [ "$FAIL" -eq 0 ] && echo CBATTERY-GREEN || echo CBATTERY-RED
 exit "$FAIL"
