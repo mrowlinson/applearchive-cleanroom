@@ -1835,6 +1835,25 @@ _T8V4C = ((0, 0x03), (1, 0x40), (2, 0x00), (3, 0x00),
           (55, 0x07), (56, 0x2e), (57, 0xf6), (58, 0x3f),
           (59, 0xab), (60, 0x26), (61, 0xde), (62, 0x0b),
           (63, 0x7e))
+_T8WT = ("0cdd8cc5b724", "5f5ab3d1b724", "eada5506d724",
+          "44dbdba4d724", "fd5dc6d9d724", "8b5b83dbd724",
+          "9cde87dbd724", "ef5baee7d724", "6c5b7c0af724",
+          "7f59d7bcf724", "90dcdbbcf724", "d15a83ebf724",
+          "e2dd87ebf724", "9edd8cedf724", "ffd991edf724",
+          "835eb5c01725")
+_T8WC = ((0, 0x83), (1, 0x03), (2, 0x04), (3, 0x00),
+         (6, 0xf0), (7, 0x8c), (8, 0x00), (9, 0x20),
+         (10, 0x9c), (11, 0x17), (12, 0x1d), (13, 0xe1),
+         (14, 0x79), (15, 0xc0), (16, 0x79), (17, 0x5e),
+         (18, 0xee), (19, 0xed), (20, 0xd5), (21, 0x8a),
+         (22, 0x63), (23, 0x37), (24, 0x80), (25, 0xbc),
+         (26, 0x56), (27, 0xf8), (28, 0x9b), (29, 0xa2),
+         (30, 0x38), (31, 0x1e), (38, 0x92), (39, 0x4d),
+         (46, 0xb9), (47, 0xa5), (48, 0x4b), (49, 0xbc),
+         (50, 0x54), (51, 0x00), (52, 0xb5), (53, 0xe5),
+         (54, 0x42), (55, 0x07), (56, 0x2e), (57, 0xf6),
+         (58, 0x3f), (59, 0xab), (60, 0x26), (61, 0xde),
+         (62, 0x0b), (63, 0x7e))
 _T7CC = ((0, 0x75), (1, 0x01), (2, 0x00), (3, 0x00), (6, 0xc1),
          (7, 0x6b), (8, 0xfa), (9, 0xf6), (10, 0xcf),
          (11, 0x25), (12, 0x00), (13, 0xad), (14, 0xfc),
@@ -5031,6 +5050,26 @@ def main():
             if pay[b] != v:
                 return fail("T8V4 const %d" % b)
         print("CLOSED T8V4 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 10472:  # T8W: 16x16 walk V4T[0..15] + tab b40-45
+        off = n - 8735
+        if len(pay) != 64:
+            return fail("T8W paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if pay[4] != (l10 & 0xFF):
+            return fail("T8W lencode")
+        m = (off - 1482) & 15
+        q = (off - 1482) >> 4
+        if pay[5] != (0x4f + (off >= 1505) + (off >= 1633)):
+            return fail("T8W b5")
+        if pay[32:38].hex() != _T8V4T[q]:
+            return fail("T8W walk")
+        if pay[40:46].hex() != _T8WT[m]:
+            return fail("T8W tab")
+        for b, v in _T8WC:
+            if pay[b] != v:
+                return fail("T8W const %d" % b)
+        print("CLOSED T8W N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
