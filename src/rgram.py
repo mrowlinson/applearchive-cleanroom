@@ -248,6 +248,28 @@ _T5J3T = ("8cbcd0f1", "bc7cc3f2", "bc7cc4f2", "ec3cb7f3",
           "aebc55f8", "47fc32f9", "77bc25fa", "77bc26fa")
 _T5J3K = ("a5e41c36e76db8", "0ba41d56be0db5",
           "fee41c06c86db8", "f51a1de6b66db3")
+# T5K tables: 16-tabs b15/22/23/30/31 + b24-27 walk the J3
+# tab by k2 (full 16) + b5 edge @1499.
+_T5KT15 = (0xcb, 0xcb, 0xcb, 0xcd, 0xcd, 0xcf, 0xcf, 0xcf,
+           0xd1, 0xd1, 0xd1, 0xd3, 0xd3, 0xd3, 0xd3, 0xd3)
+_T5KT22 = (0xbd, 0xfd, 0xfd, 0xbd, 0xbd, 0xbd, 0xbd, 0xbd,
+           0xbd, 0xbd, 0xbd, 0xbd, 0xbd, 0xbd, 0xbd, 0xbd)
+_T5KT23 = (0x2f, 0x6f, 0x77, 0x27, 0x2f, 0x17, 0x1f, 0x27,
+           0x0f, 0x17, 0x1f, 0x07, 0x0f, 0x17, 0xc7, 0xcf)
+_T5KT30 = (0x88, 0x88, 0x08, 0xc8, 0x48, 0x88, 0x08, 0x88,
+           0xc8, 0x48, 0xc8, 0x08, 0x88, 0x08, 0xc8, 0x48)
+_T5KT31 = (0xcf, 0x07, 0x0d, 0xd8, 0xde, 0xdc, 0xe2, 0xe7,
+           0xe5, 0xeb, 0xf0, 0xef, 0xf4, 0xfa, 0xc5, 0xcb)
+_T5KC = ((0, 0x82), (1, 0x78), (2, 0x87), (3, 0x22), (6, 0x91),
+         (7, 0xb5), (8, 0xf4), (9, 0xcd), (10, 0x73),
+         (11, 0x00), (12, 0xb4), (13, 0x21), (14, 0xa4),
+         (16, 0x89), (17, 0x8c), (18, 0x66), (19, 0xed),
+         (20, 0x0d), (21, 0xb5), (28, 0x31), (29, 0x4f),
+         (32, 0x30), (33, 0x29), (34, 0xd1), (35, 0xe5),
+         (36, 0x51), (37, 0x57), (38, 0x9c), (39, 0xdc),
+         (40, 0xc8), (41, 0x75), (42, 0x9b), (43, 0x37),
+         (44, 0xcc), (45, 0xcd), (46, 0xdd), (47, 0xad),
+         (48, 0x2d), (49, 0xcc), (50, 0x06), (51, 0xfc))
 _T5J3C = ((0, 0x82), (1, 0x78), (2, 0x87), (3, 0x02), (6, 0x91),
           (7, 0xb5), (8, 0xf4), (9, 0xcd), (10, 0x73),
           (11, 0x00), (12, 0xb4), (16, 0x89), (17, 0x8c),
@@ -1494,6 +1516,29 @@ def main():
             if pay[b] != v:
                 return fail("%s const %d" % (tag, b))
         print("CLOSED %s N=%d off=%d" % (tag, n, off))
+        return 0
+    if n <= 3860:  # T5K: 16-tabs + J3-walk b24-27 + b5 edge
+        off = n - 2213
+        if len(pay) != 52:
+            return fail("T5K paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if grp(pay, tuple(range(32, 42))) != l10:
+            return fail("T5K lencode")
+        m = (off - 1392) & 15
+        k2 = (off - 1392) >> 4
+        if pay[5] != (252 + (off >= 1499) + (off >= 1627)):
+            return fail("T5K b5")
+        if pay[15] != _T5KT15[m] or pay[22] != _T5KT22[m] or \
+                pay[23] != _T5KT23[m]:
+            return fail("T5K tabA")
+        if pay[24:28].hex() != _T5J3T[k2]:
+            return fail("T5K walk")
+        if pay[30] != _T5KT30[m] or pay[31] != _T5KT31[m]:
+            return fail("T5K tabB")
+        for b, v in _T5KC:
+            if pay[b] != v:
+                return fail("T5K const %d" % b)
+        print("CLOSED T5K N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
