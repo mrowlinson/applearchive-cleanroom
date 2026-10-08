@@ -101,6 +101,10 @@ _T4JBAND = ((0x78, 0x8d, 0x81, 0x60, 0x92, 0x3f, 0x43),
             (0x18, 0x9c, 0x21, 0x40, 0x9c, 0x2f, 0x3c))
 # T5E E-plateau tables (PRE-018b/019b concurred): 16-tabs keyed off&15,
 # k2-tables keyed off>>4 (OPEN why).
+_T5DIP = ("947f38024b438a0df0e201006e44228b57b5b916088e845fe9049ef1b"
+          "07d7f47e934adb748e0536b08fc164b492833e5",
+          "00e51ffe4d8388cd164d09016e44228b57b5b916088e845fe9049e51b"
+          "07d7f47e934adb748e0a75608fc164b49285bfb")
 _T5ET5H = (0x20, 0x20, 0x40, 0x60, 0x60, 0x80, 0x80, 0xa0, 0xa0, 0xc0,
            0xc0, 0xe0, 0xe0, 0x00, 0x00, 0x20)
 _T5ET6 = (0xb9, 0xf9, 0xc0, 0x87, 0xc7, 0x8e, 0xce, 0x95, 0xd5, 0x9c,
@@ -115,6 +119,41 @@ _T5EK50 = (0xe8, 0x43, 0xb4, 0xf8, 0x80, 0xc4, 0x1f, 0x90, 0xeb, 0x2f,
            0xb7, 0xfb, 0x83, 0xc7, 0x0b, 0x93)
 _T5EK51 = (0xfe, 0x7b, 0xbe, 0xff, 0x7e, 0xbf, 0x3c, 0x7f, 0xfb, 0x3d,
            0xbb, 0xfc, 0x7b, 0xbc, 0xfe, 0x7c)
+# T5F-head tables (52-tier): F1 = L10(b4)+ramp(b10) over frozen body,
+# two halves (F1a/F1b); F2 = L10(b4)+10 T2-rows over frozen body.
+_T5F1A = ((0, 0x0f), (1, 0x00), (2, 0x00), (3, 0x00), (5, 0x03),
+          (6, 0xab), (7, 0x75), (8, 0x56), (9, 0xe5), (11, 0xc3),
+          (12, 0xd7), (13, 0x97), (14, 0x08), (15, 0x00), (16, 0x92),
+          (17, 0xaf), (18, 0x6a), (19, 0xb2), (20, 0xe6), (21, 0x5a),
+          (22, 0x8c), (23, 0x48), (24, 0x08), (25, 0x8e), (26, 0x84),
+          (27, 0x5f), (28, 0xe9), (29, 0x04), (30, 0x9e), (31, 0x51),
+          (32, 0xb0), (33, 0x7d), (34, 0x7f), (35, 0x47), (36, 0xe9),
+          (37, 0x34), (38, 0xad), (39, 0xb7), (40, 0x48), (41, 0xe0),
+          (42, 0xa7), (43, 0x56), (44, 0x08), (45, 0xfc), (46, 0x16),
+          (47, 0x4b), (48, 0x49), (49, 0x28), (50, 0x5b), (51, 0xfb))
+_T5F1B = ((0, 0x0f), (1, 0x00), (2, 0x00), (3, 0x00), (5, 0x03),
+          (6, 0xab), (7, 0x75), (8, 0x16), (9, 0xe6), (11, 0xc4),
+          (12, 0xd7), (13, 0x97), (14, 0x08), (15, 0x00), (16, 0x92),
+          (17, 0xaf), (18, 0x6a), (19, 0xb2), (20, 0xe6), (21, 0x5a),
+          (22, 0x8c), (23, 0x48), (24, 0x08), (25, 0x8e), (26, 0x84),
+          (27, 0x5f), (28, 0xe9), (29, 0x04), (30, 0x9e), (31, 0x51),
+          (32, 0xb0), (33, 0x7d), (34, 0x7f), (35, 0x47), (36, 0xe9),
+          (37, 0x34), (38, 0xad), (39, 0xb7), (40, 0x48), (41, 0xe0),
+          (42, 0xa7), (43, 0x56), (44, 0x08), (45, 0xfc), (46, 0x16),
+          (47, 0x4b), (48, 0x49), (49, 0x28), (50, 0x5b), (51, 0xfb))
+_T5F2C = ((0, 0x03), (1, 0x00), (2, 0x00), (3, 0x00), (5, 0x53),
+          (6, 0xef), (7, 0x9d), (11, 0xf1), (12, 0xba), (13, 0x01),
+          (14, 0x04), (19, 0x64), (20, 0xe6), (21, 0x5a), (22, 0x8c),
+          (23, 0x48), (24, 0x08), (25, 0x8e), (26, 0x84), (27, 0x5f),
+          (28, 0xe9), (29, 0x04), (30, 0x9e), (31, 0x51), (32, 0xb0),
+          (33, 0x7d), (34, 0x7f), (35, 0x47), (36, 0xe9), (37, 0x34),
+          (38, 0xad), (39, 0xb7), (40, 0x48), (41, 0xe0), (42, 0xa7),
+          (43, 0x56), (44, 0x08), (45, 0xfc), (46, 0x16), (47, 0x4b),
+          (48, 0x49), (49, 0x28), (50, 0x5b), (51, 0xfb))
+_T5F2T = ("73bc56c8f31106", "f3bc3068333705", "b37c520093ee04",
+          "137c5300f37f05", "d37cb63813a604", "733c555093ee04",
+          "f33c3540333705", "933c3600333705", "33fc579893ee04",
+          "d3bc586093ee04")
 
 
 def bit(p, i):
@@ -890,6 +929,38 @@ def main():
             if pay[b] != v:
                 return fail("T5E const %d" % b)
         print("CLOSED T5E N=%d off=%d" % (n, off))
+        return 0
+    if n <= 2496:  # T5 F-head: dip-pair + F1 ramp + F2
+        off = n - 2213
+        if off <= 257:  # 48B dip literals N=2469/2470
+            if len(pay) != 48 or pay.hex() != _T5DIP[off - 256]:
+                return fail("T5DIP N=%d" % n)
+            print("CLOSED T5DIP N=%d" % n)
+            return 0
+        if len(pay) != 52:
+            return fail("T5F paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if grp(pay, tuple(range(32, 42))) != l10:
+            return fail("T5F lencode")
+        if off <= 273:  # F1 ramp halves
+            if off <= 265:
+                consts, ramp = _T5F1A, (0x8b + (off - 258) * 8) & 0xff
+            else:
+                consts, ramp = _T5F1B, (0x05 + (off - 266) * 8) & 0xff
+            tag = "T5F1"
+        else:  # F2 fixed rows
+            consts, ramp = _T5F2C, None
+            tag = "T5F2"
+        if ramp is not None and pay[10] != ramp:
+            return fail("T5F1 b10")
+        if ramp is None:
+            row = _T5F2T[off - 274]
+            if pay[8:11].hex() + pay[15:19].hex() != row:
+                return fail("T5F2 row")
+        for b, v in consts:
+            if pay[b] != v:
+                return fail("%s const %d" % (tag, b))
+        print("CLOSED %s N=%d off=%d" % (tag, n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
