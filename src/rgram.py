@@ -1105,6 +1105,22 @@ _T7K3C = ((0, 0xf4), (1, 0x62), (2, 0x17), (3, 0x00),
           (37, 0x2d), (38, 0x62), (39, 0x3c), (40, 0x81),
           (41, 0x5b), (42, 0x83), (43, 0x23), (44, 0xb1),
           (45, 0x97))
+_T7LT = ("79d83b52", "32de8752", "8f588c52", "5ad94255",
+          "81d88456", "14da995d", "ffdb9d5d", "c1d9ce5e",
+          "7adf1a5f", "d7591f5f", "cfde6067", "2c596567",
+          "175b6967", "3e5aab68", "925ee668", "05dfad72")
+_T7LC = ((0, 0x4e), (1, 0x2f), (2, 0x76), (3, 0x01),
+         (6, 0xde), (7, 0x0c), (8, 0x00), (9, 0x80),
+         (10, 0x8f), (11, 0xdf), (12, 0x39), (13, 0x76),
+         (14, 0x0c), (15, 0xe7), (16, 0x49), (17, 0x5f),
+         (18, 0x4d), (19, 0x82), (20, 0x32), (21, 0xdd),
+         (22, 0x35), (23, 0xbf), (24, 0xa8), (25, 0xbc),
+         (26, 0x21), (27, 0x67), (28, 0x14), (29, 0x7d),
+         (30, 0xa4), (31, 0xb6), (32, 0x14), (33, 0x2d),
+         (34, 0x62), (35, 0x3c), (36, 0x81), (37, 0x5b),
+         (38, 0x83), (39, 0x23), (40, 0xb1), (41, 0x97),
+         (44, 0xa1), (45, 0xbc), (46, 0x37), (47, 0x4d),
+         (48, 0xd6), (49, 0xba), (50, 0xc5))
 _T7CC = ((0, 0x75), (1, 0x01), (2, 0x00), (3, 0x00), (6, 0xc1),
          (7, 0x6b), (8, 0xfa), (9, 0xf6), (10, 0xcf),
          (11, 0x25), (12, 0x00), (13, 0xad), (14, 0xfc),
@@ -3616,6 +3632,28 @@ def main():
             if pay[b] != v:
                 return fail("T7K3 const %d" % b)
         print("CLOSED T7K3 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 8036:  # T7L: 16x16 walk K3T[0..15] + tab b56-59
+        off = n - 6041
+        if len(pay) != 60:
+            return fail("T7L paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if pay[4] != (l10 & 0xFF):
+            return fail("T7L lencode")
+        m = (off - 1740) & 15
+        q = (off - 1740) >> 4
+        if pay[5] != (0xfc + (off >= 1767) + (off >= 1895)):
+            return fail("T7L b5")
+        walk = bytes((pay[42], pay[43], pay[51], pay[52], pay[53],
+                      pay[54], pay[55])).hex()
+        if walk != _T7K3T[q]:
+            return fail("T7L walk")
+        if pay[56:60].hex() != _T7LT[m]:
+            return fail("T7L tab")
+        for b, v in _T7LC:
+            if pay[b] != v:
+                return fail("T7L const %d" % b)
+        print("CLOSED T7L N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
