@@ -253,12 +253,16 @@ static int known_pbz(const unsigned char *d) {
 }
 
 /* parse_chain: 0 ok, -1 hard fail (cascade printed), 1 midchain soft
- * fail ((blob) path: inner = decoded prefix, mf filled, cascade later). */
-static int parse_chain(const Buf *file, Buf *inner, MidFail *mf) {
+ * fail ((blob) path: inner = decoded prefix, mf filled, cascade later).
+ * nblocks = decoded outer-block count (raw/empty single-piece = 1);
+ * clean-path presence gate uses (innerlen, nblocks) as (whole, kcut). */
+static int parse_chain(const Buf *file, Buf *inner, MidFail *mf,
+                       size_t *nblocks) {
     const unsigned char *d = file->data;
     size_t n = file->len;
     if (n == 0) { /* empty archive: silent empty (tr-0, q4) */
         inner->data = malloc(1); inner->len = 0;
+        *nblocks = 1;
         return inner->data ? 0 : -1;
     }
     if (n < 6) { emit_stream_tail(); fails = 1; return -1; }
@@ -266,6 +270,7 @@ static int parse_chain(const Buf *file, Buf *inner, MidFail *mf) {
         unsigned char *c = malloc(n);
         memcpy(c, d, n);
         inner->data = c; inner->len = n;
+        *nblocks = 1;
         return 0;
     }
     if (n < 12) { emit_nonsupp(); fails = 1; return -1; }
@@ -363,6 +368,7 @@ static int parse_chain(const Buf *file, Buf *inner, MidFail *mf) {
     }
     if (off != n) { FAIL("chain overrun\n"); goto err; }
     *inner = acc;
+    *nblocks = (size_t)k;
     return 0;
 err:
     free(acc.data);
@@ -774,7 +780,7 @@ static int safe_join(const char *root, const unsigned char *rel, size_t rlen,
 static int extract(const Item *items, size_t nitems, const char *root,
                      int fcls, int fsub, size_t shortidx, int midchain,
                      int shortpresent, unsigned long long whole,
-                     size_t shortend) {
+                     size_t shortend, size_t nblocks) {
     char (*repl)[4096] = malloc(REPLC * sizeof *repl);
     size_t nrepl = 0;
     { /* root gated on scratch repl (a replaced root must not taint all) */
@@ -817,7 +823,7 @@ static int extract(const Item *items, size_t nitems, const char *root,
         }
     }
     unsigned fails = 0, sfails = 0;
-    int hdr = 0, dirfail = 0, aborted = 0, shortstop = 0;
+    int hdr = 0, dirfail = 0, aborted = 0, shortstop = 0, wrote_short = 0;
     /* phase 1: create everything, forward. aborts stop creation only. */
     for (size_t k = 0; k < nitems && !aborted && !shortstop; k++) {
         const Item *it = &items[k];
@@ -882,16 +888,17 @@ static int extract(const Item *items, size_t nitems, const char *root,
             if (!sdd) { fsts[nfsts++] = k; fails++; continue; }
             size_t sdoff = (size_t)(sdd - it->blobs);
             size_t sdav = sdoff <= it->bloblen ? it->bloblen - sdoff : 0;
-            if (sdav < sdl) continue; /* DAT-short: silent skip + wrapper */
-            shortfull = 1; /* DAT-complete: normal F path (FULL write) */
+            if (sdav >= sdl)
+                shortfull = 1; /* DAT-complete: normal F path (FULL) */
+            /* else DAT-short: unified presence+content below (PRE-007) */
         }
         if (k == shortidx && !shortfull) {
-            if (!midchain) {
-                /* non-F short: normal create once, then stop */
-                shortstop = 1;
-            } else if (t->num == 'F') {
-                /* midchain short file: absent unless present-rule or
-                 * DAT-complete; FULL DAT if complete else 256K chunks. */
+            if (t->num == 'F') {
+                /* unified presence+content (midchain + clean PRE-007):
+                 * whole/kcut = (mf / innerlen,nblocks) per path. */
+                /* unified short file (midchain + clean PRE-007):
+                 * absent unless present-rule or DAT-complete; FULL
+                 * DAT if complete else 256K chunks; want-0 absent. */
                 size_t dl = 0;
                 const unsigned char *dd = blob_for(it, "DAT", &dl);
                 size_t doff = 0, dav = 0;
@@ -911,6 +918,9 @@ static int extract(const Item *items, size_t nitems, const char *root,
                 unsigned long long want = hch * 262144ULL;
                 size_t wlen = datcomplete ? dl :
                     (want < dav ? (size_t)want : dav);
+                if (!datcomplete && wlen == 0 && !midchain)
+                    break; /* clean want-0: absent, no file (v512b1).
+                            * midchain want-0: EMPTY file kept (cxA/E/F). */
                 char *sl = strrchr(target, '/');
                 if (sl) {
                     *sl = 0;
@@ -945,6 +955,7 @@ static int extract(const Item *items, size_t nitems, const char *root,
                 fclose(f);
                 memcpy(files[nfiles].path, target, strlen(target) + 1);
                 files[nfiles].idx = k; files[nfiles].islink = 0; nfiles++;
+                if (wlen > 0) wrote_short = 1;
                 break; /* rest skipped */
             } else {
                 shortstop = 1;
@@ -1205,6 +1216,13 @@ static int extract(const Item *items, size_t nitems, const char *root,
             break;
         }
     }
+    if (fcls == PF_BLOBOVERRUN && !aborted && !midchain && nblocks == 1 &&
+        wrote_short) {
+        /* single-block short-content: fixed 2 tails + silent second
+         * count (M1sc 4/4; mechanism unknown, bytes pinned). */
+        fprintf(stderr, "reading payload\nreading payload\n");
+        fails++; sfails++;
+    }
     /* phase 2: files meta, strict reverse (bad2, Q1 re-probe) */
     for (size_t i = nfiles; i-- > 0;) {
         const Item *it = &items[files[i].idx];
@@ -1341,9 +1359,10 @@ int main(int argc, char **argv) {
     size_t nitems = 0, shortidx = (size_t)-1, shortavail = 0, shortend = 0;
     MidFail mf;
     memset(&mf, 0, sizeof mf);
+    size_t nblocks = 1;
     int rc = 1;
     if (read_file(argv[1], &file)) goto out;
-    int cr = parse_chain(&file, &inner, &mf);
+    int cr = parse_chain(&file, &inner, &mf, &nblocks);
     if (cr < 0) goto out;
     int fcls = 0, fsub = 0;
     if (parse_inner(&inner, &items, &nitems, &fcls, &fsub, &shortidx,
@@ -1355,14 +1374,21 @@ int main(int argc, char **argv) {
                       shortavail + 0ULL >= (mf.kcut > 0 ? mf.kcut - 1 : 0) *
                       65536ULL;
         extract(items, nitems, argv[2], fcls, fsub, shortidx, 1, present,
-                mf.whole, shortend);
+                mf.whole, shortend, nblocks);
         emit_midblob(&mf);
         fprintf(stderr, "1 entries failed to extract\n");
         fails = 1;
         goto out;
     }
-    if (extract(items, nitems, argv[2], fcls, fsub, shortidx, 0, 0, 0, 0))
-        goto out;
+    /* clean path: presence gate on (innerlen, nblocks) (PRE-007). */
+    {
+        int present = shortidx != (size_t)-1 && inner.len >= 524288 &&
+                      shortavail + 0ULL >= (nblocks > 0 ? nblocks - 1 : 0) *
+                      65536ULL;
+        if (extract(items, nitems, argv[2], fcls, fsub, shortidx, 0, present,
+                    (unsigned long long)inner.len, shortend, nblocks))
+            goto out;
+    }
     rc = 0;
 out:
     free(file.data); free(inner.data);

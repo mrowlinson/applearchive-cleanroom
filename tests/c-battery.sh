@@ -722,9 +722,23 @@ runcx() { # $1=name $2=file $3=wantsize
   [ "$PRC" -eq 1 ] && pass "cx$1-pexit" || fail "cx$1-pexit"
   mcnorm "$WORK/cx$1-o.err" > "$WORK/cx$1-o.n"; mcnorm "$WORK/cx$1.err" > "$WORK/cx$1.n"
   diff "$WORK/cx$1-o.n" "$WORK/cx$1.n" >/dev/null 2>&1 && pass "cx$1-shape" || fail "cx$1-shape"
-  [ "$(stat -f %z "$WORK/o-cx$1/$2" 2>/dev/null)" = "$3" ] && [ "$(stat -f %z "$WORK/c-cx$1/$2" 2>/dev/null)" = "$3" ] && pass "cx$1-size" || fail "cx$1-size"
-  cmp -s "$WORK/o-cx$1/$2" "$WORK/c-cx$1/$2" && pass "cx$1-cmp" || fail "cx$1-cmp"
-  [ "$(stat -f %p "$WORK/o-cx$1/$2")" = "$(stat -f %p "$WORK/c-cx$1/$2")" ] && pass "cx$1-mode" || fail "cx$1-mode"
+  # Race-SET (M1 tails legs): C pinned modal $3; oracle $3 or one chunk
+  # less (0->ABSENT); reduced content is a byte-prefix (verified).
+  CXO=$([ -f "$WORK/o-cx$1/$2" ] && stat -f %z "$WORK/o-cx$1/$2" || echo ABS)
+  CXC=$([ -f "$WORK/c-cx$1/$2" ] && stat -f %z "$WORK/c-cx$1/$2" || echo ABS)
+  CXSET=0
+  if [ "$CXC" = "$3" ]; then
+    if [ "$CXO" = "$3" ]; then CXSET=1; fi
+    if [ "$3" = "0" ] && [ "$CXO" = "ABS" ]; then CXSET=1; fi
+    if [ "$3" != "0" ] && [ "$CXO" = "$(($3 - 262144))" ]; then CXSET=1; fi
+  fi
+  [ "$CXSET" = "1" ] && pass "cx$1-size" || fail "cx$1-size"
+  CXCMP=0
+  if [ "$CXO" = "$CXC" ] && [ "$CXO" != "ABS" ] && cmp -s "$WORK/o-cx$1/$2" "$WORK/c-cx$1/$2"; then CXCMP=1; fi
+  if [ "$CXO" = "ABS" ] && [ "$CXC" = "0" ]; then CXCMP=1; fi
+  if [ "$CXO" != "ABS" ] && [ "$CXO" != "$CXC" ] && head -c "$CXO" "$WORK/c-cx$1/$2" | cmp -s - "$WORK/o-cx$1/$2"; then CXCMP=1; fi
+  [ "$CXCMP" = "1" ] && pass "cx$1-cmp" || fail "cx$1-cmp"
+  if [ "$CXO" = "ABS" ]; then pass "cx$1-mode"; else [ "$(stat -f %p "$WORK/o-cx$1/$2")" = "$(stat -f %p "$WORK/c-cx$1/$2")" ] && pass "cx$1-mode" || fail "cx$1-mode"; fi
   diff -r "$WORK/c-cx$1" "$WORK/p-cx$1" >/dev/null 2>&1 && pass "cx$1-lock" || fail "cx$1-lock"
 }
 mkcx 0 4 A; runcx A big 0
@@ -875,13 +889,16 @@ for shape in sym file dangling; do
   ORC=0; sh "$ADAPTER" aar-decode "$WORK/g9.aar" "$WORK/go-$shape" 2>"$WORK/go-$shape.err" >/dev/null || ORC=$?
   CRC=0; "$AAD" "$WORK/g9.aar" "$WORK/gc-$shape" 2>"$WORK/gc-$shape.err" >/dev/null || CRC=$?
   PRC=0; python3 "$ROOT/proto/aad.py" "$WORK/g9.aar" "$WORK/gp-$shape" 2>"$WORK/gp-$shape.err" >/dev/null || PRC=$?
-  [ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && [ "$PRC" -eq 1 ] && pass "g9$shape-exit" || fail "g9$shape-exit"
+  OEXIT=0; [ "$ORC" -eq 1 ] && OEXIT=1
+  if [ "$ORC" -eq 0 ] && [ ! -s "$WORK/go-$shape.err" ] && cmp -s "$WORK/go-$shape/a/f.txt" "$WORK/g9src/a/f.txt" && [ -L "$WORK/go-$shape/a/l.lnk" ]; then OEXIT=1; fi
+  [ "$OEXIT" -eq 1 ] && [ "$CRC" -eq 1 ] && [ "$PRC" -eq 1 ] && pass "g9$shape-exit" || fail "g9$shape-exit"
   [ "$(ls "$WORK/gv-$shape")" = "marker" ] && [ "$(ls "$WORK/gw-$shape")" = "marker" ] && [ "$(ls "$WORK/gx-$shape")" = "marker" ] && pass "g9$shape-victim" || fail "g9$shape-victim"
   diff "$WORK/g9modal.err" "$WORK/gc-$shape.err" >/dev/null 2>&1 && pass "g9$shape-cmodal" || fail "g9$shape-cmodal"
   grep -v '^blocks:' "$WORK/gp-$shape.err" | diff "$WORK/gc-$shape.err" - >/dev/null 2>&1 && pass "g9$shape-pmirror" || fail "g9$shape-pmirror"
   OSET=0
+  if [ "$ORC" -eq 0 ] && [ ! -s "$WORK/go-$shape.err" ] && cmp -s "$WORK/go-$shape/a/f.txt" "$WORK/g9src/a/f.txt" && [ -L "$WORK/go-$shape/a/l.lnk" ]; then OSET=1; fi
   if grep -q '^Error 0x83058800$' "$WORK/go-$shape.err" 2>/dev/null; then
-    N=$(grep -c 'a parent of path is not a directory' "$WORK/go-$shape.err")
+    N=$(grep -c 'a parent of path is not a directory' "$WORK/go-$shape.err" || true)
     if [ "$N" = "2" ] && grep -q '2 entries failed' "$WORK/go-$shape.err" \
        && grep -q 'not a directory: a/f.txt' "$WORK/go-$shape.err" \
        && grep -q 'not a directory: a/l.lnk' "$WORK/go-$shape.err" \
@@ -921,13 +938,16 @@ ln -s "$WORK/pv" "$WORK/po/a"; ln -s "$WORK/pw" "$WORK/pc/a"; ln -s "$WORK/px" "
 ORC=0; sh "$ADAPTER" aar-decode "$WORK/g9p.aar" "$WORK/po" 2>"$WORK/po.err" >/dev/null || ORC=$?
 CRC=0; "$AAD" "$WORK/g9p.aar" "$WORK/pc" 2>"$WORK/pc.err" >/dev/null || CRC=$?
 PRC=0; python3 "$ROOT/proto/aad.py" "$WORK/g9p.aar" "$WORK/pp" 2>"$WORK/pp.err" >/dev/null || PRC=$?
-[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && [ "$PRC" -eq 1 ] && pass "g9p-exit" || fail "g9p-exit"
+POEXIT=0; [ "$ORC" -eq 1 ] && POEXIT=1
+if [ "$ORC" -eq 0 ] && [ ! -s "$WORK/po.err" ] && [ -p "$WORK/po/a/f.txt" ] && [ -L "$WORK/po/a/l.lnk" ]; then POEXIT=1; fi
+[ "$POEXIT" -eq 1 ] && [ "$CRC" -eq 1 ] && [ "$PRC" -eq 1 ] && pass "g9p-exit" || fail "g9p-exit"
 [ "$(ls "$WORK/pv")" = "marker" ] && [ "$(ls "$WORK/pw")" = "marker" ] && [ "$(ls "$WORK/px")" = "marker" ] && pass "g9p-victim" || fail "g9p-victim"
 diff "$WORK/g9pmodal.err" "$WORK/pc.err" >/dev/null 2>&1 && pass "g9p-cmodal" || fail "g9p-cmodal"
 grep -v '^blocks:' "$WORK/pp.err" | diff "$WORK/pc.err" - >/dev/null 2>&1 && pass "g9p-pmirror" || fail "g9p-pmirror"
 POSET=0
+if [ "$ORC" -eq 0 ] && [ ! -s "$WORK/po.err" ] && [ -p "$WORK/po/a/f.txt" ] && [ -L "$WORK/po/a/l.lnk" ]; then POSET=1; fi
 if grep -q '^Error 0x83058800$' "$WORK/po.err" 2>/dev/null; then
-  N=$(grep -c 'a parent of path is not a directory' "$WORK/po.err")
+  N=$(grep -c 'a parent of path is not a directory' "$WORK/po.err" || true)
   if [ "$N" = "2" ] && grep -q '2 entries failed' "$WORK/po.err" \
      && grep -q 'not a directory: a/f.txt' "$WORK/po.err" \
      && grep -q 'not a directory: a/l.lnk' "$WORK/po.err" \
@@ -990,6 +1010,83 @@ for n in ta0 tb0 tc0 taF taZ taB5; do
   diff "$WORK/t5o-$n.err" "$WORK/t5c-$n.err" >/dev/null 2>&1 && pass "t5$n-cbytes" || fail "t5$n-cbytes"
   grep -v '^blocks:' "$WORK/t5p-$n.err" | diff "$WORK/t5o-$n.err" - >/dev/null 2>&1 && pass "t5$n-pbytes" || fail "t5$n-pbytes"
   diff -r "$WORK/t5o-$n" "$WORK/t5c-$n" >/dev/null 2>&1 && diff -r "$WORK/t5c-$n" "$WORK/t5p-$n" >/dev/null 2>&1 && pass "t5$n-tree" || fail "t5$n-tree"
+done
+
+echo "== cell m2clean-cuts (PRE-007 unified short rule, self-gen) =="
+mkdir -p "$WORK/m2src"
+python3 -c "import random; r=random.Random(40608); open('$WORK/m2src/big1','wb').write(r.randbytes(500*1024)); open('$WORK/m2src/big2','wb').write(r.randbytes(3*1024*1024))"
+for blk in 1m 512k 128k; do
+  sh "$ADAPTER" aar-encode --alg lzfse --block "$blk" --threads 1 "$WORK/m2src" "$WORK/m2-$blk.aar" >/dev/null 2>&1 || die "m2 encode $blk"
+done
+cat > "$WORK/m2wrap.err" <<'EOF'
+Extraction failed
+extract failedError 0xbd011800
+No more data
+read error
+archive stream read error (blob)
+stream cancelled
+1 entries failed to extract
+EOF
+cat > "$WORK/m2single.err" <<'EOF'
+Extraction failed
+extract failedError 0xbd011800
+No more data
+read error
+archive stream read error (blob)
+stream cancelled
+reading payload
+reading payload
+2 entries failed to extract
+EOF
+# spec: blk:k:expectC (ABS or bytes)
+for spec in "1m:1:262144" "1m:2:1310720" "512k:1:ABS" "512k:2:262144" "128k:8:262144" "128k:10:524288" "128k:12:786432" "128k:14:1048576"; do
+  blk=$(echo "$spec" | cut -d: -f1); k=$(echo "$spec" | cut -d: -f2); exp=$(echo "$spec" | cut -d: -f3)
+  CB=$(python3 -c "
+import struct; d=open('$WORK/m2-$blk.aar','rb').read(); o=12; bs=[]
+while o < len(d):
+    r,p=struct.unpack('>QQ',d[o:o+16]); bs.append((o,r,p)); o+=16+p
+print(bs[$k][0])") || die "m2 cut $spec"
+  head -c "$CB" "$WORK/m2-$blk.aar" > "$WORK/m2cut-$blk-$k.aar"
+  NB=$(python3 -c "
+import struct; d=open('$WORK/m2cut-$blk-$k.aar','rb').read(); o=12; n=0
+while o < len(d):
+    r,p=struct.unpack('>QQ',d[o:o+16]); o+=16+p; n+=1
+print(n)") || die "m2 count $spec"
+  T=m2$blk$k
+  rm -rf "$WORK/m2o-$T" "$WORK/m2c-$T" "$WORK/m2p-$T"
+  ORC=0; sh "$ADAPTER" aar-decode "$WORK/m2cut-$blk-$k.aar" "$WORK/m2o-$T" 2>"$WORK/m2o-$T.err" >/dev/null || ORC=$?
+  CRC=0; "$AAD" "$WORK/m2cut-$blk-$k.aar" "$WORK/m2c-$T" 2>"$WORK/m2c-$T.err" >/dev/null || CRC=$?
+  PRC=0; python3 "$ROOT/proto/aad.py" "$WORK/m2cut-$blk-$k.aar" "$WORK/m2p-$T" 2>"$WORK/m2p-$T.err" >/dev/null || PRC=$?
+  [ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && [ "$PRC" -eq 1 ] && pass "$T-exit" || fail "$T-exit"
+  CSZ=$([ -f "$WORK/m2c-$T/big2" ] && stat -f %z "$WORK/m2c-$T/big2" || echo ABS)
+  CNUM=$([ -f "$WORK/m2c-$T/big2" ] && stat -f %z "$WORK/m2c-$T/big2" || echo 0)
+  ONUM=$([ -f "$WORK/m2o-$T/big2" ] && stat -f %z "$WORK/m2o-$T/big2" || echo 0)
+  [ "$CSZ" = "$exp" ] && pass "$T-cmodal" || fail "$T-cmodal"
+  grep -v '^blocks:' "$WORK/m2p-$T.err" | diff "$WORK/m2c-$T.err" - >/dev/null 2>&1 && pass "$T-pmirror" || fail "$T-pmirror"
+  diff -r "$WORK/m2c-$T" "$WORK/m2p-$T" >/dev/null 2>&1 && pass "$T-cplock" || fail "$T-cplock"
+  cmp -s "$WORK/m2o-$T/big1" "$WORK/m2c-$T/big1" && pass "$T-big1" || fail "$T-big1"
+  OT=$(grep -c 'reading payload' "$WORK/m2o-$T.err" || true)
+  OCT=$(grep -o '[12] entries failed' "$WORK/m2o-$T.err" || echo NONE)
+  if [ "$NB" = "1" ] && [ "$CSZ" != "ABS" ]; then
+    diff "$WORK/m2single.err" "$WORK/m2c-$T.err" >/dev/null 2>&1 && pass "$T-ccbytes" || fail "$T-ccbytes"
+    SOSET=0
+    if [ "$ONUM" = "$CNUM" ] && [ "$OT" = "0" ] && [ "$OCT" = "1 entries failed" ]; then SOSET=1; fi
+    if [ "$ONUM" = "$CNUM" ] && [ "$OT" = "2" ] && [ "$OCT" = "2 entries failed" ]; then SOSET=1; fi
+    if [ "$ONUM" = "$((CNUM - 262144))" ] && [ "$OT" = "2" ] && { [ "$OCT" = "1 entries failed" ] || [ "$OCT" = "2 entries failed" ]; }; then SOSET=1; fi
+    [ "$SOSET" = "1" ] && pass "$T-oshape" || fail "$T-oshape"
+  elif [ "$NB" = "1" ]; then
+    diff "$WORK/m2wrap.err" "$WORK/m2c-$T.err" >/dev/null 2>&1 && pass "$T-ccbytes" || fail "$T-ccbytes"
+    SOSET=0
+    if [ "$ONUM" = "0" ] && [ "$OT" = "0" ] && [ "$OCT" = "1 entries failed" ]; then SOSET=1; fi
+    if [ "$ONUM" = "0" ] && [ "$OT" = "2" ] && [ "$OCT" = "2 entries failed" ]; then SOSET=1; fi
+    [ "$SOSET" = "1" ] && pass "$T-oshape" || fail "$T-oshape"
+  else
+    diff "$WORK/m2wrap.err" "$WORK/m2c-$T.err" >/dev/null 2>&1 && pass "$T-ccbytes" || fail "$T-ccbytes"
+    OSET=0
+    if [ "$ONUM" = "$CNUM" ] && [ "$OT" = "0" ] && [ "$OCT" = "1 entries failed" ]; then OSET=1; fi
+    if [ "$ONUM" = "$((CNUM - 262144))" ] && [ "$OT" = "2" ] && [ "$OCT" = "1 entries failed" ]; then OSET=1; fi
+    [ "$OSET" = "1" ] && pass "$T-oshape" || fail "$T-oshape"
+  fi
 done
 
 [ "$FAIL" -eq 0 ] && echo CBATTERY-GREEN || echo CBATTERY-RED

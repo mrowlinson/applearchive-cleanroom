@@ -528,7 +528,8 @@ def _under_repl(target, repl):
 
 
 def extract(items, root, fcls=0, fsub=0, shortidx=-1, midchain=False,
-            shortpresent=False, whole=0, shortend=0, inner=b""):
+            shortpresent=False, whole=0, shortend=0, inner=b"",
+            nblocks=1):
     _mkparents(os.path.abspath(root), [])  # scratch repl: root never taints
     files = []
     dirs = []
@@ -552,6 +553,7 @@ def extract(items, root, fcls=0, fsub=0, shortidx=-1, midchain=False,
     dirfail = False
     aborted = False
     shortstop = False
+    wrote_short = False
 
     def abort(msg):
         if msg:
@@ -610,10 +612,34 @@ def extract(items, root, fcls=0, fsub=0, shortidx=-1, midchain=False,
             break
         if midchain and shortidx == -1 and items and k == len(items) - 1:
             continue  # midchain clean parse: last item dropped (E4)
-        if k == shortidx:
-            if not midchain:
-                continue
+        shortfull = False
+        if k == shortidx and not midchain and typ == ord("F"):
+            sdoff = None
+            sdln = 0
+            soff = 0
+            for skey, sst, sval in entries:
+                if sst not in BLOB_W:
+                    continue
+                if skey == b"TYP":
+                    continue  # CR-053: bare, no blob.
+                if skey == b"DAT":
+                    sdoff = soff
+                    sdln = sval
+                    break
+                soff += sval
+            if sdoff is None:
+                continue  # DAT-missing: silent (DIVERGENCE RISK: C
+                          # fsts-flushes; preserved, unprobed).
+            sdav = max(len(inner) - (shortend + sdoff), 0)
+            if sdav >= sdln:
+                shortfull = True  # DAT-complete: normal F path.
+            # else DAT-short: unified presence+content below (PRE-007).
+        if k == shortidx and not shortfull:
+            if not midchain and typ != ord("F"):
+                continue  # non-F clean-short: skip (DIVERGENCE RISK: C
+                          # shortstop+creates; preserved, unprobed).
             if typ == ord("F"):
+                # Unified presence+content (midchain + clean PRE-007).
                 doff = None
                 dln = 0
                 off = 0
@@ -642,6 +668,9 @@ def extract(items, root, fcls=0, fsub=0, shortidx=-1, midchain=False,
                         break
                 want = hch * 262144
                 wlen = dln if datcomplete else min(want, dav)
+                if not datcomplete and wlen == 0 and not midchain:
+                    break  # Clean want-0: absent (v512b1). Midchain
+                           # want-0: EMPTY file kept (cxA/E/F).
                 wbytes = (bytes(inner[shortend + doff:
                                       shortend + doff + wlen])
                           if doff is not None else b"")
@@ -675,6 +704,8 @@ def extract(items, root, fcls=0, fsub=0, shortidx=-1, midchain=False,
                     hdr[0] = True
                     break
                 files.append((target, entries, blobs, False, k))
+                if wlen > 0:
+                    wrote_short = True
                 break
             shortstop = True
         if typ == ord("D"):
@@ -895,6 +926,13 @@ def extract(items, root, fcls=0, fsub=0, shortidx=-1, midchain=False,
                   "archive stream read error (blob)\nstream cancelled",
                   file=sys.stderr)
             scount += 1
+    if (fcls == PF_BLOBOVERRUN and not aborted and not midchain and
+            nblocks == 1 and wrote_short):
+        # Single-block short-content: fixed 2 tails + silent second
+        # count (M1sc 4/4; mechanism unknown, bytes pinned).
+        print("reading payload\nreading payload", file=sys.stderr)
+        failed += 1
+        scount += 1
     # phase 2: files meta, strict reverse
     for target, entries, blobs, islink, kk in reversed(files):
         if kk == shortidx:
@@ -1026,11 +1064,15 @@ def main(argv):
             present = (shortidx != -1 and mid["whole"] >= 524288 and
                        shortavail >= max(mid["kcut"] - 1, 0) * 65536)
             extract(items, argv[2], fcls, fsub, shortidx, True, present,
-                    mid["whole"], shortend, inner)
+                    mid["whole"], shortend, inner, len(metas))
             print(_midblob(mid), file=sys.stderr)
             print("1 entries failed to extract", file=sys.stderr)
             return 1
-        return extract(items, argv[2], fcls, fsub)
+        # clean path: presence gate on (innerlen, nblocks) (PRE-007).
+        present = (shortidx != -1 and len(inner) >= 524288 and
+                   shortavail >= max(len(metas) - 1, 0) * 65536)
+        return extract(items, argv[2], fcls, fsub, shortidx, False, present,
+                       len(inner), shortend, inner, len(metas))
     except FmtErr as e:
         print("%s" % e, file=sys.stderr)
         return 1
