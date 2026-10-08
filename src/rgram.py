@@ -30,6 +30,20 @@ _T4B1 = ("010000006d0000006c0024a1000000c00e00f03160dd170dc4007808"
 # T4B3 bytes36-39 rows, off 274..283 (literal table, formula OPEN).
 _T4B3TAB = ("4380168a", "35044f81", "07084f81", "d90b4f81", "ab0f4f81",
             "51148c78", "50174f81", "221b4f81", "f41e4f81", "9a438c78")
+# T4C bytes37/38/46/47 16-periodic table, key (off-348)&15 (OPEN why).
+_T4CTAB = ("8c07f5dd", "9c0765cf", "ac07d5c0", "bc0745b2", "bc0745f2",
+           "cc07b5e3", "dc0725d5", "ec0795c6", "fc0705b8", "fc0705f8",
+           "0c0875e9", "1c08e5da", "2c0855cc", "3c08c5bd", "3c08c5fd",
+           "4c0835ef")
+# T4D1 post-C transition rows, off 604..605 (literals, formula OPEN).
+_T4D1 = ("06000000230300006c003c84000000c00e00f0e160dd170dc4007808"
+         "86eff8bd69018060305de323640078000658b8fd",
+         "80010000250300000c007cd100003c000e0000eb24dc838f06c043f0"
+         "86eff8bd69014cd7247b6bac83c6434d065f823c")
+# T4D3 bytes5-10 rows, off 622..631 (literal table, formula OPEN).
+_T4D3TAB = ("231db8f00fc2", "633648f006c2", "7b5448f006c2", "937248f006c2",
+            "5b8000f0fdc1", "7b9e00f0fdc1", "ebcc48f006c2", "03eb48f006c2",
+            "1b094af006c2", "4b18ded0f4c1")
 
 
 def bit(p, i):
@@ -418,6 +432,106 @@ def main():
                       (38, 0x30), (39, 0x42), (40, 0x01), (41, 0x80),
                       (44, 0x0a), (45, 0x80), (46, 0x85), (47, 0xdb))
             tag = "T4B5"
+        for b, v in consts:
+            if pay[b] != v:
+                return fail("%s const %d" % (tag, b))
+        print("CLOSED %s N=%d off=%d" % (tag, n, off))
+        return 0
+    if n <= 1424:  # T4 plateau C (NOTE-w2s7-16: 16-table + block counter)
+        if len(pay) != 48:
+            return fail("T4C paylen")
+        off = n - 821
+        if grp(pay, tuple(range(32, 42))) != (((n << 1) | 1) & 0x3FF):
+            return fail("T4C lencode")
+        if pay[5] & 0xFC != 0:
+            return fail("T4C b5hi")
+        if bytes((pay[37], pay[38], pay[46], pay[47])).hex() != \
+                _T4CTAB[(off - 348) & 15]:
+            return fail("T4C tab16")
+        if pay[42] != ((off - 348) >> 4) or pay[43] != 0:
+            return fail("T4C b42")
+        for b, v in ((0, 0x20), (1, 0x0d), (2, 0), (3, 0), (6, 0), (7, 0),
+                     (8, 0x0c), (9, 0), (10, 0x7c), (11, 0xd1), (12, 0),
+                     (13, 0), (14, 0x3c), (15, 0), (16, 0x0e), (17, 0),
+                     (18, 0), (19, 0xeb), (20, 0xc4), (21, 0xdc),
+                     (22, 0x33), (23, 0x05), (24, 0), (25, 0x3c),
+                     (26, 0x04), (27, 0x1f), (28, 0x86), (29, 0xef),
+                     (30, 0xf8), (31, 0xbd), (32, 0x69), (33, 0x81),
+                     (34, 0x78), (35, 0xd5), (36, 0x25), (39, 0x23),
+                     (40, 0), (41, 0x3c), (44, 0x0a), (45, 0x80)):
+            if pay[b] != v:
+                return fail("T4C const %d" % b)
+        print("CLOSED T4C N=%d off=%d" % (n, off))
+        return 0
+    if n <= 1516:  # T4 plateau D (NOTE-w2s7-17: D1..D4 dispatch)
+        if len(pay) != 48:
+            return fail("T4D paylen")
+        off = n - 821
+        if grp(pay, tuple(range(32, 42))) != (((n << 1) | 1) & 0x3FF):
+            return fail("T4D lencode")
+        if off <= 605:
+            if pay.hex() != _T4D1[off - 604]:
+                return fail("T4D1 bytes")
+            print("CLOSED T4D1 N=%d off=%d" % (n, off))
+            return 0
+        if off <= 621:
+            cc = off - 606
+            if pay[5] & 0xFC != 0:
+                return fail("T4D2 b5hi")
+            if pay[6] != ((cc & 7) << 5) or pay[7] != ((cc & 8) >> 2):
+                return fail("T4D2 hole")
+            consts = ((0, 0x0d), (1, 0x18), (2, 0), (3, 0), (8, 0x10),
+                      (9, 0), (10, 0xc0), (11, 0x17), (12, 0), (13, 0),
+                      (14, 0x3c), (15, 0), (16, 0x0e), (17, 0), (18, 0),
+                      (19, 0xeb), (20, 0x24), (21, 0xdc), (22, 0x83),
+                      (23, 0x8f), (24, 0x06), (25, 0xc0), (26, 0x43),
+                      (27, 0xf0), (28, 0x86), (29, 0xef), (30, 0xf8),
+                      (31, 0xbd), (32, 0x69), (33, 0x01), (34, 0x4c),
+                      (35, 0xd7), (36, 0x24), (37, 0xe9), (38, 0x47),
+                      (39, 0xb3), (40, 0x83), (41, 0xc6), (42, 0x43),
+                      (43, 0x4d), (44, 0x06), (45, 0x5f), (46, 0xf7),
+                      (47, 0xfe))
+            tag = "T4D2"
+        elif off <= 631:
+            if pay[5:11].hex() != _T4D3TAB[off - 622]:
+                return fail("T4D3 tab")
+            consts = ((0, 0x0d), (1, 0x08), (2, 0), (3, 0), (11, 0x17),
+                      (12, 0), (13, 0), (14, 0x3c), (15, 0), (16, 0x0e),
+                      (17, 0), (18, 0), (19, 0xeb), (20, 0x24),
+                      (21, 0xdc), (22, 0x83), (23, 0x8f), (24, 0x06),
+                      (25, 0xc0), (26, 0x43), (27, 0xf0), (28, 0x86),
+                      (29, 0xef), (30, 0xf8), (31, 0xbd), (32, 0x69),
+                      (33, 0x01), (34, 0x4c), (35, 0xd7), (36, 0x24),
+                      (37, 0xa7), (38, 0xd6), (39, 0x3e), (40, 0x83),
+                      (41, 0xc6), (42, 0x43), (43, 0x4d), (44, 0x06),
+                      (45, 0x5f), (46, 0xa6), (47, 0xfc))
+            tag = "T4D3"
+        else:
+            k2 = (off - 632) >> 4
+            l10 = (((n << 1) | 1) & 0x3FF) >> 8
+            if (pay[5] & 3) != l10 or (pay[5] & 0xFC) != \
+                    (0x58, 0x70, 0x88, 0xB8)[k2]:
+                return fail("T4D4 b5")
+            if pay[6] != (0x45, 0x63, 0x81, 0x90)[k2] or \
+                    pay[7] != (0x4A, 0x4A, 0x4A, 0xDE)[k2]:
+                return fail("T4D4 b67")
+            if (pay[8], pay[9], pay[10]) != \
+                    (((0xF0, 0x06, 0xC2),) * 3 +
+                     ((0xD0, 0xF4, 0xC1),))[k2]:
+                return fail("T4D4 b8910")
+            if pay[15] != ((off - 632) & 15):
+                return fail("T4D4 b15")
+            consts = ((0, 0xd1), (1, 0x80), (2, 0), (3, 0), (11, 0x7d),
+                      (12, 0), (13, 0), (14, 0x3c), (16, 0x12), (17, 0),
+                      (18, 0), (19, 0xb0), (20, 0x24), (21, 0xdc),
+                      (22, 0x83), (23, 0x8f), (24, 0x06), (25, 0xc0),
+                      (26, 0x43), (27, 0xf0), (28, 0x86), (29, 0xef),
+                      (30, 0xf8), (31, 0xbd), (32, 0x69), (33, 0x01),
+                      (34, 0x4c), (35, 0xd7), (36, 0x24), (37, 0xa7),
+                      (38, 0xd6), (39, 0x3e), (40, 0x83), (41, 0xc6),
+                      (42, 0x43), (43, 0x4d), (44, 0x06), (45, 0x5f),
+                      (46, 0xa6), (47, 0xfc))
+            tag = "T4D4"
         for b, v in consts:
             if pay[b] != v:
                 return fail("%s const %d" % (tag, b))
