@@ -718,6 +718,37 @@ def main():
                 return fail("T4H const %d" % b)
         print("CLOSED T4H N=%d off=%d" % (n, off))
         return 0
+    if n <= 2120:  # T4 plateau I = D2c1 (NOTE-w2s7-22: H-regime cont)
+        if len(pay) != 48:
+            return fail("T4I paylen")
+        off = n - 821
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if grp(pay, tuple(range(32, 42))) != l10:
+            return fail("T4I lencode")
+        if pay[5] != (0x40 | (l10 >> 8)) or pay[29] != 0xFC:
+            return fail("T4I b5b29")
+        m = (off - 1044) & 15
+        k2 = (off - 1044) >> 4
+        if pay[26] != _T4HT26[m] or pay[34] != _T4HT34[m] or \
+                pay[35] != _T4HT35[m]:
+            return fail("T4I tab16")
+        if pay[28] != ((0x86 + k2 * 0x16) & 0xFF) or \
+                pay[30] != ((0x43 + k2 * 8) & 0xFF):
+            return fail("T4I ctr")
+        for b, v in ((0, 0x94), (1, 0x7f), (2, 0x98), (3, 0x11), (6, 0x8a),
+                     (7, 0x0d), (8, 0xf0), (9, 0xe2), (10, 0x01),
+                     (11, 0), (12, 0xee), (13, 0xaa), (14, 0x66),
+                     (15, 0x26), (16, 0xe6), (17, 0x5a), (18, 0x8c),
+                     (19, 0x48), (20, 0x08), (21, 0x6e), (22, 0x96),
+                     (23, 0x77), (24, 0x2b), (25, 0x0c), (27, 0xf8),
+                     (31, 0xdd), (32, 0x6d), (33, 0x16), (36, 0x48),
+                     (37, 0x66), (38, 0x6a), (39, 0xed), (40, 0x68),
+                     (41, 0x3c), (42, 0xd4), (43, 0x94), (44, 0x06),
+                     (45, 0x67), (46, 0xa6), (47, 0xfc)):
+            if pay[b] != v:
+                return fail("T4I const %d" % b)
+        print("CLOSED T4I N=%d off=%d" % (n, off))
+        return 0
     print("N out of scope", file=sys.stderr)
     return 2
 
