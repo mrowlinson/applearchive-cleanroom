@@ -693,6 +693,86 @@ _T7AT21 = (0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
            0x20, 0x21, 0x21, 0x21, 0x21, 0x21, 0x21, 0x21)
 _T7AK12 = (0xa9, 0xb1, 0xb1, 0xd9, 0xd9, 0xda, 0x02, 0x0a,
            0x0a, 0x32, 0x32, 0x33, 0x59, 0x62, 0x63, 0x89)
+# T7B tables (post-dip block): 16-row B1 + 10-row B2 +
+# B3-6 shared b28-32 tab + k2 b20-26.
+_T7B1T = ("9d7b03270a", "7d7fb327aa", "bd7a8329aa", "3d7b97330a",
+          "dd7e7b35ea", "5d7f8f3f4a", "3d7df941ca", "7d7e0f42ea",
+          "5d6a05674a", "1d742f674a", "5d7545676a", "bd6f1373aa",
+          "fd702973ca", "3d723f73ea", "5d6fa77faa", "9d70bd7fca")
+_T7B1C = ((0, 0x0b), (1, 0x00), (2, 0x00), (3, 0x00), (5, 0x51),
+          (6, 0xc1), (7, 0x6b), (8, 0x1a), (9, 0x52),
+          (10, 0x3e), (11, 0x18), (12, 0xb7), (13, 0x7f),
+          (14, 0x2e), (15, 0x01), (20, 0x15), (21, 0xb5),
+          (22, 0x9f), (24, 0x12), (25, 0xf8), (26, 0x3a),
+          (27, 0xd5), (28, 0x6f), (29, 0xe1), (30, 0x9e),
+          (31, 0xf1), (32, 0x92), (33, 0xb5), (34, 0x98),
+          (35, 0x3d), (36, 0x21), (37, 0xbf), (38, 0x67),
+          (39, 0x53), (40, 0x91), (41, 0xf7), (42, 0x6b),
+          (43, 0x90), (44, 0x2f), (45, 0xdf), (46, 0x31),
+          (47, 0x6b), (48, 0x4e), (49, 0x25), (50, 0x88),
+          (51, 0xe4), (52, 0x51), (53, 0x14), (54, 0x69),
+          (55, 0x1b), (56, 0x4d), (57, 0xaf), (58, 0xaf),
+          (59, 0x69))
+_T7B2T = ("d99720df90692039", "997637f1646a0b39",
+          "995755ecee640e39", "79b756eca4640e39",
+          "5917a9e3dc601139", "59572cf11296ff38",
+          "f9b7bef2b06a0b39", "f9b6edfa8e720839",
+          "595721ed88640e39", "b9b686f3846a0b39")
+_T7B2C = ((0, 0x01), (1, 0x00), (2, 0x00), (3, 0x00), (5, 0x51),
+          (6, 0xc1), (7, 0x6b), (8, 0x9a), (9, 0x56),
+          (10, 0x7e), (11, 0x11), (12, 0xb7), (13, 0x7f),
+          (14, 0x2e), (15, 0x01), (20, 0x59), (21, 0x9e),
+          (22, 0x56), (24, 0x33), (25, 0xf0), (26, 0x75),
+          (27, 0xaa), (31, 0xe3), (32, 0x92), (33, 0xb5),
+          (34, 0x98), (35, 0x3d), (36, 0x21), (37, 0xbf),
+          (38, 0x67), (39, 0x53), (40, 0x91), (41, 0xf7),
+          (42, 0x6b), (43, 0x90), (44, 0x2f), (45, 0xdf),
+          (46, 0x31), (47, 0x6b), (48, 0x4e), (49, 0x25),
+          (50, 0x88), (51, 0xe4), (52, 0x51), (53, 0x14),
+          (54, 0x69), (55, 0x1b), (56, 0x4d), (57, 0xaf),
+          (58, 0xaf), (59, 0x69))
+_T7B3T = ("263c8117b6", "bdbc9717b6", "51fca322b6", "1bbcd74fb6",
+          "50bc855eb6", "803c805fb6", "45fce296b6", "de3cb897b6",
+          "defcc097b6", "3c3cf8cfb6", "743cc0d3b6", "0dbc95d4b6",
+          "387cb7dfb6", "02fcf20cd6", "963cf717d6", "2f7cd418d6")
+_T7B3K = ("ecdf1fce536d21", "fadde0ee530e21", "0cdfcc94132c22",
+          "2c5d02e8135120")
+# T7C tables (quiet-256): 16-tabs b36-40 + b28-32 walk the
+# B3 tab by k2 (full 16, reuse) + b5 edges @359/487.
+_T7CT36 = (0x4e, 0x14, 0xdc, 0xf2, 0xa8, 0x6e, 0x84, 0x9a,
+           0xff, 0xc5, 0x98, 0x91, 0x59, 0x88, 0x4e, 0x2e)
+_T7CT37 = (0xfc, 0xfc, 0xfc, 0xfc, 0xbf, 0xbf, 0xbf, 0xbf,
+           0xfc, 0xfc, 0xbf, 0xbf, 0xfc, 0xbf, 0xbf, 0xfc)
+_T7CT38 = (0xef, 0xdb, 0x77, 0x7f, 0xff, 0xeb, 0xf3, 0xfb,
+           0x53, 0x3f, 0xdf, 0xc7, 0x63, 0x13, 0xff, 0x3f)
+_T7CT39 = (0x7e, 0xa9, 0xae, 0xae, 0xb3, 0xde, 0xde, 0xde,
+           0xef, 0x1a, 0x1e, 0x1f, 0x24, 0x25, 0x4f, 0x50)
+_T7CT40 = (0xb5, 0xb5, 0xb5, 0xb5, 0xb5, 0xb5, 0xb5, 0xb5,
+           0xb5, 0xd5, 0xd5, 0xd5, 0xd5, 0xd5, 0xd5, 0xd5)
+_T7CC = ((0, 0x75), (1, 0x01), (2, 0x00), (3, 0x00), (6, 0xc1),
+         (7, 0x6b), (8, 0xfa), (9, 0xf6), (10, 0xcf),
+         (11, 0x25), (12, 0x00), (13, 0xad), (14, 0xfc),
+         (15, 0x22), (16, 0x39), (17, 0xcb), (18, 0xd3),
+         (19, 0x8a), (20, 0x4d), (21, 0xdc), (22, 0xdb),
+         (23, 0xd7), (24, 0x53), (25, 0x6d), (26, 0x21),
+         (27, 0x3d), (33, 0x58), (34, 0x8b), (35, 0xc9),
+         (41, 0x78), (42, 0xbf), (43, 0x06), (44, 0x2f),
+         (45, 0xdf), (46, 0x31), (47, 0x6b), (48, 0x4e),
+         (49, 0x25), (50, 0x88), (51, 0xe4), (52, 0x51),
+         (53, 0x14), (54, 0x69), (55, 0x1b), (56, 0x4d),
+         (57, 0xaf), (58, 0xaf), (59, 0x69))
+_T7B3C = ((0, 0x17), (1, 0x00), (2, 0x00), (3, 0x00), (5, 0x51),
+          (6, 0xc1), (7, 0x6b), (8, 0x9a), (9, 0x56),
+          (10, 0x7e), (11, 0x11), (12, 0xb7), (13, 0x7f),
+          (14, 0x2e), (15, 0x01), (16, 0x39), (17, 0xcb),
+          (18, 0xd3), (19, 0x8a), (27, 0xa3), (33, 0x58),
+          (34, 0x8b), (35, 0xd9), (36, 0x21), (37, 0xbf),
+          (38, 0x67), (39, 0x53), (40, 0x91), (41, 0xf7),
+          (42, 0x6b), (43, 0x90), (44, 0x2f), (45, 0xdf),
+          (46, 0x31), (47, 0x6b), (48, 0x4e), (49, 0x25),
+          (50, 0x88), (51, 0xe4), (52, 0x51), (53, 0x14),
+          (54, 0x69), (55, 0x1b), (56, 0x4d), (57, 0xaf),
+          (58, 0xaf), (59, 0x69))
 _T7DIP256 = ("be4e75013371325b79e1e03300363c91f74126119a5f3cf9cec23de39"
              "2b5983d21bf675391f76b902fdf316b4e2588e45114691b4dafaf69",
              "8044bec03551c16bfaf6cf251dbe4e7514b59f2a9a5f3cf9cec23de39"
@@ -2758,6 +2838,78 @@ def main():
         if len(pay) != 56 or pay.hex() != _T7DIP256[off - 256]:
             return fail("T7DIP256")
         print("CLOSED T7DIP256 N=%d" % n)
+        return 0
+    if n <= 6314:  # T7B1: 16-row tab b16-19/23
+        off = n - 6041
+        if len(pay) != 60:
+            return fail("T7B1 paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if grp(pay, tuple(range(32, 42))) != l10:
+            return fail("T7B1 lencode")
+        cells = bytes((pay[16], pay[17], pay[18], pay[19],
+                       pay[23])).hex()
+        if cells != _T7B1T[off - 258]:
+            return fail("T7B1 row")
+        for b, v in _T7B1C:
+            if pay[b] != v:
+                return fail("T7B1 const %d" % b)
+        print("CLOSED T7B1 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 6324:  # T7B2: 10-row tab b16-19/23/28-30
+        off = n - 6041
+        if len(pay) != 60:
+            return fail("T7B2 paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if grp(pay, tuple(range(32, 42))) != l10:
+            return fail("T7B2 lencode")
+        cells = bytes((pay[16], pay[17], pay[18], pay[19], pay[23],
+                       pay[28], pay[29], pay[30])).hex()
+        if cells != _T7B2T[off - 274]:
+            return fail("T7B2 row")
+        for b, v in _T7B2C:
+            if pay[b] != v:
+                return fail("T7B2 const %d" % b)
+        print("CLOSED T7B2 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 6388:  # T7B3-6: shared b28-32 tab + k2 b20-26
+        off = n - 6041
+        if len(pay) != 60:
+            return fail("T7B3 paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if grp(pay, tuple(range(32, 42))) != l10:
+            return fail("T7B3 lencode")
+        m = (off - 284) & 15
+        k2 = (off - 284) >> 4
+        if pay[20:27].hex() != _T7B3K[k2]:
+            return fail("T7B3 k2")
+        if pay[28:33].hex() != _T7B3T[m]:
+            return fail("T7B3 tab")
+        for b, v in _T7B3C:
+            if pay[b] != v:
+                return fail("T7B3 const %d" % b)
+        print("CLOSED T7B3 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 6644:  # T7C: quiet-256, tabs b36-40 + B3-walk + b5
+        off = n - 6041
+        if len(pay) != 60:
+            return fail("T7C paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if pay[4] != (l10 & 0xFF):
+            return fail("T7C lencode")
+        m = (off - 348) & 15
+        k2 = (off - 348) >> 4
+        if pay[5] != (0x51 + (off >= 359) + (off >= 487)):
+            return fail("T7C b5")
+        if pay[28:33].hex() != _T7B3T[k2]:
+            return fail("T7C walk")
+        if pay[36] != _T7CT36[m] or pay[37] != _T7CT37[m] or \
+                pay[38] != _T7CT38[m] or pay[39] != _T7CT39[m] or \
+                pay[40] != _T7CT40[m]:
+            return fail("T7C tab")
+        for b, v in _T7CC:
+            if pay[b] != v:
+                return fail("T7C const %d" % b)
+        print("CLOSED T7C N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
