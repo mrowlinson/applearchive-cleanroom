@@ -820,6 +820,10 @@ static int extract(const Item *items, size_t nitems, const char *root,
                 FAIL("mkdir %s\n", target);
                 fails++; hdr = 1; aborted = 1; break;
             }
+            struct stat dst;
+            if (!lstat(target, &dst) && !S_ISDIR(dst.st_mode))
+                continue; /* G6: occupant failed type-check: keep, no
+                           * chmod (G2 stanza+replace staged on Q-022) */
             memcpy(dirs[ndirs].path, target, strlen(target) + 1);
             dirs[ndirs].idx = k; dirs[ndirs].islink = 0; ndirs++;
         } else if (t->num == 'F') {
@@ -850,6 +854,9 @@ static int extract(const Item *items, size_t nitems, const char *root,
                     fsts[nfsts++] = k; /* flushed fwd after S-flush */
                     fails++; continue;
                 }
+                struct stat fst;
+                if (!lstat(target, &fst) && S_ISLNK(fst.st_mode))
+                    unlink(target); /* G3: symlink occupant silent-replace */
                 FILE *f = fopen(target, "wb");
                 if (!f) {
                     if (errno == EISDIR) {

@@ -751,5 +751,38 @@ cmp -s "$WORK/cxGsrc/b1" "$WORK/o-cxG/b1" && pass "cxG-b1full" || fail "cxG-b1fu
 mkcx 300 8 H; runcx H b2 262144
 cmp -s "$WORK/cxHsrc/b1" "$WORK/o-cxH/b1" && pass "cxH-b1full" || fail "cxH-b1full"
 
+echo "== cell g-collision (G3 symlink-occupant + G5 missing-parents + G6 no-chmod) =="
+mkdir -p "$WORK/gsrc"; printf 'A1-content' > "$WORK/gsrc/victim"; printf 'A2-content' > "$WORK/gsrc/vdir"
+sh "$ADAPTER" aar-encode --alg raw --threads 1 "$WORK/gsrc" "$WORK/g.aar" >/dev/null 2>&1 || die "g encode"
+for S in o c p; do rm -rf "$WORK/g$S"; mkdir -p "$WORK/g$S"; printf 'old' > "$WORK/g$S/elsewhere"; ln -s elsewhere "$WORK/g$S/victim"; mkdir -p "$WORK/g$S/somedir"; ln -s somedir "$WORK/g$S/vdir"; done
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/g.aar" "$WORK/go" >/dev/null 2>"$WORK/g-o.err" || ORC=$?
+CRC=0; "$AAD" "$WORK/g.aar" "$WORK/gc" 2>"$WORK/g.err" || CRC=$?
+PRC=0; python3 "$HERE/../proto/aad.py" "$WORK/g.aar" "$WORK/gp" >/dev/null 2>"$WORK/gp.err" || PRC=$?
+[ "$ORC" -eq 0 ] && [ "$CRC" -eq 0 ] && [ "$PRC" -eq 0 ] && pass "g3-exit" || fail "g3-exit"
+[ ! -s "$WORK/g-o.err" ] && [ ! -s "$WORK/g.err" ] && pass "g3-silent" || fail "g3-silent"
+for S in o c p; do
+  D=$WORK/g$S; [ "$S" = "o" ] && D=$WORK/go; [ "$S" = "c" ] && D=$WORK/gc; [ "$S" = "p" ] && D=$WORK/gp
+  [ ! -L "$D/victim" ] && [ "$(cat "$D/victim")" = "A1-content" ] && pass "g3a-$S" || fail "g3a-$S"
+  [ ! -L "$D/vdir" ] && [ "$(cat "$D/vdir")" = "A2-content" ] && pass "g3b-$S" || fail "g3b-$S"
+done
+# G5 true bed pending Q-024. Observed: N-level missing roots mkdir -p rc 0
+# all sides (2-level + 4-level first-hand). Pin agreement, not bare.
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/g.aar" "$WORK/g5o/sub" >/dev/null 2>"$WORK/g5-o.err" || ORC=$?
+CRC=0; "$AAD" "$WORK/g.aar" "$WORK/g5c/sub" 2>"$WORK/g5.err" || CRC=$?
+PRC=0; python3 "$HERE/../proto/aad.py" "$WORK/g.aar" "$WORK/g5p/sub" >/dev/null 2>"$WORK/g5p.err" || PRC=$?
+[ "$ORC" -eq 0 ] && [ "$CRC" -eq 0 ] && [ "$PRC" -eq 0 ] && pass "g5mk-exit" || fail "g5mk-exit"
+diff -r "$WORK/g5o/sub" "$WORK/g5c/sub" >/dev/null 2>&1 && pass "g5mk-tree" || fail "g5mk-tree"
+diff -r "$WORK/g5c/sub" "$WORK/g5p/sub" >/dev/null 2>&1 && pass "g5mk-lock" || fail "g5mk-lock"
+[ ! -s "$WORK/g5-o.err" ] && [ ! -s "$WORK/g5.err" ] && pass "g5mk-silent" || fail "g5mk-silent"
+mkdir -p "$WORK/g6src/dd"; printf 'kid-bytes' > "$WORK/g6src/dd/kid"; chmod 700 "$WORK/g6src/dd"
+sh "$ADAPTER" aar-encode --alg raw --threads 1 "$WORK/g6src" "$WORK/g6.aar" >/dev/null 2>&1 || die "g6 encode"
+for S in o c p; do rm -rf "$WORK/g6$S"; mkdir -p "$WORK/g6$S"; printf 'keepme' > "$WORK/g6$S/dd"; chmod 644 "$WORK/g6$S/dd"; done
+sh "$ADAPTER" aar-decode "$WORK/g6.aar" "$WORK/g6o" >/dev/null 2>&1 || true
+"$AAD" "$WORK/g6.aar" "$WORK/g6c" >/dev/null 2>&1 || true
+python3 "$HERE/../proto/aad.py" "$WORK/g6.aar" "$WORK/g6p" >/dev/null 2>&1 || true
+[ "$(stat -f %p "$WORK/g6c/dd")" = "100644" ] && [ "$(cat "$WORK/g6c/dd")" = "keepme" ] && pass "g6c-keep" || fail "g6c-keep"
+[ "$(stat -f %p "$WORK/g6p/dd")" = "100644" ] && [ "$(cat "$WORK/g6p/dd")" = "keepme" ] && pass "g6p-keep" || fail "g6p-keep"
+[ ! -e "$WORK/g6o/dd/kid" ] && [ ! -e "$WORK/g6c/dd/kid" ] && [ ! -e "$WORK/g6p/dd/kid" ] && pass "g6-nokid" || fail "g6-nokid"
+
 [ "$FAIL" -eq 0 ] && echo CBATTERY-GREEN || echo CBATTERY-RED
 exit "$FAIL"

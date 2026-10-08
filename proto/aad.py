@@ -570,6 +570,9 @@ def extract(items, root, fcls=0, fsub=0, shortidx=-1, midchain=False,
             shortstop = True
         if typ == ord("D"):
             try:
+                if os.path.islink(target):
+                    # G3: symlink occupant = file occupant (loud path).
+                    raise FileExistsError(target)
                 os.makedirs(target, exist_ok=True)
             except OSError:
                 aborted = abort("aad: mkdir %s" % target)
@@ -603,6 +606,12 @@ def extract(items, root, fcls=0, fsub=0, shortidx=-1, midchain=False,
                 failed += 1
                 continue
             else:
+                if os.path.islink(target):
+                    # G3: symlink occupant silent-replace.
+                    try:
+                        os.unlink(target)
+                    except OSError:
+                        pass
                 try:
                     with open(target, "wb") as f:
                         f.write(blobs[b"DAT"])
