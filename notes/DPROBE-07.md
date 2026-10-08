@@ -1,29 +1,34 @@
 # DPROBE-07 parse-fail prefix + wrapper/nodat class model (writer1, first-hand)
+CORRECTIONS (FLAG-e62ee07): the Prefix ladder + parts of TYP enum below as
+first written were WRONG (unreproducible). Corrected sections follow; the
+original false texts are struck through, never re-asserted.
 
-## Prefix ladder (own probes, oracle exit+stderr first-hand)
-- 0..1 bytes: `Failed to fetch magic` + `stream cancelled`, exit 1.
-- 2..3 bytes: magic ok, version short: `archive format version not supported` +
-  `stream cancelled`, exit 1.
-- 4..7 bytes: version ok, nfiles short: `archive has wrong number of files`
-  + `stream cancelled`, exit 1.
-- 8..N with nfiles=N: nfiles check passes with EXACTLY 8+N bytes present;
-  fewer -> `wrong number of files` + `stream cancelled`, exit 1.
-- all prefix fails: NO `Extraction failed` banner, NO `entries failed` count,
-  `stream cancelled` immediately closes. Root still created (outdir in place).
-- Trailing garbage after a good archive: silently ignored, exit 0 FULL tree.
+## Prefix ladder: RETRACTED, see DPROBE-09
+- RETRACTED: `Failed to fetch magic` / `archive format version not
+  supported` / `archive has wrong number of files` / `wrong number of
+  files` appear NOWHERE (26-shape re-probe: lengths 0..12 raw+compressed,
+  magic variants). Never implemented in code; doc-only error. TRUE ladder
+  (length + magic routing, all IDENT): DPROBE-09.
+- RETRACTED: "trailing garbage silently ignored exit 0". TRUE rule: trailing
+  bytes parse as more items (1..5 bytes -> bd011800 stream-tail exit 1;
+  bad magic -> e800/bd035000; valid headers -> extracted, mb12/mb21).
 
-## TYP enum (own crafts, exit+tree+stderr parity)
-- Known: f d h l s p b c m n o A B C (15). Anything else incl multi-byte
-  values and unknown singles = `Invalid entry kind: <err>` + `processing dir`
-  + `2 entries failed`-style count, exit 1, root survives, NO per-item stderr.
-- TYP stored-length != 1 with total-header-size kept (te-tok): oracle takes
-  FIRST VALUE BYTE as kind: 41 41 -> A-class; 41=link-target in output path.
-  Mine: same rule (first value byte dispatches).
+## TYP enum (corrected; code was already right, 11/11 IDENT)
+- Dispatch: FULL LE UINT of TYP value (widths 1/2/4/8) vs kind codes.
+  Handled (uppercase): F D L H P S B C. ALL else silent-skips exit 0:
+  lowercase, W/R/T/M, multi-byte non-matching (FA/AF/AA), TYP/2 0x0044->D.
+- RETRACTED: "Known: f d h l s p b c m n o A B C (15)" (case/count wrong).
+- RETRACTED: te-tok "FIRST VALUE BYTE dispatches; 41 41 -> A-class".
+  TRUE: [41 41] = 0x4141 skips BOTH sides (my code already full-uint).
+- RETRACTED: `Invalid entry kind: <err>` + `processing dir` loud path.
+  Never implemented, never observed (14 viewer + 11 own crafts: all skip).
+- Non-uint TYP subtype -> `invalid type N, expected UINT` + no-TYP abort
+  exit 1. N: P->2, S/T->4, E(*)->0, F/G/H/I/J->3 (all 8 IDENT, te cell).
 - DAT-before-TYP present: kind known at dispatch regardless of field order.
 - Missing TYP: `Invalid entry: no TYP field` abort exit 1 (Fix1, kept).
 
 ## Wrapper / nodat / no-DAT classes (viewer A-012/A-015 + own matrix 26/26)
-- S (TYP s, no data expected): flush pass FORWARD in archive order (canonical;
+- S (TYP 'S', no data expected): flush pass FORWARD in archive order (canonical;
   -wt 1 pins archive order; default threads RACE at n>=2 per NOTE-49/50:
   sort-or-pin in cells, SET parity).
 - nodat class (TYP in wrapper set with no DAT / bare no-DAT file): REVERSE

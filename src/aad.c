@@ -118,17 +118,59 @@ static int decode_block(const unsigned char magic[4],
     return 0;
 }
 
-/* ---- outer chain: 12B prefix + [16B hdr + comp]* (PRE-002) ---- */
+/* ---- outer chain: length ladder + 12B prefix + [16B hdr + comp]* ---- */
+static void emit_stream_tail(void) {
+    fprintf(stderr, "Extraction failed\n"
+            "extract failedError 0xbd011800\n"
+            "No more data\nread error\ntruncated stream\n"
+            "archive stream read error (header)\nstream cancelled\n");
+}
+
+static void emit_nonsupp(void) {
+    fprintf(stderr, "Extraction failed\n"
+            "extract failedError 0xbd035000\n"
+            "Invalid/non-supported archive stream\n"
+            "archive stream read error (header)\nstream cancelled\n");
+}
+
+static void emit_trunc(const char *what, unsigned long long have,
+                       unsigned long long need) {
+    fprintf(stderr, "Extraction failed\n"
+            "extract failedError 0xbd009800\n"
+            "istream read error\n"
+            "refill buffer\n"
+            "archive stream read error (header)\n"
+            "flushing shared buffer\n"
+            "Truncated block %s (%llu/%llu bytes read)\n"
+            "NOP received\n"
+            "processStream\n"
+            "decoder failed\n"
+            "stream cancelled\n",
+            what, have, need);
+}
+
+static int known_pbz(const unsigned char *d) {
+    return !memcmp(d, "pbze", 4) || !memcmp(d, "pbz4", 4) ||
+           !memcmp(d, "pbzm", 4) || !memcmp(d, "pbzb", 4) ||
+           !memcmp(d, "pbzx", 4) || !memcmp(d, "pbzz", 4);
+}
+
 static int parse_chain(const Buf *file, Buf *inner) {
     const unsigned char *d = file->data;
     size_t n = file->len;
-    if (n >= 4 && (!memcmp(d, "AA01", 4) || !memcmp(d, "YAA1", 4))) {
-        unsigned char *c = malloc(n ? n : 1);
+    if (n == 0) { /* empty archive: silent empty (tr-0, q4) */
+        inner->data = malloc(1); inner->len = 0;
+        return inner->data ? 0 : -1;
+    }
+    if (n < 6) { emit_stream_tail(); fails = 1; return -1; }
+    if (!memcmp(d, "AA01", 4) || !memcmp(d, "YAA1", 4)) {
+        unsigned char *c = malloc(n);
         memcpy(c, d, n);
         inner->data = c; inner->len = n;
         return 0;
     }
-    if (n < 28 || memcmp(d, "pbz", 3)) { FAIL("bad outer magic\n"); return -1; }
+    if (n < 12) { emit_nonsupp(); fails = 1; return -1; }
+    if (!known_pbz(d)) { emit_nonsupp(); fails = 1; return -1; }
     unsigned char magic[4];
     memcpy(magic, d, 4);
     /* prefix = magic(4) + bsize u64be; no zero fields (DPROBE-08). */
@@ -144,7 +186,11 @@ static int parse_chain(const Buf *file, Buf *inner) {
     Buf acc = { NULL, 0 };
     size_t off = 12;
     while (off < n) {
-        if (off + 16 > n) { FAIL("block hdr past EOF\n"); goto err; }
+        if (off + 16 > n) {
+            emit_trunc("header", (unsigned long long)(n - off), 16ULL);
+            fails = 1;
+            goto err;
+        }
         uint64_t raw = rd64be(d + off), pay = rd64be(d + off + 8);
         if (raw > bsize || pay > bsize) {
             fprintf(stderr, "Extraction failed\n"
@@ -165,7 +211,12 @@ static int parse_chain(const Buf *file, Buf *inner) {
             goto err;
         }
         uint32_t unc = (uint32_t)raw, comp = (uint32_t)pay;
-        if (off + 16 + comp > n) { FAIL("block data past EOF\n"); goto err; }
+        if (off + 16 + comp > n) {
+            emit_trunc("payload", (unsigned long long)(n - off - 16),
+                       (unsigned long long)pay);
+            fails = 1;
+            goto err;
+        }
         Buf blk = { NULL, 0 };
         if (decode_block(magic, d + off + 16, comp, unc, &blk)) goto err;
         unsigned char *nd = realloc(acc.data, acc.len + blk.len);
@@ -242,7 +293,8 @@ static int entry_val_len(unsigned char st, const unsigned char *p,
 
 /* inner parse failure classes (oracle wrapper per class; prefix kept) */
 enum { PF_OK = 0, PF_TAIL, PF_BADMAGIC, PF_HDRCUT, PF_ENDMISMATCH,
-       PF_VALUEOVERRUN, PF_BADSUBTYPE, PF_BLOBOVERRUN };
+       PF_VALUEOVERRUN, PF_BADSUBTYPE, PF_BLOBOVERRUN, PF_HSIZEMISMATCH,
+       PF_HDRTAIL, PF_STREAMMAGIC };
 
 static int parse_inner(const Buf *inner, Item **items, size_t *nitems,
                        int *fcls, int *fsub) {
@@ -253,11 +305,12 @@ static int parse_inner(const Buf *inner, Item **items, size_t *nitems,
     while (pos < n) {
         if (pos + 6 > n) { cls = PF_TAIL; break; }
         if (memcmp(d + pos, "AA01", 4) && memcmp(d + pos, "YAA1", 4)) {
-            cls = PF_BADMAGIC; break;
+            cls = pos == 0 ? PF_STREAMMAGIC : PF_BADMAGIC; break;
         }
         size_t hsize = rd16le(d + pos + 4);
+        if (hsize < 6) { cls = PF_HSIZEMISMATCH; sub = (int)hsize; break; }
         size_t end = pos + hsize, p = pos + 6;
-        if (end > n) { cls = PF_VALUEOVERRUN; break; }
+        if (end > n) { cls = PF_HDRTAIL; break; }
         Item it = { NULL, 0, NULL, 0 };
         size_t ecap = 0;
         while (p < end) {
@@ -736,6 +789,25 @@ static int extract(const Item *items, size_t nitems, const char *root,
                     "parsing entry header\n"
                     "archive stream read error (header)\nstream cancelled\n",
                     fsub);
+            break;
+        case PF_HSIZEMISMATCH:
+            fprintf(stderr, "Extraction failed\n"
+                    "extract failedError 0xe501f000\n"
+                    "header size mismatch: stored %d, got 6\n"
+                    "corrupted archive header\n"
+                    "parsing entry header\n"
+                    "archive stream read error (header)\nstream cancelled\n",
+                    fsub);
+            break;
+        case PF_HDRTAIL:
+            fprintf(stderr, "Extraction failed\n"
+                    "extract failedError 0xbd011800\n"
+                    "No more data\nread error\ntruncated stream\n"
+                    "parsing entry header\n"
+                    "archive stream read error (header)\nstream cancelled\n");
+            break;
+        case PF_STREAMMAGIC:
+            emit_nonsupp();
             break;
         case PF_BLOBOVERRUN:
             fprintf(stderr, "Extraction failed\n"

@@ -28,7 +28,8 @@ class FmtErr(Exception):
 
 # inner parse failure classes (oracle wrapper per class; prefix kept)
 (PF_OK, PF_TAIL, PF_BADMAGIC, PF_HDRCUT, PF_ENDMISMATCH,
- PF_VALUEOVERRUN, PF_BADSUBTYPE, PF_BLOBOVERRUN) = range(8)
+ PF_VALUEOVERRUN, PF_BADSUBTYPE, PF_BLOBOVERRUN, PF_HSIZEMISMATCH,
+ PF_HDRTAIL, PF_STREAMMAGIC) = range(11)
 
 
 class _PFail(Exception):
@@ -98,15 +99,41 @@ def decode_block(magic, payload, unc, comp):
     return raw
 
 
+STREAM_TAIL = ("Extraction failed\nextract failedError 0xbd011800\n"
+                 "No more data\nread error\ntruncated stream\n"
+                 "archive stream read error (header)\nstream cancelled")
+NONSUPP = ("Extraction failed\nextract failedError 0xbd035000\n"
+           "Invalid/non-supported archive stream\n"
+           "archive stream read error (header)\nstream cancelled")
+
+
+def _trunc(what, have, need):
+    return ("Extraction failed\nextract failedError 0xbd009800\n"
+            "istream read error\nrefill buffer\n"
+            "archive stream read error (header)\nflushing shared buffer\n"
+            "Truncated block %s (%d/%d bytes read)\n"
+            "NOP received\nprocessStream\ndecoder failed\n"
+            "stream cancelled" % (what, have, need))
+
+
+KNOWN_PBZ = (b"pbze", b"pbz4", b"pbzm", b"pbzb", b"pbzx", b"pbzz")
+
+
 def parse_chain(data):
-    """-> (inner_bytes, metas). 12B prefix + [16B hdr + comp]* (DPROBE-08):
-    prefix = magic(4) + bsize u64be; block hdr = raw u64be + pay u64be."""
+    """-> (inner_bytes, metas). Length ladder + 12B prefix + chain."""
+    if len(data) == 0:
+        return b"", [{"alg": "raw", "stored": True,
+                      "unc": 0, "comp": 0}]
+    if len(data) < 6:
+        raise FmtErr(STREAM_TAIL)
     if bytes(data[:4]) in INNER_MAGICS:
         return bytes(data), [{"alg": "raw", "stored": True,
                               "unc": len(data), "comp": len(data)}]
-    if bytes(data[:3]) != b"pbz" or len(data) < 28:
-        raise FmtErr("bad outer magic")
+    if len(data) < 12:
+        raise FmtErr(NONSUPP)
     magic = bytes(data[:4])
+    if magic not in KNOWN_PBZ:
+        raise FmtErr(NONSUPP)
     (bsize,) = struct.unpack(">Q", data[4:12])
     if bsize == 0 or bsize > 0x8000000:
         raise FmtErr("Failed to create decompression stream\n"
@@ -116,7 +143,7 @@ def parse_chain(data):
     inner, metas, off = bytearray(), [], 12
     while off < len(data):
         if off + 16 > len(data):
-            raise FmtErr("block header past EOF at %d" % off)
+            raise FmtErr(_trunc("header", len(data) - off, 16))
         raw, pay = struct.unpack(">QQ", data[off:off + 16])
         if raw > bsize or pay > bsize:
             raise FmtErr("Extraction failed\n"
@@ -132,9 +159,9 @@ def parse_chain(data):
                          "decoder failed\n"
                          "stream cancelled" % (pay, raw, bsize))
         unc, comp = raw, pay
+        if off + 16 + comp > len(data):
+            raise FmtErr(_trunc("payload", len(data) - off - 16, comp))
         payload = bytes(data[off + 16:off + 16 + comp])
-        if len(payload) != comp:
-            raise FmtErr("block data past EOF at %d" % off)
         inner += decode_block(magic, payload, unc, comp)
         metas.append({"alg": magic.decode("ascii"), "stored": comp == unc,
                       "unc": unc, "comp": comp, "bsize": bsize})
@@ -149,11 +176,13 @@ def parse_header(data, pos):
     if pos + 6 > len(data):
         raise _PFail(PF_TAIL)
     if bytes(data[pos:pos + 4]) not in INNER_MAGICS:
-        raise _PFail(PF_BADMAGIC)
+        raise _PFail(PF_STREAMMAGIC if pos == 0 else PF_BADMAGIC)
     (hsize,) = struct.unpack_from("<H", data, pos + 4)
+    if hsize < 6:
+        raise _PFail(PF_HSIZEMISMATCH, hsize)
     end = pos + hsize
-    if end > len(data) or hsize < 6:
-        raise _PFail(PF_VALUEOVERRUN)
+    if end > len(data):
+        raise _PFail(PF_HDRTAIL)
     p = pos + 6
     entries = []
     while p < end:
@@ -567,6 +596,21 @@ def extract(items, root, fcls=0, fsub=0):
                   "parsing entry header\n"
                   "archive stream read error (header)\nstream cancelled"
                   % fsub, file=sys.stderr)
+        elif fcls == PF_HSIZEMISMATCH:
+            print("Extraction failed\nextract failedError 0xe501f000\n"
+                  "header size mismatch: stored %d, got 6\n"
+                  "corrupted archive header\n"
+                  "parsing entry header\n"
+                  "archive stream read error (header)\nstream cancelled"
+                  % fsub, file=sys.stderr)
+        elif fcls == PF_HDRTAIL:
+            print("Extraction failed\nextract failedError 0xbd011800\n"
+                  "No more data\nread error\ntruncated stream\n"
+                  "parsing entry header\n"
+                  "archive stream read error (header)\nstream cancelled",
+                  file=sys.stderr)
+        elif fcls == PF_STREAMMAGIC:
+            print(NONSUPP, file=sys.stderr)
         elif fcls == PF_BLOBOVERRUN:
             print("Extraction failed\nextract failedError 0xbd011800\n"
                   "No more data\nread error\n"

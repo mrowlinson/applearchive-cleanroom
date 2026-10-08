@@ -23,6 +23,8 @@ Usage: craft.py CMD IN OUT ARGS...
   setbsize IN OUT HEX16       patch outer bsize u64be (16 hex chars)
   setblk IN OUT BLK HEX32     replace block BLK 16B header (32 hex chars)
   mbcat IN OUT EXTRA          append EXTRA's blocks to IN (same magic+bsize)
+  sethsize IN OUT IDX U16     set item IDX hsize absolute (inner coords)
+  patch IN OUT OFF HEX        replace bytes at OFF with hex (length-kept)
 """
 import struct
 import sys
@@ -146,6 +148,11 @@ def outer_cmd(cmd, src, dst, args):
         blocks_of(d)
         blocks_of(extra)
         d += extra[12:]
+    elif cmd == "patch":
+        off = int(args[0])
+        v = bytes.fromhex(args[1])
+        assert off + len(v) <= len(d), "patch range"
+        d[off:off + len(v)] = v
     else:
         raise SystemExit("unknown outer cmd")
     open(dst, "wb").write(bytes(d))
@@ -153,7 +160,7 @@ def outer_cmd(cmd, src, dst, args):
 
 def main():
     cmd, src, dst, args = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4:]
-    if cmd in ("setbsize", "setblk", "mbcat"):
+    if cmd in ("setbsize", "setblk", "mbcat", "patch"):
         outer_cmd(cmd, src, dst, args)
         return
     d, raw, stored = load(src)
@@ -257,6 +264,9 @@ def main():
     elif cmd == "hsdelta":
         pos, hsz, ents = items[int(args[0])]
         raw[pos + 4:pos + 6] = struct.pack("<H", hsz + int(args[1]))
+    elif cmd == "sethsize":
+        pos, hsz, ents = items[int(args[0])]
+        raw[pos + 4:pos + 6] = struct.pack("<H", int(args[1]))
     elif cmd == "setsub":
         i = find_pat(args[0].encode())
         pos, hsz, ents = items[i]
