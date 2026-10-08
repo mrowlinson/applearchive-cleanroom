@@ -212,6 +212,142 @@ _T5I2K = ("4eec20b2006c7f", "0eec3ff6f80078", "4eac2ab2008af8",
 # bands; b13-16 16-tabs.
 _T5I3K5 = (0x39, 0xe9, 0x09, 0xb9, 0x69, 0x8a, 0x3a, 0xea,
            0x0a, 0xba, 0x6a, 0x3a, 0x3a, 0xeb, 0xbb, 0xbb)
+# T5J tables: 3 transition literals + 15-row J1 tab +
+# 10-row J2 tab. Glitchy ramps, shipped literal (OPEN).
+_T5J0 = ("97230000735bef9d5337804900747c5291251dfa55df39d1698e023f"
+         "ed844c4aa2bf571eacae38b9c8759b37cccdddad2dcc06fc",
+         "a4cb110075fb91b5f4cd73fc00e43cb31747eb8955df39d1698e023f"
+         "ed844c4aa2bf571eacae38b9c8759b37cccdddad2dcc06fc",
+         "fb8f020177fb91b5f4cd73aa008fbc96b740087a8d7ed2e53d47811f"
+         "ed844c4aa2bf571eacae38b9c8759b37cccdddad2dcc06fc")
+_T5J1T = ("ab90b48a", "5b91be9a", "0b92c8aa", "bb92d2ba",
+          "6b93dcca", "1b94e6da", "cb94f0ea", "7b95fafa",
+          "3b964c2a", "bb9b6afa", "6b9c760a", "1b9d801a",
+          "6b9ece1a", "1b9fd82a", "cb9fe23a")
+_T5J1C = ((2, 0x02), (3, 0x01), (5, 0xfb), (6, 0x91), (7, 0xb5),
+          (8, 0xf4), (9, 0xcd), (10, 0x73), (12, 0x00),
+          (13, 0x8f), (14, 0xbc), (15, 0x96), (16, 0xb7),
+          (17, 0x40), (18, 0x08), (20, 0x8d), (21, 0x7e),
+          (22, 0xd2), (23, 0xe5), (24, 0x3d), (25, 0x47),
+          (26, 0x81), (27, 0x1f), (28, 0xed), (29, 0x84),
+          (30, 0x4c), (31, 0x4a), (32, 0xa2), (33, 0xbf),
+          (34, 0x57), (35, 0x1e), (36, 0xac), (37, 0xae),
+          (38, 0x38), (39, 0xb9), (40, 0xc8), (41, 0x75),
+          (42, 0x9b), (43, 0x37), (44, 0xcc), (45, 0xcd),
+          (46, 0xdd), (47, 0xad), (48, 0x2d), (49, 0xcc),
+          (50, 0x06), (51, 0xfc))
+_T5J2T = ("1b7422704ceb", "c178207ac4b6", "cb46237e28a8",
+          "b3c82168c2c3", "e3462372eaa8", "b534227abc9b",
+          "f3c8217ce2c3", "254723706ea8", "3b47236ef0a8",
+          "5147236e72a8")
+# T5J3-6 tables: ONE shared 16-tab b24-27 + k2 body overrides
+# + b5 edge @1371. (Tab reuse 4/4, OPEN why.)
+_T5J3T = ("8cbcd0f1", "bc7cc3f2", "bc7cc4f2", "ec3cb7f3",
+          "ec3cb8f3", "857c95f4", "b53c88f5", "b5fc90f5",
+          "4e7c66f6", "7efc60f7", "7efc61f7", "aebc54f8",
+          "aebc55f8", "47fc32f9", "77bc25fa", "77bc26fa")
+_T5J3K = ("a5e41c36e76db8", "0ba41d56be0db5",
+          "fee41c06c86db8", "f51a1de6b66db3")
+# T5K tables: 16-tabs b15/22/23/30/31 + b24-27 walk the J3
+# tab by k2 (full 16) + b5 edge @1499.
+_T5KT15 = (0xcb, 0xcb, 0xcb, 0xcd, 0xcd, 0xcf, 0xcf, 0xcf,
+           0xd1, 0xd1, 0xd1, 0xd3, 0xd3, 0xd3, 0xd3, 0xd3)
+_T5KT22 = (0xbd, 0xfd, 0xfd, 0xbd, 0xbd, 0xbd, 0xbd, 0xbd,
+           0xbd, 0xbd, 0xbd, 0xbd, 0xbd, 0xbd, 0xbd, 0xbd)
+_T5KT23 = (0x2f, 0x6f, 0x77, 0x27, 0x2f, 0x17, 0x1f, 0x27,
+           0x0f, 0x17, 0x1f, 0x07, 0x0f, 0x17, 0xc7, 0xcf)
+_T5KT30 = (0x88, 0x88, 0x08, 0xc8, 0x48, 0x88, 0x08, 0x88,
+           0xc8, 0x48, 0xc8, 0x08, 0x88, 0x08, 0xc8, 0x48)
+_T5KT31 = (0xcf, 0x07, 0x0d, 0xd8, 0xde, 0xdc, 0xe2, 0xe7,
+           0xe5, 0xeb, 0xf0, 0xef, 0xf4, 0xfa, 0xc5, 0xcb)
+# T5L tables (tier tail): 2 transition literals + 16-row L1
+# tab + 10-row L2 tab + L3 16-tabs/k2. Row-tabs OPEN why.
+_T5L0 = ("01cd09002bfe91b5f4cd736e0041bc433491d1deab9f74399254e007"
+         "ed844c4aa2bf571eacae38b9c8759b37cccdddad2dcc06fc",
+         "827887022dfe91b5f4cd7300b480e61a898cf6be4b923fe3823c45b6"
+         "cd3da7f0129741979cdc4989c8759b37cccdddad2dcc06fc")
+_T5L1T = ("475ff894", "a85bfd94", "b9de0195", "1adb0695",
+          "1adf0695", "7bdb0b95", "8c5e1095", "ed5a1595",
+          "fedd1995", "46db3695", "575e3b95", "b85a4095",
+          "c9dd4495", "195b4595", "2ade4995", "8bda4e95")
+_T5L1C = ((0, 0x82), (1, 0x78), (2, 0x87), (3, 0x22), (5, 0xfe),
+          (6, 0x91), (7, 0xb5), (8, 0xf4), (9, 0xcd),
+          (10, 0x73), (11, 0x00), (12, 0xb4), (13, 0x80),
+          (14, 0xe6), (15, 0xce), (16, 0x89), (17, 0x8c),
+          (18, 0xf6), (19, 0xbe), (20, 0x4b), (21, 0x92),
+          (22, 0xcf), (23, 0x29), (24, 0x82), (25, 0x3c),
+          (26, 0x45), (27, 0xb6), (28, 0xcd), (29, 0x3d),
+          (30, 0x47), (31, 0xf1), (32, 0x52), (33, 0x72),
+          (34, 0xc2), (35, 0x71), (40, 0x0c), (41, 0x5d),
+          (42, 0xb7), (43, 0x79), (44, 0xcc), (45, 0xcd),
+          (46, 0xdd), (47, 0xad), (48, 0x2d), (49, 0xcc),
+          (50, 0x06), (51, 0xfc))
+_T5L2T = ("0870625cebdfd6b00d006cf3", "0438322e7f5aae632cfab779",
+          "0438322e8759acfeecf8b779", "0438322e475f8ace4cfbb779",
+          "0438322e17dcb7632cfab779", "0438322efbdb4e9fccf7b779",
+          "0438322e305a94ce4cfbb779", "0438322e3d5ad7feecf8b779",
+          "0438322e63dac1632cfab779", "0438322e245fe0feecf8b779")
+_T5L2C = ((0, 0x82), (1, 0x78), (2, 0x87), (5, 0xfe), (6, 0x91),
+          (7, 0xb5), (8, 0xf4), (9, 0xcd), (10, 0x73),
+          (11, 0x00), (12, 0xb4), (13, 0x80), (14, 0xe6),
+          (16, 0x89), (17, 0x8c), (18, 0xf6), (19, 0xbe),
+          (20, 0x4b), (21, 0x92), (22, 0x7f), (23, 0xaa),
+          (24, 0x82), (25, 0x3c), (26, 0x45), (27, 0xb6),
+          (28, 0xcd), (29, 0x3d), (30, 0x27), (31, 0xf4),
+          (32, 0x2f), (33, 0xd8), (44, 0xcc), (45, 0xcd),
+          (46, 0xdd), (47, 0xad), (48, 0x2d), (49, 0xcc),
+          (50, 0x06), (51, 0xfc))
+_T5L3T34 = (0x02, 0xb2, 0x22, 0xe2, 0x52, 0x02, 0x82, 0x32,
+            0xb2, 0x72, 0xe2, 0xf2, 0x02, 0x22, 0x42, 0x52)
+_T5L3T35 = (0x29, 0x2c, 0x44, 0x46, 0x5e, 0x62, 0x78, 0x7c,
+            0x92, 0x96, 0xac, 0xc6, 0xc8, 0xe2, 0xe2, 0xfc)
+_T5L3T42 = (0xb5, 0x55, 0x47, 0xd7, 0xc9, 0x69, 0x4b, 0xeb,
+            0xcd, 0x6d, 0x4f, 0xd1, 0xe1, 0x63, 0x63, 0xe5)
+_T5L3T43 = (0x78, 0xf8, 0x79, 0xf8, 0x79, 0xf9, 0xf8, 0xf9,
+            0xf8, 0x78, 0xf9, 0xf9, 0xf9, 0x78, 0x78, 0x78)
+_T5L3K = ("3c5ea2ce4cfb", "495ee5feecf8", "5edeab3e8cfc",
+          "495e839fccf7")
+_T5L3C = ((0, 0x82), (1, 0x78), (2, 0x87), (3, 0x54), (5, 0xfe),
+          (6, 0x91), (7, 0xb5), (8, 0xf4), (9, 0xcd),
+          (10, 0x73), (11, 0x00), (12, 0x34), (13, 0x91),
+          (14, 0xd1), (15, 0x90), (16, 0xef), (17, 0x5b),
+          (18, 0x40), (19, 0x73), (20, 0x4b), (21, 0x92),
+          (22, 0x7f), (23, 0xaa), (24, 0x82), (25, 0x3c),
+          (26, 0x45), (27, 0xb6), (28, 0xcd), (29, 0x3d),
+          (30, 0x27), (31, 0xf4), (32, 0x2f), (33, 0xd8),
+          (44, 0x70), (45, 0x5a), (46, 0xd8), (47, 0xdd),
+          (48, 0x6c), (49, 0xc0), (50, 0xef), (51, 0xe6))
+_T5KC = ((0, 0x82), (1, 0x78), (2, 0x87), (3, 0x22), (6, 0x91),
+         (7, 0xb5), (8, 0xf4), (9, 0xcd), (10, 0x73),
+         (11, 0x00), (12, 0xb4), (13, 0x21), (14, 0xa4),
+         (16, 0x89), (17, 0x8c), (18, 0x66), (19, 0xed),
+         (20, 0x0d), (21, 0xb5), (28, 0x31), (29, 0x4f),
+         (32, 0x30), (33, 0x29), (34, 0xd1), (35, 0xe5),
+         (36, 0x51), (37, 0x57), (38, 0x9c), (39, 0xdc),
+         (40, 0xc8), (41, 0x75), (42, 0x9b), (43, 0x37),
+         (44, 0xcc), (45, 0xcd), (46, 0xdd), (47, 0xad),
+         (48, 0x2d), (49, 0xcc), (50, 0x06), (51, 0xfc))
+_T5J3C = ((0, 0x82), (1, 0x78), (2, 0x87), (3, 0x02), (6, 0x91),
+          (7, 0xb5), (8, 0xf4), (9, 0xcd), (10, 0x73),
+          (11, 0x00), (12, 0xb4), (16, 0x89), (17, 0x8c),
+          (22, 0x11), (23, 0x5d), (28, 0x31), (29, 0x4f),
+          (30, 0xc8), (31, 0xa4), (32, 0xa2), (33, 0xbf),
+          (34, 0x57), (35, 0x1e), (36, 0xac), (37, 0xae),
+          (38, 0x38), (39, 0xb9), (40, 0xc8), (41, 0x75),
+          (42, 0x9b), (43, 0x37), (44, 0xcc), (45, 0xcd),
+          (46, 0xdd), (47, 0xad), (48, 0x2d), (49, 0xcc),
+          (50, 0x06), (51, 0xfc))
+_T5J2C = ((3, 0x00), (5, 0xfb), (6, 0x91), (7, 0xb5), (8, 0xf4),
+          (9, 0xcd), (10, 0x73), (12, 0x00), (13, 0x41),
+          (14, 0xbc), (15, 0x43), (16, 0x34), (17, 0x91),
+          (18, 0xd1), (20, 0x8d), (21, 0x7e), (22, 0xd2),
+          (23, 0xe5), (25, 0x4d), (26, 0x81), (27, 0x1f),
+          (28, 0xed), (29, 0x84), (30, 0x4c), (31, 0x4a),
+          (32, 0xa2), (33, 0xbf), (34, 0x57), (35, 0x1e),
+          (36, 0xac), (37, 0xae), (38, 0x38), (39, 0xb9),
+          (40, 0xc8), (41, 0x75), (42, 0x9b), (43, 0x37),
+          (44, 0xcc), (45, 0xcd), (46, 0xdd), (47, 0xad),
+          (48, 0x2d), (49, 0xcc), (50, 0x06), (51, 0xfc))
 _T5I3T13 = (0xa4, 0xa4, 0xa4, 0xc0, 0xc0, 0xc4, 0xc4, 0xdc,
             0xe0, 0xe0, 0xfc, 0xfc, 0xfc, 0x18, 0x18, 0x34)
 _T5I3T14 = (0x7c, 0x7c, 0x7c, 0x7c, 0x7c, 0x3c, 0x3c, 0x7c,
@@ -1379,6 +1515,142 @@ def main():
             if pay[b] != v:
                 return fail("T5I3 const %d" % b)
         print("CLOSED T5I3 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 3515:  # T5J0: 3 transition literals (off=1300..1302)
+        off = n - 2213
+        if len(pay) != 52 or pay.hex() != _T5J0[off - 1300]:
+            return fail("T5J0")
+        print("CLOSED T5J0 N=%d" % n)
+        return 0
+    if n <= 3530:  # T5J1: 15-row b0/b1/b11/b19 tab
+        off = n - 2213
+        if len(pay) != 52:
+            return fail("T5J1 paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if grp(pay, tuple(range(32, 42))) != l10:
+            return fail("T5J1 lencode")
+        cells = bytes((pay[0], pay[1], pay[11], pay[19])).hex()
+        if cells != _T5J1T[off - 1303]:
+            return fail("T5J1 row")
+        for b, v in _T5J1C:
+            if pay[b] != v:
+                return fail("T5J1 const %d" % b)
+        print("CLOSED T5J1 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 3540:  # T5J2: 10-row tab b0/b1/b2/b11/b19/b24
+        off = n - 2213
+        if len(pay) != 52:
+            return fail("T5J2 paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if grp(pay, tuple(range(32, 42))) != l10:
+            return fail("T5J2 lencode")
+        cells = bytes((pay[0], pay[1], pay[2], pay[11], pay[19],
+                       pay[24])).hex()
+        if cells != _T5J2T[off - 1318]:
+            return fail("T5J2 row")
+        for b, v in _T5J2C:
+            if pay[b] != v:
+                return fail("T5J2 const %d" % b)
+        print("CLOSED T5J2 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 3604:  # T5J3-6: shared b24-27 tab + k2 overrides
+        off = n - 2213
+        if len(pay) != 52:
+            return fail("T5J3 paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if grp(pay, tuple(range(32, 42))) != l10:
+            return fail("T5J3 lencode")
+        m = (off - 1328) & 15
+        k2 = (off - 1328) >> 4
+        tag = "T5J%d" % (k2 + 3)
+        if pay[5] != (0xfb + (off >= 1371)):
+            return fail("T5J3 b5")
+        if pay[13:16].hex() + pay[18:22].hex() != _T5J3K[k2]:
+            return fail("T5J3 k2")
+        if pay[24:28].hex() != _T5J3T[m]:
+            return fail("T5J3 tab")
+        for b, v in _T5J3C:
+            if pay[b] != v:
+                return fail("%s const %d" % (tag, b))
+        print("CLOSED %s N=%d off=%d" % (tag, n, off))
+        return 0
+    if n <= 3860:  # T5K: 16-tabs + J3-walk b24-27 + b5 edge
+        off = n - 2213
+        if len(pay) != 52:
+            return fail("T5K paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if grp(pay, tuple(range(32, 42))) != l10:
+            return fail("T5K lencode")
+        m = (off - 1392) & 15
+        k2 = (off - 1392) >> 4
+        if pay[5] != (252 + (off >= 1499) + (off >= 1627)):
+            return fail("T5K b5")
+        if pay[15] != _T5KT15[m] or pay[22] != _T5KT22[m] or \
+                pay[23] != _T5KT23[m]:
+            return fail("T5K tabA")
+        if pay[24:28].hex() != _T5J3T[k2]:
+            return fail("T5K walk")
+        if pay[30] != _T5KT30[m] or pay[31] != _T5KT31[m]:
+            return fail("T5K tabB")
+        for b, v in _T5KC:
+            if pay[b] != v:
+                return fail("T5K const %d" % b)
+        print("CLOSED T5K N=%d off=%d" % (n, off))
+        return 0
+    if n <= 3862:  # T5L0: 2 transition literals (off=1648/1649)
+        off = n - 2213
+        if len(pay) != 52 or pay.hex() != _T5L0[off - 1648]:
+            return fail("T5L0")
+        print("CLOSED T5L0 N=%d" % n)
+        return 0
+    if n <= 3878:  # T5L1: 16-row b36-39 tab
+        off = n - 2213
+        if len(pay) != 52:
+            return fail("T5L1 paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if grp(pay, tuple(range(32, 42))) != l10:
+            return fail("T5L1 lencode")
+        if pay[36:40].hex() != _T5L1T[off - 1650]:
+            return fail("T5L1 row")
+        for b, v in _T5L1C:
+            if pay[b] != v:
+                return fail("T5L1 const %d" % b)
+        print("CLOSED T5L1 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 3888:  # T5L2: 10-row tab b3/15/34-43
+        off = n - 2213
+        if len(pay) != 52:
+            return fail("T5L2 paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if grp(pay, tuple(range(32, 42))) != l10:
+            return fail("T5L2 lencode")
+        row = pay[3:4].hex() + pay[15:16].hex() + pay[34:44].hex()
+        if row != _T5L2T[off - 1666]:
+            return fail("T5L2 row")
+        for b, v in _T5L2C:
+            if pay[b] != v:
+                return fail("T5L2 const %d" % b)
+        print("CLOSED T5L2 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 3952:  # T5L3: 16-tabs b34/35/42/43 + k2 b36-41
+        off = n - 2213
+        if len(pay) != 52:
+            return fail("T5L3 paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if grp(pay, tuple(range(32, 42))) != l10:
+            return fail("T5L3 lencode")
+        m = (off - 1676) & 15
+        k2 = (off - 1676) >> 4
+        if pay[34] != _T5L3T34[m] or pay[35] != _T5L3T35[m]:
+            return fail("T5L3 tabA")
+        if pay[36:42].hex() != _T5L3K[k2]:
+            return fail("T5L3 k2")
+        if pay[42] != _T5L3T42[m] or pay[43] != _T5L3T43[m]:
+            return fail("T5L3 tabB")
+        for b, v in _T5L3C:
+            if pay[b] != v:
+                return fail("T5L3 const %d" % b)
+        print("CLOSED T5L3 N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
