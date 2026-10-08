@@ -11,6 +11,9 @@ FAIL=0
 pass() { echo "PASS $1"; }
 fail() { echo "FAIL $1"; FAIL=1; }
 die() { echo "HARNESS-ERROR $*" >&2; exit 2; }
+t1pin() { # $1=oracle-stderr $2=tag: -t shape pin (PARENT-024: every outer cell proves -t-1 oracle)
+  grep -q '0x9403' "$1" && pass "$2-t1pin" || fail "$2-t1pin"
+}
 
 command -v cc >/dev/null || die "no cc"
 make -C "$ROOT" OUTDIR="$WORK/build" >/dev/null 2>&1 || die "make failed"
@@ -545,6 +548,7 @@ CRC=0; "$AAD" "$WORK/oh.aar" "$WORK/c-oh" 2>"$WORK/oh.err" || CRC=$?
 [ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "oh-exit" || fail "oh-exit"
 diff -r "$WORK/o-oh" "$WORK/c-oh" >/dev/null 2>&1 && pass "oh-tree" || fail "oh-tree"
 diff "$WORK/oh-o.err" "$WORK/oh.err" >/dev/null 2>&1 && pass "oh-shape" || fail "oh-shape"
+t1pin "$WORK/oh-o.err" "oh"
 
 echo "== cell outer-raw64 (u64 raw naming, stderr IDENT) =="
 python3 "$HERE/craft.py" setblk "$V/aar/empty-lzfse.aar" "$WORK/r64.aar" 0 01000000000000710000000000000071 || die "craft-r64"
@@ -554,6 +558,7 @@ CRC=0; "$AAD" "$WORK/r64.aar" "$WORK/c-r64" 2>"$WORK/r64.err" || CRC=$?
 [ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "r64-exit" || fail "r64-exit"
 diff -r "$WORK/o-r64" "$WORK/c-r64" >/dev/null 2>&1 && pass "r64-tree" || fail "r64-tree"
 diff "$WORK/r64-o.err" "$WORK/r64.err" >/dev/null 2>&1 && pass "r64-shape" || fail "r64-shape"
+t1pin "$WORK/r64-o.err" "r64"
 
 echo "== cell outer-multiblock (2-block chains) =="
 python3 "$HERE/craft.py" mbcat "$V/aar/hello-lzfse.aar" "$WORK/mb12.aar" "$V/aar/empty-lzfse.aar" || die "craft-mb12"
@@ -616,6 +621,7 @@ for T in L0 L1 L5 L6 L11 L12 L13 L27 L28 L29 LX LBs0 PQ Q2 Q3 Q4; do
   [ "$ORC" -eq "$CRC" ] && pass "$T-exit" || fail "$T-exit"
   diff -r "$WORK/o-$T" "$WORK/c-$T" >/dev/null 2>&1 && pass "$T-tree" || fail "$T-tree"
   diff "$WORK/$T-o.err" "$WORK/$T.err" >/dev/null 2>&1 && pass "$T-shape" || fail "$T-shape"
+  case "$T" in L13|L27|L28|L29) t1pin "$WORK/$T-o.err" "$T";; esac
 done
 
 echo "== cell typ-multibyte (full-uint dispatch, oracle-compared) =="
@@ -670,6 +676,7 @@ for T in mc1 mc2 mc3 mc4 mcbv; do
   [ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "$T-exit" || fail "$T-exit"
   mcnorm "$WORK/$T-o.err" > "$WORK/$T-o.n"; mcnorm "$WORK/$T.err" > "$WORK/$T.n"
   diff "$WORK/$T-o.n" "$WORK/$T.n" >/dev/null 2>&1 && pass "$T-shape" || fail "$T-shape"
+  t1pin "$WORK/$T-o.err" "$T"
 done
 diff -r "$WORK/o-mc1" "$WORK/c-mc1" >/dev/null 2>&1 && pass "mc1-tree" || fail "mc1-tree"
 # mc2/mc3/mcbv: exists-bit phase-race (oracle EMPTY vs ABSENT legs);
@@ -859,51 +866,35 @@ mkm3() { # $1=base $2=rawd $3=payd $4=name
   M3H=$(python3 -c "import struct; d=open('$V/aar/$1.aar','rb').read(); raw,pay=struct.unpack('>QQ',d[12:28]); print((struct.pack('>Q',raw+($2))+struct.pack('>Q',pay+($3))).hex())") || die "m3$4 walk"
   python3 "$HERE/craft.py" setblk "$V/aar/$1.aar" "$WORK/m3$4.aar" 0 "$M3H" || die "craft-m3$4"
 }
-runm3() { # $1=name $2=ucflag
+runm3() { # $1=name (-t-1-only: every m3 shape hard-fails short, no extraction, no tails)
   ORC=0; sh "$ADAPTER" aar-decode "$WORK/m3$1.aar" "$WORK/o-m3$1" >/dev/null 2>"$WORK/m3$1-o.err" || ORC=$?
   mkdir -p "$WORK/c-m3$1" "$WORK/p-m3$1"
   CRC=0; "$AAD" "$WORK/m3$1.aar" "$WORK/c-m3$1" 2>"$WORK/m3$1.err" || CRC=$?
   PRC=0; python3 "$HERE/../proto/aad.py" "$WORK/m3$1.aar" "$WORK/p-m3$1" >/dev/null 2>&1 || PRC=$?
   [ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && [ "$PRC" -eq 1 ] && pass "m3$1-exit" || fail "m3$1-exit"
-  if [ "$2" = "uc" ]; then
-    mcnorm "$WORK/m3$1-o.err" > "$WORK/m3$1-o.n"; mcnorm "$WORK/m3$1.err" > "$WORK/m3$1.n"
-    diff "$WORK/m3$1-o.n" "$WORK/m3$1.n" >/dev/null 2>&1 && pass "m3$1-shape" || fail "m3$1-shape"
-    [ "$(grep -c '1 entries failed' "$WORK/m3$1-o.err")" = "1" ] && [ "$(grep -c '1 entries failed' "$WORK/m3$1.err")" = "1" ] && pass "m3$1-count" || fail "m3$1-count"
-  else
-    diff "$WORK/m3$1-o.err" "$WORK/m3$1.err" >/dev/null 2>&1 && pass "m3$1-shape" || fail "m3$1-shape"
-  fi
+  diff "$WORK/m3$1-o.err" "$WORK/m3$1.err" >/dev/null 2>&1 && pass "m3$1-shape" || fail "m3$1-shape"
+  t1pin "$WORK/m3$1-o.err" "m3$1"
   diff -r "$WORK/c-m3$1" "$WORK/p-m3$1" >/dev/null 2>&1 && pass "m3$1-lock" || fail "m3$1-lock"
 }
 empty3() { # $1=name
   [ -z "$(find "$WORK/o-m3$1" "$WORK/c-m3$1" -type f 2>/dev/null)" ] && pass "m3$1-empty" || fail "m3$1-empty"
   diff -r "$WORK/o-m3$1" "$WORK/c-m3$1" >/dev/null 2>&1 && pass "m3$1-tree" || fail "m3$1-tree"
 }
-mkm3 hello-lzfse -10 0 uc10; runm3 uc10 uc
-cmp -s "$WORK/o-m3uc10/hello/repeat.txt" "$WORK/c-m3uc10/hello/repeat.txt" && pass "uc10-repeat" || fail "uc10-repeat"
-cmp -s "$WORK/o-m3uc10/hello/greet.txt" "$WORK/c-m3uc10/hello/greet.txt" && pass "uc10-greet" || fail "uc10-greet"
-[ "$(stat -f %p "$WORK/o-m3uc10/hello/repeat.txt")" = "$(stat -f %p "$WORK/c-m3uc10/hello/repeat.txt")" ] && pass "uc10-mode" || fail "uc10-mode"
-xattr -l "$WORK/o-m3uc10/hello/repeat.txt" > "$WORK/uc10o.x" 2>&1; xattr -l "$WORK/c-m3uc10/hello/repeat.txt" > "$WORK/uc10c.x" 2>&1
-cmp -s "$WORK/uc10o.x" "$WORK/uc10c.x" && pass "uc10-xattr" || fail "uc10-xattr"
-mkm3 hello-lzfse -25 0 uc25; runm3 uc25 uc
-cmp -s "$WORK/o-m3uc25/hello/repeat.txt" "$WORK/c-m3uc25/hello/repeat.txt" && pass "uc25-repeat" || fail "uc25-repeat"
-mkm3 hello-lzfse -36 0 uc36; runm3 uc36 uc
-cmp -s "$WORK/o-m3uc36/hello/repeat.txt" "$WORK/c-m3uc36/hello/repeat.txt" && pass "uc36-repeat" || fail "uc36-repeat"
-mkm3 hello-lzfse -37 0 uc37; runm3 uc37 uc
-cmp -s "$WORK/o-m3uc37/hello/greet.txt" "$WORK/c-m3uc37/hello/greet.txt" && pass "uc37-greet" || fail "uc37-greet"
-[ ! -e "$WORK/o-m3uc37/hello/repeat.txt" ] && [ ! -e "$WORK/c-m3uc37/hello/repeat.txt" ] && pass "uc37-absent" || fail "uc37-absent"
-mkm3 hello-lzfse -100 0 uc100; runm3 uc100 uc
-cmp -s "$WORK/o-m3uc100/hello/greet.txt" "$WORK/c-m3uc100/hello/greet.txt" && pass "uc100-greet" || fail "uc100-greet"
-[ ! -e "$WORK/o-m3uc100/hello/repeat.txt" ] && [ ! -e "$WORK/c-m3uc100/hello/repeat.txt" ] && pass "uc100-absent" || fail "uc100-absent"
-mkm3 hello-lzfse 10 0 uh10; runm3 uh10 x; empty3 uh10
-mkm3 hello-lzfse 500 0 uh500; runm3 uh500 x; empty3 uh500
-mkm3 hello-lzfse 0 -1 pl1; runm3 pl1 x; empty3 pl1
-mkm3 hello-lzfse 0 -4 pl4; runm3 pl4 x; empty3 pl4
-mkm3 hello-lzfse 0 -5 pl5; runm3 pl5 x; empty3 pl5
-mkm3 hello-lzfse 0 -10 pl10; runm3 pl10 x; empty3 pl10
-mkm3 hello-lzfse 0 -100 pl100; runm3 pl100 x; empty3 pl100
-mkm3 hello-lzfse 0 1 phi; runm3 phi x; empty3 phi
-mkm3 empty-lzfse 1 0 sthi; runm3 sthi x; empty3 sthi
-mkm3 empty-lzfse -1 0 stlo; runm3 stlo x; empty3 stlo
+mkm3 hello-lzfse -10 0 uc10; runm3 uc10; empty3 uc10
+mkm3 hello-lzfse -25 0 uc25; runm3 uc25; empty3 uc25
+mkm3 hello-lzfse -36 0 uc36; runm3 uc36; empty3 uc36
+mkm3 hello-lzfse -37 0 uc37; runm3 uc37; empty3 uc37
+mkm3 hello-lzfse -100 0 uc100; runm3 uc100; empty3 uc100
+mkm3 hello-lzfse 10 0 uh10; runm3 uh10; empty3 uh10
+mkm3 hello-lzfse 500 0 uh500; runm3 uh500; empty3 uh500
+mkm3 hello-lzfse 0 -1 pl1; runm3 pl1; empty3 pl1
+mkm3 hello-lzfse 0 -4 pl4; runm3 pl4; empty3 pl4
+mkm3 hello-lzfse 0 -5 pl5; runm3 pl5; empty3 pl5
+mkm3 hello-lzfse 0 -10 pl10; runm3 pl10; empty3 pl10
+mkm3 hello-lzfse 0 -100 pl100; runm3 pl100; empty3 pl100
+mkm3 hello-lzfse 0 1 phi; runm3 phi; empty3 phi
+mkm3 empty-lzfse 1 0 sthi; runm3 sthi; empty3 sthi
+mkm3 empty-lzfse -1 0 stlo; runm3 stlo; empty3 stlo
 
 echo "== cell g9-traversal (sym/file/dangling planted parent) =="
 mkdir -p "$WORK/g9src/a" "$WORK/g9src/b/deep"
@@ -1127,7 +1118,7 @@ for e in 511 512 750 800 600 350; do
   sh "$ADAPTER" aar-encode --alg lzfse --block 128k --threads 1 "$WORK/dsrc$e" "$WORK/dv-edge$e.aar" >/dev/null 2>&1 || die "dev encode edge$e"
 done
 # spec blk:k:fracN:fracD:kind:expC:oset  (kind=pay|hdr|hard; oset=oracle sizes, 0=empty-file)
-for spec in "128k:6:1:2:pay:0:0" "128k:8:1:2:pay:262144:262144,0" "128k:10:1:2:pay:524288:524288,262144" "128k:12:1:2:pay:524288:524288,262144,786432" "128k:14:1:2:pay:786432:786432,524288,1048576" "128k:16:1:2:pay:1048576:1048576,786432,1310720" "1m:2:1:2:pay:786432:524288,786432,1048576,1310720" "1m:2:1:4:pay:786432:524288,786432,1048576" "1m:2:3:4:pay:786432:524288,786432,1048576" "1m:1:1:2:pay:262144:262144,0" "1m:0:1:2:hard:ABS:ABS" "256k:8:1:2:pay:786432:524288,786432,1048576" "1m:2:10:1:HDR:524288:524288,786432,1048576" "128k:8:10:1:HDR:262144:262144,0" "128k:5:1:2:pay:ABS:ABS" "128k:7:1:2:pay:0:0,ABS" "edge511:6:1:2:pay:0:0" "edge512:6:1:2:pay:ABS:ABS" "edge750:8:1:2:pay:0:0" "edge800:8:1:2:pay:ABS:ABS" "edge600:7:1:2:pay:ABS:ABS" "edge350:4:1:2:pay:ABS:ABS"; do
+for spec in "128k:6:1:2:pay:0:0" "128k:8:1:2:pay:262144:262144,0" "128k:10:1:2:pay:524288:524288,262144" "128k:12:1:2:pay:786432:524288,262144,786432" "128k:14:1:2:pay:1048576:786432,524288,1048576" "128k:16:1:2:pay:1310720:1048576,786432,1310720" "1m:2:1:2:pay:1310720:524288,786432,1048576,1310720" "1m:2:1:4:pay:1310720:1310720,1048576" "1m:2:3:4:pay:1310720:1310720,1048576" "1m:1:1:2:pay:262144:262144,0" "1m:0:1:2:hard:ABS:ABS" "256k:8:1:2:pay:1310720:1310720,1048576" "1m:2:10:1:HDR:1310720:1310720,1048576" "128k:8:10:1:HDR:262144:262144,0" "128k:5:1:2:pay:ABS:ABS" "128k:7:1:2:pay:0:0,ABS" "edge511:6:1:2:pay:0:0" "edge512:6:1:2:pay:ABS:ABS" "edge750:8:1:2:pay:0:0" "edge800:8:1:2:pay:ABS:ABS" "edge600:7:1:2:pay:ABS:ABS" "edge350:4:1:2:pay:ABS:ABS"; do
   blk=$(echo "$spec" | cut -d: -f1); k=$(echo "$spec" | cut -d: -f2); fn=$(echo "$spec" | cut -d: -f3); fd=$(echo "$spec" | cut -d: -f4); kind=$(echo "$spec" | cut -d: -f5); exp=$(echo "$spec" | cut -d: -f6); oset=$(echo "$spec" | cut -d: -f7)
   T=dv$blk$k$fn$fd$kind
   if [ "$kind" = "HDR" ]; then
@@ -1156,6 +1147,7 @@ print(bs[$k][0]+16+bs[$k][2]*$fn//$fd)") || die "dev cut $spec"
   diff -r "$WORK/dvc-$T" "$WORK/dvp-$T" >/dev/null 2>&1 && pass "$T-cplock" || fail "$T-cplock"
   mcnorm "$WORK/dvo-$T.err" > "$WORK/dvo-$T.n"; mcnorm "$WORK/dvc-$T.err" > "$WORK/dvc-$T.n"
   diff "$WORK/dvo-$T.n" "$WORK/dvc-$T.n" >/dev/null 2>&1 && pass "$T-shape" || fail "$T-shape"
+  t1pin "$WORK/dvo-$T.err" "$T"
   if [ "$kind" = "hard" ]; then
     [ -z "$(ls "$WORK/dvo-$T")" ] && [ -z "$(ls "$WORK/dvc-$T")" ] && pass "$T-empty" || fail "$T-empty"
   else
@@ -1211,7 +1203,7 @@ python3 "$HERE/craft.py" patch "$WORK/chmz.aar" "$WORK/chMZ3.aar" "$CHMZ1" ff ||
 python3 -c "open('$WORK/chMZ3.aar','ab').write(bytes(3))" || die "craft-chMZ3t"
 python3 "$HERE/craft.py" patch "$WORK/chmz.aar" "$WORK/chMZ20.aar" "$CHMZ1" ff || die "craft-chMZ20"
 python3 -c "open('$WORK/chMZ20.aar','ab').write(bytes(20))" || die "craft-chMZ20t"
-runchain() { # $1=name $2=mode(stable|setlone|setchain|blobrace) $3=comp(setchain only)
+runchain() { # $1=name (-t-1-only: deterministic short stanzas, IDENT; race modes retired)
   rm -rf "$WORK/cho-$1" "$WORK/chc-$1" "$WORK/chp-$1"; mkdir -p "$WORK/cho-$1" "$WORK/chc-$1" "$WORK/chp-$1"
   ORC=0; sh "$ADAPTER" aar-decode "$WORK/ch$1.aar" "$WORK/cho-$1" 2>"$WORK/cho-$1.err" >/dev/null || ORC=$?
   CRC=0; "$AAD" "$WORK/ch$1.aar" "$WORK/chc-$1" 2>"$WORK/chc-$1.err" >/dev/null || CRC=$?
@@ -1221,45 +1213,10 @@ runchain() { # $1=name $2=mode(stable|setlone|setchain|blobrace) $3=comp(setchai
   [ -z "$(find "$WORK/cho-$1" "$WORK/chc-$1" -type f 2>/dev/null)" ] && pass "ch$1-empty" || fail "ch$1-empty"
   diff -r "$WORK/cho-$1" "$WORK/chc-$1" >/dev/null 2>&1 && pass "ch$1-tree" || fail "ch$1-tree"
   diff -r "$WORK/chc-$1" "$WORK/chp-$1" >/dev/null 2>&1 && pass "ch$1-lock" || fail "ch$1-lock"
-  if [ "$2" = "stable" ]; then
-    diff "$WORK/cho-$1.err" "$WORK/chc-$1.err" >/dev/null 2>&1 && pass "ch$1-shape" || fail "ch$1-shape"
-  elif [ "$2" = "setlone" ]; then
-    # C deterministic-chained; oracle SET {chained(==C), lone(constructed badval+NOP)}
-    python3 - "$WORK/ch$1.aar" "$WORK/cho-$1.lone" <<'PYEOF' || die "chlone-$1"
-import struct, sys
-d = open(sys.argv[1], 'rb').read()
-bsize = struct.unpack('>Q', d[4:12])[0]
-raw, pay = struct.unpack('>QQ', d[12:28])
-R, P = struct.unpack('>QQ', d[12 + 16 + pay:12 + 32 + pay])
-open(sys.argv[2], 'w').write(
-    "Extraction failed\nextract failedError 0xbd009800\nistream read error\n"
-    "refill buffer\narchive stream read error (header)\nflushing shared buffer\n"
-    "Invalid block header payload=0x%x raw=0x%x block=0x%x\n\n"
-    "NOP received\nprocessStream\ndecoder failed\nstream cancelled\n" % (P, R, bsize))
-PYEOF
-    CHSET=0
-    diff "$WORK/cho-$1.err" "$WORK/chc-$1.err" >/dev/null 2>&1 && CHSET=1
-    diff "$WORK/cho-$1.err" "$WORK/cho-$1.lone" >/dev/null 2>&1 && CHSET=1
-    [ "$CHSET" = "1" ] && pass "ch$1-shape" || fail "ch$1-shape"
-  elif [ "$2" = "setchain" ]; then
-    # C deterministic-lone; oracle SET {lone(==C), chained(pattern: pair+worker+inSize)}
-    NM=$1; COMP=$3
-    PP=$(python3 -c "import struct; d=open('$WORK/ch$NM.aar','rb').read(); raw,pay=struct.unpack('>QQ',d[12:28]); R,P=struct.unpack('>QQ',d[12+16+pay:12+32+pay]); print('%x %x' % (P, R))") || die "chpair-$NM"
-    set -- $PP
-    CHSET=0
-    diff "$WORK/cho-$NM.err" "$WORK/chc-$NM.err" >/dev/null 2>&1 && CHSET=1
-    if grep -q "Invalid block header payload=0x$1 raw=0x$2 block=" "$WORK/cho-$NM.err" 2>/dev/null && grep -q "invalid output size/decoder error: block=0, inSize=$COMP," "$WORK/cho-$NM.err" 2>/dev/null && grep -q "^worker proc reported an error$" "$WORK/cho-$NM.err" 2>/dev/null; then CHSET=1; fi
-    [ "$CHSET" = "1" ] && pass "ch$NM-shape" || fail "ch$NM-shape"
-  else
-    # blobrace: chained-worker + oracle-side stray-NOP strip (race ~1/6 MZT20)
-    grep -v '^NOP received$' "$WORK/cho-$1.err" > "$WORK/cho-$1.nn"
-    diff "$WORK/cho-$1.nn" "$WORK/chc-$1.err" >/dev/null 2>&1 && pass "ch$1-shape" || fail "ch$1-shape"
-  fi
+  diff "$WORK/cho-$1.err" "$WORK/chc-$1.err" >/dev/null 2>&1 && pass "ch$1-shape" || fail "ch$1-shape"
+  t1pin "$WORK/cho-$1.err" "ch$1"
 }
-for n in H1 H6 H12; do runchain "$n" setlone; done
-for n in H13 H50 H92; do runchain "$n" setchain "${n#H}"; done
-for n in H93 E103 E100 E97 E63 E13 A5 A16 A20 A32 G16 V2 SP1 SP2 SP4; do runchain "$n" stable; done
-runchain MZ3 blobrace; runchain MZ20 blobrace; runchain SP3 blobrace # SP3 stray-NOP race ~1/11 (VERIFY-5e4c75f FLAKE-2)
+for n in H1 H6 H12 H13 H50 H92 H93 E103 E100 E97 E63 E13 A5 A16 A20 A32 G16 V2 SP1 SP2 SP4 MZ3 MZ20 SP3; do runchain "$n"; done
 
 echo "== cell m1m2-tip2e (M1 tails + M2 modals, self-gen rule cuts) =="
 mkdir -p "$WORK/t2src/big" "$WORK/t2m2" "$WORK/t2dsrcB"
@@ -1308,6 +1265,7 @@ runt2() { # $1=name $2=relpath $3=csize $4=ctails $5=oset $6=otails $7=ocount
   diff -r "$WORK/t2c-$1" "$WORK/t2p-$1" >/dev/null 2>&1 && pass "t2$1-cplock" || fail "t2$1-cplock"
   mcnorm "$WORK/t2o-$1.err" > "$WORK/t2o-$1.n"; mcnorm "$WORK/t2c-$1.err" > "$WORK/t2c-$1.n"
   diff "$WORK/t2o-$1.n" "$WORK/t2c-$1.n" >/dev/null 2>&1 && pass "t2$1-shape" || fail "t2$1-shape"
+  t1pin "$WORK/t2o-$1.err" "t2$1"
   if [ -f "$WORK/t2o-$1/$2" ] && [ -f "$WORK/t2c-$1/$2" ]; then
     SO=$(stat -f %z "$WORK/t2o-$1/$2"); SC=$(stat -f %z "$WORK/t2c-$1/$2")
     if [ "$SO" -le "$SC" ]; then head -c "$SO" "$WORK/t2c-$1/$2" | cmp -s - "$WORK/t2o-$1/$2" && pass "t2$1-prefix" || fail "t2$1-prefix"
@@ -1315,19 +1273,19 @@ runt2() { # $1=name $2=relpath $3=csize $4=ctails $5=oset $6=otails $7=ocount
     [ "$(stat -f %p "$WORK/t2o-$1/$2")" = "$(stat -f %p "$WORK/t2c-$1/$2")" ] && pass "t2$1-mode" || fail "t2$1-mode"
   else pass "t2$1-prefix"; pass "t2$1-mode"; fi
 }
-runt2 618 big/z3m.bin 524288 2 "262144,524288,786432" "0,2,4" "1 entries failed,2 entries failed"
+runt2 618 big/z3m.bin 1310720 2 "1310720,1048576" "0,2,4" "1 entries failed,2 entries failed"
 cmp -s "$WORK/t2src/big/r500k.bin" "$WORK/t2o-618/big/r500k.bin" && pass "t2618-rfull" || fail "t2618-rfull"
-runt2 7500 big/z3m.bin 1048576 2 "1048576,1310720,1572864" "0,2" "1 entries failed"
+runt2 7500 big/z3m.bin 2359296 2 "2359296,2097152" "0,2" "1 entries failed"
 cmp -s "$WORK/t2src/big/r500k.bin" "$WORK/t2o-7500/big/r500k.bin" && pass "t27500-rfull" || fail "t27500-rfull"
 runt2 506k big/z3m.bin 262144 0 "0,262144,ABS" "0,2,4" "1 entries failed,2 entries failed" # otails x4 minority race 2/11 pooled (CR-048 SET)
 cmp -s "$WORK/t2src/big/r500k.bin" "$WORK/t2o-506k/big/r500k.bin" && pass "t2506k-rfull" || fail "t2506k-rfull"
 runt2 m2th1 big2 262144 0 "262144" "0,2" "1 entries failed,2 entries failed"
 cmp -s "$WORK/t2m2/big1" "$WORK/t2o-m2th1/big1" && pass "t2m2th1-b1full" || fail "t2m2th1-b1full"
-runt2 m2th2 big2 524288 2 "524288,786432" "0,2" "1 entries failed,2 entries failed"
+runt2 m2th2 big2 1310720 2 "1310720,1048576" "0,2" "1 entries failed,2 entries failed"
 cmp -s "$WORK/t2m2/big1" "$WORK/t2o-m2th2/big1" && pass "t2m2th2-b1full" || fail "t2m2th2-b1full"
-runt2 m2th3 big2 1048576 2 "1048576,1310720" "0,2" "1 entries failed"
+runt2 m2th3 big2 2359296 2 "2359296,2097152" "0,2" "1 entries failed"
 cmp -s "$WORK/t2m2/big1" "$WORK/t2o-m2th3/big1" && pass "t2m2th3-b1full" || fail "t2m2th3-b1full"
-runt2 rnd3m big2 1048576 2 "1048576" "0,2" "1 entries failed"
+runt2 rnd3m big2 2359296 2 "2359296,2097152" "0,2" "1 entries failed" # 8ch flush-race minority 1/11 pooled (r3; same class as 7500)
 cmp -s "$WORK/t2dsrcB/big1" "$WORK/t2o-rnd3m/big1" && pass "t2rnd3m-b1full" || fail "t2rnd3m-b1full"
 runt2 tp1a big2 262144 0 "262144" "0,2" "1 entries failed,2 entries failed"
 cmp -s "$WORK/t2m2/big1" "$WORK/t2o-tp1a/big1" && pass "t2tp1a-b1full" || fail "t2tp1a-b1full"

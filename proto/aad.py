@@ -82,10 +82,13 @@ def _lib_dec(payload, unc):
         _lzd.compression_decode_buffer.restype = ctypes.c_size_t
         _lzd.compression_decode_scratch_buffer_size.argtypes = [ctypes.c_int]
         _lzd.compression_decode_scratch_buffer_size.restype = ctypes.c_size_t
-    out = ctypes.create_string_buffer(unc if unc else 1)
+    # +1 dst detects over-decode (unclo), mirroring C: the API
+    # caps at dst_size, so unc+1 returns unc+1 iff true output
+    # exceeds unc (-t-1 oracle hard-fails unclo, 94039800).
+    out = ctypes.create_string_buffer(unc + 1)
     scr = ctypes.create_string_buffer(
         _lzd.compression_decode_scratch_buffer_size(2049))
-    got = _lzd.compression_decode_buffer(out, unc, bytes(payload),
+    got = _lzd.compression_decode_buffer(out, unc + 1, bytes(payload),
                                          len(payload), scr, 2049)
     if got == unc and unc:
         return bytes(out.raw[:got]), got
@@ -147,89 +150,43 @@ NONSUPP = ("Extraction failed\nextract failedError 0xbd035000\n"
            "archive stream read error (header)\nstream cancelled")
 
 
-def _trunc(what, have, need, blob=0):
-    if not blob:
-        return ("Extraction failed\nextract failedError 0xbd009800\n"
-                "istream read error\nrefill buffer\n"
-                "archive stream read error (header)\nflushing shared buffer\n"
-                "Truncated block %s (%d/%d bytes read)\n"
-                "NOP received\nprocessStream\ndecoder failed\n"
-                "stream cancelled" % (what, have, need))
-    return ("Extraction failed\nextract failedError 0xbd009800\n"
-            "istream read error\nRefill buffer failed\nread error\n"
-            "archive stream read error (blob)\nflushing shared buffer\n"
-            "Truncated block %s (%d/%d bytes read)\n"
-            "NOP received\nprocessStream\ndecoder failed\n"
-            "stream cancelled" % (what, have, need))
-
-
-def _badval(pay, raw, bsize, blob=0):
-    head = ("Extraction failed\nextract failedError 0xbd009800\n"
-            "istream read error\n")
+def _t1(code, msg, blob=0):
+    """-t-1-only block-layer error stanzas (PARENT-024 (a),
+    NOTE-60 mapping, NOTE-193 first-hand): SHORT, no
+    flushing/NOP tails, no counts, no value echo."""
+    s = ("Extraction failed\nextract failedError %s\n%s\n"
+         "istream read error\n" % (code, msg))
     if blob:
-        head += ("Refill buffer failed\nread error\n"
-                 "archive stream read error (blob)\n")
+        s += ("Refill buffer failed\nread error\n"
+              "archive stream read error (blob)\n")
     else:
-        head += ("refill buffer\narchive stream read error (header)\n")
-    return (head + "flushing shared buffer\n"
-            "Invalid block header payload=0x%x raw=0x%x block=0x%x\n"
-            "\n"
-            "NOP received\nprocessStream\ndecoder failed\n"
-            "stream cancelled" % (pay, raw, bsize))
+        s += "refill buffer\narchive stream read error (header)\n"
+    return s + "stream cancelled"
 
 
-def _chain(data, pend, h2, bsize):
-    """Chained line before worker (TIP2e chain-together law,
-    DPROBE-15): scan trailing as a chain. r<16 -> framing; pair
-    invalid -> badval STOP; valid + short payload -> truncpay
-    STOP; valid + full -> skip 16+P + recurse. Both flavors."""
-    r, p = h2, pend
-    while True:
-        if r <= 0:
-            return ""
-        if r < 16:
-            return "Truncated block header (%d/16 bytes read)\n" % r
-        R = int.from_bytes(data[p:p + 8], "big")
-        P = int.from_bytes(data[p + 8:p + 16], "big")
-        if R > bsize or P > bsize:
-            return ("Invalid block header payload=0x%x raw=0x%x "
-                    "block=0x%x\n\n" % (P, R, bsize))
-        if 16 + P > r:
-            return ("Truncated block payload (%d/%d bytes read)\n"
-                    % (r - 16, P))
-        p += 16 + P
-        r -= 16 + P
+def _trunc(what, blob=0):
+    if what.startswith("h"):
+        return _t1("0x94034400", "truncated stream header", blob)
+    return _t1("0x94036c00", "truncated stream payload", blob)
 
 
-def _decfail(k, pay, raw, out=-1, blob=0, data=b"", pend=0, h2=0,
-             bsize=0):
-    head = ("Extraction failed\nextract failedError 0xbd009800\n"
-            "istream read error\n")
-    if blob:
-        head += ("Refill buffer failed\nread error\n"
-                 "archive stream read error (blob)\n")
-    else:
-        head += ("refill buffer\narchive stream read error (header)\n")
-    s = head + "flushing shared buffer\n"
-    s += _chain(data, pend, h2, bsize)
-    return (s + "invalid output size/decoder error: block=%d, inSize=%d, "
-            "outSize=%d, expectedOutSize=%d\n"
-            "worker proc reported an error\nThreads reported errors\n"
-            "ThreadPipelineDestroy\nprocessStream\ndecoder failed\n"
-            "stream cancelled" % (k, pay, out, raw))
+def _badval(blob=0):
+    return _t1("0x94036800", "corrupted stream header", blob)
 
 
-def _midblob(mid, data):
-    kind, a, b, c = mid["kind"], mid["a"], mid["b"], mid["c"]
+def _decfail(blob=0):
+    return _t1("0x94039800", "block decompression failed", blob)
+
+
+def _midblob(mid):
+    kind = mid["kind"]
     if kind == "trunchdr":
-        return _trunc("header", a, b, 1)
+        return _trunc("header", 1)
     if kind == "truncpay":
-        return _trunc("payload", a, b, 1)
+        return _trunc("payload", 1)
     if kind == "badval":
-        return _badval(a, b, c, 1)
-    return _decfail(a, b, c, mid.get("out", -1), 1, data,
-                    mid.get("pend", 0), mid.get("h2", 0),
-                    mid.get("bsize", 0))
+        return _badval(1)
+    return _decfail(1)
 
 
 KNOWN_PBZ = (b"pbze", b"pbz4", b"pbzm", b"pbzb", b"pbzx", b"pbzz")
@@ -262,7 +219,7 @@ def parse_chain(data):
         blob = len(inner) >= 262144
         if off + 16 > len(data):
             if not blob:
-                raise FmtErr(_trunc("header", len(data) - off, 16))
+                raise FmtErr(_trunc("header"))
             return bytes(inner), metas, {"kind": "trunchdr",
                                          "a": len(data) - off, "b": 16,
                                          "c": 0, "whole": len(inner),
@@ -270,14 +227,14 @@ def parse_chain(data):
         raw, pay = struct.unpack(">QQ", data[off:off + 16])
         if raw > bsize or pay > bsize:
             if not blob:
-                raise FmtErr(_badval(pay, raw, bsize))
+                raise FmtErr(_badval())
             return bytes(inner), metas, {"kind": "badval", "a": pay,
                                          "b": raw, "c": bsize,
                                          "whole": len(inner), "kcut": k}
         unc, comp = raw, pay
         if off + 16 + comp > len(data):
             if not blob:
-                raise FmtErr(_trunc("payload", len(data) - off - 16, comp))
+                raise FmtErr(_trunc("payload"))
             return bytes(inner), metas, {"kind": "truncpay",
                                          "a": len(data) - off - 16,
                                          "b": comp, "c": 0,
@@ -293,8 +250,7 @@ def parse_chain(data):
             out = got if got else -1
             have2 = len(data) - off - 16 - comp
             if not blob:
-                raise FmtErr(_decfail(k, comp, unc, out, 0, bytes(data),
-                                      off + 16 + comp, have2, bsize))
+                raise FmtErr(_decfail(0))
             return bytes(inner), metas, {"kind": "decfail", "a": k,
                                          "b": comp, "c": unc,
                                          "whole": len(inner), "kcut": k,
@@ -695,22 +651,15 @@ def extract(items, root, fcls=0, fsub=0, shortidx=-1, midchain=False,
                         hch += 1
                     else:
                         break
-                # M2-dev (NOTE-060) + TIP2e whole-step: truncpay
-                # LONG: big dev = nch//2-1 + (whole>=3M);
-                # small dev = (nch>=4).
-                if midchain and not datcomplete and nch >= 2 and \
-                        mfkind == "truncpay":
-                    dev = (nch // 2 - 1 + (1 if whole >= 3145728 else 0)
-                           if obs >= 196608 else (1 if nch >= 4 else 0))
-                    hch = max(hch - dev, 0)
-                elif midchain and not datcomplete and \
-                        mfkind == "trunchdr":
-                    # TIP2e prefix-scaled cap: 1/2/4ch per whole
-                    # 1M/2M/3M (m2th locks; >=4M extrapolated).
-                    w1m = whole // 1048576
-                    cap = (1 << (w1m - 1)) if w1m else 1
-                    if hch > cap:
-                        hch = cap
+                # -t-1 holdback-1 (thread-shape TIP, first-hand
+                # NOTE-196/197: midchain DAT-short content =
+                # whole 256K chunks available minus the final
+                # chunk, floored at 0; presence gate above
+                # unchanged. Retires default-t M2-dev + TIP2e
+                # trunchdr-cap (both held more).
+                if midchain and not datcomplete:
+                    full = dav // 262144
+                    hch = full - 1 if full > 0 else 0
                 want = hch * 262144
                 wlen = dln if datcomplete else min(want, dav)
                 if not datcomplete and wlen == 0 and not midchain and \
@@ -1106,7 +1055,7 @@ def main(argv):
                     mid["whole"], shortend, inner,
                     metas[0].get("bsize", 0) if metas else 0,
                     mid["kind"])
-            print(_midblob(mid, bytes(data)), file=sys.stderr)
+            print(_midblob(mid), file=sys.stderr)
             # TIP2e M1: modal x2 tails, except short-whole
             # (<512K) and kcut==1 any-kind (NOTE-180/183).
             x0 = mid["whole"] < 524288 or mid["kcut"] == 1

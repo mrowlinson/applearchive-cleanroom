@@ -44,10 +44,13 @@ case "$cmd" in
     ;;
   aar-decode)
     # adapter aar-decode IN.aar OUTDIR
+    # PARENT-024 (a): always -t 1 (deterministic block-layer
+    # error-path mirror target; default threading races failure
+    # cosmetics machine-dependently).
     [ $# -eq 2 ] || die "usage: aar-decode IN.aar OUTDIR"
     need_file "$1"
     mkdir -p "$2"
-    exec "$AA" extract -i "$1" -d "$2"
+    exec "$AA" extract -t 1 -i "$1" -d "$2"
     ;;
   aar-list)
     # adapter aar-list IN.aar  (bytes-in, text-out)
