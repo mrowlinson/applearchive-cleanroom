@@ -1188,6 +1188,22 @@ _T7RAC = ((0, 0x07), (1, 0x8e), (2, 0xf8), (3, 0x00),
           (50, 0xc2), (51, 0x19), (52, 0x33), (53, 0x59),
           (54, 0xbd), (55, 0xf6), (56, 0xcd), (57, 0xa9),
           (58, 0x4f), (59, 0x33))
+_T7RBT = ("827c160458", "1bbcf30458", "00bc454278",
+          "00bc464278", "5e7c857a78", "96bc457e78",
+          "2ffc227f78", "14fc74bc98", "d97cd7f398",
+          "72bcb4f498", "a27ca7f598", "08fcb330b8",
+          "c03c16a8d8", "5c3ce8b5d8", "bffcf7e3d8",
+          "517c45eed8")
+_T7RBB = ("c7e0880fdf2a3bbd6ff55acd", "8ec1111f8055765edfeab5ce")
+_T7RBC = ((12, 0x00), (13, 0x4a), (14, 0x7c), (15, 0x53),
+          (16, 0xbe), (17, 0x49), (18, 0x33), (19, 0x1f),
+          (26, 0x5d), (27, 0xb3), (33, 0xd0), (34, 0x47),
+          (35, 0xea), (36, 0x5b), (37, 0xbf), (38, 0xeb),
+          (39, 0xc5), (40, 0x14), (41, 0x2d), (42, 0x62),
+          (43, 0x02), (44, 0xb1), (45, 0x97), (46, 0xa3),
+          (47, 0x3d), (48, 0xb6), (49, 0xfc), (50, 0xc2),
+          (51, 0x19), (52, 0x33), (53, 0x59), (54, 0xbd),
+          (55, 0xf6), (57, 0xa9), (58, 0x4f), (59, 0x33))
 _T7CC = ((0, 0x75), (1, 0x01), (2, 0x00), (3, 0x00), (6, 0xc1),
          (7, 0x6b), (8, 0xfa), (9, 0xf6), (10, 0xcf),
          (11, 0x25), (12, 0x00), (13, 0xad), (14, 0xfc),
@@ -3782,6 +3798,29 @@ def main():
             if pay[b] != v:
                 return fail("T7RA const %d" % b)
         print("CLOSED T7RA N=%d off=%d" % (n, off))
+        return 0
+    if n <= 8272:  # T7RB: 9x16 walk RAT[0..8] + tab b28-32 + B/C
+        off = n - 6041
+        if len(pay) != 60:
+            return fail("T7RB paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if pay[4] != (l10 & 0xFF):
+            return fail("T7RB lencode")
+        m = (off - 2088) & 15
+        q = (off - 2088) >> 4
+        if pay[20:26].hex() != _T7RAT[q]:
+            return fail("T7RB walk")
+        if pay[28:33].hex() != _T7RBT[m]:
+            return fail("T7RB tab")
+        body = bytes((pay[0], pay[1], pay[2], pay[3], pay[5],
+                      pay[6], pay[7], pay[8], pay[9], pay[10],
+                      pay[11], pay[56])).hex()
+        if body != _T7RBB[off >= 2151]:
+            return fail("T7RB body")
+        for b, v in _T7RBC:
+            if pay[b] != v:
+                return fail("T7RB const %d" % b)
+        print("CLOSED T7RB N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
