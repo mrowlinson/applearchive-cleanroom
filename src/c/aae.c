@@ -426,7 +426,8 @@ static uint8_t *oracle_xz(const uint8_t *xz, size_t xzn, size_t unc,
     data_end = xz_lzma2_end(xz, data_start, &eos_end);
     if (data_end % 4) xz_fail("misaligned lzma2");
     size_t lzlen = data_end - data_start;
-    size_t ob0 = unc >= ((size_t)1 << 21) ? 4 : 3;
+    size_t comp = eos_end - data_start;
+    size_t ob0 = unc >= ((size_t)1 << 21) ? 4 : ((unc < 128 && comp < 128) ? 2 : 3);
     size_t ohlen = (ob0 + 1) * 4;
     buf o = {0};
     bput(&o, xz, 12);

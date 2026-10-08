@@ -5,7 +5,8 @@ Outer framing is pbze-identical (magic pbzx, 28B header, payloads, 16B gaps).
 Per 4MB stream: XZ check-none payload whose LZMA packet bytes are stock
 liblzma preset-6 (pinned: FORMAT raw-LZMA1-preset-6 lc3lp0pb2 dict-8M +
 VERSION 5.8.4 + battery, per quiz A-20); block header/index/footer are
-Apple-custom and rewritten here (own code): b0 = 4 iff unc >= 2**21 else 3,
+Apple-custom and rewritten here (own code): b0 = 4 iff unc >= 2**21 else 2
+iff unc,comp < 128 else 3,
 flags 0xC0, bcs/unpadded EXCLUDE lzma2 pad, footer crc covers back+flags,
 backward = (idxlen-4)/4. Store iff 16c > 15u (razor-verified).
 """
@@ -98,7 +99,10 @@ def oracle_xz(stock_xz, unc):
     if data_end % 4:
         raise ValueError("misaligned lzma2 data")
     lzdata = xz[data_start:data_end]
-    ob0 = 4 if unc >= (1 << 21) else 3
+    # b0 rule (bedded 9+4: t119/t127->2, t128+->3, u2M->3, u3M->4):
+    # 4 iff unc >= 2**21, else 2 iff both vints 1B (unc,comp < 128).
+    comp = eos_end - data_start
+    ob0 = 4 if unc >= (1 << 21) else (2 if unc < 128 and comp < 128 else 3)
     ohlen = (ob0 + 1) * 4
     hdr = bytearray()
     hdr.append(ob0)
