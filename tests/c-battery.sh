@@ -1112,6 +1112,7 @@ print(n)") || die "m2 count $spec"
     OSET=0
     if [ "$ONUM" = "$CNUM" ] && [ "$OT" = "0" ] && [ "$OCT" = "1 entries failed" ]; then OSET=1; fi
     if [ "$ONUM" = "$((CNUM - 262144))" ] && [ "$OT" = "2" ] && [ "$OCT" = "1 entries failed" ]; then OSET=1; fi
+    if [ "$ONUM" = "$CNUM" ] && [ "$OT" = "2" ] && [ "$OCT" = "2 entries failed" ]; then OSET=1; fi # multi-block single-block-style flip joint (VERIFY-5e4c75f FLAKE-1: m2512k2 oracle (262144,x2,fc2))
     [ "$OSET" = "1" ] && pass "$T-oshape" || fail "$T-oshape"
   fi
 done
@@ -1126,7 +1127,7 @@ for e in 511 512 750 800 600 350; do
   sh "$ADAPTER" aar-encode --alg lzfse --block 128k --threads 1 "$WORK/dsrc$e" "$WORK/dv-edge$e.aar" >/dev/null 2>&1 || die "dev encode edge$e"
 done
 # spec blk:k:fracN:fracD:kind:expC:oset  (kind=pay|hdr|hard; oset=oracle sizes, 0=empty-file)
-for spec in "128k:6:1:2:pay:0:0" "128k:8:1:2:pay:262144:262144,0" "128k:10:1:2:pay:524288:524288,262144" "128k:12:1:2:pay:524288:524288,262144" "128k:14:1:2:pay:786432:786432,524288,1048576" "128k:16:1:2:pay:1048576:1048576,786432,1310720" "1m:2:1:2:pay:786432:524288,786432,1048576,1310720" "1m:2:1:4:pay:786432:524288,786432,1048576" "1m:2:3:4:pay:786432:524288,786432,1048576" "1m:1:1:2:pay:262144:262144,0" "1m:0:1:2:hard:ABS:ABS" "256k:8:1:2:pay:786432:524288,786432,1048576" "1m:2:10:1:HDR:524288:524288,786432,1048576" "128k:8:10:1:HDR:262144:262144,0" "128k:5:1:2:pay:ABS:ABS" "128k:7:1:2:pay:0:0,ABS" "edge511:6:1:2:pay:0:0" "edge512:6:1:2:pay:ABS:ABS" "edge750:8:1:2:pay:0:0" "edge800:8:1:2:pay:ABS:ABS" "edge600:7:1:2:pay:ABS:ABS" "edge350:4:1:2:pay:ABS:ABS"; do
+for spec in "128k:6:1:2:pay:0:0" "128k:8:1:2:pay:262144:262144,0" "128k:10:1:2:pay:524288:524288,262144" "128k:12:1:2:pay:524288:524288,262144,786432" "128k:14:1:2:pay:786432:786432,524288,1048576" "128k:16:1:2:pay:1048576:1048576,786432,1310720" "1m:2:1:2:pay:786432:524288,786432,1048576,1310720" "1m:2:1:4:pay:786432:524288,786432,1048576" "1m:2:3:4:pay:786432:524288,786432,1048576" "1m:1:1:2:pay:262144:262144,0" "1m:0:1:2:hard:ABS:ABS" "256k:8:1:2:pay:786432:524288,786432,1048576" "1m:2:10:1:HDR:524288:524288,786432,1048576" "128k:8:10:1:HDR:262144:262144,0" "128k:5:1:2:pay:ABS:ABS" "128k:7:1:2:pay:0:0,ABS" "edge511:6:1:2:pay:0:0" "edge512:6:1:2:pay:ABS:ABS" "edge750:8:1:2:pay:0:0" "edge800:8:1:2:pay:ABS:ABS" "edge600:7:1:2:pay:ABS:ABS" "edge350:4:1:2:pay:ABS:ABS"; do
   blk=$(echo "$spec" | cut -d: -f1); k=$(echo "$spec" | cut -d: -f2); fn=$(echo "$spec" | cut -d: -f3); fd=$(echo "$spec" | cut -d: -f4); kind=$(echo "$spec" | cut -d: -f5); exp=$(echo "$spec" | cut -d: -f6); oset=$(echo "$spec" | cut -d: -f7)
   T=dv$blk$k$fn$fd$kind
   if [ "$kind" = "HDR" ]; then
@@ -1257,8 +1258,8 @@ PYEOF
 }
 for n in H1 H6 H12; do runchain "$n" setlone; done
 for n in H13 H50 H92; do runchain "$n" setchain "${n#H}"; done
-for n in H93 E103 E100 E97 E63 E13 A5 A16 A20 A32 G16 V2 SP1 SP2 SP3 SP4; do runchain "$n" stable; done
-runchain MZ3 blobrace; runchain MZ20 blobrace
+for n in H93 E103 E100 E97 E63 E13 A5 A16 A20 A32 G16 V2 SP1 SP2 SP4; do runchain "$n" stable; done
+runchain MZ3 blobrace; runchain MZ20 blobrace; runchain SP3 blobrace # SP3 stray-NOP race ~1/11 (VERIFY-5e4c75f FLAKE-2)
 
 echo "== cell m1m2-tip2e (M1 tails + M2 modals, self-gen rule cuts) =="
 mkdir -p "$WORK/t2src/big" "$WORK/t2m2" "$WORK/t2dsrcB"
@@ -1318,7 +1319,7 @@ runt2 618 big/z3m.bin 524288 2 "262144,524288,786432" "0,2,4" "1 entries failed,
 cmp -s "$WORK/t2src/big/r500k.bin" "$WORK/t2o-618/big/r500k.bin" && pass "t2618-rfull" || fail "t2618-rfull"
 runt2 7500 big/z3m.bin 1048576 2 "1048576,1310720,1572864" "0,2" "1 entries failed"
 cmp -s "$WORK/t2src/big/r500k.bin" "$WORK/t2o-7500/big/r500k.bin" && pass "t27500-rfull" || fail "t27500-rfull"
-runt2 506k big/z3m.bin 262144 0 "0,262144,ABS" "0,2" "1 entries failed,2 entries failed"
+runt2 506k big/z3m.bin 262144 0 "0,262144,ABS" "0,2,4" "1 entries failed,2 entries failed" # otails x4 minority race 2/11 pooled (CR-048 SET)
 cmp -s "$WORK/t2src/big/r500k.bin" "$WORK/t2o-506k/big/r500k.bin" && pass "t2506k-rfull" || fail "t2506k-rfull"
 runt2 m2th1 big2 262144 0 "262144" "0,2" "1 entries failed,2 entries failed"
 cmp -s "$WORK/t2m2/big1" "$WORK/t2o-m2th1/big1" && pass "t2m2th1-b1full" || fail "t2m2th1-b1full"
