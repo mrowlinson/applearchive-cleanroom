@@ -115,9 +115,14 @@ static int decode_block(const unsigned char magic[4],
     else if (!memcmp(magic, "pbzb", 4)) alg = COMPRESSION_LZBITMAP;
     else if (!memcmp(magic, "pbzx", 4)) alg = COMPRESSION_LZMA;
     else { return -1; } /* unreachable: known_pbz gated */
-    unsigned char *d = malloc(unc ? unc : 1);
+    /* +1 dst detects over-decode (got>unc, unclo): the API caps
+     * at dst_size, so unc+1 returns unc+1 iff true output
+     * exceeds unc. -t-1 oracle hard-fails unclo (94039800,
+     * no extraction); silent truncation was default-t-only. */
+    unsigned char *d = malloc((size_t)unc + 1);
     void *scr = malloc(compression_decode_scratch_buffer_size(alg));
-    size_t g = compression_decode_buffer(d, unc, pay, comp, scr, alg);
+    size_t g = compression_decode_buffer(d, (size_t)unc + 1, pay, comp,
+                                         scr, alg);
     free(scr);
     *got = g;
     if (g == unc && unc) { out->data = d; out->len = g; return 0; }
@@ -140,116 +145,37 @@ static void emit_nonsupp(void) {
             "archive stream read error (header)\nstream cancelled\n");
 }
 
-static void emit_trunc(const char *what, unsigned long long have,
-                       unsigned long long need, int blob) {
-    if (!blob)
-        fprintf(stderr, "Extraction failed\n"
-                "extract failedError 0xbd009800\n"
-                "istream read error\n"
-                "refill buffer\n"
-                "archive stream read error (header)\n"
-                "flushing shared buffer\n"
-                "Truncated block %s (%llu/%llu bytes read)\n"
-                "NOP received\n"
-                "processStream\n"
-                "decoder failed\n"
-                "stream cancelled\n",
-                what, have, need);
-    else
-        fprintf(stderr, "Extraction failed\n"
-                "extract failedError 0xbd009800\n"
-                "istream read error\n"
-                "Refill buffer failed\n"
-                "read error\n"
-                "archive stream read error (blob)\n"
-                "flushing shared buffer\n"
-                "Truncated block %s (%llu/%llu bytes read)\n"
-                "NOP received\n"
-                "processStream\n"
-                "decoder failed\n"
-                "stream cancelled\n",
-                what, have, need);
-}
-
-static void emit_badval(unsigned long long pay, unsigned long long raw,
-                        unsigned long long bsize, int blob) {
+/* -t-1-only block-layer error stanzas (PARENT-024 (a),
+ * NOTE-60 mapping, NOTE-193 first-hand): SHORT, no
+ * flushing/NOP tails, no counts, no value echo. */
+static void emit_t1(const char *code, const char *msg, int blob) {
     fprintf(stderr, "Extraction failed\n"
-            "extract failedError 0xbd009800\n"
-            "istream read error\n");
+            "extract failedError %s\n"
+            "%s\n"
+            "istream read error\n",
+            code, msg);
     if (blob)
         fprintf(stderr, "Refill buffer failed\nread error\n"
                 "archive stream read error (blob)\n");
     else
         fprintf(stderr, "refill buffer\n"
                 "archive stream read error (header)\n");
-    fprintf(stderr, "flushing shared buffer\n"
-            "Invalid block header payload=0x%llx raw=0x%llx block=0x%llx\n"
-            "\n"
-            "NOP received\n"
-            "processStream\n"
-            "decoder failed\n"
-            "stream cancelled\n",
-            pay, raw, bsize);
+    fprintf(stderr, "stream cancelled\n");
 }
 
-/* chained line before the worker stanza (TIP2e chain-together
- * law, DPROBE-15): scan trailing bytes from payload_end as a
- * chain. r<16 -> framing(r/16); pair invalid -> badval STOP;
- * valid + short payload -> truncpay-line STOP; valid + full
- * payload -> skip 16+P + recurse. Header + blob alike (MZT). */
-static void emit_chain(const unsigned char *d, size_t pend,
-                       unsigned long long h2, unsigned long long bsize) {
-    unsigned long long r = h2;
-    size_t p = pend;
-    for (;;) {
-        if (r == 0)
-            return;
-        if (r < 16) {
-            fprintf(stderr, "Truncated block header (%llu/16 bytes read)\n",
-                    r);
-            return;
-        }
-        uint64_t R = rd64be(d + p), P = rd64be(d + p + 8);
-        if (R > bsize || P > bsize) {
-            fprintf(stderr, "Invalid block header payload=0x%llx raw=0x%llx "
-                    "block=0x%llx\n\n",
-                    (unsigned long long)P, (unsigned long long)R, bsize);
-            return;
-        }
-        if (16 + P > r) {
-            fprintf(stderr, "Truncated block payload (%llu/%llu bytes "
-                    "read)\n", r - 16, (unsigned long long)P);
-            return;
-        }
-        p += (size_t)(16 + P);
-        r -= 16 + P;
-    }
-}
-
-static void emit_decfail(unsigned long long k, unsigned long long pay,
-                         unsigned long long raw, long long out, int blob,
-                         const unsigned char *d, size_t pend,
-                         unsigned long long h2, unsigned long long bsize) {
-    fprintf(stderr, "Extraction failed\n"
-            "extract failedError 0xbd009800\n"
-            "istream read error\n");
-    if (blob)
-        fprintf(stderr, "Refill buffer failed\nread error\n"
-                "archive stream read error (blob)\n");
+static void emit_trunc(const char *what, int blob) {
+    if (what[0] == 'h')
+        emit_t1("0x94034400", "truncated stream header", blob);
     else
-        fprintf(stderr, "refill buffer\n"
-                "archive stream read error (header)\n");
-    fprintf(stderr, "flushing shared buffer\n");
-    emit_chain(d, pend, h2, bsize);
-    fprintf(stderr, "invalid output size/decoder error: block=%llu, inSize=%llu, "
-            "outSize=%lld, expectedOutSize=%llu\n"
-            "worker proc reported an error\n"
-            "Threads reported errors\n"
-            "ThreadPipelineDestroy\n"
-            "processStream\n"
-            "decoder failed\n"
-            "stream cancelled\n",
-            k, pay, out, raw);
+        emit_t1("0x94036c00", "truncated stream payload", blob);
+}
+
+static void emit_badval(int blob) {
+    emit_t1("0x94036800", "corrupted stream header", blob);
+}
+
+static void emit_decfail(int blob) {
+    emit_t1("0x94039800", "block decompression failed", blob);
 }
 
 /* mid-chain soft failure: (blob) path extracts the decoded prefix. */
@@ -265,20 +191,19 @@ typedef struct {
     unsigned long long bsize;   /* decfail outer bsize (pair gate) */
 } MidFail;
 
-static void emit_midblob(const MidFail *mf, const Buf *file) {
+static void emit_midblob(const MidFail *mf) {
     switch (mf->kind) {
     case MF_TRUNCHDR:
-        emit_trunc("header", mf->a, mf->b, 1);
+        emit_trunc("header", 1);
         break;
     case MF_TRUNCPAY:
-        emit_trunc("payload", mf->a, mf->b, 1);
+        emit_trunc("payload", 1);
         break;
     case MF_BADVAL:
-        emit_badval(mf->a, mf->b, mf->c, 1);
+        emit_badval(1);
         break;
     case MF_DECFAIL:
-        emit_decfail(mf->a, mf->b, mf->c, mf->out, 1, file->data,
-                     (size_t)mf->pend, mf->h2, mf->bsize);
+        emit_decfail(1);
         break;
     }
 }
@@ -334,7 +259,7 @@ static int parse_chain(const Buf *file, Buf *inner, MidFail *mf,
         int blob = acc.len >= 262144; /* streaming flavor threshold */
         if (off + 16 > n) {
             if (!blob) {
-                emit_trunc("header", (unsigned long long)(n - off), 16ULL, 0);
+                emit_trunc("header", 0);
                 fails = 1;
                 goto err;
             }
@@ -347,8 +272,7 @@ static int parse_chain(const Buf *file, Buf *inner, MidFail *mf,
         uint64_t raw = rd64be(d + off), pay = rd64be(d + off + 8);
         if (raw > bsize || pay > bsize) {
             if (!blob) {
-                emit_badval((unsigned long long)pay, (unsigned long long)raw,
-                            (unsigned long long)bsize, 0);
+                emit_badval(0);
                 fails = 1;
                 goto err;
             }
@@ -363,8 +287,7 @@ static int parse_chain(const Buf *file, Buf *inner, MidFail *mf,
         uint32_t unc = (uint32_t)raw, comp = (uint32_t)pay;
         if (off + 16 + comp > n) {
             if (!blob) {
-                emit_trunc("payload", (unsigned long long)(n - off - 16),
-                           (unsigned long long)pay, 0);
+                emit_trunc("payload", 0);
                 fails = 1;
                 goto err;
             }
@@ -383,10 +306,7 @@ static int parse_chain(const Buf *file, Buf *inner, MidFail *mf,
             unsigned long long have2 =
                 (unsigned long long)(n - off - 16 - comp);
             if (!blob) {
-                emit_decfail(k, (unsigned long long)pay,
-                             (unsigned long long)raw, out, 0, d,
-                             off + 16 + comp, have2,
-                             (unsigned long long)bsize);
+                emit_decfail(0);
                 fails = 1;
                 goto err;
             }
@@ -965,30 +885,16 @@ static int extract(const Item *items, size_t nitems, const char *root,
                     if (shortend + 0ULL <= (nch - j) * 262144ULL) hch++;
                     else break;
                 }
-                /* M2-dev (NOTE-060) + TIP2e whole-step: truncpay
-                 * LONG (nch>=2, !datcomplete): held -= dev; big
-                 * (bsize>=192K): dev = nch/2-1 + (whole>=3M:
-                 * 7500/rnd3m 4ch-locked both contents); small:
-                 * dev = (nch>=4). */
-                if (midchain && !datcomplete && nch >= 2 &&
-                    mfkind == MF_TRUNCPAY) {
-                    unsigned long long dev = obs >= 196608ULL ?
-                        nch / 2 - 1 + (whole >= 3145728ULL ? 1 : 0) :
-                        (nch >= 4 ? 1 : 0);
-                    if (dev > hch) dev = hch;
-                    hch -= dev;
-                } else if (midchain && !datcomplete &&
-                           mfkind == MF_TRUNCHDR) {
-                    /* TIP2e prefix-scaled cap: 1ch/2ch/4ch per
-                     * whole 1M/2M/3M (m2th locks; 128k-HDR
-                     * refutes kcut-form; whole>=4M doubling
-                     * extrapolated, DPROBE-15). */
-                    unsigned long long w1m = whole / 1048576ULL;
-                    unsigned sh = w1m > 31 ? 30 : w1m ?
-                        (unsigned)(w1m - 1) : 0;
-                    unsigned long long cap = w1m ? (1ULL << sh) : 1ULL;
-                    if (hch > cap)
-                        hch = cap;
+                /* -t-1 holdback-1 (thread-shape TIP, first-hand
+                 * NOTE-196/197: midchain DAT-short content =
+                 * whole 256K chunks available minus the final
+                 * chunk, floored at 0; presence gate above
+                 * unchanged. Retires default-t M2-dev + TIP2e
+                 * trunchdr-cap (both held more). */
+                if (midchain && !datcomplete) {
+                    unsigned long long full =
+                        (unsigned long long)dav / 262144ULL;
+                    hch = full > 0 ? full - 1 : 0;
                 }
                 unsigned long long want = hch * 262144ULL;
                 size_t wlen = datcomplete ? dl :
@@ -1448,7 +1354,7 @@ int main(int argc, char **argv) {
                       65536ULL;
         extract(items, nitems, argv[2], fcls, fsub, shortidx, 1, present,
                 mf.whole, shortend, obs, mf.kind);
-        emit_midblob(&mf, &file);
+        emit_midblob(&mf);
         /* TIP2e M1: modal x2 tails, except short-whole (<512K:
          * mc2/mc3 x0) and kcut==1 any-kind (tp1a/b + m2th1
          * x0-locked, NOTE-180/183; pooled kcut1 65/70 x0). */
