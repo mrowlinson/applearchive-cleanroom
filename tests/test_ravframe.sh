@@ -73,6 +73,28 @@ echo "== ravframe pattern =="
 for s in 64 1000; do
   CELL "p$s" "$s" pat
 done
+SCELL() { # tag nbytes kind : CELL + --raw verbatim pin (all-stored only)
+  tag=$1; n=$2; kind=$3
+  mk "$tag" "$n" "$kind"
+  "$CT" -encode -a lzraven -i "$WORK/$tag.bin" -o "$WORK/$tag.rav" 2>/dev/null || { echo "FAIL $tag ct rc"; FAIL=1; return; }
+  if v=$(python3 "$RAV" "$WORK/$tag.rav" "$n" --raw "$WORK/$tag.bin" 2>"$WORK/$tag.ravf"); then
+    case "$v" in
+      *CLOSED*) c=CLOSED;; *) c=BAD;;
+    esac
+    case "$v" in
+      *rawmatch*) m=MATCH;; *) m=SKIP;;
+    esac
+    chk "f-$tag-closed" str "$c" "$(sz "$WORK/$tag.rav")"
+    f2=$(python3 -c "import struct;print('%08x' % struct.unpack('<I', open('$WORK/$tag.rav','rb').read()[4:8])[0])" 2>/dev/null || echo none)
+    chk "f-$tag-f2" str "$f2" "$(sz "$WORK/$tag.rav")"
+    chk "f-$tag" sha "$(sha "$WORK/$tag.rav")" "$(sz "$WORK/$tag.rav")"
+    chk "f-$tag-rawmatch" str "$m" "$(sz "$WORK/$tag.rav")"
+  else echo "FAIL $tag ravframe: $(head -1 "$WORK/$tag.ravf")"; FAIL=1; fi
+}
+echo "== ravframe stored verbatim =="
+for s in 1 16 256 4096; do
+  SCELL "st$s" "$s" "seed$s"
+done
 [ -n "${RECORD:-}" ] && mv "$PINS.new" "$PINS" && echo "RECORDED $PINS"
 echo "== $WORK =="
 [ "$FAIL" -eq 0 ] && echo RAVFRAME-GREEN || echo RAVFRAME-RED
