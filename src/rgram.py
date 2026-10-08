@@ -913,6 +913,72 @@ _T7HC = ((0, 0x26), (1, 0xb5), (2, 0x00), (3, 0x00),
          (51, 0xfe), (52, 0xb2), (53, 0x7b), (54, 0x92),
          (55, 0xfc), (56, 0x2d), (57, 0xcb), (58, 0xb7),
          (59, 0xf1))
+_T7I0 = ("2c0000005bd9537bfcd1bd1900adfc22f9962787599e56"
+        "0030ee0f93423c80df329d57ef54bf4bf0d348c0c84f43a8"
+        "c7d4da7dfeb27b92fc2dcbb7f1",
+        "520b00005dd9537bfcd1bd19007cfc7639760c276f5c711"
+        "af61a7ec7423c80df329d57ef54bf4bf0d348c0c84f43a8"
+        "c7d4da7dfeb27b92fc2dcbb7f1")
+_T7I1T = ("433c02e376", "a1fc401b96", "3a7c161c96", "a67c219f96",
+          "a67c229f96", "3ffcf79f96", "9dbc36d896", "343c55d896",
+          "693c03e796", "00bc21e796", "c7fc421fb6", "f7bc3520b6",
+          "f7bc3620b6", "55bc7558b6", "8dfc355cb6", "5a3c56dcb6")
+_T7I1C = ((0, 0x26), (1, 0xb5), (2, 0x00), (3, 0x00),
+          (5, 0xd9), (6, 0x53), (7, 0x7b), (8, 0xfc),
+          (9, 0xd1), (10, 0xbd), (11, 0x19), (12, 0x00),
+          (13, 0x7c), (14, 0xfc), (15, 0x76), (16, 0x39),
+          (17, 0x76), (18, 0x0c), (19, 0x27), (20, 0x35),
+          (21, 0x5d), (22, 0x71), (23, 0x1a), (24, 0xf6),
+          (25, 0x1a), (26, 0x7e), (27, 0x77), (33, 0xd3),
+          (34, 0x79), (35, 0xf5), (36, 0x54), (37, 0xbf),
+          (38, 0x4b), (39, 0xf0), (40, 0xd3), (41, 0x48),
+          (42, 0xc0), (43, 0xc8), (44, 0x4f), (45, 0x43),
+          (46, 0xa8), (47, 0xc7), (48, 0xd4), (49, 0xda),
+          (50, 0x7d), (51, 0xfe), (52, 0xb2), (53, 0x7b),
+          (54, 0x92), (55, 0xfc), (56, 0x2d), (57, 0xcb),
+          (58, 0xb7), (59, 0xf1))
+_T7I2T = ("94bcb71f17c2bf", "307c550437c685", "f8fc070ed7258c",
+          "0c3ce3aad78992", "4dbcd0d517f298", "e17cf767b72966",
+          "be7cf7e3d78992", "d5fc42b3f76a7f", "663c46cad7258c",
+          "083c71c137c685")
+_T7I2C = ((0, 0xa4), (1, 0x16), (2, 0x00), (3, 0x00),
+          (5, 0xd9), (6, 0x53), (7, 0x7b), (8, 0xfc),
+          (9, 0xd1), (10, 0xbd), (11, 0x19), (12, 0x00),
+          (13, 0x7c), (14, 0xfc), (15, 0x76), (16, 0x39),
+          (17, 0x76), (18, 0x0c), (19, 0x67), (20, 0x49),
+          (21, 0x5f), (22, 0x4d), (23, 0x82), (24, 0x32),
+          (25, 0xdd), (26, 0xb5), (27, 0x8e), (35, 0xe2),
+          (36, 0x54), (37, 0xbf), (38, 0x4b), (39, 0xf0),
+          (40, 0xd3), (41, 0x48), (42, 0xc0), (43, 0xc8),
+          (44, 0x4f), (45, 0x43), (46, 0xa8), (47, 0xc7),
+          (48, 0xd4), (49, 0xda), (50, 0x7d), (51, 0xfe),
+          (52, 0xb2), (53, 0x7b), (54, 0x92), (55, 0xfc),
+          (56, 0x2d), (57, 0xcb), (58, 0xb7), (59, 0xf1))
+_T7I3T36 = (0x51, 0x67, 0x6e, 0x8c, 0x6d, 0x4d, 0x2e, 0x5a,
+            0x53, 0x69, 0x31, 0x90, 0x56, 0x37, 0x4d, 0xa1)
+_T7I3T37 = (0xfc, 0xfc, 0xfc, 0xbf, 0xbf, 0xfc, 0xfc, 0xbf,
+            0xbf, 0xbf, 0xfc, 0xbf, 0xbf, 0xbf, 0xbf, 0xfc)
+_T7I3T38 = (0x87, 0x8f, 0x27, 0xb7, 0xfb, 0x3b, 0x7f, 0xbf,
+            0xa7, 0xaf, 0x4b, 0x87, 0x73, 0xb7, 0xbf, 0xf7)
+_T7I3T39 = (0xcb, 0xcb, 0x06, 0xa7, 0xac, 0xad, 0xb2, 0x8d,
+            0x8e, 0x8e, 0x93, 0x44, 0x6f, 0x74, 0x74, 0x25)
+_T7I3T40 = (0x77, 0x77, 0x97, 0x97, 0x97, 0x97, 0x97, 0xb7,
+            0xb7, 0xb7, 0xb7, 0xd7, 0xd7, 0xd7, 0xd7, 0xf7)
+_T7I3B = ("fc3cf667f78992", "457c61e7371479", "59fc42bf37f298",
+          "aa3c66f2371479")
+_T7I3C = ((0, 0x4c), (1, 0x6a), (2, 0x01), (3, 0x00),
+          (6, 0x53), (7, 0x7b), (8, 0xfc),
+          (9, 0xd1), (10, 0xbd), (11, 0x19), (12, 0x00),
+          (13, 0x7c), (14, 0xfc), (15, 0x76), (16, 0x39),
+          (17, 0x76), (18, 0x0c), (19, 0x27), (20, 0x49),
+          (21, 0x5f), (22, 0x4d), (23, 0x82), (24, 0x32),
+          (25, 0xdd), (26, 0x35), (27, 0xef),
+          (35, 0xc2), (41, 0x8d),
+          (42, 0x04), (43, 0x8c), (44, 0x4f), (45, 0x43),
+          (46, 0xa8), (47, 0xc7), (48, 0xd4), (49, 0xda),
+          (50, 0x7d), (51, 0xfe), (52, 0xb2), (53, 0x7b),
+          (54, 0x92), (55, 0xfc), (56, 0x2d), (57, 0xcb),
+          (58, 0xb7), (59, 0xf1))
 _T7CC = ((0, 0x75), (1, 0x01), (2, 0x00), (3, 0x00), (6, 0xc1),
          (7, 0x6b), (8, 0xfa), (9, 0xf6), (10, 0xcf),
          (11, 0x25), (12, 0x00), (13, 0xad), (14, 0xfc),
@@ -3246,6 +3312,64 @@ def main():
             if pay[b] != v:
                 return fail("T7H const %d" % b)
         print("CLOSED T7H N=%d off=%d" % (n, off))
+        return 0
+    if n <= 7342:  # T7I0: 2 transition literals (off=1300/1301)
+        off = n - 6041
+        if len(pay) != 60 or pay.hex() != _T7I0[off - 1300]:
+            return fail("T7I0")
+        print("CLOSED T7I0 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 7358:  # T7I1: 16-row table b28-32
+        off = n - 6041
+        if len(pay) != 60:
+            return fail("T7I1 paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if pay[4] != (l10 & 0xFF):
+            return fail("T7I1 lencode")
+        if pay[28:33].hex() != _T7I1T[off - 1302]:
+            return fail("T7I1 row")
+        for b, v in _T7I1C:
+            if pay[b] != v:
+                return fail("T7I1 const %d" % b)
+        print("CLOSED T7I1 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 7368:  # T7I2: 10-row chatter b28-34
+        off = n - 6041
+        if len(pay) != 60:
+            return fail("T7I2 paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if pay[4] != (l10 & 0xFF):
+            return fail("T7I2 lencode")
+        cells = bytes((pay[28], pay[29], pay[30], pay[31],
+                       pay[32], pay[33], pay[34])).hex()
+        if cells != _T7I2T[off - 1318]:
+            return fail("T7I2 row")
+        for b, v in _T7I2C:
+            if pay[b] != v:
+                return fail("T7I2 const %d" % b)
+        print("CLOSED T7I2 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 7432:  # T7I3: 64-body, 16-tabs b36-40
+        off = n - 6041
+        if len(pay) != 60:
+            return fail("T7I3 paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if pay[4] != (l10 & 0xFF):
+            return fail("T7I3 lencode")
+        m = (off - 1328) & 15
+        q = (off - 1328) >> 4
+        if pay[5] != (0xd9 + (off >= 1383)):
+            return fail("T7I3 b5")
+        if pay[28:35].hex() != _T7I3B[q]:
+            return fail("T7I3 blk")
+        if pay[36] != _T7I3T36[m] or pay[37] != _T7I3T37[m] or \
+                pay[38] != _T7I3T38[m] or pay[39] != _T7I3T39[m] or \
+                pay[40] != _T7I3T40[m]:
+            return fail("T7I3 tab")
+        for b, v in _T7I3C:
+            if pay[b] != v:
+                return fail("T7I3 const %d" % b)
+        print("CLOSED T7I3 N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
