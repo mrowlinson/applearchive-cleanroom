@@ -149,7 +149,13 @@ def lz4_encode(inner, buckets=2048, slots=5, hashmode="shift"):
                 mend = gpos + ml
                 put(gpos)
                 if gpos + 1 < mend:
-                    put(gpos + 1)
+                    # P1 skipped iff gap%5==4 (gap = literals since
+                    # last match). bed-derived: 53/53 stale-critical
+                    # gaps ==4mod5, 448/448 bearing-criticals !=4mod5;
+                    # battery +4/-0, all stale first-divs resolve.
+                    # mechanism OPEN (Q-31).
+                    if (gpos - (base + anchor)) % 5 != 4:
+                        put(gpos + 1)
                 # ends iff next has literals (self-consistent lookahead)
                 if mend - base < n - 12:
                     if lookup(mend) is None:
