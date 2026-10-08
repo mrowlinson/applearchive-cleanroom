@@ -1524,6 +1524,96 @@ _T8QC = ((0, 0x43), (1, 0x01), (2, 0x00), (3, 0x00),
          (55, 0xdb), (56, 0x15), (57, 0xe7), (58, 0xaa),
          (59, 0x91), (60, 0xee), (61, 0xa8), (62, 0x17),
          (63, 0x06))
+_T8DIP694 = "f37fad2bab49e9367f07383300887c745cfecbbd09dee" \
+    "ce9d4b891c877fc610776eceaa075211bb2c8a736dcd245035" \
+    "f253c57db15e7aa91eea81706"
+_T8R0 = ("17000000ad49e9361f80c8473bc09919fc058e5bf25fee8"
+        "d09deece9d4b8914a16a887c316bfffdefca9a963e15ec88"
+        "6d245035f253c57db15e7aa91eea81706",
+        "53010000af49e9367f07383300887c741cbcd9d3f25fee9"
+        "df402c7d9c68d54c216a887537ffc93e3fca9a963acdc12"
+        "54165d34f0253c57db15e7aa91eea81706")
+_T8R1T = ("295bcb5516", "b05c409516", "c1df449516", "025eecc316",
+          "7fdca4c516", "905fa9c516", "30ddfac516", "0a5c8af816",
+          "5ad98af816", "a0dd2afa16", "ebda6d0636", "68da3b2936",
+          "795d402936", "ccda663536", "575b096a36")
+_T8R1C = ((0, 0x53), (1, 0x01), (2, 0x00), (3, 0x00),
+          (5, 0x49), (6, 0xe9), (7, 0x36), (8, 0x7f),
+          (9, 0x07), (10, 0x38), (11, 0x33), (12, 0x00),
+          (13, 0x88), (14, 0x7c), (15, 0x74), (16, 0x1c),
+          (17, 0xbc), (18, 0xd9), (19, 0xd3), (20, 0xf2),
+          (21, 0x5f), (22, 0xee), (23, 0x9d), (24, 0xf4),
+          (25, 0x02), (26, 0xc7), (27, 0xd9), (28, 0xc6),
+          (29, 0x8d), (30, 0x54), (31, 0xc2), (32, 0x16),
+          (33, 0xa8), (34, 0x87), (35, 0x53), (36, 0x7f),
+          (37, 0xfc), (38, 0x93), (39, 0xe3), (40, 0xfc),
+          (41, 0xa9), (42, 0xa9), (43, 0x63), (49, 0x5d),
+          (50, 0x34), (51, 0xf0), (52, 0x25), (53, 0x3c),
+          (54, 0x57), (55, 0xdb), (56, 0x15), (57, 0xe7),
+          (58, 0xaa), (59, 0x91), (60, 0xee), (61, 0xa8),
+          (62, 0x17), (63, 0x06))
+_T8R2S = "0a000000cf49e9361f5fe0f83bc0999900887c745cfecbb" \
+    "d09deece9d4b8914a16a8876373fce780d727d9548d5da9c57" \
+    "61b8af4253c57db15e7aa91eea81706"
+_T8R2T = ("c5de7b9076e65a", "29dd809276e65a", "e25e859276e65a",
+          "515dcd3a96ea68", "29dcfa37963c3f", "235b8f22163b64",
+          "ec5bba1216a051", "f7d966c576e65a", "a2dc8cd176e65a")
+_T8R2C = ((0, 0x0a), (1, 0x00), (2, 0x00), (3, 0x00),
+          (5, 0x49), (6, 0xe9), (7, 0x36), (8, 0x1f),
+          (9, 0x5f), (10, 0xe0), (11, 0xf8), (12, 0x3b),
+          (13, 0xc0), (14, 0x99), (15, 0x99), (16, 0x00),
+          (17, 0x88), (18, 0x7c), (19, 0x74), (20, 0x5c),
+          (21, 0xfe), (22, 0xcb), (23, 0xbd), (24, 0x09),
+          (25, 0xde), (26, 0xec), (27, 0xe9), (28, 0xd4),
+          (29, 0xb8), (30, 0x91), (31, 0x4a), (32, 0x16),
+          (33, 0xa8), (34, 0x87), (35, 0x63), (36, 0x73),
+          (37, 0xfc), (38, 0xe7), (39, 0x80), (40, 0xd7),
+          (41, 0x27), (42, 0xd9), (43, 0x54), (51, 0xf4),
+          (52, 0x25), (53, 0x3c), (54, 0x57), (55, 0xdb),
+          (56, 0x15), (57, 0xe7), (58, 0xaa), (59, 0x91),
+          (60, 0xee), (61, 0xa8), (62, 0x17), (63, 0x06))
+_T8R3S = "b3000000e349e9367f07383300887c741cbcd9d3f25fee9" \
+    "df402c76dc68d54c216a8872b73fce780d727d9f46f5f79a9f" \
+    "68e5f4c233c581a796dae1aeea81706"
+_T8R3T = ("496c3c301b796d", "49fffc5023796d", "49e47ca458d96d",
+          "49557c5859d96d", "49a9fc81b0d96d", "49713c98b0d96d",
+          "49963c02dbd96d", "49ec7c0811596e", "4965fcc311596e",
+          "4935bce111596e", "49c87c021a596e", "49c3fcf73c596e",
+          "4921fc0573b96e", "49847c437bb96e", "4a847c447bb96e")
+_T8R3C = ((0, 0xb3), (1, 0x00), (2, 0x00), (3, 0x00),
+          (6, 0xe9), (7, 0x36), (8, 0x7f), (9, 0x07),
+          (10, 0x38), (11, 0x33), (12, 0x00), (13, 0x88),
+          (14, 0x7c), (15, 0x74), (16, 0x1c), (17, 0xbc),
+          (18, 0xd9), (19, 0xd3), (20, 0xf2), (21, 0x5f),
+          (22, 0xee), (23, 0x9d), (24, 0xf4), (25, 0x02),
+          (26, 0xc7), (27, 0x6d), (28, 0xc6), (29, 0x8d),
+          (30, 0x54), (31, 0xc2), (32, 0x16), (33, 0xa8),
+          (34, 0x87), (35, 0x2b), (36, 0x73), (37, 0xfc),
+          (38, 0xe7), (39, 0x80), (40, 0xd7), (41, 0x27),
+          (42, 0xd9), (43, 0xf4), (44, 0x6f), (45, 0x5f),
+          (46, 0x79), (47, 0xa9), (48, 0xf6), (49, 0x8e),
+          (50, 0x5f), (51, 0x4c), (58, 0xae), (59, 0x1a),
+          (60, 0xee), (61, 0xa8), (62, 0x17), (63, 0x06))
+_T8R4T = ("233c581a796d", "6c3c301b796d", "fffc5023796d",
+          "e47ca458d96d", "557c5859d96d", "a9fc81b0d96d",
+          "713c98b0d96d", "963c02dbd96d", "ec7c0811596e",
+          "65fcc311596e", "35bce111596e", "c87c021a596e",
+          "c3fcf73c596e", "21fc0573b96e", "847c437bb96e",
+          "847c447bb96e")
+_T8R4B = ("075b9b4516a051", "215d7ea9f68e5f", "eddbff8bf6014d")
+_T8R4C = ((0, 0xb3), (1, 0x00), (2, 0x00), (3, 0x00),
+          (5, 0x4a), (6, 0xe9), (7, 0x36), (8, 0x7f),
+          (9, 0x07), (10, 0x38), (11, 0x33), (12, 0x00),
+          (13, 0x88), (14, 0x7c), (15, 0x74), (16, 0x1c),
+          (17, 0xbc), (18, 0xd9), (19, 0xd3), (20, 0xf2),
+          (21, 0x5f), (22, 0xee), (23, 0x9d), (24, 0xf4),
+          (25, 0x02), (26, 0xc7), (27, 0x6d), (28, 0xc6),
+          (29, 0x8d), (30, 0x54), (31, 0xc2), (32, 0x16),
+          (33, 0xa8), (34, 0x87), (35, 0x2b), (36, 0x73),
+          (37, 0xfc), (38, 0xe7), (39, 0x80), (40, 0xd7),
+          (41, 0x27), (42, 0xd9), (43, 0xf4), (51, 0x4c),
+          (58, 0xae), (59, 0x1a), (60, 0xee), (61, 0xa8),
+          (62, 0x17), (63, 0x06))
 _T7CC = ((0, 0x75), (1, 0x01), (2, 0x00), (3, 0x00), (6, 0xc1),
          (7, 0x6b), (8, 0xfa), (9, 0xf6), (10, 0xcf),
          (11, 0x25), (12, 0x00), (13, 0xad), (14, 0xfc),
@@ -4428,6 +4518,89 @@ def main():
             if pay[b] != v:
                 return fail("T8Q const %d" % b)
         print("CLOSED T8Q N=%d off=%d" % (n, off))
+        return 0
+    if n == 9429:  # solo 60B dip (off=694)
+        if len(pay) != 60 or pay.hex() != _T8DIP694:
+            return fail("T8DIP694")
+        print("CLOSED T8DIP694 N=%d" % n)
+        return 0
+    if n <= 9431:  # T8R0: 2 post-dip literals (off=695/696)
+        off = n - 8735
+        if len(pay) != 64 or pay.hex() != _T8R0[off - 695]:
+            return fail("T8R0")
+        print("CLOSED T8R0 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 9446:  # T8R1: 15-row table b44-48
+        off = n - 8735
+        if len(pay) != 64:
+            return fail("T8R1 paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if pay[4] != (l10 & 0xFF):
+            return fail("T8R1 lencode")
+        if pay[44:49].hex() != _T8R1T[off - 697]:
+            return fail("T8R1 row")
+        for b, v in _T8R1C:
+            if pay[b] != v:
+                return fail("T8R1 const %d" % b)
+        print("CLOSED T8R1 N=%d off=%d" % (n, off))
+        return 0
+    if n == 9447:  # T8R2 singleton (off=712)
+        if len(pay) != 64 or pay.hex() != _T8R2S:
+            return fail("T8R2S")
+        print("CLOSED T8R2S N=%d" % n)
+        return 0
+    if n <= 9456:  # T8R2: 9-row table b44-50
+        off = n - 8735
+        if len(pay) != 64:
+            return fail("T8R2 paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if pay[4] != (l10 & 0xFF):
+            return fail("T8R2 lencode")
+        if pay[44:51].hex() != _T8R2T[off - 713]:
+            return fail("T8R2 row")
+        for b, v in _T8R2C:
+            if pay[b] != v:
+                return fail("T8R2 const %d" % b)
+        print("CLOSED T8R2 N=%d off=%d" % (n, off))
+        return 0
+    if n == 9457:  # T8R3 singleton (off=722)
+        if len(pay) != 64 or pay.hex() != _T8R3S:
+            return fail("T8R3S")
+        print("CLOSED T8R3S N=%d" % n)
+        return 0
+    if n <= 9472:  # T8R3: 15-row table b5/52-57
+        off = n - 8735
+        if len(pay) != 64:
+            return fail("T8R3 paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if pay[4] != (l10 & 0xFF):
+            return fail("T8R3 lencode")
+        cells = bytes((pay[5], pay[52], pay[53], pay[54], pay[55],
+                       pay[56], pay[57])).hex()
+        if cells != _T8R3T[off - 723]:
+            return fail("T8R3 row")
+        for b, v in _T8R3C:
+            if pay[b] != v:
+                return fail("T8R3 const %d" % b)
+        print("CLOSED T8R3 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 9520:  # T8R4: 3x16 shared 6B tab + 7B block words
+        off = n - 8735
+        if len(pay) != 64:
+            return fail("T8R4 paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if pay[4] != (l10 & 0xFF):
+            return fail("T8R4 lencode")
+        m = (off - 738) & 15
+        q = (off - 738) >> 4
+        if pay[52:58].hex() != _T8R4T[m]:
+            return fail("T8R4 tab")
+        if pay[44:51].hex() != _T8R4B[q]:
+            return fail("T8R4 blk")
+        for b, v in _T8R4C:
+            if pay[b] != v:
+                return fail("T8R4 const %d" % b)
+        print("CLOSED T8R4 N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
