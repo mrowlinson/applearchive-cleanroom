@@ -30,6 +30,11 @@ _T4B1 = ("010000006d0000006c0024a1000000c00e00f03160dd170dc4007808"
 # T4B3 bytes36-39 rows, off 274..283 (literal table, formula OPEN).
 _T4B3TAB = ("4380168a", "35044f81", "07084f81", "d90b4f81", "ab0f4f81",
             "51148c78", "50174f81", "221b4f81", "f41e4f81", "9a438c78")
+# T4C bytes37/38/46/47 16-periodic table, key (off-348)&15 (OPEN why).
+_T4CTAB = ("8c07f5dd", "9c0765cf", "ac07d5c0", "bc0745b2", "bc0745f2",
+           "cc07b5e3", "dc0725d5", "ec0795c6", "fc0705b8", "fc0705f8",
+           "0c0875e9", "1c08e5da", "2c0855cc", "3c08c5bd", "3c08c5fd",
+           "4c0835ef")
 
 
 def bit(p, i):
@@ -422,6 +427,32 @@ def main():
             if pay[b] != v:
                 return fail("%s const %d" % (tag, b))
         print("CLOSED %s N=%d off=%d" % (tag, n, off))
+        return 0
+    if n <= 1424:  # T4 plateau C (NOTE-w2s7-16: 16-table + block counter)
+        if len(pay) != 48:
+            return fail("T4C paylen")
+        off = n - 821
+        if grp(pay, tuple(range(32, 42))) != (((n << 1) | 1) & 0x3FF):
+            return fail("T4C lencode")
+        if pay[5] & 0xFC != 0:
+            return fail("T4C b5hi")
+        if bytes((pay[37], pay[38], pay[46], pay[47])).hex() != \
+                _T4CTAB[(off - 348) & 15]:
+            return fail("T4C tab16")
+        if pay[42] != ((off - 348) >> 4) or pay[43] != 0:
+            return fail("T4C b42")
+        for b, v in ((0, 0x20), (1, 0x0d), (2, 0), (3, 0), (6, 0), (7, 0),
+                     (8, 0x0c), (9, 0), (10, 0x7c), (11, 0xd1), (12, 0),
+                     (13, 0), (14, 0x3c), (15, 0), (16, 0x0e), (17, 0),
+                     (18, 0), (19, 0xeb), (20, 0xc4), (21, 0xdc),
+                     (22, 0x33), (23, 0x05), (24, 0), (25, 0x3c),
+                     (26, 0x04), (27, 0x1f), (28, 0x86), (29, 0xef),
+                     (30, 0xf8), (31, 0xbd), (32, 0x69), (33, 0x81),
+                     (34, 0x78), (35, 0xd5), (36, 0x25), (39, 0x23),
+                     (40, 0), (41, 0x3c), (44, 0x0a), (45, 0x80)):
+            if pay[b] != v:
+                return fail("T4C const %d" % b)
+        print("CLOSED T4C N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
