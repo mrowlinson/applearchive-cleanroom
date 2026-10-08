@@ -2404,6 +2404,25 @@ _T9S1C = ((1, 0x00), (2, 0x00), (3, 0x00), (6, 0x16), (7, 0x29),
           (48, 0xf9), (49, 0xf1), (50, 0x32), (54, 0x2a), (55, 0xe8),
           (57, 0x6a), (58, 0x37), (59, 0xe7), (64, 0x98), (65, 0x5f),
           (66, 0x5f), (67, 0x5a))
+_T9D3P = {12561: "fa1674012362162922004b3ebf56040b8d5c8f89f70dd4a4b73c51a59934c85df3bfbb4cfaeea419a45c403136f86dba8ebc078318d66eeeeed7d724985f5f5a",
+          12562: "fa9e69cb2562162922004b3ebf56040b8d5c8f89f70dd4c4b73c51a59934c85df3bfbb4cfaeea499a45c403136f86d32f8043024ecccbf8e1e7d7557985f5f5a"}
+_T9D3T = ("626470df9bce", "6264cc5bfaeb", "a2640e5a2252", "a264625e5d52",
+           "e264e35ce962", "e2643fd94780", "e264f45c019f", "e26466d9019f",
+           "e2648dd843a0", "e264e1dc7ea0", "2265fc5938cd", "2265e75b3ccd",
+           "62658edd9034", "a26585587081", "a265185a8588", "a265035c8988")
+_T9D3C = ((0, 0x0c), (1, 0x00), (2, 0x00), (3, 0x00), (7, 0x91),
+          (8, 0xa6), (9, 0xef), (10, 0x99), (11, 0xb6), (12, 0x12),
+          (13, 0x80), (14, 0x25), (15, 0x1f), (16, 0xbf), (17, 0x56),
+          (18, 0x04), (19, 0x0b), (20, 0x8d), (21, 0x5c), (22, 0x8f),
+          (23, 0x89), (24, 0xf7), (25, 0x0d), (26, 0xd4), (27, 0xc4),
+          (28, 0xb7), (29, 0x3c), (30, 0x51), (31, 0xa5), (32, 0x99),
+          (33, 0x34), (34, 0xc8), (35, 0x5d), (36, 0xf3), (37, 0xbf),
+          (38, 0xbb), (39, 0x4c), (40, 0xfa), (41, 0xee), (42, 0xa4),
+          (43, 0x99), (44, 0xa4), (45, 0x5c), (46, 0x40), (47, 0x31),
+          (48, 0x36), (49, 0xf8), (50, 0x6d), (51, 0x32), (52, 0xf8),
+          (53, 0x04), (54, 0x30), (55, 0x24), (56, 0xec), (57, 0xcc),
+          (58, 0xbf), (59, 0x8e), (60, 0xee), (61, 0x7f), (62, 0x78),
+          (63, 0x57))
 _T7CC = ((0, 0x75), (1, 0x01), (2, 0x00), (3, 0x00), (6, 0xc1),
          (7, 0x6b), (8, 0xfa), (9, 0xf6), (10, 0xcf),
          (11, 0x25), (12, 0x00), (13, 0xad), (14, 0xfc),
@@ -6188,6 +6207,29 @@ def main():
             if pay[b] != v:
                 return fail("T9S1 const %d" % b)
         print("CLOSED T9S1 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 12578:  # T9D3: 64B dip pair + R 16-row tab b5,6,b64-67
+        off = n - 12561
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if pay[4] != (l10 & 0xFF):
+            return fail("T9D3 lencode")
+        if n in _T9D3P:
+            if len(pay) != 64:
+                return fail("T9D3P paylen")
+            if pay.hex() != _T9D3P[n]:
+                return fail("T9D3P lit %d" % n)
+            print("CLOSED T9D3P N=%d off=%d" % (n, off))
+            return 0
+        if len(pay) != 68:
+            return fail("T9D3R paylen")
+        m = off - 2
+        if bytes((pay[5], pay[6], pay[64], pay[65], pay[66],
+                   pay[67])).hex() != _T9D3T[m]:
+            return fail("T9D3R tab")
+        for b, v in _T9D3C:
+            if pay[b] != v:
+                return fail("T9D3R const %d" % b)
+        print("CLOSED T9D3R N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
