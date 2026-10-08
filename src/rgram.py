@@ -8085,6 +8085,30 @@ def main():
                 return fail("T9O1Q const %d" % b)
         print("CLOSED T9O1Q N=%d off=%d" % (n, off))
         return 0
+    if n <= 16383:  # T9O2Q: 8x16+11 O1QT tab + N1QT[7+] words + b5
+        off = n - 16245
+        if len(pay) != 68:
+            return fail("T9O2Q paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if pay[4] != (l10 & 0xFF):
+            return fail("T9O2Q lencode")
+        m = off & 15
+        q = off >> 4
+        _o = _T9O1QT[m]
+        if pay[5] != int(_o[0:2], 16) + ((q >= 1) or (m >= 11)):
+            return fail("T9O2Q b5")
+        if bytes((pay[6], pay[7], pay[56], pay[57], pay[58],
+                   pay[59])).hex() != _o[2:]:
+            return fail("T9O2Q tab")
+        blk = bytes((pay[49], pay[50], pay[52], pay[53], pay[54],
+                     pay[55])).hex()
+        if blk != _T9N1QT[q + 7]:
+            return fail("T9O2Q blk")
+        for b, v in _T9O1QC:  # O1 body continues verbatim
+            if pay[b] != v:
+                return fail("T9O2Q const %d" % b)
+        print("CLOSED T9O2Q N=%d off=%d" % (n, off))
+        return 0
     print("N out of scope", file=sys.stderr)
     return 2
 
