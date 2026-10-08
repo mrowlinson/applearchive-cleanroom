@@ -24,6 +24,12 @@ _T2W240 = ((0x82, 0x10), (0x72, 0x0f), (0x82, 0x10), (0x72, 0x0f),
 # N=1077 dip-44 payload literal (formula OPEN).
 _T4DIP1077 = ("780000066b0000000c0000000e00000060dd170dc40078000600e001"
               "048060840000000001000f000658b8fd")
+# N=1078 post-dip resync row literal (1 row, formula OPEN).
+_T4B1 = ("010000006d0000006c0024a1000000c00e00f03160dd170dc4007808"
+         "86c7f37b8a0120180000000001000f000658b8fd")
+# T4B3 bytes36-39 rows, off 274..283 (literal table, formula OPEN).
+_T4B3TAB = ("4380168a", "35044f81", "07084f81", "d90b4f81", "ab0f4f81",
+            "51148c78", "50174f81", "221b4f81", "f41e4f81", "9a438c78")
 
 
 def bit(p, i):
@@ -326,42 +332,96 @@ def main():
             return fail("dip1077 bytes")
         print("CLOSED DIP44 N=1077")
         return 0
-    if n <= 1152:  # T4 plateau B4 (NOTE-w2s7-13: k-form + j-counter)
-        if n <= 1104:
+    if n <= 1168:  # T4 plateau B (NOTE-w2s7-13/15: B1..B5 dispatch)
+        if n <= 1077:
             print("N out of scope", file=sys.stderr)
             return 2
         if len(pay) != 48:
-            return fail("T4B4 paylen")
+            return fail("T4B paylen")
         off = n - 821
         if grp(pay, tuple(range(32, 42))) != (((n << 1) | 1) & 0x3FF):
-            return fail("T4B4 lencode")
+            return fail("T4B lencode")
         if pay[5] & 0xFC != 0:
-            return fail("T4B4 b5hi")
-        k = (off - 284) >> 4
-        j = (off - 284) & 15
-        if pay[33] != (0x41 | ((k & 1) << 7)):
-            return fail("T4B4 b33")
-        if pay[34] != (0x82 | ((k >> 1) & 1) | ((9 - 3 * k) << 2)):
-            return fail("T4B4 b34")
-        if pay[35] != (0xD0 | (k + 1)):
-            return fail("T4B4 b35")
-        if pay[42] != (0x07 | ((j & 7) << 5)):
-            return fail("T4B4 b42")
-        if pay[43] != ((j >> 3) & 1):
-            return fail("T4B4 b43")
-        for b, v in ((0, 0xe0), (1, 0), (2, 0), (3, 0), (6, 0), (7, 0),
-                     (8, 0x0c), (9, 0), (10, 0x7c), (11, 0xd1), (12, 0),
-                     (13, 0), (14, 0x3c), (15, 0), (16, 0x0e), (17, 0),
-                     (18, 0), (19, 0xeb), (20, 0x24), (21, 0xdc),
-                     (22, 0x33), (23, 0x05), (24, 0x06), (25, 0xc0),
-                     (26, 0x43), (27, 0xf0), (28, 0x86), (29, 0xef),
-                     (30, 0xf8), (31, 0xbd), (32, 0x69), (36, 0x05),
-                     (37, 0x7c), (38, 0x30), (39, 0x42), (40, 0x01),
-                     (41, 0x80), (44, 0x0a), (45, 0x80), (46, 0x85),
-                     (47, 0xdb)):
+            return fail("T4B b5hi")
+        if off == 257:
+            if pay.hex() != _T4B1:
+                return fail("T4B1 bytes")
+            print("CLOSED T4B1 N=%d" % n)
+            return 0
+        if off <= 273:
+            j = off - 258
+            if pay[37] != (((j & 7) << 2) | ((j & 8) << 3)):
+                return fail("T4B2 b37")
+            consts = ((0, 0x10), (1, 0), (2, 0), (3, 0), (6, 0), (7, 0),
+                      (8, 0x6c), (9, 0), (10, 0x7c), (11, 0xd1), (12, 0),
+                      (13, 0), (14, 0), (15, 0xc0), (16, 0x0e), (17, 0),
+                      (18, 0), (19, 0xeb), (20, 0x24), (21, 0x10),
+                      (22, 0x14), (23, 0xa1), (24, 0x06), (25, 0xc0),
+                      (26, 0x43), (27, 0xf0), (28, 0x86), (29, 0x47),
+                      (30, 0xf9), (31, 0x3b), (32, 0x0a), (33, 0x02),
+                      (34, 0), (35, 0x82), (36, 0), (38, 0), (39, 0),
+                      (40, 0x05), (41, 0), (42, 0xf0), (43, 0),
+                      (44, 0x06), (45, 0x58), (46, 0xb8), (47, 0xfd))
+            tag = "T4B2"
+        elif off <= 283:
+            if pay[36:40].hex() != _T4B3TAB[off - 274]:
+                return fail("T4B3 tab")
+            consts = ((0, 0x0d), (1, 0), (2, 0), (3, 0), (6, 0), (7, 0),
+                      (8, 0x6c), (9, 0), (10, 0x3c), (11, 0x08), (12, 0),
+                      (13, 0), (14, 0), (15, 0xc0), (16, 0x0e), (17, 0),
+                      (18, 0xf0), (19, 0xe1), (20, 0x60), (21, 0xdd),
+                      (22, 0x17), (23, 0x0d), (24, 0xc4), (25, 0),
+                      (26, 0x78), (27, 0x08), (28, 0x86), (29, 0xef),
+                      (30, 0xf8), (31, 0xbd), (32, 0x69), (33, 0x01),
+                      (34, 0), (35, 0xc1), (40, 0x25), (41, 0),
+                      (42, 0xf0), (43, 0), (44, 0x06), (45, 0x58),
+                      (46, 0xb8), (47, 0xfd))
+            tag = "T4B3"
+        elif off <= 331:
+            k = (off - 284) >> 4
+            j = (off - 284) & 15
+            if pay[33] != (0x41 | ((k & 1) << 7)):
+                return fail("T4B4 b33")
+            if pay[34] != (0x82 | ((k >> 1) & 1) | ((9 - 3 * k) << 2)):
+                return fail("T4B4 b34")
+            if pay[35] != (0xD0 | (k + 1)):
+                return fail("T4B4 b35")
+            if pay[42] != (0x07 | ((j & 7) << 5)):
+                return fail("T4B4 b42")
+            if pay[43] != ((j >> 3) & 1):
+                return fail("T4B4 b43")
+            consts = ((0, 0xe0), (1, 0), (2, 0), (3, 0), (6, 0), (7, 0),
+                      (8, 0x0c), (9, 0), (10, 0x7c), (11, 0xd1), (12, 0),
+                      (13, 0), (14, 0x3c), (15, 0), (16, 0x0e), (17, 0),
+                      (18, 0), (19, 0xeb), (20, 0x24), (21, 0xdc),
+                      (22, 0x33), (23, 0x05), (24, 0x06), (25, 0xc0),
+                      (26, 0x43), (27, 0xf0), (28, 0x86), (29, 0xef),
+                      (30, 0xf8), (31, 0xbd), (32, 0x69), (36, 0x05),
+                      (37, 0x7c), (38, 0x30), (39, 0x42), (40, 0x01),
+                      (41, 0x80), (44, 0x0a), (45, 0x80), (46, 0x85),
+                      (47, 0xdb))
+            tag = "T4B4"
+        else:
+            j = off - 332
+            if pay[42] != (0x07 | ((j & 7) << 5)):
+                return fail("T4B5 b42")
+            if pay[43] != ((j >> 3) & 1):
+                return fail("T4B5 b43")
+            consts = ((0, 0xd0), (1, 0), (2, 0), (3, 0), (6, 0), (7, 0),
+                      (8, 0x0c), (9, 0), (10, 0x7c), (11, 0xd1), (12, 0),
+                      (13, 0), (14, 0x3c), (15, 0), (16, 0x0e), (17, 0),
+                      (18, 0), (19, 0xeb), (20, 0x24), (21, 0xdc),
+                      (22, 0x33), (23, 0xe2), (24, 0x06), (25, 0xc0),
+                      (26, 0x43), (27, 0xf0), (28, 0x86), (29, 0xef),
+                      (30, 0xf8), (31, 0xbd), (32, 0x69), (33, 0xc1),
+                      (34, 0xb8), (35, 0x14), (36, 0x05), (37, 0x7c),
+                      (38, 0x30), (39, 0x42), (40, 0x01), (41, 0x80),
+                      (44, 0x0a), (45, 0x80), (46, 0x85), (47, 0xdb))
+            tag = "T4B5"
+        for b, v in consts:
             if pay[b] != v:
-                return fail("T4B4 const %d" % b)
-        print("CLOSED T4B4 N=%d off=%d" % (n, off))
+                return fail("%s const %d" % (tag, b))
+        print("CLOSED %s N=%d off=%d" % (tag, n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
