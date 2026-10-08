@@ -5364,7 +5364,7 @@ _T10PHQC = ((0, 0xa9), (1, 0x57), (8, 0x6f), (9, 0x78), (10, 0x02),
          (50, 0xa8), (51, 0x25), (52, 0xc1), (53, 0x9d), (54, 0x86),
          (55, 0xae), (56, 0x67), (57, 0xfb), (58, 0x88), (59, 0x02),
          (60, 0xb4), (61, 0xd0), (62, 0x11), (63, 0x08))
-_T11R0M = ("73806361985817", "738063ae076a63",
+_T10R16M = ("73806361985817", "738063ae076a63",
            "738063f98712d5", "730076b6007e0c",
            "730076f584120f", "7300795b032e79",
            "730079e661628c", "778002838fd721",
@@ -5372,9 +5372,9 @@ _T11R0M = ("73806361985817", "738063ae076a63",
            "7780044b5f346f", "77000a8b52b68a",
            "77000ad4123d91", "7780189e1afdab",
            "778018930320ac", "778018c10294f6")
-_T11R0B5 = (0xb1, 0x31, 0x31, 0xb1, 0x31, 0x31, 0x31, 0xb1, 0xb1, 0xb1,
+_T10R16B5 = (0xb1, 0x31, 0x31, 0xb1, 0x31, 0x31, 0x31, 0xb1, 0xb1, 0xb1,
             0xb1, 0x31, 0x31, 0xb1, 0x31, 0x31)
-_T11R0C = ((0, 0x04), (1, 0x00), (2, 0x00), (3, 0x00), (8, 0xcf),
+_T10R16C = ((0, 0x04), (1, 0x00), (2, 0x00), (3, 0x00), (8, 0xcf),
          (10, 0xe5), (11, 0xa0), (12, 0xc3), (13, 0x13), (16, 0x0a),
          (17, 0xdd), (18, 0x0d), (19, 0x7e), (20, 0xd1), (21, 0xdf),
          (22, 0xac), (23, 0x5f), (24, 0xde), (25, 0xdb), (26, 0x8f),
@@ -11987,27 +11987,27 @@ def main():
                 return fail("T10PHQ const %d" % b)
         print("CLOSED T10PHQ N=%d off=%d" % (n, off))
         return 0
-    if n <= 23000:  # T11R0: 16x16 76B-pay, m-tab b9,14,15,68-71 + q=PHM[1:]
+    if n <= 23000:  # T10R16: 16x16 76B-pay, m-tab b9,14,15,68-71 + q=PHM[1:]
         off = n - 22745
         if len(pay) != 76:
-            return fail("T11R0 paylen")
+            return fail("T10R16 paylen")
         l10 = (((n << 1) | 1) & 0x3FF)
         if pay[4] != (l10 & 0xFF):
-            return fail("T11R0 lencode")
+            return fail("T10R16 lencode")
         m = off & 15
         q = off >> 4
-        if pay[5] != _T11R0B5[q] + (off >= 39) + (off >= 167):
-            return fail("T11R0 b5")
+        if pay[5] != _T10R16B5[q] + (off >= 39) + (off >= 167):
+            return fail("T10R16 b5")
         if bytes((pay[9], pay[14], pay[15], pay[68], pay[69],
-                   pay[70], pay[71])).hex() != _T11R0M[m]:
-            return fail("T11R0 mtab")
+                   pay[70], pay[71])).hex() != _T10R16M[m]:
+            return fail("T10R16 mtab")
         if bytes((pay[6], pay[7], pay[64], pay[65], pay[66],
                    pay[67])).hex() != _T10PHM[q][2:]:
-            return fail("T11R0 qtab")
-        for b, v in _T11R0C:
+            return fail("T10R16 qtab")
+        for b, v in _T10R16C:
             if pay[b] != v:
-                return fail("T11R0 const %d" % b)
-        print("CLOSED T11R0 N=%d off=%d" % (n, off))
+                return fail("T10R16 const %d" % b)
+        print("CLOSED T10R16 N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
