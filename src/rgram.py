@@ -3597,7 +3597,8 @@ _T10Q2T = ("056880de6a8d", "056822d93290", "05723c5ad283",
            "8584dc582dac", "8588cddf95f8", "058f7ddfe809",
            "058faadb1470", "85905d5a5f91", "859303dc3898",
            "85936dd97aa0")
-_T10Q2B = ("6f684fb9b5fa7014", "afec277810fdaa01")
+_T10Q2B = ("6f684fb9b5fa7014", "afec277810fdaa01",
+           "6f684fb9e5bc7716", "cfaf2f4da0ba777f")
 _T10Q2C = ((0, 0x02), (1, 0x00), (2, 0x00), (3, 0x00), (7, 0x68),
           (8, 0xab), (9, 0x67), (10, 0x0b), (11, 0x9b), (12, 0x6c),
           (13, 0x06), (14, 0x98), (15, 0x50), (16, 0x43), (17, 0x90),
@@ -8610,7 +8611,7 @@ def main():
                 return fail("T10EH const %d" % b)
         print("CLOSED T10EH N=%d off=%d" % (n, off))
         return 0
-    if n <= 17144:  # T10Q2: 2x16 tab b5,6,60-63 + 8B words
+    if n <= 17176:  # T10Q2: 4x16 tab b5,6,60-63 + 8B words + b5
         off = n - 17113
         if len(pay) != 72:
             return fail("T10Q2 paylen")
@@ -8619,8 +8620,12 @@ def main():
             return fail("T10Q2 lencode")
         m = off & 15
         q = off >> 4
-        if bytes((pay[5], pay[6], pay[60], pay[61], pay[62],
-                   pay[63])).hex() != _T10Q2T[m]:
+        _o = _T10Q2T[m]
+        if pay[5] != int(_o[0:2], 16) + ((q == 3) or (q == 2 and
+                                                      m >= 7)):
+            return fail("T10Q2 b5")
+        if bytes((pay[6], pay[60], pay[61], pay[62],
+                   pay[63])).hex() != _o[2:]:
             return fail("T10Q2 tab")
         blk = bytes((pay[56], pay[57], pay[58], pay[59], pay[68],
                      pay[69], pay[70], pay[71])).hex()
