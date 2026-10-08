@@ -2706,6 +2706,27 @@ _T9A2QC = ((1, 0x02), (2, 0x00), (3, 0x00), (6, 0xa7),
           (51, 0xab), (52, 0x59), (53, 0xb8), (54, 0x84), (55, 0x76),
           (56, 0xce), (57, 0xf0), (58, 0x17), (59, 0xda), (60, 0x0a),
           (61, 0xdf), (62, 0x57), (63, 0x55))
+_T9B2T = ("007c71bd5ee9", "ab7c21075eef", "753c55345eef", "aa3c03435eef",
+           "73fc80135eff", "03bc4592beff", "cdfc80bfbeff", "b2fcd2fcdeff",
+           "c6bc6546de05", "5ffc4247de05", "973c034bde05", "7c3cd0cdbe0b",
+           "90fc354cfe14", "4e7c84d23e16", "4e7c85d23e16", "20fc70955e1c")
+_T9B2B = ("e452bfe905bafccc", "c4539fa4ed1c1ccd", "e452efb59526bccf",
+           "0453bfc77d57bccf", "2453afaa8df23cd0", "c4527fd50d4a7cd1",
+           "24536fe52d259cd1", "84538fc975e59cd1", "e4539fe1fde11cd2",
+           "04533fdb7589bcd4", "8453bfb145d51cd6", "8453cfb69dd51cd6",
+           "44522fd935593cd6", "2453fffd7d579cd6", "c4532fa945469cd6",
+           "c4533fae9d469cd6")
+_T9B2C = ((0, 0xd4), (1, 0x20), (2, 0x00), (3, 0x00), (6, 0xa7),
+          (7, 0xc2), (8, 0x24), (9, 0x01), (10, 0x82), (11, 0x11),
+          (14, 0x0d), (15, 0xa7), (22, 0xd1), (23, 0x15), (31, 0x9f),
+          (32, 0xdd), (33, 0xbf), (34, 0xe7), (35, 0x6d), (36, 0x1a),
+          (37, 0xcc), (38, 0xea), (39, 0xb6), (40, 0x7c), (41, 0xd9),
+          (42, 0x72), (43, 0xa4), (44, 0x17), (45, 0x69), (46, 0x39),
+          (47, 0xd8), (48, 0x72), (49, 0xbc), (50, 0x31), (51, 0xab),
+          (52, 0x59), (53, 0xb8), (54, 0x84), (55, 0x76), (56, 0xce),
+          (57, 0xf0), (58, 0x17), (59, 0xda), (60, 0x0a), (61, 0xdf),
+          (62, 0x57), (63, 0x55), (64, 0xeb), (65, 0x7c), (66, 0xa5),
+          (67, 0x2f))
 _T7CC = ((0, 0x75), (1, 0x01), (2, 0x00), (3, 0x00), (6, 0xc1),
          (7, 0x6b), (8, 0xfa), (9, 0xf6), (10, 0xcf),
          (11, 0x25), (12, 0x00), (13, 0xad), (14, 0xfc),
@@ -6833,6 +6854,31 @@ def main():
             if pay[b] != v:
                 return fail("T9A2Q const %d" % b)
         print("CLOSED T9A2Q N=%d off=%d" % (n, off))
+        return 0
+    if n <= 13952:  # T9B2: 16x16 tab b24-29 + 8B block words + b30 rule
+        off = n - 13697
+        if len(pay) != 68:
+            return fail("T9B2 paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if pay[4] != (l10 & 0xFF):
+            return fail("T9B2 lencode")
+        m = off & 15
+        q = off >> 4
+        if pay[5] != 0xeb + (off >= 127) + (off >= 255):
+            return fail("T9B2 b5")
+        if pay[30] != 0x62 + (m >= 8):
+            return fail("T9B2 b30")
+        if bytes((pay[24], pay[25], pay[26], pay[27], pay[28],
+                   pay[29])).hex() != _T9B2T[m]:
+            return fail("T9B2 tab")
+        blk = bytes((pay[12], pay[13], pay[16], pay[17], pay[18], pay[19],
+                     pay[20], pay[21])).hex()
+        if blk != _T9B2B[q]:
+            return fail("T9B2 blk")
+        for b, v in _T9B2C:
+            if pay[b] != v:
+                return fail("T9B2 const %d" % b)
+        print("CLOSED T9B2 N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
