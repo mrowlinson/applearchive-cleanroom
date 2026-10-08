@@ -307,6 +307,52 @@ _T5L3T43 = (0x78, 0xf8, 0x79, 0xf8, 0x79, 0xf9, 0xf8, 0xf9,
             0xf8, 0x78, 0xf9, 0xf9, 0xf9, 0x78, 0x78, 0x78)
 _T5L3K = ("3c5ea2ce4cfb", "495ee5feecf8", "5edeab3e8cfc",
           "495e839fccf7")
+# T6A tables (56-tier head off 0..142): 16-tabs b52-55
+# (PRE-025b concur EXACT) + k2 segs b38/39/46/47 + b5 edge.
+_T6AT52 = (0x8c, 0x0c, 0x0c, 0x6c, 0xec, 0xec, 0x4c, 0xac,
+           0xcc, 0x2c, 0x2c, 0x8c, 0x0c, 0x0c, 0x8c, 0xcc)
+_T6AT53 = (0x85, 0xae, 0x7f, 0xc2, 0xea, 0xbb, 0xff, 0x8a,
+           0xf8, 0xa0, 0x71, 0x98, 0xdd, 0xae, 0xd6, 0x7c)
+_T6AT54 = (0xc7, 0x2f, 0xff, 0x77, 0xdf, 0xaf, 0x27, 0x97,
+           0x5f, 0xcf, 0x9f, 0x17, 0x7f, 0x4f, 0xb7, 0x37)
+_T6AT55 = (0x84, 0x85, 0x85, 0x95, 0x95, 0x96, 0xa6, 0xa6,
+           0xa7, 0xb2, 0xb3, 0xb8, 0xc3, 0xc4, 0xc4, 0xd4)
+_T6AK = ("0229b578", "b22c55f8", "22444779", "e246d7f8",
+         "525ec979", "026269f9", "82784bf8", "327cebf9",
+         "b292cdf8")
+# T6B tables: post-4096 reframe. b53/54/55 tabs SHARED with A;
+# b52 post-tab (PRE-025b concur, rotated to off&15 key); body
+# = PRE-024b reframe values; k2 segs continue k2=9..15.
+_T6BT52 = (0x8d, 0x0d, 0x0d, 0x6d, 0xed, 0xed, 0x4d, 0xad,
+           0xcd, 0x2d, 0x2d, 0x8d, 0x0d, 0x0d, 0x8d, 0xcd)
+_T6BK = ("b292cdf8", "72966d78", "e2ac4ff9", "f2c6d1f9",
+         "02c8e1f9", "22e26378", "42e26378", "52fce578")
+_T6DIP256 = ("04f10e05e3e0236bf59be700b480e618898cf6be4b927faa823c45b6"
+             "cd3d27f42fd8129718db42bcab03dbbccccdddad2ddc06fc")
+_T6BC = ((0, 0x0d), (1, 0x00), (2, 0x00), (3, 0x00), (5, 0xe0),
+         (6, 0x23), (7, 0x6b), (8, 0x15), (9, 0xf1),
+         (10, 0x0e), (11, 0xb1), (12, 0xdf), (13, 0x3c),
+         (14, 0x07), (15, 0x20), (16, 0x34), (17, 0x91),
+         (18, 0xd1), (19, 0x8a), (20, 0xef), (21, 0x5b),
+         (22, 0x40), (23, 0x73), (24, 0x4b), (25, 0x92),
+         (26, 0x82), (27, 0x3c), (28, 0x6d), (29, 0xaa),
+         (30, 0xc8), (31, 0x56), (32, 0xee), (33, 0x39),
+         (34, 0xa1), (35, 0xff), (36, 0x2f), (37, 0xd8),
+         (40, 0xe2), (41, 0xdf), (42, 0xee), (43, 0xfe),
+         (44, 0xec), (45, 0xf8), (48, 0x70), (49, 0x5a),
+         (50, 0xd8), (51, 0xdd))
+_T6AC = ((0, 0x06), (1, 0x00), (2, 0x00), (3, 0x00), (6, 0x91),
+         (7, 0xb5), (8, 0x94), (9, 0x78), (10, 0x87),
+         (11, 0xd8), (12, 0x6f), (13, 0x9e), (14, 0x03),
+         (15, 0x10), (16, 0x34), (17, 0x91), (18, 0xd1),
+         (19, 0x8a), (20, 0xef), (21, 0x5b), (22, 0x40),
+         (23, 0x73), (24, 0x4b), (25, 0x92), (26, 0x82),
+         (27, 0x3c), (28, 0x6d), (29, 0xaa), (30, 0xc8),
+         (31, 0x56), (32, 0xee), (33, 0x39), (34, 0xa1),
+         (35, 0xff), (36, 0x2f), (37, 0xd8), (40, 0xe2),
+         (41, 0xdf), (42, 0xee), (43, 0xfe), (44, 0xec),
+         (45, 0xf8), (48, 0x70), (49, 0x5a), (50, 0xd8),
+         (51, 0xdd))
 _T5L3C = ((0, 0x82), (1, 0x78), (2, 0x87), (3, 0x54), (5, 0xfe),
           (6, 0x91), (7, 0xb5), (8, 0xf4), (9, 0xcd),
           (10, 0x73), (11, 0x00), (12, 0x34), (13, 0x91),
@@ -529,7 +575,7 @@ def main():
             return fail("stored content not zeros")
         print("CLOSED stored N=%d" % n)
         return 0
-    if len(pay) not in (44, 48, 52):
+    if len(pay) not in (44, 48, 52, 56):
         return fail("paylen %d" % len(pay))
     if n <= 127:  # T0
         if len(pay) != 44:
@@ -1651,6 +1697,53 @@ def main():
             if pay[b] != v:
                 return fail("T5L3 const %d" % b)
         print("CLOSED T5L3 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 4095:  # T6A: 56-tier head, tabs b52-55 + k2 segs
+        off = n - 3953
+        if len(pay) != 56:
+            return fail("T6A paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if grp(pay, tuple(range(32, 42))) != l10:
+            return fail("T6A lencode")
+        m = off & 15
+        k2 = off >> 4
+        if pay[5] != (0xfe + (off >= 15)):
+            return fail("T6A b5")
+        krow = bytes((pay[38], pay[39], pay[46], pay[47])).hex()
+        if krow != _T6AK[k2]:
+            return fail("T6A k2")
+        if pay[52] != _T6AT52[m] or pay[53] != _T6AT53[m] or \
+                pay[54] != _T6AT54[m] or pay[55] != _T6AT55[m]:
+            return fail("T6A tab")
+        for b, v in _T6AC:
+            if pay[b] != v:
+                return fail("T6A const %d" % b)
+        print("CLOSED T6A N=%d off=%d" % (n, off))
+        return 0
+    if n <= 4208:  # T6B: post-reframe, shared tabs + new segs
+        off = n - 3953
+        if len(pay) != 56:
+            return fail("T6B paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if grp(pay, tuple(range(32, 42))) != l10:
+            return fail("T6B lencode")
+        m = off & 15
+        k2 = off >> 4
+        krow = bytes((pay[38], pay[39], pay[46], pay[47])).hex()
+        if krow != _T6BK[k2 - 8]:
+            return fail("T6B k2")
+        if pay[52] != _T6BT52[m] or pay[53] != _T6AT53[m] or \
+                pay[54] != _T6AT54[m] or pay[55] != _T6AT55[m]:
+            return fail("T6B tab")
+        for b, v in _T6BC:
+            if pay[b] != v:
+                return fail("T6B const %d" % b)
+        print("CLOSED T6B N=%d off=%d" % (n, off))
+        return 0
+    if n == 4209:  # 52B short-form dip (off=256, +256 rule)
+        if len(pay) != 52 or pay.hex() != _T6DIP256:
+            return fail("T6DIP256")
+        print("CLOSED T6DIP256 N=4209")
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
