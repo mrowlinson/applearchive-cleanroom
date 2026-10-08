@@ -602,6 +602,35 @@ _T6K3T = ("ff5d7e7f", "7cdc3681", "8d5f3b81", "2ddd8c81",
           "70598887", "ed5e9189", "3ddc9189", "cbd94e8b")
 _T6K3K = ("0efc3f60743448", "04fdbb64747a47", "83bf07cfd4a949",
           "babf23fdd4c046")
+# T6L tables (run-256): 16-tabs b40/41/42/46/47/48 + k2
+# b22/23/30/31/39 + b15 flip k2>=1 + b5 edges @1807/1935.
+_T6LT40 = (0xd1, 0x11, 0x31, 0x71, 0x91, 0xd1, 0xf1, 0x31,
+           0x51, 0x91, 0xd1, 0xf1, 0x11, 0x51, 0x91, 0xb1)
+_T6LT41 = (0x58, 0x61, 0x95, 0x95, 0xc9, 0xd1, 0xa4, 0xa5,
+           0xd9, 0xe1, 0xe1, 0x15, 0x20, 0xf1, 0xf1, 0x25)
+_T6LT42 = (0xff, 0xc1, 0xc1, 0xc1, 0xc1, 0xc3, 0xc4, 0xc4,
+           0xc4, 0xc6, 0xc6, 0xc7, 0xc9, 0xc9, 0xc9, 0xca)
+_T6LT46 = (0x06, 0x2c, 0xae, 0xae, 0x30, 0x56, 0x0c, 0x0c,
+           0x8e, 0xb4, 0xb4, 0x36, 0x6c, 0x12, 0x12, 0x94)
+_T6LT47 = (0xf9, 0xf8, 0xf8, 0xf8, 0xf9, 0xf8, 0xf9, 0xf9,
+           0xf9, 0xf8, 0xf8, 0xf9, 0xf8, 0xf9, 0xf9, 0xf9)
+_T6LT48 = (0xb3, 0xd3, 0xd3, 0xd3, 0xd3, 0xd3, 0xd3, 0xd3,
+           0xd3, 0xd3, 0xd3, 0xd3, 0xd3, 0xd3, 0xd3, 0xd3)
+_T6LK = ("f3fb985dfe", "b30918dcf8", "db09985f1a", "630c18dd5a",
+         "4b1a98da76", "4b1a98de76", "bb1d18dca6", "832b985aa0",
+         "a32b98ddc2", "cb2b18da84", "f33b98d9fc", "1b3c185d1e",
+         "433c1859e0", "8b4c985eda", "8b4c18dc7a", "735a98d996")
+_T6LC = ((0, 0x80), (1, 0x0d), (2, 0x4f), (3, 0x64), (6, 0x32),
+         (7, 0x5b), (8, 0x79), (9, 0xe1), (10, 0xe0),
+         (11, 0x33), (12, 0xf7), (13, 0xc5), (14, 0x93),
+         (16, 0x0f), (17, 0x32), (18, 0x09), (19, 0xcd),
+         (20, 0x8e), (21, 0xaf), (24, 0x16), (25, 0xee),
+         (26, 0x19), (27, 0x0f), (28, 0x92), (29, 0xb5),
+         (32, 0xcc), (33, 0xfc), (34, 0x1f), (35, 0x76),
+         (36, 0x74), (37, 0x34), (38, 0x48), (43, 0x38),
+         (44, 0x8a), (45, 0xce), (49, 0x6a), (50, 0x6d),
+         (51, 0x96), (52, 0xcd), (53, 0xae), (54, 0xdf),
+         (55, 0xb6))
 _T6K3C = ((0, 0x7e), (1, 0xf1), (2, 0xe4), (3, 0x07), (6, 0x32),
           (7, 0x5b), (8, 0x79), (9, 0xe1), (10, 0xe0),
           (11, 0x73), (12, 0x00), (13, 0x36), (14, 0x3c),
@@ -2507,6 +2536,34 @@ def main():
             if pay[b] != v:
                 return fail("T6K3 const %d" % b)
         print("CLOSED T6K3 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 5948:  # T6L: run-256, tabs + k2 + b15/b5 edges
+        off = n - 3953
+        if len(pay) != 56:
+            return fail("T6L paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if grp(pay, tuple(range(32, 42))) != l10:
+            return fail("T6L lencode")
+        m = (off - 1740) & 15
+        k2 = (off - 1740) >> 4
+        if pay[5] != (0x6c + (off >= 1807) + (off >= 1935)):
+            return fail("T6L b5")
+        if pay[15] != (0xbf + ((k2 >= 1) << 4)):
+            return fail("T6L b15")
+        kcells = bytes((pay[22], pay[23], pay[30], pay[31],
+                        pay[39])).hex()
+        if kcells != _T6LK[k2]:
+            return fail("T6L k2")
+        if pay[40] != _T6LT40[m] or pay[41] != _T6LT41[m] or \
+                pay[42] != _T6LT42[m]:
+            return fail("T6L tabA")
+        if pay[46] != _T6LT46[m] or pay[47] != _T6LT47[m] or \
+                pay[48] != _T6LT48[m]:
+            return fail("T6L tabB")
+        for b, v in _T6LC:
+            if pay[b] != v:
+                return fail("T6L const %d" % b)
+        print("CLOSED T6L N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
