@@ -1294,6 +1294,30 @@ _T7N4C = ((0, 0xf6), (1, 0x87), (2, 0x1d), (3, 0x0c),
           (48, 0xb6), (49, 0xfc), (50, 0xc2), (51, 0x19),
           (52, 0x33), (53, 0x59), (54, 0xbd), (55, 0xf6),
           (56, 0xce), (57, 0xa9), (58, 0x4f), (59, 0x33))
+_T7OT = ("27bc60e517", "6ebca2c437", "01bcc3cc37",
+          "ccbcd5ef37", "ccbcd6ef37", "a03cc7f837",
+          "efbc10d857", "60bcc4d857", "c33c02e157",
+          "4dfc440377", "c63c000477", "a03c62eb77",
+          "97fc371897", "22fc671b97", "47fcd14597",
+          "887ca24697")
+_T7OC = ((0, 0xf6), (1, 0x87), (2, 0x1d), (3, 0xf8),
+         (6, 0x55), (7, 0x76), (8, 0x5e), (9, 0xdf),
+         (10, 0xea), (11, 0xb5), (12, 0x00), (13, 0x2c),
+         (14, 0xbc), (15, 0x94), (16, 0x7b), (17, 0xf8),
+         (18, 0xfc), (19, 0x2f), (20, 0x95), (21, 0x5a),
+         (22, 0x28), (23, 0xbd), (24, 0x92), (25, 0x30),
+         (26, 0xf2), (27, 0x3b), (28, 0x76), (29, 0xec),
+         (30, 0xea), (31, 0x38), (32, 0x55), (33, 0xbf),
+         (34, 0x63), (35, 0xc9), (36, 0x18), (37, 0xea),
+         (38, 0xd8), (39, 0xb6), (46, 0x39), (47, 0xbe),
+         (53, 0x92), (54, 0xd5), (55, 0x6b), (56, 0xce),
+         (57, 0xa9), (58, 0x4f), (59, 0x33))
+_T7TAIL = ("c6111f003b8455765edfeab5002cbc947bf8fc2f955a28"
+           "bd9230f23577fc610776ecea7094fcbfd615f9d406b197"
+           "a33db6fcc2193359bdf6cea94f33",
+           "f6871d1c3d8455765edfeab5002cbc947bf8fc2f955a28"
+           "bd9230f23bf6ffb5c66357072515f9d4f6e15ec886d24"
+           "583bd353c178a9a9e9b17cea94f33")
 _T7CC = ((0, 0x75), (1, 0x01), (2, 0x00), (3, 0x00), (6, 0xc1),
          (7, 0x6b), (8, 0xfa), (9, 0xf6), (10, 0xcf),
          (11, 0x25), (12, 0x00), (13, 0xad), (14, 0xfc),
@@ -3997,6 +4021,32 @@ def main():
             if pay[b] != v:
                 return fail("T7N4 const %d" % b)
         print("CLOSED T7N4 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 8732:  # T7O: 16x16 walk N4T[0..15] + tab b48-52
+        off = n - 6041
+        if len(pay) != 60:
+            return fail("T7O paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if pay[4] != (l10 & 0xFF):
+            return fail("T7O lencode")
+        m = (off - 2436) & 15
+        q = (off - 2436) >> 4
+        if pay[5] != (0x82 + (off >= 2535) + (off >= 2663)):
+            return fail("T7O b5")
+        if pay[40:46].hex() != _T7N4T[q]:
+            return fail("T7O walk")
+        if pay[48:53].hex() != _T7OT[m]:
+            return fail("T7O tab")
+        for b, v in _T7OC:
+            if pay[b] != v:
+                return fail("T7O const %d" % b)
+        print("CLOSED T7O N=%d off=%d" % (n, off))
+        return 0
+    if n <= 8734:  # 60-tier tail literals (off=2692/2693)
+        off = n - 6041
+        if len(pay) != 60 or pay.hex() != _T7TAIL[off - 2692]:
+            return fail("T7TAIL")
+        print("CLOSED T7TAIL N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
