@@ -1499,6 +1499,31 @@ _T8P4C = ((0, 0x17), (1, 0x00), (2, 0x00), (3, 0x00),
           (55, 0xdb), (56, 0x15), (57, 0xe7), (58, 0xaa),
           (59, 0x91), (60, 0xee), (61, 0xa8), (62, 0x17),
           (63, 0x06))
+_T8QT = ("23bf972c3992", "39bf9f2c3992", "d0fc878c9992",
+          "babf9b72b992", "19bfd723d992", "d4fcbf4ed992",
+          "03fc6f4fd992", "cbfc0b54d992", "75bf7f555993",
+          "ccbf33655993", "e2bf3b655993", "a8bf27905993",
+          "78bf4b367993", "45fcfb95d993", "f0fc779bd993",
+          "7dfcf3aad993")
+_T8QB = ("0f97d4b312babf", "63a4d4335fbabf", "8379d8b351dabf",
+         "0f7ad8b351dabf", "1b38dc3351dabf", "5747d3334b5ac0",
+         "1357d7330e7ac0", "436ede335a7ac0", "7f5adf33407ac0",
+         "2776d93324fac0", "0b78d9b36ffac0", "2b4ddd33621ac1",
+         "43cfd0b3453ac1", "2bd1d033113ac1", "831ad8b35b9ac1",
+         "1ff0db334ebac1")
+_T8QC = ((0, 0x43), (1, 0x01), (2, 0x00), (3, 0x00),
+         (6, 0xe9), (7, 0x36), (8, 0x7f), (9, 0x07),
+         (10, 0x38), (11, 0x33), (12, 0x00), (13, 0x88),
+         (14, 0x7c), (15, 0x74), (16, 0x5c), (17, 0xbf),
+         (18, 0x02), (19, 0xfa), (20, 0xf2), (21, 0x5f),
+         (22, 0xee), (23, 0x5d), (24, 0xd7), (28, 0xa3),
+         (29, 0x73), (34, 0xae), (35, 0x8e), (42, 0x4f),
+         (43, 0x2d), (44, 0xe1), (45, 0x5e), (46, 0xc8),
+         (47, 0x86), (48, 0xd2), (49, 0x45), (50, 0x03),
+         (51, 0x5f), (52, 0x25), (53, 0x3c), (54, 0x57),
+         (55, 0xdb), (56, 0x15), (57, 0xe7), (58, 0xaa),
+         (59, 0x91), (60, 0xee), (61, 0xa8), (62, 0x17),
+         (63, 0x06))
 _T7CC = ((0, 0x75), (1, 0x01), (2, 0x00), (3, 0x00), (6, 0xc1),
          (7, 0x6b), (8, 0xfa), (9, 0xf6), (10, 0xcf),
          (11, 0x25), (12, 0x00), (13, 0xad), (14, 0xfc),
@@ -4379,6 +4404,30 @@ def main():
             if pay[b] != v:
                 return fail("T8P4 const %d" % b)
         print("CLOSED T8P4 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 9428:  # T8Q: 16x16 tab b36-41 + 7B block words
+        off = n - 8735
+        if len(pay) != 64:
+            return fail("T8Q paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if pay[4] != (l10 & 0xFF):
+            return fail("T8Q lencode")
+        m = (off - 438) & 15
+        q = (off - 438) >> 4
+        if pay[5] != (0x47 + (off >= 481) + (off >= 609)):
+            return fail("T8Q b5")
+        tab = bytes((pay[36], pay[37], pay[38], pay[39], pay[40],
+                     pay[41])).hex()
+        if tab != _T8QT[m]:
+            return fail("T8Q tab")
+        blk = bytes((pay[25], pay[26], pay[27], pay[30], pay[31],
+                     pay[32], pay[33])).hex()
+        if blk != _T8QB[q]:
+            return fail("T8Q blk")
+        for b, v in _T8QC:
+            if pay[b] != v:
+                return fail("T8Q const %d" % b)
+        print("CLOSED T8Q N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
