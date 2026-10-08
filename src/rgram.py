@@ -329,6 +329,62 @@ _T6BK = ("b292cdf8", "72966d78", "e2ac4ff9", "f2c6d1f9",
          "02c8e1f9", "22e26378", "42e26378", "52fce578")
 _T6DIP256 = ("04f10e05e3e0236bf59be700b480e618898cf6be4b927faa823c45b6"
              "cd3d27f42fd8129718db42bcab03dbbccccdddad2ddc06fc")
+# T6C tables (cluster C): 2 transition literals + 15-row C1
+# + 10-row C2 + C3-6 shared 16-tab b13-17 + k2 b5-11.
+_T6C0 = ("03000000e5e0236b15f10e0ddf3c07203491d180ef5b40734b927faa"
+         "823c45b6cd3d27f42fd802cf18db42bcab036dbc2d8a75eccdf61fd1",
+         "31000000e780530b19bf790e0041bc433491d180ef5b40734b927faa"
+         "823c45b6cd3d27f42fd802cf18db42bcab036dbc2d8a61ae2dd44fda")
+_T6C1T = ("e0908b19", "40ce0b39", "805c1b39", "e0999b39",
+          "40d71b59", "80652b59", "80cfcb99", "201b5bb9",
+          "8058dbb9", "e0955bd9", "20246bd9", "8061ebd9",
+          "e19e6bf9", "212d7bf9", "816afbf9")
+_T6C1C = ((0, 0x31), (1, 0x00), (2, 0x00), (3, 0x00), (9, 0xbf),
+          (10, 0x79), (11, 0x0e), (12, 0x00), (13, 0x41),
+          (14, 0xbc), (15, 0x43), (16, 0x34), (17, 0x91),
+          (18, 0xd1), (19, 0x80), (20, 0xef), (21, 0x5b),
+          (22, 0x40), (23, 0x73), (24, 0x4b), (25, 0x92),
+          (26, 0x7f), (27, 0xaa), (28, 0x82), (29, 0x3c),
+          (30, 0x45), (31, 0xb6), (32, 0xcd), (33, 0x3d),
+          (34, 0x27), (35, 0xf4), (36, 0x2f), (37, 0xd8),
+          (38, 0x02), (39, 0xcf), (40, 0x18), (41, 0xdb),
+          (42, 0x42), (43, 0xbc), (44, 0xab), (45, 0x03),
+          (46, 0x6d), (47, 0xbc), (48, 0x2d), (49, 0x8a),
+          (50, 0x61), (51, 0xae), (52, 0x2d), (53, 0xd4),
+          (54, 0x4f), (55, 0xda))
+_T6C2T = ("c1abfb7d1af6", "61fe4be7a8f1", "4161fbe9a8f1",
+          "c1c1eb5d8bf2", "c1f37beaa8f1", "c18a5b9be5ef",
+          "61b71b618bf2", "815eabfec6f0", "c1359beba8f1",
+          "a1aeabffc6f0")
+_T6C2C = ((0, 0x04), (1, 0x00), (2, 0x00), (3, 0x00), (8, 0x59),
+          (9, 0x10), (10, 0xef), (11, 0x50), (15, 0x00),
+          (16, 0xb4), (17, 0x80), (18, 0xe6), (19, 0x00),
+          (20, 0x89), (21, 0x8c), (22, 0xf6), (23, 0xbe),
+          (24, 0x4b), (25, 0x92), (26, 0x7f), (27, 0xaa),
+          (28, 0x82), (29, 0x3c), (30, 0x45), (31, 0xb6),
+          (32, 0xcd), (33, 0x3d), (34, 0x27), (35, 0xf4),
+          (36, 0x2f), (37, 0xd8), (38, 0x02), (39, 0xcf),
+          (40, 0x18), (41, 0xdb), (42, 0x42), (43, 0xbc),
+          (44, 0xab), (45, 0x03), (46, 0x6d), (47, 0xbc),
+          (48, 0x2d), (49, 0x8a), (50, 0x5d), (51, 0x7b),
+          (52, 0xad), (53, 0xa0), (54, 0xf7), (55, 0xa5))
+_T6C3T = ("7abca4d811", "7abca5d811", "c77c55f811", "e37c72f811",
+          "307c221812", "307c231812", "7d3cd31812", "7d3cd41812",
+          "cafc833812", "e6fca03812", "33fc505812", "33fc515812",
+          "80bc017812", "80bc027812", "cd7cb27812", "d13cc87812")
+_T6C3K = ("01eb2b596c511e", "814f3b19e0181e", "41357b59cc6d1e",
+          "41affbb9b3fc1d")
+_T6C3C = ((0, 0x44), (1, 0x00), (2, 0x00), (3, 0x00), (12, 0x00),
+          (18, 0x19), (19, 0x0d), (20, 0xef), (21, 0x5b),
+          (22, 0x40), (23, 0x73), (24, 0x4b), (25, 0x92),
+          (26, 0x7f), (27, 0xaa), (28, 0x82), (29, 0x3c),
+          (30, 0x45), (31, 0xb6), (32, 0xcd), (33, 0x3d),
+          (34, 0x27), (35, 0xf4), (36, 0x2f), (37, 0xd8),
+          (38, 0x02), (39, 0xcf), (40, 0x18), (41, 0xdb),
+          (42, 0x42), (43, 0xbc), (44, 0xab), (45, 0x03),
+          (46, 0x6d), (47, 0xbc), (48, 0x2d), (49, 0x8a),
+          (50, 0x5d), (51, 0x7b), (52, 0xad), (53, 0xa0),
+          (54, 0xf7), (55, 0xa5))
 _T6BC = ((0, 0x0d), (1, 0x00), (2, 0x00), (3, 0x00), (5, 0xe0),
          (6, 0x23), (7, 0x6b), (8, 0x15), (9, 0xf1),
          (10, 0x0e), (11, 0xb1), (12, 0xdf), (13, 0x3c),
@@ -1744,6 +1800,62 @@ def main():
         if len(pay) != 52 or pay.hex() != _T6DIP256:
             return fail("T6DIP256")
         print("CLOSED T6DIP256 N=4209")
+        return 0
+    if n <= 4211:  # T6C0: 2 transition literals (off=257/258)
+        off = n - 3953
+        if len(pay) != 56 or pay.hex() != _T6C0[off - 257]:
+            return fail("T6C0")
+        print("CLOSED T6C0 N=%d" % n)
+        return 0
+    if n <= 4226:  # T6C1: 15-row b5-8 tab
+        off = n - 3953
+        if len(pay) != 56:
+            return fail("T6C1 paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if grp(pay, tuple(range(32, 42))) != l10:
+            return fail("T6C1 lencode")
+        if pay[5:9].hex() != _T6C1T[off - 259]:
+            return fail("T6C1 row")
+        for b, v in _T6C1C:
+            if pay[b] != v:
+                return fail("T6C1 const %d" % b)
+        print("CLOSED T6C1 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 4236:  # T6C2: 10-row tab b5-7/b12-14
+        off = n - 3953
+        if len(pay) != 56:
+            return fail("T6C2 paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if grp(pay, tuple(range(32, 42))) != l10:
+            return fail("T6C2 lencode")
+        cells = bytes((pay[5], pay[6], pay[7], pay[12], pay[13],
+                       pay[14])).hex()
+        if cells != _T6C2T[off - 274]:
+            return fail("T6C2 row")
+        for b, v in _T6C2C:
+            if pay[b] != v:
+                return fail("T6C2 const %d" % b)
+        print("CLOSED T6C2 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 4300:  # T6C3-6: shared b13-17 tab + k2 b5-11
+        off = n - 3953
+        if len(pay) != 56:
+            return fail("T6C3 paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if grp(pay, tuple(range(32, 42))) != l10:
+            return fail("T6C3 lencode")
+        m = (off - 284) & 15
+        k2 = (off - 284) >> 4
+        if pay[5:12].hex() != _T6C3K[k2]:
+            return fail("T6C3 k2")
+        cells = bytes((pay[13], pay[14], pay[15], pay[16],
+                       pay[17])).hex()
+        if cells != _T6C3T[m]:
+            return fail("T6C3 tab")
+        for b, v in _T6C3C:
+            if pay[b] != v:
+                return fail("T6C3 const %d" % b)
+        print("CLOSED T6C3 N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
