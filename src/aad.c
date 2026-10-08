@@ -1294,7 +1294,7 @@ static int extract(const Item *items, size_t nitems, const char *root,
         }
     }
     /* M1 tails: emitted in main (midchain path only), never here:
-     * modal x2 unless short-whole or trunchdr-kcut1 (TIP2e). */
+     * modal x2 unless short-whole or kcut1 (TIP2e). */
     /* phase 2: files meta, strict reverse (bad2, Q1 re-probe) */
     for (size_t i = nfiles; i-- > 0;) {
         const Item *it = &items[files[i].idx];
@@ -1450,9 +1450,9 @@ int main(int argc, char **argv) {
                 mf.whole, shortend, obs, mf.kind);
         emit_midblob(&mf, &file);
         /* TIP2e M1: modal x2 tails, except short-whole (<512K:
-         * mc2/mc3 x0) and trunchdr-kcut1 (m2th1 x0-locked). */
-        if (mf.whole >= 524288ULL &&
-            !(mf.kind == MF_TRUNCHDR && mf.kcut == 1))
+         * mc2/mc3 x0) and kcut==1 any-kind (tp1a/b + m2th1
+         * x0-locked, NOTE-180/183; pooled kcut1 65/70 x0). */
+        if (mf.whole >= 524288ULL && mf.kcut != 1)
             fprintf(stderr, "reading payload\nreading payload\n");
         fprintf(stderr, "1 entries failed to extract\n");
         fails = 1;

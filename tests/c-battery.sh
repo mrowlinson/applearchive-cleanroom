@@ -1283,6 +1283,8 @@ t2cut m2 "bs[1][0]+4" m2th1
 t2cut m2 "bs[2][0]+4" m2th2
 t2cut m2 "bs[3][0]+4" m2th3
 t2cut dsrcB "bs[3][0]+16+bs[3][2]//2" rnd3m
+t2cut m2 "bs[1][0]+16+500000" tp1a
+t2cut m2 "bs[1][0]+16+900000" tp1b
 runt2() { # $1=name $2=relpath $3=csize $4=ctails $5=oset $6=otails $7=ocount
   rm -rf "$WORK/t2o-$1" "$WORK/t2c-$1" "$WORK/t2p-$1"; mkdir -p "$WORK/t2o-$1" "$WORK/t2c-$1" "$WORK/t2p-$1"
   ORC=0; sh "$ADAPTER" aar-decode "$WORK/t2$1.aar" "$WORK/t2o-$1" 2>"$WORK/t2o-$1.err" >/dev/null || ORC=$?
@@ -1316,16 +1318,20 @@ runt2 618 big/z3m.bin 524288 2 "262144,524288,786432" "0,2,4" "1 entries failed,
 cmp -s "$WORK/t2src/big/r500k.bin" "$WORK/t2o-618/big/r500k.bin" && pass "t2618-rfull" || fail "t2618-rfull"
 runt2 7500 big/z3m.bin 1048576 2 "1048576,1310720,1572864" "0,2" "1 entries failed"
 cmp -s "$WORK/t2src/big/r500k.bin" "$WORK/t2o-7500/big/r500k.bin" && pass "t27500-rfull" || fail "t27500-rfull"
-runt2 506k big/z3m.bin 262144 2 "0,262144" "0,2" "1 entries failed,2 entries failed"
+runt2 506k big/z3m.bin 262144 0 "0,262144,ABS" "0,2" "1 entries failed,2 entries failed"
 cmp -s "$WORK/t2src/big/r500k.bin" "$WORK/t2o-506k/big/r500k.bin" && pass "t2506k-rfull" || fail "t2506k-rfull"
-runt2 m2th1 big2 262144 0 "262144" "0,2" "1 entries failed"
+runt2 m2th1 big2 262144 0 "262144" "0,2" "1 entries failed,2 entries failed"
 cmp -s "$WORK/t2m2/big1" "$WORK/t2o-m2th1/big1" && pass "t2m2th1-b1full" || fail "t2m2th1-b1full"
 runt2 m2th2 big2 524288 2 "524288,786432" "0,2" "1 entries failed,2 entries failed"
 cmp -s "$WORK/t2m2/big1" "$WORK/t2o-m2th2/big1" && pass "t2m2th2-b1full" || fail "t2m2th2-b1full"
-runt2 m2th3 big2 1048576 2 "1048576" "0,2" "1 entries failed"
+runt2 m2th3 big2 1048576 2 "1048576,1310720" "0,2" "1 entries failed"
 cmp -s "$WORK/t2m2/big1" "$WORK/t2o-m2th3/big1" && pass "t2m2th3-b1full" || fail "t2m2th3-b1full"
 runt2 rnd3m big2 1048576 2 "1048576" "0,2" "1 entries failed"
 cmp -s "$WORK/t2dsrcB/big1" "$WORK/t2o-rnd3m/big1" && pass "t2rnd3m-b1full" || fail "t2rnd3m-b1full"
+runt2 tp1a big2 262144 0 "262144" "0,2" "1 entries failed,2 entries failed"
+cmp -s "$WORK/t2m2/big1" "$WORK/t2o-tp1a/big1" && pass "t2tp1a-b1full" || fail "t2tp1a-b1full"
+runt2 tp1b big2 262144 0 "262144" "0,2" "1 entries failed,2 entries failed"
+cmp -s "$WORK/t2m2/big1" "$WORK/t2o-tp1b/big1" && pass "t2tp1b-b1full" || fail "t2tp1b-b1full"
 
 [ "$FAIL" -eq 0 ] && echo CBATTERY-GREEN || echo CBATTERY-RED
 exit "$FAIL"

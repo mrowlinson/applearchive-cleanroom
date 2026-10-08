@@ -971,7 +971,7 @@ def extract(items, root, fcls=0, fsub=0, shortidx=-1, midchain=False,
                   file=sys.stderr)
             scount += 1
     # M1 tails: emitted in main (midchain path only), never here:
-    # modal x2 unless short-whole or trunchdr-kcut1 (TIP2e).
+    # modal x2 unless short-whole or kcut1 (TIP2e).
     # phase 2: files meta, strict reverse
     for target, entries, blobs, islink, kk in reversed(files):
         if kk == shortidx:
@@ -1108,9 +1108,8 @@ def main(argv):
                     mid["kind"])
             print(_midblob(mid, bytes(data)), file=sys.stderr)
             # TIP2e M1: modal x2 tails, except short-whole
-            # (<512K) and trunchdr-kcut1 (x0-locked).
-            x0 = mid["whole"] < 524288 or (mid["kind"] == "trunchdr"
-                                           and mid["kcut"] == 1)
+            # (<512K) and kcut==1 any-kind (NOTE-180/183).
+            x0 = mid["whole"] < 524288 or mid["kcut"] == 1
             if not x0:
                 print("reading payload\nreading payload",
                       file=sys.stderr)

@@ -4,13 +4,15 @@
 
 Midchain: x2 `reading payload` after cascade, before count,
 EXCEPT x0 iff whole<524288 (mc2/mc3 256/384K x0 10/10; mc4
-512K x2 6/6) or (trunchdr && kcut==1: m2th1 x0-locked 14/14).
+512K x2 6/6) or kcut==1 any-kind (tp1a/b truncpay x0
+19/20+17/20+12/12 + own 7/8 replicate; m2th1 trunchdr
+17/18; pooled kcut1 65/70 x0, NOTE-180/183 GENERALIZE the
+trunchdr-only form). Own b1pay50 x2-3/4 = outlier legs
+(base/phase minority, SET-covered, no rule impact).
 Clean/hard unchanged (x0; hard no-count). x2 in EVERY
-multi-block-midchain tails SET (viewer-618 {x0,x2,x4} +
-viewer-7500 {x2,x0} + 60+ own x2/x4 legs, x0 never on
-618-rule 0/26 this phase). Phase kills statics (618 modal
-x0->x2 NOTE-170; battery SET-pins {x0,x2}+x4, never modal).
-618 pooled-modal x2 (25/47); 7500 x2 (39/43) + fc1-stable.
+kcut>=2 tails SET. Phase kills statics (618 modal x0->x2;
+battery SET-pins {x0,x2}+x4, never modal). 618 pooled x2
+(25/47); 7500 x2 (39/43) + fc1-stable.
 
 ## 2. M2 content: prefix-scaled trunchdr cap + truncpay whole-step
 
@@ -25,8 +27,8 @@ modal-chasing REFUTED).
 Truncpay big dev += (whole>=3M): 7500/rnd3m 4ch-locked
 (18/18 zeros + 6/6 phase-C + 6/6 random, pooled 34/43).
 Pooled-early-5ch phase-local. C 4ch/x2 both. Random-3M
-validates content-blind (no pay-sniffing). NOTE-073 asks
-viewer re-rule (NOTE-176 said keep-5ch pre-random-bed);
+validates content-blind (no pay-sniffing). NOTE-178
+RE-RULED 4ch (parity accepted, NOTE-176-5ch superseded);
 cells pin C-4ch + oracle-SET {4,5,6}. Blast radius ZERO
 (all battery truncpay cells whole<=2M). 506k-analog
 (bs1+161): oracle {1ch,0B} + x2/fc2; C already 1ch.
@@ -79,4 +81,4 @@ universal-member emission are the durable bars. OPEN:
 whole>=4M trunchdr doubling (extrapolated); comp'1..12
 lone-leg (never seen, SET-defensive); mcbv x0 tails
 (unverified, SET); random-3M 5ch-leg (would extend SET,
-rule holds); 7500 4ch-vs-5ch (NOTE-073 re-rule pending).
+rule holds). 7500 4ch RULED (NOTE-178).
