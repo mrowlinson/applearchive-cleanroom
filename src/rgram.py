@@ -2048,6 +2048,28 @@ _T8Z4C = ((2, 0x0a), (3, 0x00), (6, 0x34), (7, 0x39), (8, 0x02),
           (48, 0x17), (49, 0x28), (50, 0xec), (51, 0x21), (52, 0x4e),
           (53, 0x64), (54, 0x6f), (55, 0x44), (56, 0x92), (57, 0xdc),
           (58, 0xe3), (59, 0xae))
+_T8A1T = ("373c513d9b45", "d07c263e9b45", "2e7c65769b45", "7ffcb3a8bb45",
+           "78bc85965b46", "363cd41cbb47", "80bcd0cd3b48", "a23c33e5db48",
+           "cdfc54f0db48", "06fc7165fb48", "36bc6466fb48", "84fca0a31b49",
+           "31bc81437b4b", "fcfce2c27b4b", "e6fc05f69b4b", "e6fc06f69b4b")
+_T8A1B = ("e57621c41707b9ac", "e576a16af7c3b9ac",
+           "e576e17e57c5b9ac", "657a219d7710b9ac",
+           "e56161b5d712d9ac", "657aa1aa77fd39ad",
+           "657d2184977c39ad", "656ae182b72379ad",
+           "656a2197172579ad", "e56c2149578779ad",
+           "e56c21fd56a479ad", "e56fe1d6b62bf9ad",
+           "e56f61fe9748f9ad", "e56f219f164af9ad",
+           "657aa121977af9ad", "e57f616117e719ae")
+_T8A1C = ((2, 0xa0), (3, 0x00), (6, 0x34), (7, 0x39), (8, 0x02),
+          (9, 0x00), (10, 0xc0), (11, 0xd4),
+          (18, 0x38), (19, 0xf6), (26, 0xb7), (27, 0xd1), (28, 0x08),
+          (29, 0xfc), (30, 0x4f), (31, 0x4f), (32, 0x97), (33, 0x50),
+          (34, 0x42), (35, 0xca), (36, 0xac), (37, 0xda), (38, 0xdb),
+          (39, 0x2e), (40, 0x54), (41, 0x46), (42, 0xcc), (43, 0x27),
+          (44, 0x36), (45, 0x3c), (46, 0xf8), (47, 0x4c), (48, 0x17),
+          (49, 0x28), (50, 0xec), (51, 0x21), (52, 0x4e), (53, 0x64),
+          (54, 0x6f), (55, 0x44), (56, 0x92), (57, 0xdc), (58, 0xe3),
+          (59, 0xae), (60, 0x33), (61, 0x3c), (62, 0x13), (63, 0xed))
 _T7CC = ((0, 0x75), (1, 0x01), (2, 0x00), (3, 0x00), (6, 0xc1),
          (7, 0x6b), (8, 0xfa), (9, 0xf6), (10, 0xcf),
          (11, 0x25), (12, 0x00), (13, 0xad), (14, 0xfc),
@@ -5432,6 +5454,29 @@ def main():
             print("CLOSED T8Z4 N=%d off=%d" % (n, off))
             return 0
         return fail("T8Z gap %d" % n)
+    if n <= 11168:  # T8A1: 16x16 tab b20-25 + 8B block words
+        off = n - 8735
+        if len(pay) != 64:
+            return fail("T8A1 paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if pay[4] != (l10 & 0xFF):
+            return fail("T8A1 lencode")
+        m = (off - 2178) & 15
+        q = (off - 2178) >> 4
+        if pay[5] != 0x55 + (off >= 2273) + (off >= 2401):
+            return fail("T8A1 b5")
+        if bytes((pay[20], pay[21], pay[22], pay[23], pay[24],
+                   pay[25])).hex() != _T8A1T[m]:
+            return fail("T8A1 tab")
+        blk = bytes((pay[0], pay[1], pay[12], pay[13], pay[14],
+                     pay[15], pay[16], pay[17])).hex()
+        if blk != _T8A1B[q]:
+            return fail("T8A1 blk")
+        for b, v in _T8A1C:
+            if pay[b] != v:
+                return fail("T8A1 const %d" % b)
+        print("CLOSED T8A1 N=%d off=%d" % (n, off))
+        return 0
     print("N out of scope", file=sys.stderr)
     return 2
 
