@@ -547,6 +547,29 @@ _T6I3T = ("edda821c", "a65b7b1f", "f7db801f", "735b1b20",
           "e7da562c", "385b5c2c", "a8dd662c", "425c5a2f")
 _T6I3K = ("5dbce3598d8e", "507ce4991573", "a1fc7279b1c5",
           "107c4479593c")
+# T6J tables (run-256): 16-tabs b0/1/2/26/27 + b20-23 walk
+# the I3 tab by k2 (full 16, reuse) + b5 edges @1423/1551.
+_T6JT0 = (0x0d, 0xb7, 0xa1, 0x01, 0xb7, 0xb9, 0xa3, 0x03,
+          0xaf, 0xa3, 0x8b, 0x05, 0xb1, 0xb9, 0x05, 0xb1)
+_T6JT1 = (0xb9, 0xbf, 0xc6, 0x1f, 0x1f, 0x3d, 0x44, 0x9d,
+          0xa3, 0xa4, 0xab, 0x1b, 0x21, 0x21, 0x7b, 0x81)
+_T6JT2 = (0x98, 0x98, 0x98, 0x99, 0x99, 0x99, 0x99, 0x99,
+          0x99, 0x99, 0x99, 0x9a, 0x9a, 0x9a, 0x9a, 0x9a)
+_T6JT26 = (0x15, 0x95, 0x15, 0x15, 0x95, 0x95, 0x15, 0x15,
+           0x95, 0x15, 0x95, 0x15, 0x95, 0x95, 0x15, 0x95)
+_T6JT27 = (0x10, 0x5c, 0x29, 0x73, 0x3e, 0x5a, 0x27, 0x71,
+           0x3d, 0x09, 0x55, 0x6f, 0x3b, 0x3b, 0x51, 0x1d)
+_T6JC = ((3, 0x01), (6, 0x32), (7, 0x5b), (8, 0x79), (9, 0xe1),
+         (10, 0xe0), (11, 0xf3), (12, 0x00), (13, 0x84),
+         (14, 0xbc), (15, 0xb1), (16, 0x79), (17, 0x8d),
+         (18, 0x8e), (19, 0x97), (24, 0x52), (25, 0x88),
+         (28, 0x73), (29, 0xac), (30, 0xf5), (31, 0x98),
+         (32, 0xc6), (33, 0xbf), (34, 0xbf), (35, 0x8e),
+         (36, 0xef), (37, 0xa1), (38, 0x9c), (39, 0x65),
+         (40, 0x5b), (41, 0x5f), (42, 0xe5), (43, 0xa8),
+         (44, 0x0d), (45, 0x9d), (46, 0x19), (47, 0xf1),
+         (48, 0xaf), (49, 0xd6), (50, 0x66), (51, 0x39),
+         (52, 0xcd), (53, 0xae), (54, 0xdf), (55, 0xb6))
 _T6I3C = ((0, 0xad), (1, 0xa0), (2, 0x19), (3, 0x00), (5, 0x69),
           (6, 0x32), (7, 0x5b), (8, 0x79), (9, 0xe1),
           (10, 0xe0), (11, 0xf3), (12, 0x00), (19, 0x97),
@@ -2347,6 +2370,29 @@ def main():
             if pay[b] != v:
                 return fail("T6I3 const %d" % b)
         print("CLOSED T6I3 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 5600:  # T6J: run-256, tabs + I3-walk + b5 edges
+        off = n - 3953
+        if len(pay) != 56:
+            return fail("T6J paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if grp(pay, tuple(range(32, 42))) != l10:
+            return fail("T6J lencode")
+        m = (off - 1392) & 15
+        k2 = (off - 1392) >> 4
+        if pay[5] != (0x69 + (off >= 1423) + (off >= 1551)):
+            return fail("T6J b5")
+        if pay[0] != _T6JT0[m] or pay[1] != _T6JT1[m] or \
+                pay[2] != _T6JT2[m]:
+            return fail("T6J tabA")
+        if pay[20:24].hex() != _T6I3T[k2]:
+            return fail("T6J walk")
+        if pay[26] != _T6JT26[m] or pay[27] != _T6JT27[m]:
+            return fail("T6J tabB")
+        for b, v in _T6JC:
+            if pay[b] != v:
+                return fail("T6J const %d" % b)
+        print("CLOSED T6J N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
