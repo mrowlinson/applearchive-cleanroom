@@ -24934,6 +24934,498 @@ static const long _T10PQQC[][PAIRW__T10PQQC] = {
     {67, 240},
 };
 static const long _T10PQQC_N = 57;
+static const char *_T10R25M[] = {
+    "5be8ef58451217",
+    "9be8efd8182885",
+    "9be8ef8fca9385",
+    "9be8ef8fce9385",
+    "5bf2ef7285ee7a",
+    "9bf2efc19b273e",
+    "9bf2efdcdd293e",
+    "9bf8ef784540a8",
+    "9bf8ef0d47a5d7",
+    "db03ff2294f104",
+    "db03ffb3074f7e",
+    "db03ff99223885",
+    "db03ff56224d85",
+    "db03ffa1804f85",
+    "1b07fffcd88e5d",
+    "5b07ffbfdb297d",
+};
+enum { PAIRW__T10R25C = 2 };
+static const long _T10R25C[][PAIRW__T10R25C] = {
+    {0, 87},
+    {1, 26},
+    {2, 0},
+    {3, 0},
+    {6, 15},
+    {7, 146},
+    {8, 12},
+    {9, 8},
+    {10, 221},
+    {11, 116},
+    {12, 0},
+    {13, 25},
+    {14, 188},
+    {15, 5},
+    {16, 104},
+    {17, 244},
+    {18, 160},
+    {19, 59},
+    {20, 69},
+    {24, 70},
+    {25, 173},
+    {26, 10},
+    {27, 147},
+    {31, 200},
+    {32, 38},
+    {33, 18},
+    {34, 229},
+    {35, 58},
+    {36, 222},
+    {37, 174},
+    {38, 202},
+    {39, 161},
+    {40, 123},
+    {41, 252},
+    {42, 121},
+    {43, 253},
+    {44, 193},
+    {45, 139},
+    {46, 231},
+    {47, 107},
+    {48, 248},
+    {49, 222},
+    {50, 2},
+    {51, 124},
+    {52, 86},
+    {53, 212},
+    {54, 175},
+    {55, 245},
+    {56, 11},
+    {57, 253},
+    {58, 125},
+    {59, 179},
+    {60, 172},
+    {61, 213},
+    {62, 55},
+    {63, 240},
+    {72, 136},
+    {73, 128},
+    {74, 47},
+    {75, 2},
+};
+static const long _T10R25C_N = 60;
+enum { PAIRW__T10PR0C = 2 };
+static const long _T10PR0C[][PAIRW__T10PR0C] = {
+    {0, 120},
+    {1, 11},
+    {2, 18},
+    {3, 211},
+    {5, 204},
+    {6, 15},
+    {7, 146},
+    {8, 12},
+    {9, 8},
+    {10, 1},
+    {11, 50},
+    {12, 104},
+    {13, 148},
+    {14, 31},
+    {15, 26},
+    {16, 160},
+    {17, 81},
+    {18, 97},
+    {19, 82},
+    {20, 219},
+    {21, 60},
+    {22, 118},
+    {23, 181},
+    {24, 162},
+    {25, 113},
+    {26, 62},
+    {27, 89},
+    {28, 34},
+    {29, 81},
+    {30, 174},
+    {31, 83},
+    {32, 222},
+    {33, 174},
+    {34, 202},
+    {35, 161},
+    {36, 123},
+    {37, 252},
+    {38, 121},
+    {39, 253},
+    {40, 193},
+    {41, 139},
+    {42, 231},
+    {43, 107},
+    {44, 248},
+    {45, 222},
+    {46, 2},
+    {47, 124},
+    {48, 137},
+    {49, 186},
+    {50, 208},
+    {51, 158},
+    {52, 179},
+    {53, 91},
+    {54, 127},
+    {55, 28},
+    {56, 107},
+    {57, 60},
+    {58, 145},
+    {59, 76},
+    {60, 86},
+    {61, 212},
+    {62, 175},
+    {63, 245},
+    {64, 11},
+    {65, 253},
+    {66, 125},
+    {67, 179},
+    {68, 172},
+    {69, 213},
+    {70, 55},
+    {71, 240},
+};
+static const long _T10PR0C_N = 71;
+enum { PAIRW__T10PR1C = 2 };
+static const long _T10PR1C[][PAIRW__T10PR1C] = {
+    {0, 104},
+    {1, 0},
+    {2, 0},
+    {3, 0},
+    {5, 204},
+    {6, 15},
+    {7, 146},
+    {8, 12},
+    {9, 8},
+    {10, 19},
+    {11, 19},
+    {12, 0},
+    {13, 25},
+    {14, 188},
+    {15, 5},
+    {16, 104},
+    {17, 148},
+    {18, 31},
+    {19, 26},
+    {20, 192},
+    {21, 155},
+    {22, 175},
+    {23, 78},
+    {24, 226},
+    {25, 84},
+    {26, 133},
+    {27, 73},
+    {28, 246},
+    {29, 255},
+    {30, 14},
+    {31, 181},
+    {32, 105},
+    {33, 165},
+    {34, 40},
+    {35, 215},
+    {36, 222},
+    {37, 174},
+    {38, 202},
+    {39, 161},
+    {40, 123},
+    {41, 252},
+    {42, 121},
+    {43, 253},
+    {44, 193},
+    {45, 139},
+    {46, 231},
+    {47, 107},
+    {48, 248},
+    {49, 222},
+    {50, 2},
+    {51, 124},
+    {52, 137},
+    {53, 186},
+    {54, 208},
+    {55, 158},
+    {56, 203},
+    {57, 82},
+    {58, 211},
+    {59, 175},
+    {60, 86},
+    {61, 212},
+    {62, 175},
+    {63, 245},
+    {64, 11},
+    {65, 253},
+    {66, 125},
+    {67, 179},
+    {68, 172},
+    {69, 213},
+    {70, 55},
+    {71, 240},
+    {72, 242},
+    {73, 58},
+    {74, 184},
+    {75, 117},
+};
+static const long _T10PR1C_N = 75;
+static const char *_T10PRA[] = {
+    "ebbfc9a5fbc989",
+    "edbfc977b8a165",
+    "edbfc90a3d5d82",
+    "bdb2caa7fc9058",
+    "3db3ca20baac7a",
+    "43b3ca177915dd",
+    "45b3caf7b9702f",
+    "45b3ca8e3b762f",
+    "51b4cab6787f16",
+    "5fb4ca3abc4c7b",
+    "5fb4ca32b9dddb",
+    "5fb4ca753980dc",
+    "67b4ca013b7f02",
+    "95b4ca993c0ddb",
+    "95b4ca077a24db",
+    "97b4caaf3c9922",
+};
+enum { PAIRW__T10PRAC = 2 };
+static const long _T10PRAC[][PAIRW__T10PRAC] = {
+    {0, 176},
+    {1, 7},
+    {2, 0},
+    {3, 0},
+    {5, 204},
+    {6, 15},
+    {7, 146},
+    {8, 12},
+    {9, 8},
+    {10, 19},
+    {11, 19},
+    {12, 0},
+    {13, 25},
+    {14, 188},
+    {15, 5},
+    {16, 104},
+    {17, 148},
+    {18, 31},
+    {19, 26},
+    {20, 192},
+    {21, 155},
+    {22, 175},
+    {23, 78},
+    {24, 66},
+    {25, 4},
+    {26, 254},
+    {27, 161},
+    {28, 41},
+    {29, 148},
+    {30, 63},
+    {31, 169},
+    {32, 43},
+    {36, 194},
+    {37, 61},
+    {38, 254},
+    {39, 188},
+    {40, 193},
+    {41, 139},
+    {42, 231},
+    {43, 107},
+    {44, 248},
+    {45, 222},
+    {46, 2},
+    {47, 124},
+    {48, 137},
+    {49, 186},
+    {50, 208},
+    {51, 158},
+    {52, 203},
+    {53, 82},
+    {54, 211},
+    {55, 175},
+    {56, 86},
+    {57, 212},
+    {58, 175},
+    {59, 245},
+    {60, 11},
+    {61, 253},
+    {62, 125},
+    {63, 179},
+    {64, 172},
+    {65, 213},
+    {66, 55},
+    {67, 240},
+    {72, 106},
+    {73, 127},
+    {74, 171},
+    {75, 77},
+};
+static const long _T10PRAC_N = 68;
+static const char *_T10PRB[] = {
+    "42a2e27d2d1a84620746c9",
+    "428ce20e2f8864cbc7208e",
+    "c28fe2152fd7640a57f942",
+    "428c620f2f886449088393",
+    "c293e2d92d3264e0d07149",
+    "c293e2da2d3264e68b08b5",
+    "428c620f2f8864e10eacd6",
+    "4281e22d6dda6467bbbdbc",
+    "429be21e6f096436e07ab8",
+    "4285e2262d0964e4f8a232",
+};
+enum { PAIRW__T10PRBC = 2 };
+static const long _T10PRBC[][PAIRW__T10PRBC] = {
+    {0, 48},
+    {1, 0},
+    {2, 0},
+    {3, 0},
+    {5, 204},
+    {6, 15},
+    {7, 146},
+    {8, 12},
+    {9, 8},
+    {10, 19},
+    {11, 19},
+    {12, 0},
+    {13, 25},
+    {14, 188},
+    {15, 5},
+    {16, 104},
+    {17, 148},
+    {18, 31},
+    {19, 26},
+    {20, 192},
+    {21, 155},
+    {22, 175},
+    {23, 78},
+    {26, 254},
+    {27, 164},
+    {28, 58},
+    {29, 252},
+    {30, 111},
+    {31, 111},
+    {37, 246},
+    {38, 248},
+    {39, 243},
+    {40, 193},
+    {41, 139},
+    {42, 231},
+    {43, 107},
+    {44, 248},
+    {45, 222},
+    {46, 2},
+    {47, 124},
+    {48, 137},
+    {49, 186},
+    {50, 208},
+    {51, 158},
+    {52, 203},
+    {53, 82},
+    {54, 211},
+    {55, 175},
+    {56, 75},
+    {57, 252},
+    {58, 244},
+    {59, 36},
+    {60, 86},
+    {61, 212},
+    {62, 175},
+    {63, 245},
+    {64, 11},
+    {65, 253},
+    {66, 125},
+    {67, 179},
+    {68, 172},
+    {69, 213},
+    {70, 55},
+    {71, 240},
+};
+static const long _T10PRBC_N = 64;
+static const char *_T10PRM[] = {
+    "7e7836be85161e",
+    "7e7836be89161e",
+    "1ef936cfc31731",
+    "1ef936f6d561a0",
+    "20f93628422b48",
+    "20f93683cbd055",
+    "20f936cf532d57",
+    "6af936df8e6bbb",
+    "9a78373fc10f87",
+    "0a793738094367",
+    "0e793725c88cb0",
+    "2a7937848fb8ba",
+    "22f837fcc1919b",
+    "42f937f4a01f05",
+    "8af93793902dc8",
+    "8af93749c8a8d5",
+};
+static const char *_T10PRQ[] = {
+    "c2cfe2162fd78ba24324",
+    "42cc62112f88840b1962",
+    "c2d362db2d32d365b39c",
+    "c2c8e2ddad42f938d15b",
+};
+enum { PAIRW__T10PRQC = 2 };
+static const long _T10PRQC[][PAIRW__T10PRQC] = {
+    {0, 80},
+    {1, 3},
+    {2, 0},
+    {3, 0},
+    {5, 204},
+    {6, 15},
+    {7, 146},
+    {8, 12},
+    {9, 8},
+    {10, 19},
+    {11, 19},
+    {12, 0},
+    {13, 25},
+    {14, 188},
+    {15, 5},
+    {16, 104},
+    {17, 148},
+    {18, 31},
+    {19, 26},
+    {20, 192},
+    {21, 155},
+    {22, 175},
+    {23, 78},
+    {26, 107},
+    {27, 75},
+    {28, 14},
+    {29, 255},
+    {30, 219},
+    {31, 155},
+    {36, 100},
+    {40, 229},
+    {41, 189},
+    {42, 120},
+    {43, 190},
+    {44, 248},
+    {45, 222},
+    {46, 2},
+    {47, 124},
+    {48, 137},
+    {49, 186},
+    {50, 208},
+    {51, 158},
+    {52, 203},
+    {53, 82},
+    {54, 211},
+    {55, 175},
+    {56, 75},
+    {57, 252},
+    {58, 244},
+    {59, 36},
+    {64, 11},
+    {65, 253},
+    {66, 125},
+    {67, 179},
+    {68, 172},
+    {69, 213},
+    {70, 55},
+    {71, 240},
+};
+static const long _T10PRQC_N = 58;
 enum { PAIRW__T10P5QC = 2 };
 static const long _T10P5QC[][PAIRW__T10P5QC] = {
     {0, 29},
@@ -27680,6 +28172,18 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
     char _t1139[512];
     char _t1140[512];
     char _t1141[512];
+    char _t1142[512];
+    char _t1143[512];
+    char _t1144[512];
+    char _t1145[512];
+    char _t1146[512];
+    char _t1147[512];
+    char _t1148[512];
+    char _t1149[512];
+    char _t1150[512];
+    char _t1151[512];
+    char _t1152[512];
+    char _t1153[512];
 
     if ((rawlen) < (12)) {
         return failf("short file");
@@ -27687,7 +28191,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
 
     pay = raw + 12;
     paylen = rawlen > 16 ? rawlen - 16 : rawlen - 12;
-    /* T6839: stored zeros */
+    /* T6950: stored zeros */
     if ((n) <= (63)) {
         if ((paylen) != (n)) {
             return failf("stored paylen %ld != %ld", (long)(paylen), (long)(n));
@@ -27703,7 +28207,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return failf("paylen %ld", (long)(paylen));
     }
 
-    /* T6848: T0 */
+    /* T6959: T0 */
     if ((n) <= (127)) {
         if ((paylen) != (44)) {
             return failf("T0 paylen");
@@ -27766,7 +28270,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T6892: T1 */
+    /* T7003: T1 */
     if ((n) <= (255)) {
         if ((paylen) != (44)) {
             return failf("T1 paylen");
@@ -27796,7 +28300,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T6910: T2 (NOTE-w2s6-9/10: pre-edge echo + regimes) */
+    /* T7021: T2 (NOTE-w2s6-9/10: pre-edge echo + regimes) */
     if ((n) <= (511)) {
         if ((paylen) != (44)) {
             return failf("T2 paylen");
@@ -27911,7 +28415,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T6980: T3 (NOTE-w2s7-2/3: halted clock C + cascade table) */
+    /* T7091: T3 (NOTE-w2s7-2/3: halted clock C + cascade table) */
     if ((n) <= (820)) {
         if ((paylen) != (44)) {
             return failf("T3 paylen");
@@ -28052,7 +28556,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T7070: T4 plateau A (NOTE-w2s7-11: unified L10 + 1024 flip) */
+    /* T7181: T4 plateau A (NOTE-w2s7-11: unified L10 + 1024 flip) */
     if ((n) <= (1076)) {
         if ((paylen) != (48)) {
             return failf("T4A paylen");
@@ -28101,7 +28605,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T7107: dip-44 literal (formula OPEN) */
+    /* T7218: dip-44 literal (formula OPEN) */
     if ((n) == (1077)) {
         if ((paylen) != (44)) {
             return failf("dip1077 paylen");
@@ -28115,7 +28619,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T7114: T4 plateau B (NOTE-w2s7-13/15: B1..B5 dispatch) */
+    /* T7225: T4 plateau B (NOTE-w2s7-13/15: B1..B5 dispatch) */
     if ((n) <= (1168)) {
         if ((n) <= (1077)) {
             fprintf(stderr, "N out of scope\n");
@@ -28208,7 +28712,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T7205: T4 plateau C (NOTE-w2s7-16: 16-table + block counter) */
+    /* T7316: T4 plateau C (NOTE-w2s7-16: 16-table + block counter) */
     if ((n) <= (1424)) {
         if ((paylen) != (48)) {
             return failf("T4C paylen");
@@ -28245,7 +28749,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T7231: T4 plateau D (NOTE-w2s7-17: D1..D4 dispatch) */
+    /* T7342: T4 plateau D (NOTE-w2s7-17: D1..D4 dispatch) */
     if ((n) <= (1516)) {
         if ((paylen) != (48)) {
             return failf("T4D paylen");
@@ -28318,7 +28822,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T7305: T4 plateau E1 (NOTE-w2s7-18: 7-field + slip-16) */
+    /* T7416: T4 plateau E1 (NOTE-w2s7-18: 7-field + slip-16) */
     if ((n) <= (1772)) {
         if ((paylen) != (48)) {
             return failf("T4E1 paylen");
@@ -28357,7 +28861,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T7338: T4 plateau F = D2a (NOTE-w2s7-19: transition tables) */
+    /* T7449: T4 plateau F = D2a (NOTE-w2s7-19: transition tables) */
     if ((n) <= (1800)) {
         if ((paylen) != (48)) {
             return failf("T4F paylen");
@@ -28410,7 +28914,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T7386: T4 plateau G = D2b1 (NOTE-w2s7-20: bands + 16-tabs) */
+    /* T7497: T4 plateau G = D2b1 (NOTE-w2s7-20: bands + 16-tabs) */
     if ((n) <= (1864)) {
         if ((paylen) != (48)) {
             return failf("T4G paylen");
@@ -28445,7 +28949,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T7417: T4 plateau H = D2b2 (NOTE-w2s7-21: tabs + counters) */
+    /* T7528: T4 plateau H = D2b2 (NOTE-w2s7-21: tabs + counters) */
     if ((n) <= (2047)) {
         if ((paylen) != (48)) {
             return failf("T4H paylen");
@@ -28481,7 +28985,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T7450: T4 plateau I = D2c1 (NOTE-w2s7-22: H-regime cont) */
+    /* T7561: T4 plateau I = D2c1 (NOTE-w2s7-22: H-regime cont) */
     if ((n) <= (2120)) {
         if ((paylen) != (48)) {
             return failf("T4I paylen");
@@ -28514,7 +29018,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T7481: T4 tail J (NOTE-w2s7-23: singletons + c3/c4/c5) */
+    /* T7592: T4 tail J (NOTE-w2s7-23: singletons + c3/c4/c5) */
     if ((n) <= (2212)) {
         if ((paylen) != (48)) {
             return failf("T4J paylen");
@@ -28596,7 +29100,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T7557: T5 E-plateau (NOTE-w2s7-24: tabs + k2-tabs) */
+    /* T7668: T5 E-plateau (NOTE-w2s7-24: tabs + k2-tabs) */
     if ((n) <= (2468)) {
         if ((paylen) != (52)) {
             return failf("T5E paylen");
@@ -28629,7 +29133,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T7588: T5 F-head: dip-pair + F1 ramp + F2 */
+    /* T7699: T5 F-head: dip-pair + F1 ramp + F2 */
     if ((n) <= (2496)) {
         off = (((n) - (2213)));
         if ((off) <= (257)) {
@@ -28688,7 +29192,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T7620: T5F3: 16-tabs + k2 b13-18 + b5 edge flip */
+    /* T7731: T5F3: 16-tabs + k2 b13-18 + b5 edge flip */
     if ((n) <= (2560)) {
         off = (((n) - (2213)));
         if ((paylen) != (52)) {
@@ -28721,7 +29225,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T7641: T5F4/F5: unified tabs+walk+b11; F5 cont F4 */
+    /* T7752: T5F4/F5: unified tabs+walk+b11; F5 cont F4 */
     if ((n) <= (2816)) {
         off = (((n) - (2213)));
         if ((off) <= (487)) {
@@ -28766,7 +29270,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T7669: 48B short-form dip (off=604) */
+    /* T7780: 48B short-form dip (off=604) */
     if ((n) == (2817)) {
         hex_of(pay, paylen, _t58);
         strcpy(_t59, _T5DIP604);
@@ -28777,7 +29281,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T7674: 52B transition singleton (off=605) */
+    /* T7785: 52B transition singleton (off=605) */
     if ((n) == (2818)) {
         hex_of(pay, paylen, _t60);
         strcpy(_t61, _T5G0);
@@ -28788,7 +29292,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T7679: T5G1: 16-row b32-35 tab + frozen body */
+    /* T7790: T5G1: 16-row b32-35 tab + frozen body */
     if ((n) <= (2834)) {
         off = (((n) - (2213)));
         if ((paylen) != (52)) {
@@ -28813,7 +29317,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T7693: T5G2: 10-row b32-37 tab + frozen body */
+    /* T7804: T5G2: 10-row b32-37 tab + frozen body */
     if ((n) <= (2844)) {
         off = (((n) - (2213)));
         if ((paylen) != (52)) {
@@ -28838,7 +29342,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T7707: T5G3: 16-tabs b30/31/38/39 + k2 b32-37 */
+    /* T7818: T5G3: 16-tabs b30/31/38/39 + k2 b32-37 */
     if ((n) <= (2908)) {
         off = (((n) - (2213)));
         if ((paylen) != (52)) {
@@ -28871,7 +29375,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T7727: T5H: 16-tabs b44-47 + k2 b32/37/38/39 + edges */
+    /* T7838: T5H: 16-tabs b44-47 + k2 b32/37/38/39 + edges */
     if ((n) <= (3164)) {
         off = (((n) - (2213)));
         if ((paylen) != (52)) {
@@ -28908,7 +29412,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T7752: T5I0: transition pair literals (off=952/953) */
+    /* T7863: T5I0: transition pair literals (off=952/953) */
     if ((n) <= (3166)) {
         off = (((n) - (2213)));
         hex_of(pay, paylen, _t68);
@@ -28920,7 +29424,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T7758: T5I1a: 16-row b48-51 tab + frozen body */
+    /* T7869: T5I1a: 16-row b48-51 tab + frozen body */
     if ((n) <= (3182)) {
         off = (((n) - (2213)));
         if ((paylen) != (52)) {
@@ -28945,7 +29449,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T7772: T5I1b: 10-row b35/b44-47/b50-51 tab */
+    /* T7883: T5I1b: 10-row b35/b44-47/b50-51 tab */
     if ((n) <= (3192)) {
         off = (((n) - (2213)));
         if ((paylen) != (52)) {
@@ -28976,7 +29480,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T7787: T5I2: 16-tabs b5/6/7 + b8 bands + k2 segs */
+    /* T7898: T5I2: 16-tabs b5/6/7 + b8 bands + k2 segs */
     if ((n) <= (3256)) {
         off = (((n) - (2213)));
         if ((paylen) != (52)) {
@@ -29018,7 +29522,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T7810: T5I3: I2-walk b6/7 + b5 k2-tab + b8 + tabs */
+    /* T7921: T5I3: I2-walk b6/7 + b5 k2-tab + b8 + tabs */
     if ((n) <= (3512)) {
         off = (((n) - (2213)));
         if ((paylen) != (52)) {
@@ -29052,7 +29556,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T7833: T5J0: 3 transition literals (off=1300..1302) */
+    /* T7944: T5J0: 3 transition literals (off=1300..1302) */
     if ((n) <= (3515)) {
         off = (((n) - (2213)));
         hex_of(pay, paylen, _t82);
@@ -29064,7 +29568,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T7839: T5J1: 15-row b0/b1/b11/b19 tab */
+    /* T7950: T5J1: 15-row b0/b1/b11/b19 tab */
     if ((n) <= (3530)) {
         off = (((n) - (2213)));
         if ((paylen) != (52)) {
@@ -29096,7 +29600,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T7854: T5J2: 10-row tab b0/b1/b2/b11/b19/b24 */
+    /* T7965: T5J2: 10-row tab b0/b1/b2/b11/b19/b24 */
     if ((n) <= (3540)) {
         off = (((n) - (2213)));
         if ((paylen) != (52)) {
@@ -29130,7 +29634,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T7870: T5J3-6: shared b24-27 tab + k2 overrides */
+    /* T7981: T5J3-6: shared b24-27 tab + k2 overrides */
     if ((n) <= (3604)) {
         off = (((n) - (2213)));
         if ((paylen) != (52)) {
@@ -29169,7 +29673,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T7891: T5K: 16-tabs + J3-walk b24-27 + b5 edge */
+    /* T8002: T5K: 16-tabs + J3-walk b24-27 + b5 edge */
     if ((n) <= (3860)) {
         off = (((n) - (2213)));
         if ((paylen) != (52)) {
@@ -29205,7 +29709,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T7914: T5L0: 2 transition literals (off=1648/1649) */
+    /* T8025: T5L0: 2 transition literals (off=1648/1649) */
     if ((n) <= (3862)) {
         off = (((n) - (2213)));
         hex_of(pay, paylen, _t98);
@@ -29217,7 +29721,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T7920: T5L1: 16-row b36-39 tab */
+    /* T8031: T5L1: 16-row b36-39 tab */
     if ((n) <= (3878)) {
         off = (((n) - (2213)));
         if ((paylen) != (52)) {
@@ -29242,7 +29746,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T7934: T5L2: 10-row tab b3/15/34-43 */
+    /* T8045: T5L2: 10-row tab b3/15/34-43 */
     if ((n) <= (3888)) {
         off = (((n) - (2213)));
         if ((paylen) != (52)) {
@@ -29273,7 +29777,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T7949: T5L3: 16-tabs b34/35/42/43 + k2 b36-41 */
+    /* T8060: T5L3: 16-tabs b34/35/42/43 + k2 b36-41 */
     if ((n) <= (3952)) {
         off = (((n) - (2213)));
         if ((paylen) != (52)) {
@@ -29306,7 +29810,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T7969: T6A: 56-tier head, tabs b52-55 + k2 segs */
+    /* T8080: T6A: 56-tier head, tabs b52-55 + k2 segs */
     if ((n) <= (4095)) {
         off = (((n) - (3953)));
         if ((paylen) != (56)) {
@@ -29346,7 +29850,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T7991: T6B: post-reframe, shared tabs + new segs */
+    /* T8102: T6B: post-reframe, shared tabs + new segs */
     if ((n) <= (4208)) {
         off = (((n) - (3953)));
         if ((paylen) != (56)) {
@@ -29383,7 +29887,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8011: 52B short-form dip (off=256, +256 rule) */
+    /* T8122: 52B short-form dip (off=256, +256 rule) */
     if ((n) == (4209)) {
         hex_of(pay, paylen, _t115);
         strcpy(_t116, _T6DIP256);
@@ -29394,7 +29898,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8016: T6C0: 2 transition literals (off=257/258) */
+    /* T8127: T6C0: 2 transition literals (off=257/258) */
     if ((n) <= (4211)) {
         off = (((n) - (3953)));
         hex_of(pay, paylen, _t117);
@@ -29406,7 +29910,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8022: T6C1: 15-row b5-8 tab */
+    /* T8133: T6C1: 15-row b5-8 tab */
     if ((n) <= (4226)) {
         off = (((n) - (3953)));
         if ((paylen) != (56)) {
@@ -29431,7 +29935,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8036: T6C2: 10-row tab b5-7/b12-14 */
+    /* T8147: T6C2: 10-row tab b5-7/b12-14 */
     if ((n) <= (4236)) {
         off = (((n) - (3953)));
         if ((paylen) != (56)) {
@@ -29465,7 +29969,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8052: T6C3-6: shared b13-17 tab + k2 b5-11 */
+    /* T8163: T6C3-6: shared b13-17 tab + k2 b5-11 */
     if ((n) <= (4300)) {
         off = (((n) - (3953)));
         if ((paylen) != (56)) {
@@ -29505,7 +30009,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8072: T6D: quiet-256, tabs + C3-walk + b5 edges */
+    /* T8183: T6D: quiet-256, tabs + C3-walk + b5 edges */
     if ((n) <= (4556)) {
         off = (((n) - (3953)));
         if ((paylen) != (56)) {
@@ -29546,7 +30050,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8095: T6E0: 3 transition literals (off=604..606) */
+    /* T8206: T6E0: 3 transition literals (off=604..606) */
     if ((n) <= (4559)) {
         off = (((n) - (3953)));
         hex_of(pay, paylen, _t132);
@@ -29558,7 +30062,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8101: T6E1: 15-row b28-31 tab */
+    /* T8212: T6E1: 15-row b28-31 tab */
     if ((n) <= (4574)) {
         off = (((n) - (3953)));
         if ((paylen) != (56)) {
@@ -29583,7 +30087,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8115: T6E2: 10-row scattered tab */
+    /* T8226: T6E2: 10-row scattered tab */
     if ((n) <= (4584)) {
         off = (((n) - (3953)));
         if ((paylen) != (56)) {
@@ -29619,7 +30123,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8131: T6E3-6: shared tab + k2 + b5 edge */
+    /* T8242: T6E3-6: shared tab + k2 + b5 edge */
     if ((n) <= (4648)) {
         off = (((n) - (3953)));
         if ((paylen) != (56)) {
@@ -29673,7 +30177,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8155: T6F: quiet-256, tabs b40-43 + k2 b32-35 */
+    /* T8266: T6F: quiet-256, tabs b40-43 + k2 b32-35 */
     if ((n) <= (4904)) {
         off = (((n) - (3953)));
         if ((paylen) != (56)) {
@@ -29706,7 +30210,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8176: T6G0: 3 transition literals (off=952..954) */
+    /* T8287: T6G0: 3 transition literals (off=952..954) */
     if ((n) <= (4907)) {
         off = (((n) - (3953)));
         hex_of(pay, paylen, _t147);
@@ -29718,7 +30222,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8182: T6G1: 15-row tab b30/31/39/46/47 */
+    /* T8293: T6G1: 15-row tab b30/31/39/46/47 */
     if ((n) <= (4922)) {
         off = (((n) - (3953)));
         if ((paylen) != (56)) {
@@ -29751,7 +30255,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8198: T6G2: 10-row tab b30/31/38/39/46-50 */
+    /* T8309: T6G2: 10-row tab b30/31/38/39/46-50 */
     if ((n) <= (4932)) {
         off = (((n) - (3953)));
         if ((paylen) != (56)) {
@@ -29788,7 +30292,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8214: T6G3-6: shared b50-55 tab + k2 + b5 edge */
+    /* T8325: T6G3-6: shared b50-55 tab + k2 + b5 edge */
     if ((n) <= (4996)) {
         off = (((n) - (3953)));
         if ((paylen) != (56)) {
@@ -29832,7 +30336,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8238: T6H: run-256, tabs + G3-walk + bands */
+    /* T8349: T6H: run-256, tabs + G3-walk + bands */
     if ((n) <= (5252)) {
         off = (((n) - (3953)));
         if ((paylen) != (56)) {
@@ -29871,7 +30375,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8263: T6I0: 3 transition literals (off=1300..1302) */
+    /* T8374: T6I0: 3 transition literals (off=1300..1302) */
     if ((n) <= (5255)) {
         off = (((n) - (3953)));
         hex_of(pay, paylen, _t164);
@@ -29883,7 +30387,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8269: T6I1: 15-row b13-16 tab */
+    /* T8380: T6I1: 15-row b13-16 tab */
     if ((n) <= (5270)) {
         off = (((n) - (3953)));
         if ((paylen) != (56)) {
@@ -29908,7 +30412,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8283: T6I2: 10-row tab b13-19 */
+    /* T8394: T6I2: 10-row tab b13-19 */
     if ((n) <= (5280)) {
         off = (((n) - (3953)));
         if ((paylen) != (56)) {
@@ -29933,7 +30437,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8297: T6I3-6: shared b20-23 tab + k2 b13-18 */
+    /* T8408: T6I3-6: shared b20-23 tab + k2 b13-18 */
     if ((n) <= (5344)) {
         off = (((n) - (3953)));
         if ((paylen) != (56)) {
@@ -29965,7 +30469,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8315: T6J: run-256, tabs + I3-walk + b5 edges */
+    /* T8426: T6J: run-256, tabs + I3-walk + b5 edges */
     if ((n) <= (5600)) {
         off = (((n) - (3953)));
         if ((paylen) != (56)) {
@@ -30001,7 +30505,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8338: T6K0: 3 transition literals (off=1648..1650) */
+    /* T8449: T6K0: 3 transition literals (off=1648..1650) */
     if ((n) <= (5603)) {
         off = (((n) - (3953)));
         hex_of(pay, paylen, _t176);
@@ -30013,7 +30517,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8344: T6K1: 15-row tab b32-36 */
+    /* T8455: T6K1: 15-row tab b32-36 */
     if ((n) <= (5618)) {
         off = (((n) - (3953)));
         if ((paylen) != (56)) {
@@ -30046,7 +30550,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8360: T6K2: 10-row tab b32-38 */
+    /* T8471: T6K2: 10-row tab b32-38 */
     if ((n) <= (5628)) {
         off = (((n) - (3953)));
         if ((paylen) != (56)) {
@@ -30071,7 +30575,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8374: T6K3-6: shared b40-43 tab + k2 + b5 edge */
+    /* T8485: T6K3-6: shared b40-43 tab + k2 + b5 edge */
     if ((n) <= (5692)) {
         off = (((n) - (3953)));
         if ((paylen) != (56)) {
@@ -30106,7 +30610,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8394: T6L: run-256, tabs + k2 + b15/b5 edges */
+    /* T8505: T6L: run-256, tabs + k2 + b15/b5 edges */
     if ((n) <= (5948)) {
         off = (((n) - (3953)));
         if ((paylen) != (56)) {
@@ -30153,7 +30657,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8422: T6M0: 3 transition literals (off=1996..1998) */
+    /* T8533: T6M0: 3 transition literals (off=1996..1998) */
     if ((n) <= (5951)) {
         off = (((n) - (3953)));
         hex_of(pay, paylen, _t190);
@@ -30165,7 +30669,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8428: T6M1: 15-row b51-55 tab */
+    /* T8539: T6M1: 15-row b51-55 tab */
     if ((n) <= (5966)) {
         off = (((n) - (3953)));
         if ((paylen) != (56)) {
@@ -30190,7 +30694,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8442: T6M2: 10-row tab b42/43/50-55 */
+    /* T8553: T6M2: 10-row tab b42/43/50-55 */
     if ((n) <= (5976)) {
         off = (((n) - (3953)));
         if ((paylen) != (56)) {
@@ -30219,7 +30723,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8457: T6M3-6: shared b5-10 tab + k2 (tier end) */
+    /* T8568: T6M3-6: shared b5-10 tab + k2 (tier end) */
     if ((n) <= (6040)) {
         off = (((n) - (3953)));
         if ((paylen) != (56)) {
@@ -30260,7 +30764,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8482: T7A: 60-tier head, tabs + M3-walk + steps */
+    /* T8593: T7A: 60-tier head, tabs + M3-walk + steps */
     if ((n) <= (6296)) {
         off = (((n) - (6041)));
         if ((paylen) != (60)) {
@@ -30301,7 +30805,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8511: 56B dip pair (off=256/257, +256 rule) */
+    /* T8622: 56B dip pair (off=256/257, +256 rule) */
     if ((n) <= (6298)) {
         off = (((n) - (6041)));
         hex_of(pay, paylen, _t202);
@@ -30313,7 +30817,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8517: T7B1: 16-row tab b16-19/23 */
+    /* T8628: T7B1: 16-row tab b16-19/23 */
     if ((n) <= (6314)) {
         off = (((n) - (6041)));
         if ((paylen) != (60)) {
@@ -30346,7 +30850,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8533: T7B2: 10-row tab b16-19/23/28-30 */
+    /* T8644: T7B2: 10-row tab b16-19/23/28-30 */
     if ((n) <= (6324)) {
         off = (((n) - (6041)));
         if ((paylen) != (60)) {
@@ -30382,7 +30886,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8549: T7B3-6: shared b28-32 tab + k2 b20-26 */
+    /* T8660: T7B3-6: shared b28-32 tab + k2 b20-26 */
     if ((n) <= (6388)) {
         off = (((n) - (6041)));
         if ((paylen) != (60)) {
@@ -30414,7 +30918,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8567: T7C: quiet-256, tabs b36-40 + B3-walk + b5 */
+    /* T8678: T7C: quiet-256, tabs b36-40 + B3-walk + b5 */
     if ((n) <= (6644)) {
         off = (((n) - (6041)));
         if ((paylen) != (60)) {
@@ -30447,7 +30951,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8589: solo 56B dip (off=604) */
+    /* T8700: solo 56B dip (off=604) */
     if ((n) == (6645)) {
         hex_of(pay, paylen, _t216);
         strcpy(_t217, _T7DIP604);
@@ -30458,7 +30962,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8594: T7D0: 2 post-dip singletons (off=605/606) */
+    /* T8705: T7D0: 2 post-dip singletons (off=605/606) */
     if ((n) <= (6647)) {
         off = (((n) - (6041)));
         hex_of(pay, paylen, _t218);
@@ -30470,7 +30974,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8600: T7D1: 15-row table b0/5/11/27/34/35/43 */
+    /* T8711: T7D1: 15-row table b0/5/11/27/34/35/43 */
     if ((n) <= (6662)) {
         off = (((n) - (6041)));
         if ((paylen) != (60)) {
@@ -30505,7 +31009,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8616: T7D2 singleton (off=622) */
+    /* T8727: T7D2 singleton (off=622) */
     if ((n) == (6663)) {
         hex_of(pay, paylen, _t223);
         strcpy(_t224, _T7D2S);
@@ -30516,7 +31020,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8621: T7D2: 9-row chatter table */
+    /* T8732: T7D2: 9-row chatter table */
     if ((n) <= (6672)) {
         off = (((n) - (6041)));
         if ((paylen) != (60)) {
@@ -30554,7 +31058,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8638: T7D3: 4x16 shared tab b48-51 + block words */
+    /* T8749: T7D3: 4x16 shared tab b48-51 + block words */
     if ((n) <= (6736)) {
         off = (((n) - (6041)));
         if ((paylen) != (60)) {
@@ -30600,7 +31104,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8659: T7E: 16x16 walk D3T[0..15] + tab b55-59 */
+    /* T8770: T7E: 16x16 walk D3T[0..15] + tab b55-59 */
     if ((n) <= (6992)) {
         off = (((n) - (6041)));
         if ((paylen) != (60)) {
@@ -30635,7 +31139,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8679: T7G0: 3 transition literals (off=952..954) */
+    /* T8790: T7G0: 3 transition literals (off=952..954) */
     if ((n) <= (6995)) {
         off = (((n) - (6041)));
         hex_of(pay, paylen, _t237);
@@ -30647,7 +31151,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8685: T7G1: 15-row table b5-9 */
+    /* T8796: T7G1: 15-row table b5-9 */
     if ((n) <= (7010)) {
         off = (((n) - (6041)));
         if ((paylen) != (60)) {
@@ -30672,7 +31176,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8699: T7G2 singleton (off=970) */
+    /* T8810: T7G2 singleton (off=970) */
     if ((n) == (7011)) {
         hex_of(pay, paylen, _t241);
         strcpy(_t242, _T7G2S);
@@ -30683,7 +31187,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8704: T7G2: 9-row chatter table */
+    /* T8815: T7G2: 9-row chatter table */
     if ((n) <= (7020)) {
         off = (((n) - (6041)));
         if ((paylen) != (60)) {
@@ -30719,7 +31223,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8720: T7G3: 4x16 shared tab b13-17 + block words */
+    /* T8831: T7G3: 4x16 shared tab b13-17 + block words */
     if ((n) <= (7084)) {
         off = (((n) - (6041)));
         if ((paylen) != (60)) {
@@ -30762,7 +31266,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8741: T7H: 16x16 walk G3T[0..15] + tab b20-23 */
+    /* T8852: T7H: 16x16 walk G3T[0..15] + tab b20-23 */
     if ((n) <= (7340)) {
         off = (((n) - (6041)));
         if ((paylen) != (60)) {
@@ -30797,7 +31301,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8761: T7I0: 2 transition literals (off=1300/1301) */
+    /* T8872: T7I0: 2 transition literals (off=1300/1301) */
     if ((n) <= (7342)) {
         off = (((n) - (6041)));
         hex_of(pay, paylen, _t255);
@@ -30809,7 +31313,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8767: T7I1: 16-row table b28-32 */
+    /* T8878: T7I1: 16-row table b28-32 */
     if ((n) <= (7358)) {
         off = (((n) - (6041)));
         if ((paylen) != (60)) {
@@ -30834,7 +31338,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8781: T7I2: 10-row chatter b28-34 */
+    /* T8892: T7I2: 10-row chatter b28-34 */
     if ((n) <= (7368)) {
         off = (((n) - (6041)));
         if ((paylen) != (60)) {
@@ -30869,7 +31373,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8797: T7I3: 64-body, 16-tabs b36-40 */
+    /* T8908: T7I3: 64-body, 16-tabs b36-40 */
     if ((n) <= (7432)) {
         off = (((n) - (6041)));
         if ((paylen) != (60)) {
@@ -30902,7 +31406,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8819: T7J: 16x16 band-run, tab + 8B block words */
+    /* T8930: T7J: 16x16 band-run, tab + 8B block words */
     if ((n) <= (7688)) {
         off = (((n) - (6041)));
         if ((paylen) != (60)) {
@@ -30957,7 +31461,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8843: T7K0: 3 transition literals (off=1648..1650) */
+    /* T8954: T7K0: 3 transition literals (off=1648..1650) */
     if ((n) <= (7691)) {
         off = (((n) - (6041)));
         hex_of(pay, paylen, _t270);
@@ -30969,7 +31473,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8849: T7K1: 15-row table b48-52 */
+    /* T8960: T7K1: 15-row table b48-52 */
     if ((n) <= (7706)) {
         off = (((n) - (6041)));
         if ((paylen) != (60)) {
@@ -30994,7 +31498,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8863: T7K2 singleton (off=1666) */
+    /* T8974: T7K2 singleton (off=1666) */
     if ((n) == (7707)) {
         hex_of(pay, paylen, _t274);
         strcpy(_t275, _T7K2S);
@@ -31005,7 +31509,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8868: T7K2a: 9-row table b48-54 */
+    /* T8979: T7K2a: 9-row table b48-54 */
     if ((n) <= (7716)) {
         off = (((n) - (6041)));
         if ((paylen) != (60)) {
@@ -31030,7 +31534,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8882: T7K2 singleton2 (off=1676) */
+    /* T8993: T7K2 singleton2 (off=1676) */
     if ((n) == (7717)) {
         hex_of(pay, paylen, _t278);
         strcpy(_t279, _T7K2S2);
@@ -31041,7 +31545,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8887: T7K2b: 3-row table b46/47/55-59 */
+    /* T8998: T7K2b: 3-row table b46/47/55-59 */
     if ((n) <= (7720)) {
         off = (((n) - (6041)));
         if ((paylen) != (60)) {
@@ -31076,7 +31580,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8903: T7K3a: 12-row table b46/55-59 */
+    /* T9014: T7K3a: 12-row table b46/55-59 */
     if ((n) <= (7732)) {
         off = (((n) - (6041)));
         if ((paylen) != (60)) {
@@ -31110,7 +31614,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8919: T7K3: 3x16 shared 7B tab b46/47/55-59 */
+    /* T9030: T7K3: 3x16 shared 7B tab b46/47/55-59 */
     if ((n) <= (7780)) {
         off = (((n) - (6041)));
         if ((paylen) != (60)) {
@@ -31152,7 +31656,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8939: T7L: 16x16 walk K3T[0..15] + tab b56-59 */
+    /* T9050: T7L: 16x16 walk K3T[0..15] + tab b56-59 */
     if ((n) <= (8036)) {
         off = (((n) - (6041)));
         if ((paylen) != (60)) {
@@ -31197,7 +31701,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8961: T7M0: 2 reframe literals (off=1996/1997) */
+    /* T9072: T7M0: 2 reframe literals (off=1996/1997) */
     if ((n) <= (8038)) {
         off = (((n) - (6041)));
         hex_of(pay, paylen, _t296);
@@ -31209,7 +31713,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8967: T7M1: 16-row table b0/9-13 */
+    /* T9078: T7M1: 16-row table b0/9-13 */
     if ((n) <= (8054)) {
         off = (((n) - (6041)));
         if ((paylen) != (60)) {
@@ -31243,7 +31747,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8983: T7M2 singleton (off=2014) */
+    /* T9094: T7M2 singleton (off=2014) */
     if ((n) == (8055)) {
         hex_of(pay, paylen, _t301);
         strcpy(_t302, _T7M2S);
@@ -31254,7 +31758,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T8988: T7MB: 9-row bridge b5/13-19 */
+    /* T9099: T7MB: 9-row bridge b5/13-19 */
     if ((n) <= (8064)) {
         off = (((n) - (6041)));
         if ((paylen) != (60)) {
@@ -31290,7 +31794,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9004: T7RA: 4x16 regime-A tab b20-25 + blk b13-19 */
+    /* T9115: T7RA: 4x16 regime-A tab b20-25 + blk b13-19 */
     if ((n) <= (8128)) {
         off = (((n) - (6041)));
         if ((paylen) != (60)) {
@@ -31322,7 +31826,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9022: T7RB: 16x16 walk RAT[0..15] + tab b28-32 + B/C/D */
+    /* T9133: T7RB: 16x16 walk RAT[0..15] + tab b28-32 + B/C/D */
     if ((n) <= (8384)) {
         off = (((n) - (6041)));
         if ((paylen) != (60)) {
@@ -31384,7 +31888,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9048: T7N0: 3 transition literals (off=2344..2346) */
+    /* T9159: T7N0: 3 transition literals (off=2344..2346) */
     if ((n) <= (8387)) {
         off = (((n) - (6041)));
         hex_of(pay, paylen, _t321);
@@ -31396,7 +31900,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9054: T7N1: 15-row table b28-31/35/40 */
+    /* T9165: T7N1: 15-row table b28-31/35/40 */
     if ((n) <= (8402)) {
         off = (((n) - (6041)));
         if ((paylen) != (60)) {
@@ -31430,7 +31934,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9070: T7N2 singleton (off=2362) */
+    /* T9181: T7N2 singleton (off=2362) */
     if ((n) == (8403)) {
         hex_of(pay, paylen, _t326);
         strcpy(_t327, _T7N2S);
@@ -31441,7 +31945,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9075: T7N2: 9-row chatter table */
+    /* T9186: T7N2: 9-row chatter table */
     if ((n) <= (8412)) {
         off = (((n) - (6041)));
         if ((paylen) != (60)) {
@@ -31478,7 +31982,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9091: T7N3 singleton (off=2372) */
+    /* T9202: T7N3 singleton (off=2372) */
     if ((n) == (8413)) {
         hex_of(pay, paylen, _t331);
         strcpy(_t332, _T7N3S);
@@ -31489,7 +31993,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9096: T7N3: 15-row table b40-45 */
+    /* T9207: T7N3: 15-row table b40-45 */
     if ((n) <= (8428)) {
         off = (((n) - (6041)));
         if ((paylen) != (60)) {
@@ -31514,7 +32018,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9110: T7N4: 3x16 shared tab b40-45 + block words */
+    /* T9221: T7N4: 3x16 shared tab b40-45 + block words */
     if ((n) <= (8476)) {
         off = (((n) - (6041)));
         if ((paylen) != (60)) {
@@ -31558,7 +32062,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9131: T7O: 16x16 walk N4T[0..15] + tab b48-52 */
+    /* T9242: T7O: 16x16 walk N4T[0..15] + tab b48-52 */
     if ((n) <= (8732)) {
         off = (((n) - (6041)));
         if ((paylen) != (60)) {
@@ -31593,7 +32097,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9151: 60-tier tail literals (off=2692/2693) */
+    /* T9262: 60-tier tail literals (off=2692/2693) */
     if ((n) <= (8734)) {
         off = (((n) - (6041)));
         hex_of(pay, paylen, _t344);
@@ -31605,7 +32109,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9157: T8HEAD: 16-row 64B head b50/51/59-63 */
+    /* T9268: T8HEAD: 16-row 64B head b50/51/59-63 */
     if ((n) <= (8750)) {
         off = (((n) - (8735)));
         if ((paylen) != (64)) {
@@ -31640,7 +32144,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9173: T8DIPW: wide dip 8751..8760 (60B lits) */
+    /* T9284: T8DIPW: wide dip 8751..8760 (60B lits) */
     if ((n) <= (8760)) {
         off = (((n) - (8735)));
         hex_of(pay, paylen, _t349);
@@ -31652,7 +32156,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9179: T8R: 4x16 resume tab b60-63 + block words */
+    /* T9290: T8R: 4x16 resume tab b60-63 + block words */
     if ((n) <= (8824)) {
         off = (((n) - (8735)));
         if ((paylen) != (64)) {
@@ -31696,7 +32200,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9199: T8S1: 16x16 walk T8RT[0..15] + tab b8/13-17 */
+    /* T9310: T8S1: 16x16 walk T8RT[0..15] + tab b8/13-17 */
     if ((n) <= (9080)) {
         off = (((n) - (8735)));
         if ((paylen) != (64)) {
@@ -31740,7 +32244,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9221: solo 60B dip (off=346) */
+    /* T9332: solo 60B dip (off=346) */
     if ((n) == (9081)) {
         hex_of(pay, paylen, _t361);
         strcpy(_t362, _T8DIP346);
@@ -31751,7 +32255,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9226: T8P0: 3 post-dip literals (off=347..349) */
+    /* T9337: T8P0: 3 post-dip literals (off=347..349) */
     if ((n) <= (9084)) {
         off = (((n) - (8735)));
         hex_of(pay, paylen, _t363);
@@ -31763,7 +32267,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9232: T8P1: 14-row table b5/16/20-24 */
+    /* T9343: T8P1: 14-row table b5/16/20-24 */
     if ((n) <= (9098)) {
         off = (((n) - (8735)));
         if ((paylen) != (64)) {
@@ -31798,7 +32302,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9248: T8P2 singleton (off=364) */
+    /* T9359: T8P2 singleton (off=364) */
     if ((n) == (9099)) {
         hex_of(pay, paylen, _t368);
         strcpy(_t369, _T8P2S);
@@ -31809,7 +32313,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9253: T8P2: 9-row table b24-30 */
+    /* T9364: T8P2: 9-row table b24-30 */
     if ((n) <= (9108)) {
         off = (((n) - (8735)));
         if ((paylen) != (64)) {
@@ -31834,7 +32338,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9267: T8P3 singleton (off=374) */
+    /* T9378: T8P3 singleton (off=374) */
     if ((n) == (9109)) {
         hex_of(pay, paylen, _t372);
         strcpy(_t373, _T8P3S);
@@ -31845,7 +32349,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9272: T8P3: 15-row table b17-19/23/31/36/37 */
+    /* T9383: T8P3: 15-row table b17-19/23/31/36/37 */
     if ((n) <= (9124)) {
         off = (((n) - (8735)));
         if ((paylen) != (64)) {
@@ -31880,7 +32384,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9288: T8P4: 3x16 shared 7B tab + 7B block words */
+    /* T9399: T8P4: 3x16 shared 7B tab + 7B block words */
     if ((n) <= (9172)) {
         off = (((n) - (8735)));
         if ((paylen) != (64)) {
@@ -31922,7 +32426,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9308: T8Q: 16x16 tab b36-41 + 7B block words */
+    /* T9419: T8Q: 16x16 tab b36-41 + 7B block words */
     if ((n) <= (9428)) {
         off = (((n) - (8735)));
         if ((paylen) != (64)) {
@@ -31976,7 +32480,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9332: solo 60B dip (off=694) */
+    /* T9443: solo 60B dip (off=694) */
     if ((n) == (9429)) {
         hex_of(pay, paylen, _t388);
         strcpy(_t389, _T8DIP694);
@@ -31987,7 +32491,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9337: T8R0: 2 post-dip literals (off=695/696) */
+    /* T9448: T8R0: 2 post-dip literals (off=695/696) */
     if ((n) <= (9431)) {
         off = (((n) - (8735)));
         hex_of(pay, paylen, _t390);
@@ -31999,7 +32503,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9343: T8R1: 15-row table b44-48 */
+    /* T9454: T8R1: 15-row table b44-48 */
     if ((n) <= (9446)) {
         off = (((n) - (8735)));
         if ((paylen) != (64)) {
@@ -32024,7 +32528,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9357: T8R2 singleton (off=712) */
+    /* T9468: T8R2 singleton (off=712) */
     if ((n) == (9447)) {
         hex_of(pay, paylen, _t394);
         strcpy(_t395, _T8R2S);
@@ -32035,7 +32539,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9362: T8R2: 9-row table b44-50 */
+    /* T9473: T8R2: 9-row table b44-50 */
     if ((n) <= (9456)) {
         off = (((n) - (8735)));
         if ((paylen) != (64)) {
@@ -32060,7 +32564,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9376: T8R3 singleton (off=722) */
+    /* T9487: T8R3 singleton (off=722) */
     if ((n) == (9457)) {
         hex_of(pay, paylen, _t398);
         strcpy(_t399, _T8R3S);
@@ -32071,7 +32575,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9381: T8R3: 15-row table b5/52-57 */
+    /* T9492: T8R3: 15-row table b5/52-57 */
     if ((n) <= (9472)) {
         off = (((n) - (8735)));
         if ((paylen) != (64)) {
@@ -32106,7 +32610,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9397: T8R4: 3x16 shared 6B tab + 7B block words */
+    /* T9508: T8R4: 3x16 shared 6B tab + 7B block words */
     if ((n) <= (9520)) {
         off = (((n) - (8735)));
         if ((paylen) != (64)) {
@@ -32138,7 +32642,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9415: T8S: 16x16 walk R4T[0..15] + tab b43/51/59-63 */
+    /* T9526: T8S: 16x16 walk R4T[0..15] + tab b43/51/59-63 */
     if ((n) <= (9776)) {
         off = (((n) - (8735)));
         if ((paylen) != (64)) {
@@ -32183,7 +32687,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9437: T8T0: 3 reframe literals (off=1042..1044) */
+    /* T9548: T8T0: 3 reframe literals (off=1042..1044) */
     if ((n) <= (9779)) {
         off = (((n) - (8735)));
         hex_of(pay, paylen, _t412);
@@ -32195,7 +32699,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9443: T8T1: 15-row table b60-63 */
+    /* T9554: T8T1: 15-row table b60-63 */
     if ((n) <= (9794)) {
         off = (((n) - (8735)));
         if ((paylen) != (64)) {
@@ -32220,7 +32724,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9457: T8T2 singleton (off=1060) */
+    /* T9568: T8T2 singleton (off=1060) */
     if ((n) == (9795)) {
         hex_of(pay, paylen, _t416);
         strcpy(_t417, _T8T2S);
@@ -32231,7 +32735,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9462: T8T2: 9-row table b5-7/60-63 */
+    /* T9573: T8T2: 9-row table b5-7/60-63 */
     if ((n) <= (9804)) {
         off = (((n) - (8735)));
         if ((paylen) != (64)) {
@@ -32266,7 +32770,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9478: T8T3 singleton (off=1070) */
+    /* T9589: T8T3 singleton (off=1070) */
     if ((n) == (9805)) {
         hex_of(pay, paylen, _t421);
         strcpy(_t422, _T8T3S);
@@ -32277,7 +32781,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9483: T8T3: 15-row table b10/60-63 */
+    /* T9594: T8T3: 15-row table b10/60-63 */
     if ((n) <= (9820)) {
         off = (((n) - (8735)));
         if ((paylen) != (64)) {
@@ -32310,7 +32814,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9499: T8T4: 3x16 shared 5B tab + 7B block words */
+    /* T9610: T8T4: 3x16 shared 5B tab + 7B block words */
     if ((n) <= (9868)) {
         off = (((n) - (8735)));
         if ((paylen) != (64)) {
@@ -32360,7 +32864,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9522: T8U: 16x16 walk T4T[0..15] + tab b1/12-15/20 */
+    /* T9633: T8U: 16x16 walk T4T[0..15] + tab b1/12-15/20 */
     if ((n) <= (10124)) {
         off = (((n) - (8735)));
         if ((paylen) != (64)) {
@@ -32412,7 +32916,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9546: T8V0: 3 reframe literals (off=1390..1392) */
+    /* T9657: T8V0: 3 reframe literals (off=1390..1392) */
     if ((n) <= (10127)) {
         off = (((n) - (8735)));
         hex_of(pay, paylen, _t438);
@@ -32424,7 +32928,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9552: T8V1: 15-row table b24-29 */
+    /* T9663: T8V1: 15-row table b24-29 */
     if ((n) <= (10142)) {
         off = (((n) - (8735)));
         if ((paylen) != (64)) {
@@ -32449,7 +32953,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9566: T8V2 singleton (off=1408) */
+    /* T9677: T8V2 singleton (off=1408) */
     if ((n) == (10143)) {
         hex_of(pay, paylen, _t442);
         strcpy(_t443, _T8V2S);
@@ -32460,7 +32964,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9571: T8V2: 9-row chatter table */
+    /* T9682: T8V2: 9-row chatter table */
     if ((n) <= (10152)) {
         off = (((n) - (8735)));
         if ((paylen) != (64)) {
@@ -32497,7 +33001,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9587: T8V3 singleton (off=1418) */
+    /* T9698: T8V3 singleton (off=1418) */
     if ((n) == (10153)) {
         hex_of(pay, paylen, _t447);
         strcpy(_t448, _T8V3S);
@@ -32508,7 +33012,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9592: T8V3: 15-row table b32-37 */
+    /* T9703: T8V3: 15-row table b32-37 */
     if ((n) <= (10168)) {
         off = (((n) - (8735)));
         if ((paylen) != (64)) {
@@ -32533,7 +33037,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9606: T8V4: 3x16 shared 6B tab + 8B block words */
+    /* T9717: T8V4: 3x16 shared 6B tab + 8B block words */
     if ((n) <= (10216)) {
         off = (((n) - (8735)));
         if ((paylen) != (64)) {
@@ -32565,7 +33069,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9624: T8W: 16x16 walk V4T[0..15] + tab b40-45 */
+    /* T9735: T8W: 16x16 walk V4T[0..15] + tab b40-45 */
     if ((n) <= (10472)) {
         off = (((n) - (8735)));
         if ((paylen) != (64)) {
@@ -32600,7 +33104,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9644: T8X0: 3 transition literals (off=1738..1740) */
+    /* T9755: T8X0: 3 transition literals (off=1738..1740) */
     if ((n) <= (10475)) {
         off = (((n) - (8735)));
         hex_of(pay, paylen, _t459);
@@ -32612,7 +33116,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9650: T8X1: 15-row table b48-53 */
+    /* T9761: T8X1: 15-row table b48-53 */
     if ((n) <= (10490)) {
         off = (((n) - (8735)));
         if ((paylen) != (64)) {
@@ -32637,7 +33141,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9664: T8X2 singleton (off=1756) */
+    /* T9775: T8X2 singleton (off=1756) */
     if ((n) == (10491)) {
         hex_of(pay, paylen, _t463);
         strcpy(_t464, _T8X2S);
@@ -32648,7 +33152,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9669: T8X2: 9-row table b5/48-55 */
+    /* T9780: T8X2: 9-row table b5/48-55 */
     if ((n) <= (10500)) {
         off = (((n) - (8735)));
         if ((paylen) != (64)) {
@@ -32685,7 +33189,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9685: T8X3 singleton (off=1766) */
+    /* T9796: T8X3 singleton (off=1766) */
     if ((n) == (10501)) {
         hex_of(pay, paylen, _t468);
         strcpy(_t469, _T8X3S);
@@ -32696,7 +33200,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9690: T8X3: 15-row table b39/47/55-59 */
+    /* T9801: T8X3: 15-row table b39/47/55-59 */
     if ((n) <= (10516)) {
         off = (((n) - (8735)));
         if ((paylen) != (64)) {
@@ -32731,7 +33235,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9706: T8X4: 3x16 shared 7B tab + 6B block words */
+    /* T9817: T8X4: 3x16 shared 7B tab + 6B block words */
     if ((n) <= (10564)) {
         off = (((n) - (8735)));
         if ((paylen) != (64)) {
@@ -32773,7 +33277,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9727: T8Y: 16x16 tab b60-63 + 7B block words */
+    /* T9838: T8Y: 16x16 tab b60-63 + 7B block words */
     if ((n) <= (10820)) {
         off = (((n) - (8735)));
         if ((paylen) != (64)) {
@@ -32819,7 +33323,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9751: T8Z storm: 5 singles + Z1 15-row + Z2 9-row + Z3 15-row + Z4 3x16 */
+    /* T9862: T8Z storm: 5 singles + Z1 15-row + Z2 9-row + Z3 15-row + Z4 3x16 */
     if ((n) <= (10912)) {
         off = (((n) - (8735)));
         if ((paylen) != (64)) {
@@ -32958,7 +33462,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return failf("T8Z gap %ld", (long)(n));
     }
 
-    /* T9811: T8A1: 16x16 tab b20-25 + 8B block words */
+    /* T9922: T8A1: 16x16 tab b20-25 + 8B block words */
     if ((n) <= (11168)) {
         off = (((n) - (8735)));
         if ((paylen) != (64)) {
@@ -33011,7 +33515,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9834: T8B1 storm: 5 singles + A 15-row + B 9-row */
+    /* T9945: T8B1 storm: 5 singles + A 15-row + B 9-row */
     if ((n) <= (11197)) {
         off = (((n) - (8735)));
         if ((paylen) != (64)) {
@@ -33081,7 +33585,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return failf("T8B1 gap %ld", (long)(n));
     }
 
-    /* T9867: T8B1Q: 4x16 tab b40-45 + 8B words, k15 early-edge */
+    /* T9978: T8B1Q: 4x16 tab b40-45 + 8B words, k15 early-edge */
     if ((n) <= (11260)) {
         off = (((n) - (8735)));
         if ((paylen) != (64)) {
@@ -33137,7 +33641,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9889: T8C1: 16x16 tab b48-53 + 6B block words */
+    /* T10000: T8C1: 16x16 tab b48-53 + 6B block words */
     if ((n) <= (11516)) {
         off = (((n) - (8735)));
         if ((paylen) != (64)) {
@@ -33188,7 +33692,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9912: T8D1 storm: 5 singles + A 15-row + B 9-row */
+    /* T10023: T8D1 storm: 5 singles + A 15-row + B 9-row */
     if ((n) <= (11545)) {
         off = (((n) - (8735)));
         if ((paylen) != (64)) {
@@ -33261,7 +33765,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return failf("T8D1 gap %ld", (long)(n));
     }
 
-    /* T9945: T8D1Q: 3x16 tab b60-63 + 9B words, k15 early-edge */
+    /* T10056: T8D1Q: 3x16 tab b60-63 + 9B words, k15 early-edge */
     if ((n) <= (11593)) {
         off = (((n) - (8735)));
         if ((paylen) != (64)) {
@@ -33321,7 +33825,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9972: T8E1: 15-row (b5+b60-63) + single 11609 */
+    /* T10083: T8E1: 15-row (b5+b60-63) + single 11609 */
     if ((n) <= (11609)) {
         off = (((n) - (8735)));
         if ((paylen) != (64)) {
@@ -33362,7 +33866,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T9993: T8E1Q: 15x16 tab b60-63 + 4B words, k15 early-edge */
+    /* T10104: T8E1Q: 15x16 tab b60-63 + 4B words, k15 early-edge */
     if ((n) <= (11849)) {
         off = (((n) - (8735)));
         if ((paylen) != (64)) {
@@ -33437,7 +33941,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T10031: T8F tail: F1 15-row + F2 16-row + F3 9-row + F4 3blk + F5 15-row + 5 singles */
+    /* T10142: T8F tail: F1 15-row + F2 16-row + F3 9-row + F4 3blk + F5 15-row + 5 singles */
     if ((n) <= (11956)) {
         off = (((n) - (8735)));
         if ((paylen) != (64)) {
@@ -33614,7 +34118,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return failf("T8F gap %ld", (long)(n));
     }
 
-    /* T10104: T9HEAD: 16x16 tab b36-41 + 6B block words b28-33 */
+    /* T10215: T9HEAD: 16x16 tab b36-41 + 6B block words b28-33 */
     if ((n) <= (12212)) {
         off = (((n) - (11957)));
         if ((paylen) != (68)) {
@@ -33665,7 +34169,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T10127: T9DIPR: 64B dip pair + R 16-row tab b44-49 */
+    /* T10238: T9DIPR: 64B dip pair + R 16-row tab b44-49 */
     if ((n) <= (12230)) {
         off = (((n) - (11957)));
         l10 = (((((((n) << (1))) | (1))) & (1023)));
@@ -33710,7 +34214,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T10150: T9D2 dip band: 3 singles + A 8-row + Q 4blk (paylen 64) */
+    /* T10261: T9D2 dip band: 3 singles + A 8-row + Q 4blk (paylen 64) */
     if ((n) <= (12304)) {
         off = (((n) - (12231)));
         if ((paylen) != (64)) {
@@ -33803,7 +34307,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T10189: T9S1: 16x16 tab b52,53,b60-63 + 8B block words */
+    /* T10300: T9S1: 16x16 tab b52,53,b60-63 + 8B block words */
     if ((n) <= (12560)) {
         off = (((n) - (12305)));
         if ((paylen) != (68)) {
@@ -33856,7 +34360,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T10212: T9D3: 64B dip pair + R 16-row tab b5,6,b64-67 */
+    /* T10323: T9D3: 64B dip pair + R 16-row tab b5,6,b64-67 */
     if ((n) <= (12578)) {
         off = (((n) - (12561)));
         l10 = (((((((n) << (1))) | (1))) & (1023)));
@@ -33901,7 +34405,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T10235: T9D4: 10-row dip band tab b5-9,b60-63 (paylen 64) */
+    /* T10346: T9D4: 10-row dip band tab b5-9,b60-63 (paylen 64) */
     if ((n) <= (12588)) {
         off = (((n) - (12579)));
         if ((paylen) != (64)) {
@@ -33936,7 +34440,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T10250: T9T1: 4x16 tab b13,14,b64-67 + 8B block words */
+    /* T10361: T9T1: 4x16 tab b13,14,b64-67 + 8B block words */
     if ((n) <= (12652)) {
         off = (((n) - (12589)));
         if ((paylen) != (68)) {
@@ -33986,7 +34490,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T10271: T9U1: 16x16 tab b9,10,b17-21 + 5B block words */
+    /* T10382: T9U1: 16x16 tab b9,10,b17-21 + 5B block words */
     if ((n) <= (12908)) {
         off = (((n) - (12653)));
         if ((paylen) != (68)) {
@@ -34037,7 +34541,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T10294: T9V1 storm: dip + 4 singles + A 15-row + B 9-row */
+    /* T10405: T9V1 storm: dip + 4 singles + A 15-row + B 9-row */
     if ((n) <= (12937)) {
         off = (((n) - (11957)));
         l10 = (((((((n) << (1))) | (1))) & (1023)));
@@ -34119,7 +34623,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return failf("T9V1 gap %ld", (long)(n));
     }
 
-    /* T10334: T9V1Q: 4x16 tab b32-37 + 8B words, k15 early-edge */
+    /* T10445: T9V1Q: 4x16 tab b32-37 + 8B words, k15 early-edge */
     if ((n) <= (13000)) {
         off = (((n) - (11957)));
         if ((paylen) != (68)) {
@@ -34175,7 +34679,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T10356: T9W1: 16x16 tab b40-45 + 6B block words b32-37 */
+    /* T10467: T9W1: 16x16 tab b40-45 + 6B block words b32-37 */
     if ((n) <= (13256)) {
         off = (((n) - (13001)));
         if ((paylen) != (68)) {
@@ -34226,7 +34730,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T10379: T9X1 storm: dip + 4 singles + A 15-row + B 9-row */
+    /* T10490: T9X1 storm: dip + 4 singles + A 15-row + B 9-row */
     if ((n) <= (13285)) {
         off = (((n) - (11957)));
         l10 = (((((((n) << (1))) | (1))) & (1023)));
@@ -34308,7 +34812,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return failf("T9X1 gap %ld", (long)(n));
     }
 
-    /* T10419: T9X1Q: 4x16 tab b48,49,b56-59 + 11B words, k15 edge */
+    /* T10530: T9X1Q: 4x16 tab b48,49,b56-59 + 11B words, k15 edge */
     if ((n) <= (13348)) {
         off = (((n) - (11957)));
         if ((paylen) != (68)) {
@@ -34375,7 +34879,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T10443: T9Y1: 5x16 tab b5,6,b60-63 + 6B block words */
+    /* T10554: T9Y1: 5x16 tab b5,6,b60-63 + 6B block words */
     if ((n) <= (13428)) {
         off = (((n) - (13349)));
         if ((paylen) != (68)) {
@@ -34423,7 +34927,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T10464: T9Z1: 11x16 tab b6,b60-63 + 6B words + b5 HI/LO */
+    /* T10575: T9Z1: 11x16 tab b6,b60-63 + 6B words + b5 HI/LO */
     if ((n) <= (13604)) {
         off = (((n) - (13429)));
         if ((paylen) != (68)) {
@@ -34474,7 +34978,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T10488: T9A2 storm: dip + 5 singles + A 15-row + B 8-row */
+    /* T10599: T9A2 storm: dip + 5 singles + A 15-row + B 8-row */
     if ((n) <= (13633)) {
         off = (((n) - (11957)));
         l10 = (((((((n) << (1))) | (1))) & (1023)));
@@ -34554,7 +35058,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return failf("T9A2 gap %ld", (long)(n));
     }
 
-    /* T10528: T9A2Q: 4x16 tab b12,b16-21 + 7B words, k15 edge */
+    /* T10639: T9A2Q: 4x16 tab b12,b16-21 + 7B words, k15 edge */
     if ((n) <= (13696)) {
         off = (((n) - (11957)));
         if ((paylen) != (68)) {
@@ -34620,7 +35124,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T10555: T9B2: 16x16 tab b24-29 + 8B block words + b30 rule */
+    /* T10666: T9B2: 16x16 tab b24-29 + 8B block words + b30 rule */
     if ((n) <= (13952)) {
         off = (((n) - (13697)));
         if ((paylen) != (68)) {
@@ -34676,7 +35180,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T10580: T9C2 storm: 5 singles + A 15-row + B 9-row */
+    /* T10691: T9C2 storm: 5 singles + A 15-row + B 9-row */
     if ((n) <= (13981)) {
         off = (((n) - (11957)));
         if ((paylen) != (68)) {
@@ -34753,7 +35257,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return failf("T9C2 gap %ld", (long)(n));
     }
 
-    /* T10617: T9C2Q: 3x16 tab b40-45 + 8B words, k15 early-edge */
+    /* T10728: T9C2Q: 3x16 tab b40-45 + 8B words, k15 early-edge */
     if ((n) <= (14029)) {
         off = (((n) - (11957)));
         if ((paylen) != (68)) {
@@ -34816,7 +35320,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T10642: T9E2: 15-row tab b40-45 + single 14045 */
+    /* T10753: T9E2: 15-row tab b40-45 + single 14045 */
     if ((n) <= (14045)) {
         off = (((n) - (14030)));
         if ((paylen) != (68)) {
@@ -34857,7 +35361,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T10662: T9E2Q: 15x16 tab b40-43,47,52,53 + 8B words, k15 edge; q15 ext */
+    /* T10773: T9E2Q: 15x16 tab b40-43,47,52,53 + 8B words, k15 edge; q15 ext */
     if ((n) <= (14300)) {
         off = (((n) - (14046)));
         if ((paylen) != (68)) {
@@ -34925,7 +35429,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T10687: T9F2: 3 singles + B 15-row + s14319 + C 9-row + s14329 */
+    /* T10798: T9F2: 3 singles + B 15-row + s14319 + C 9-row + s14329 */
     if ((n) <= (14329)) {
         if ((paylen) != (68)) {
             return failf("T9F2 paylen");
@@ -34994,7 +35498,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T10719: T9F2Q: 3x16+15 tab b6,b60-63 + b5 + 8B words, k15 carry */
+    /* T10830: T9F2Q: 3x16+15 tab b6,b60-63 + b5 + 8B words, k15 carry */
     if ((n) <= (14392)) {
         off = (((n) - (14330)));
         if ((paylen) != (68)) {
@@ -35047,7 +35551,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T10742: T9G2: 16x16 tab b10,11,b64-67 + b5[q] + F2QT-rot words */
+    /* T10853: T9G2: 16x16 tab b10,11,b64-67 + b5[q] + F2QT-rot words */
     if ((n) <= (14648)) {
         off = (((n) - (14393)));
         if ((paylen) != (68)) {
@@ -35099,7 +35603,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T10766: T9H3: 3 singles + A 15-row + B 10-row */
+    /* T10877: T9H3: 3 singles + A 15-row + B 10-row */
     if ((n) <= (14676)) {
         if ((paylen) != (68)) {
             return failf("T9H3 paylen");
@@ -35169,7 +35673,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T10798: T9H3Q: 4x16 tab b24-30 + 9B block words */
+    /* T10909: T9H3Q: 4x16 tab b24-30 + 9B block words */
     if ((n) <= (14740)) {
         off = (((n) - (14677)));
         if ((paylen) != (68)) {
@@ -35223,7 +35727,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T10822: T9I1: 16x16 tab b32-38 + H3QT words + b28/29 + b5 */
+    /* T10933: T9I1: 16x16 tab b32-38 + H3QT words + b28/29 + b5 */
     if ((n) <= (14996)) {
         off = (((n) - (14741)));
         if ((paylen) != (68)) {
@@ -35279,7 +35783,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T10846: T9J1: 5 singles + A 15-row + B 8-row */
+    /* T10957: T9J1: 5 singles + A 15-row + B 8-row */
     if ((n) <= (15024)) {
         if ((paylen) != (68)) {
             return failf("T9J1 paylen");
@@ -35350,7 +35854,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T10879: T9J1Q: 4x16 tab b2,b40-43,47,52,53 + 7B words */
+    /* T10990: T9J1Q: 4x16 tab b2,b40-43,47,52,53 + 7B words */
     if ((n) <= (15088)) {
         off = (((n) - (15025)));
         if ((paylen) != (68)) {
@@ -35405,7 +35909,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T10904: T9J2Q: 16x16 tab b52,53,56-59 + 6B words + b5 */
+    /* T11015: T9J2Q: 16x16 tab b52,53,56-59 + 6B words + b5 */
     if ((n) <= (15344)) {
         off = (((n) - (15089)));
         if ((paylen) != (68)) {
@@ -35456,7 +35960,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T10927: T9K1: 5 singles + A 15-row + B 8-row */
+    /* T11038: T9K1: 5 singles + A 15-row + B 8-row */
     if ((n) <= (15372)) {
         if ((paylen) != (68)) {
             return failf("T9K1 paylen");
@@ -35526,7 +36030,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T10959: T9K1Q: 4x16 tab b10,11,64-67 + 9B words */
+    /* T11070: T9K1Q: 4x16 tab b10,11,64-67 + 9B words */
     if ((n) <= (15436)) {
         off = (((n) - (15373)));
         if ((paylen) != (68)) {
@@ -35577,7 +36081,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T10981: T9K2Q: 16x16 tab b1-3,13-15,20,21 + K1QT words + b5 */
+    /* T11092: T9K2Q: 16x16 tab b1-3,13-15,20,21 + K1QT words + b5 */
     if ((n) <= (15692)) {
         off = (((n) - (15437)));
         if ((paylen) != (68)) {
@@ -35628,7 +36132,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11003: T9L1: 6 singles + A 15-row + B 7-row */
+    /* T11114: T9L1: 6 singles + A 15-row + B 7-row */
     if ((n) <= (15720)) {
         if ((paylen) != (68)) {
             return failf("T9L1 paylen");
@@ -35707,7 +36211,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11037: T9L1Q: 4x16 tab b64-67 + 11B words + b5 + b24/25 tabs */
+    /* T11148: T9L1Q: 4x16 tab b64-67 + 11B words + b5 + b24/25 tabs */
     if ((n) <= (15784)) {
         off = (((n) - (15721)));
         if ((paylen) != (68)) {
@@ -35776,7 +36280,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11070: T9M1Q: 16x16 tab b2,3,28-31,36 + L1Q words + b5 */
+    /* T11181: T9M1Q: 16x16 tab b2,3,28-31,36 + L1Q words + b5 */
     if ((n) <= (16040)) {
         off = (((n) - (15785)));
         if ((paylen) != (68)) {
@@ -35827,7 +36331,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11094: T9N1: 5 singles + A 15-row + B 8-row */
+    /* T11205: T9N1: 5 singles + A 15-row + B 8-row */
     if ((n) <= (16068)) {
         if ((paylen) != (68)) {
             return failf("T9N1 paylen");
@@ -35897,7 +36401,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11127: T9N1Q: 4x16 tab b49,50,52-55 + 8B words + b5 */
+    /* T11238: T9N1Q: 4x16 tab b49,50,52-55 + 8B words + b5 */
     if ((n) <= (16132)) {
         off = (((n) - (16069)));
         if ((paylen) != (68)) {
@@ -35950,7 +36454,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11150: T9O1Q: 7x16 tab b5,6,7,56-59 + N1QT words */
+    /* T11261: T9O1Q: 7x16 tab b5,6,7,56-59 + N1QT words */
     if ((n) <= (16244)) {
         off = (((n) - (16133)));
         if ((paylen) != (68)) {
@@ -35999,7 +36503,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11171: T9O2Q: 8x16+11 O1QT tab + N1QT[7+] words + b5 */
+    /* T11282: T9O2Q: 8x16+11 O1QT tab + N1QT[7+] words + b5 */
     if ((n) <= (16383)) {
         off = (((n) - (16245)));
         if ((paylen) != (68)) {
@@ -36052,7 +36556,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11195: T9P1: A 5-row + 3 singles + B 15-row + C 10-row */
+    /* T11306: T9P1: A 5-row + 3 singles + B 15-row + C 10-row */
     if ((n) <= (16416)) {
         if ((paylen) != (68)) {
             return failf("T9P1 paylen");
@@ -36146,7 +36650,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11237: T9P1Q: 4x16 tab b2,13-15,20,21 + words + b0/b1 */
+    /* T11348: T9P1Q: 4x16 tab b2,13-15,20,21 + words + b0/b1 */
     if ((n) <= (16480)) {
         off = (((n) - (16417)));
         if ((paylen) != (68)) {
@@ -36202,7 +36706,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11264: T10HEAD: 16x16 tab b24,68-71 + 7B words + b5 */
+    /* T11375: T10HEAD: 16x16 tab b24,68-71 + 7B words + b5 */
     if ((n) <= (16736)) {
         off = (((n) - (16481)));
         if ((paylen) != (72)) {
@@ -36253,7 +36757,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11287: T10 dip pair (paylen 68) */
+    /* T11398: T10 dip pair (paylen 68) */
     if ((n) <= (16738)) {
         if ((paylen) != (68)) {
             return failf("T10DIP paylen");
@@ -36268,7 +36772,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11294: T10A: 16-row tab b29,30,68-71 */
+    /* T11405: T10A: 16-row tab b29,30,68-71 */
     if ((n) <= (16754)) {
         off = (((n) - (16739)));
         if ((paylen) != (72)) {
@@ -36300,7 +36804,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11309: T10 band head: 10-row tab b28-31,64-67 */
+    /* T11420: T10 band head: 10-row tab b28-31,64-67 */
     if ((n) <= (16764)) {
         off = (((n) - (16755)));
         if ((paylen) != (68)) {
@@ -36334,7 +36838,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11324: T10 band Q: 4x16 tab + 8B words + b5 */
+    /* T11435: T10 band Q: 4x16 tab + 8B words + b5 */
     if ((n) <= (16828)) {
         off = (((n) - (16765)));
         if ((paylen) != (68)) {
@@ -36389,7 +36893,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11347: T10B: 16-row tab b44,68-71 */
+    /* T11458: T10B: 16-row tab b44,68-71 */
     if ((n) <= (16844)) {
         off = (((n) - (16829)));
         if ((paylen) != (72)) {
@@ -36420,7 +36924,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11362: T10Q: 15x16 T10BT tab + BQT words + q-words */
+    /* T11473: T10Q: 15x16 T10BT tab + BQT words + q-words */
     if ((n) <= (17084)) {
         off = (((n) - (16845)));
         if ((paylen) != (72)) {
@@ -36477,7 +36981,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11389: T10 dip-2 pair (paylen 68) */
+    /* T11500: T10 dip-2 pair (paylen 68) */
     if ((n) <= (17086)) {
         if ((paylen) != (68)) {
             return failf("T10E paylen");
@@ -36492,7 +36996,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11396: T10C: 16-row tab b53-59 */
+    /* T11507: T10C: 16-row tab b53-59 */
     if ((n) <= (17102)) {
         off = (((n) - (17087)));
         if ((paylen) != (72)) {
@@ -36525,7 +37029,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11411: T10 band-2: 10-row tab b3,52-55,64-67 */
+    /* T11522: T10 band-2: 10-row tab b3,52-55,64-67 */
     if ((n) <= (17112)) {
         off = (((n) - (17103)));
         if ((paylen) != (68)) {
@@ -36560,7 +37064,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11427: T10Q2: 4x16 tab b5,6,60-63 + 8B words + b5 */
+    /* T11538: T10Q2: 4x16 tab b5,6,60-63 + 8B words + b5 */
     if ((n) <= (17176)) {
         off = (((n) - (17113)));
         if ((paylen) != (72)) {
@@ -36614,7 +37118,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11452: T10S: 16x16 storm m-tab + q-tab(shares Q2T words) */
+    /* T11563: T10S: 16x16 storm m-tab + q-tab(shares Q2T words) */
     if ((n) <= (17432)) {
         off = (((n) - (17177)));
         if ((paylen) != (72)) {
@@ -36662,7 +37166,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11474: T10D33: singleton 68B dip */
+    /* T11585: T10D33: singleton 68B dip */
     if ((n) <= (17433)) {
         if ((paylen) != (68)) {
             return failf("T10D33 paylen");
@@ -36681,7 +37185,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11485: T10P0: singleton P-head row b0=02 */
+    /* T11596: T10P0: singleton P-head row b0=02 */
     if ((n) <= (17434)) {
         if ((paylen) != (72)) {
             return failf("T10P0 paylen");
@@ -36700,7 +37204,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11496: T10PA: 16-row b0=2f tab b9-11,17-21 */
+    /* T11607: T10PA: 16-row b0=2f tab b9-11,17-21 */
     if ((n) <= (17450)) {
         off = (((n) - (17435)));
         if ((paylen) != (72)) {
@@ -36734,7 +37238,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11511: T10PB: 10-row b0=01 tab b9,10,17-19,68-71 */
+    /* T11622: T10PB: 10-row b0=01 tab b9,10,17-19,68-71 */
     if ((n) <= (17460)) {
         off = (((n) - (17451)));
         if ((paylen) != (72)) {
@@ -36769,7 +37273,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11527: T10P2Q: 4x16 m-tab b20-22,68-71 + q b9,10,17-19,64-67 */
+    /* T11638: T10P2Q: 4x16 m-tab b20-22,68-71 + q b9,10,17-19,64-67 */
     if ((n) <= (17524)) {
         off = (((n) - (17461)));
         if ((paylen) != (72)) {
@@ -36819,7 +37323,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11548: T10R: 16x16 m-tab b24,25,68-71 + q=P2M b20-22,64-67 */
+    /* T11659: T10R: 16x16 m-tab b24,25,68-71 + q=P2M b20-22,64-67 */
     if ((n) <= (17780)) {
         off = (((n) - (17525)));
         if ((paylen) != (72)) {
@@ -36869,7 +37373,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11570: T10D81: singleton 68B dip */
+    /* T11681: T10D81: singleton 68B dip */
     if ((n) <= (17781)) {
         if ((paylen) != (68)) {
             return failf("T10D81 paylen");
@@ -36888,7 +37392,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11581: T10P30: singleton P-head row b0=0b */
+    /* T11692: T10P30: singleton P-head row b0=0b */
     if ((n) <= (17782)) {
         if ((paylen) != (72)) {
             return failf("T10P30 paylen");
@@ -36907,7 +37411,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11592: T10P3A: 16-row tab b0,5,11,37-41 */
+    /* T11703: T10P3A: 16-row tab b0,5,11,37-41 */
     if ((n) <= (17798)) {
         off = (((n) - (17783)));
         if ((paylen) != (72)) {
@@ -36941,7 +37445,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11607: T10P3B: 10-row b0=09 tab b11,40-47 */
+    /* T11718: T10P3B: 10-row b0=09 tab b11,40-47 */
     if ((n) <= (17808)) {
         off = (((n) - (17799)));
         if ((paylen) != (72)) {
@@ -36976,7 +37480,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11623: T10P3Q: 4x16 m-tab b48,68-71 + q b11,40-47 */
+    /* T11734: T10P3Q: 4x16 m-tab b48,68-71 + q b11,40-47 */
     if ((n) <= (17872)) {
         off = (((n) - (17809)));
         if ((paylen) != (72)) {
@@ -37024,7 +37528,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11644: T10R2: 16x16 m-tab b53,54,68-71 + q=P3M b48,64-67 */
+    /* T11755: T10R2: 16x16 m-tab b53,54,68-71 + q=P3M b48,64-67 */
     if ((n) <= (18128)) {
         off = (((n) - (17873)));
         if ((paylen) != (72)) {
@@ -37072,7 +37576,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11666: T10D29: singleton 68B dip */
+    /* T11777: T10D29: singleton 68B dip */
     if ((n) <= (18129)) {
         if ((paylen) != (68)) {
             return failf("T10D29 paylen");
@@ -37091,7 +37595,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11677: T10P40: singleton P-head row b0=22 */
+    /* T11788: T10P40: singleton P-head row b0=22 */
     if ((n) <= (18130)) {
         if ((paylen) != (72)) {
             return failf("T10P40 paylen");
@@ -37110,7 +37614,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11688: T10P4A: 16-row tab b5,6,60-63 */
+    /* T11799: T10P4A: 16-row tab b5,6,60-63 */
     if ((n) <= (18146)) {
         off = (((n) - (18131)));
         if ((paylen) != (72)) {
@@ -37142,7 +37646,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11703: T10P4B: 10-row b0=11 tab b5-7,12,13,64-67 */
+    /* T11814: T10P4B: 10-row b0=11 tab b5-7,12,13,64-67 */
     if ((n) <= (18156)) {
         off = (((n) - (18147)));
         if ((paylen) != (72)) {
@@ -37177,7 +37681,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11719: T10P4Q: 4x16 m-tab b13,68-71 + q b5-9,64-67 */
+    /* T11830: T10P4Q: 4x16 m-tab b13,68-71 + q b5-9,64-67 */
     if ((n) <= (18220)) {
         off = (((n) - (18157)));
         if ((paylen) != (72)) {
@@ -37227,7 +37731,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11741: T10R3: 16x16 m-tab b10,11,17-21 + q=P4M b13,68-71 */
+    /* T11852: T10R3: 16x16 m-tab b10,11,17-21 + q=P4M b13,68-71 */
     if ((n) <= (18476)) {
         off = (((n) - (18221)));
         if ((paylen) != (72)) {
@@ -37276,7 +37780,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11763: T10D77: singleton 68B dip */
+    /* T11874: T10D77: singleton 68B dip */
     if ((n) <= (18477)) {
         if ((paylen) != (68)) {
             return failf("T10D77 paylen");
@@ -37295,7 +37799,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11774: T10P50: singleton P-head row b0=44 */
+    /* T11885: T10P50: singleton P-head row b0=44 */
     if ((n) <= (18478)) {
         if ((paylen) != (72)) {
             return failf("T10P50 paylen");
@@ -37314,7 +37818,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11785: T10P5A: 16-row tab b20,21,64-67 */
+    /* T11896: T10P5A: 16-row tab b20,21,64-67 */
     if ((n) <= (18494)) {
         off = (((n) - (18479)));
         if ((paylen) != (72)) {
@@ -37346,7 +37850,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11800: T10P5B: 10-row b0=22 tab b24-27,68-71 */
+    /* T11911: T10P5B: 10-row b0=22 tab b24-27,68-71 */
     if ((n) <= (18504)) {
         off = (((n) - (18495)));
         if ((paylen) != (72)) {
@@ -37380,7 +37884,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11815: T10P5Q: 4x16 m-tab b29,30,68-71 + q b24-27,64-67 */
+    /* T11926: T10P5Q: 4x16 m-tab b29,30,68-71 + q b24-27,64-67 */
     if ((n) <= (18568)) {
         off = (((n) - (18505)));
         if ((paylen) != (72)) {
@@ -37431,7 +37935,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11837: T10R4: 16x16 m-tab b14,15,32-37 + q=P5M b29,30,68-71 */
+    /* T11948: T10R4: 16x16 m-tab b14,15,32-37 + q=P5M b29,30,68-71 */
     if ((n) <= (18824)) {
         off = (((n) - (18569)));
         if ((paylen) != (72)) {
@@ -37482,7 +37986,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11859: T10P60: singleton P-head row b0=01 */
+    /* T11970: T10P60: singleton P-head row b0=01 */
     if ((n) <= (18825)) {
         if ((paylen) != (72)) {
             return failf("T10P60 paylen");
@@ -37501,7 +38005,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11870: T10P61: singleton P-head row b0=80 */
+    /* T11981: T10P61: singleton P-head row b0=80 */
     if ((n) <= (18826)) {
         if ((paylen) != (72)) {
             return failf("T10P61 paylen");
@@ -37520,7 +38024,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11881: T10P6A: 16-row tab b44,45,64-67 */
+    /* T11992: T10P6A: 16-row tab b44,45,64-67 */
     if ((n) <= (18842)) {
         off = (((n) - (18827)));
         if ((paylen) != (72)) {
@@ -37552,7 +38056,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11896: T10P6B: 10-row b0=43 tab b48-51,68-71 */
+    /* T12007: T10P6B: 10-row b0=43 tab b48-51,68-71 */
     if ((n) <= (18852)) {
         off = (((n) - (18843)));
         if ((paylen) != (72)) {
@@ -37586,7 +38090,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11911: T10P6Q: 4x16 m-tab b53,54,68-71 + q b48-51,64-67 */
+    /* T12022: T10P6Q: 4x16 m-tab b53,54,68-71 + q b48-51,64-67 */
     if ((n) <= (18916)) {
         off = (((n) - (18853)));
         if ((paylen) != (72)) {
@@ -37637,7 +38141,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11933: T10R5: 16x16 m-tab b6,56-59 + b5tab + q=P6M */
+    /* T12044: T10R5: 16x16 m-tab b6,56-59 + b5tab + q=P6M */
     if ((n) <= (19172)) {
         off = (((n) - (18917)));
         if ((paylen) != (72)) {
@@ -37685,7 +38189,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11956: T10P70: singleton P-head row b0=04 */
+    /* T12067: T10P70: singleton P-head row b0=04 */
     if ((n) <= (19173)) {
         if ((paylen) != (72)) {
             return failf("T10P70 paylen");
@@ -37704,7 +38208,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11967: T10P71: singleton P-head row b0=0b */
+    /* T12078: T10P71: singleton P-head row b0=0b */
     if ((n) <= (19174)) {
         if ((paylen) != (72)) {
             return failf("T10P71 paylen");
@@ -37723,7 +38227,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11978: T10P7A: 16-row tab b13,68-71 */
+    /* T12089: T10P7A: 16-row tab b13,68-71 */
     if ((n) <= (19190)) {
         off = (((n) - (19175)));
         if ((paylen) != (72)) {
@@ -37754,7 +38258,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T11993: T10P7B: 10-row tab b5,13-17,68-71 */
+    /* T12104: T10P7B: 10-row tab b5,13-17,68-71 */
     if ((n) <= (19200)) {
         off = (((n) - (19191)));
         if ((paylen) != (72)) {
@@ -37790,7 +38294,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12009: T10P7Q: 4x16 m-tab b17-19,64-67 + q b13-16,68-71 */
+    /* T12120: T10P7Q: 4x16 m-tab b17-19,64-67 + q b13-16,68-71 */
     if ((n) <= (19264)) {
         off = (((n) - (19201)));
         if ((paylen) != (72)) {
@@ -37846,7 +38350,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12034: T10R6: 16x16 m-tab b20-22,64-67 + b17tab + b60-63=P7M */
+    /* T12145: T10R6: 16x16 m-tab b20-22,64-67 + b17tab + b60-63=P7M */
     if ((n) <= (19520)) {
         off = (((n) - (19265)));
         if ((paylen) != (72)) {
@@ -37900,7 +38404,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12060: T10P80: singleton P-head row b0=10 */
+    /* T12171: T10P80: singleton P-head row b0=10 */
     if ((n) <= (19521)) {
         if ((paylen) != (72)) {
             return failf("T10P80 paylen");
@@ -37919,7 +38423,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12071: T10P81: singleton P-head row b0=28 */
+    /* T12182: T10P81: singleton P-head row b0=28 */
     if ((n) <= (19522)) {
         if ((paylen) != (72)) {
             return failf("T10P81 paylen");
@@ -37938,7 +38442,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12082: T10P8A: 16-row tab b29,30,68-71 */
+    /* T12193: T10P8A: 16-row tab b29,30,68-71 */
     if ((n) <= (19538)) {
         off = (((n) - (19523)));
         if ((paylen) != (72)) {
@@ -37970,7 +38474,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12097: T10P8B: 10-row tab b0,1,11,32-39,68-71 */
+    /* T12208: T10P8B: 10-row tab b0,1,11,32-39,68-71 */
     if ((n) <= (19548)) {
         off = (((n) - (19539)));
         if ((paylen) != (72)) {
@@ -38011,7 +38515,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12114: T10P8Q: 4x16 m-tab b13,14,37-41 + q b32-35,68-71 */
+    /* T12225: T10P8Q: 4x16 m-tab b13,14,37-41 + q b32-35,68-71 */
     if ((n) <= (19612)) {
         off = (((n) - (19549)));
         if ((paylen) != (72)) {
@@ -38063,7 +38567,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12136: T10R7: 16x16 m-tab b44,68-71 + q=P8M b13,14,37-41 */
+    /* T12247: T10R7: 16x16 m-tab b44,68-71 + q=P8M b13,14,37-41 */
     if ((n) <= (19868)) {
         off = (((n) - (19613)));
         if ((paylen) != (72)) {
@@ -38112,7 +38616,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12158: T10P90: singleton P-head row b0=40 */
+    /* T12269: T10P90: singleton P-head row b0=40 */
     if ((n) <= (19869)) {
         if ((paylen) != (72)) {
             return failf("T10P90 paylen");
@@ -38131,7 +38635,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12169: T10P91: singleton P-head row b0=04 */
+    /* T12280: T10P91: singleton P-head row b0=04 */
     if ((n) <= (19870)) {
         if ((paylen) != (72)) {
             return failf("T10P91 paylen");
@@ -38150,7 +38654,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12180: T10P9A: 16-row tab b53,54,68-71 */
+    /* T12291: T10P9A: 16-row tab b53,54,68-71 */
     if ((n) <= (19886)) {
         off = (((n) - (19871)));
         if ((paylen) != (72)) {
@@ -38182,7 +38686,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12195: T10P9B: 10-row tab b0,1,56-59,68-71 */
+    /* T12306: T10P9B: 10-row tab b0,1,56-59,68-71 */
     if ((n) <= (19896)) {
         off = (((n) - (19887)));
         if ((paylen) != (72)) {
@@ -38218,7 +38722,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12211: T10P9Q: 4x16 m-tab b5-7,60-63 + q b1,56-59,68-71 */
+    /* T12322: T10P9Q: 4x16 m-tab b5-7,60-63 + q b1,56-59,68-71 */
     if ((n) <= (19960)) {
         off = (((n) - (19897)));
         if ((paylen) != (72)) {
@@ -38268,7 +38772,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12232: T10R8: 16x16 m-tab b0,11,68-71 + q=P9M b5,6,60-63 */
+    /* T12343: T10R8: 16x16 m-tab b0,11,68-71 + q=P9M b5,6,60-63 */
     if ((n) <= (20216)) {
         off = (((n) - (19961)));
         if ((paylen) != (72)) {
@@ -38323,7 +38827,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12260: T10PA0: singleton P-head row b0=7c */
+    /* T12371: T10PA0: singleton P-head row b0=7c */
     if ((n) <= (20217)) {
         if ((paylen) != (72)) {
             return failf("T10PA0 paylen");
@@ -38342,7 +38846,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12271: T10PA1: singleton P-head row b0=6a */
+    /* T12382: T10PA1: singleton P-head row b0=6a */
     if ((n) <= (20218)) {
         if ((paylen) != (72)) {
             return failf("T10PA1 paylen");
@@ -38361,7 +38865,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12282: T10PAA: 16-row tab b5,17-19,64-67 */
+    /* T12393: T10PAA: 16-row tab b5,17-19,64-67 */
     if ((n) <= (20234)) {
         off = (((n) - (20219)));
         if ((paylen) != (72)) {
@@ -38395,7 +38899,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12297: T10PAB: 10-row tab b9-11,17-19,68-71 */
+    /* T12408: T10PAB: 10-row tab b9-11,17-19,68-71 */
     if ((n) <= (20244)) {
         off = (((n) - (20235)));
         if ((paylen) != (72)) {
@@ -38431,7 +38935,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12313: T10PAQ: 4x16 m-tab b20-22,64-67 + q b12,13,16-19,68-71 */
+    /* T12424: T10PAQ: 4x16 m-tab b20-22,64-67 + q b12,13,16-19,68-71 */
     if ((n) <= (20308)) {
         off = (((n) - (20245)));
         if ((paylen) != (72)) {
@@ -38485,7 +38989,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12336: T10R9: 16x16 m-tab b25-27,64-67 + q=PAM b20-22,60-63 */
+    /* T12447: T10R9: 16x16 m-tab b25-27,64-67 + q=PAM b20-22,60-63 */
     if ((n) <= (20564)) {
         off = (((n) - (20309)));
         if ((paylen) != (72)) {
@@ -38536,7 +39040,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12358: T10PB0: singleton P-head row b0=f3 */
+    /* T12469: T10PB0: singleton P-head row b0=f3 */
     if ((n) <= (20565)) {
         if ((paylen) != (72)) {
             return failf("T10PB0 paylen");
@@ -38555,7 +39059,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12369: T10PB1: singleton P-head row b0=9c */
+    /* T12480: T10PB1: singleton P-head row b0=9c */
     if ((n) <= (20566)) {
         if ((paylen) != (72)) {
             return failf("T10PB1 paylen");
@@ -38574,7 +39078,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12380: T10PBA: 16-row tab b14,15,37-41 */
+    /* T12491: T10PBA: 16-row tab b14,15,37-41 */
     if ((n) <= (20582)) {
         off = (((n) - (20567)));
         if ((paylen) != (72)) {
@@ -38607,7 +39111,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12395: T10PBB: 10-row tab b14,36-39,68-71 */
+    /* T12506: T10PBB: 10-row tab b14,36-39,68-71 */
     if ((n) <= (20592)) {
         off = (((n) - (20583)));
         if ((paylen) != (72)) {
@@ -38642,7 +39146,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12411: T10PBQ: 4x16 m-tab b40-42,64-67 + q b14,36-39,68-71 */
+    /* T12522: T10PBQ: 4x16 m-tab b40-42,64-67 + q b14,36-39,68-71 */
     if ((n) <= (20656)) {
         off = (((n) - (20593)));
         if ((paylen) != (72)) {
@@ -38695,7 +39199,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12434: T10R10: 16x16 m-tab b45-47,64-67 + q=PBM b40-42,60-63 */
+    /* T12545: T10R10: 16x16 m-tab b45-47,64-67 + q=PBM b40-42,60-63 */
     if ((n) <= (20912)) {
         off = (((n) - (20657)));
         if ((paylen) != (72)) {
@@ -38746,7 +39250,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12456: T10PC0: singleton P-head row b0=c9 */
+    /* T12567: T10PC0: singleton P-head row b0=c9 */
     if ((n) <= (20913)) {
         if ((paylen) != (72)) {
             return failf("T10PC0 paylen");
@@ -38765,7 +39269,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12467: T10PC1: singleton P-head row b0=9c */
+    /* T12578: T10PC1: singleton P-head row b0=9c */
     if ((n) <= (20914)) {
         if ((paylen) != (72)) {
             return failf("T10PC1 paylen");
@@ -38784,7 +39288,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12478: T10PCA: 16-row tab b5-7,56-59 */
+    /* T12589: T10PCA: 16-row tab b5-7,56-59 */
     if ((n) <= (20930)) {
         off = (((n) - (20915)));
         if ((paylen) != (72)) {
@@ -38817,7 +39321,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12493: T10PCB: 10-row tab b5-10,68-71 */
+    /* T12604: T10PCB: 10-row tab b5-10,68-71 */
     if ((n) <= (20940)) {
         off = (((n) - (20931)));
         if ((paylen) != (72)) {
@@ -38853,7 +39357,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12509: T10PCQ: 4x16 m-tab b0,1,11,68-71 + q b6-10,64-67 */
+    /* T12620: T10PCQ: 4x16 m-tab b0,1,11,68-71 + q b6-10,64-67 */
     if ((n) <= (21004)) {
         off = (((n) - (20941)));
         if ((paylen) != (72)) {
@@ -38906,7 +39410,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12532: T10R11: 16x16 m-tab b16,17,68-71 + q=PCM b0,1,11,64-67 */
+    /* T12643: T10R11: 16x16 m-tab b16,17,68-71 + q=PCM b0,1,11,64-67 */
     if ((n) <= (21260)) {
         off = (((n) - (21005)));
         if ((paylen) != (72)) {
@@ -38956,7 +39460,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12554: T10PD0: singleton P-head row b0=d2 */
+    /* T12665: T10PD0: singleton P-head row b0=d2 */
     if ((n) <= (21261)) {
         if ((paylen) != (72)) {
             return failf("T10PD0 paylen");
@@ -38975,7 +39479,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12565: T10PD1: singleton P-head row b0=2d */
+    /* T12676: T10PD1: singleton P-head row b0=2d */
     if ((n) <= (21262)) {
         if ((paylen) != (72)) {
             return failf("T10PD1 paylen");
@@ -38994,7 +39498,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12576: T10PDA: 16-row tab b21-23,60-63 */
+    /* T12687: T10PDA: 16-row tab b21-23,60-63 */
     if ((n) <= (21278)) {
         off = (((n) - (21263)));
         if ((paylen) != (72)) {
@@ -39027,7 +39531,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12591: T10PDB: 10-row tab b24-28,64-67 */
+    /* T12702: T10PDB: 10-row tab b24-28,64-67 */
     if ((n) <= (21288)) {
         off = (((n) - (21279)));
         if ((paylen) != (72)) {
@@ -39062,7 +39566,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12607: T10PDQ: 4x16 m-tab b29,30,68-71 + q b24-27,64-67 */
+    /* T12718: T10PDQ: 4x16 m-tab b29,30,68-71 + q b24-27,64-67 */
     if ((n) <= (21352)) {
         off = (((n) - (21289)));
         if ((paylen) != (72)) {
@@ -39110,7 +39614,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12627: T10R12: 16x16 m-tab b33,34,64-67 + q=PDM b29,30,68-71 */
+    /* T12738: T10R12: 16x16 m-tab b33,34,64-67 + q=PDM b29,30,68-71 */
     if ((n) <= (21608)) {
         off = (((n) - (21353)));
         if ((paylen) != (72)) {
@@ -39159,7 +39663,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12649: T10PE0: singleton P-head row b0=48 */
+    /* T12760: T10PE0: singleton P-head row b0=48 */
     if ((n) <= (21609)) {
         if ((paylen) != (72)) {
             return failf("T10PE0 paylen");
@@ -39178,7 +39682,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12660: T10PE1: singleton P-head row b0=2d */
+    /* T12771: T10PE1: singleton P-head row b0=2d */
     if ((n) <= (21610)) {
         if ((paylen) != (72)) {
             return failf("T10PE1 paylen");
@@ -39197,7 +39701,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12671: T10PEA: 16-row tab b37,64-67 */
+    /* T12782: T10PEA: 16-row tab b37,64-67 */
     if ((n) <= (21626)) {
         off = (((n) - (21611)));
         if ((paylen) != (72)) {
@@ -39228,7 +39732,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12686: T10PEB: 10-row tab b5,40-44,68-71 */
+    /* T12797: T10PEB: 10-row tab b5,40-44,68-71 */
     if ((n) <= (21636)) {
         off = (((n) - (21627)));
         if ((paylen) != (72)) {
@@ -39264,7 +39768,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12702: T10PEQ: 4x16 m-tab b45,46,68-71 + q b40-43,64-67 */
+    /* T12813: T10PEQ: 4x16 m-tab b45,46,68-71 + q b40-43,64-67 */
     if ((n) <= (21700)) {
         off = (((n) - (21637)));
         if ((paylen) != (72)) {
@@ -39312,7 +39816,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12722: T10R13: 16x16 m-tab b6,7,48-51 + q=PEM b45,46,68-71 */
+    /* T12833: T10R13: 16x16 m-tab b6,7,48-51 + q=PEM b45,46,68-71 */
     if ((n) <= (21956)) {
         off = (((n) - (21701)));
         if ((paylen) != (72)) {
@@ -39365,7 +39869,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12747: T10PF0: singleton P-head row b0=2d */
+    /* T12858: T10PF0: singleton P-head row b0=2d */
     if ((n) <= (21957)) {
         if ((paylen) != (72)) {
             return failf("T10PF0 paylen");
@@ -39384,7 +39888,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12758: T10PF1: singleton P-head row b0=a7 */
+    /* T12869: T10PF1: singleton P-head row b0=a7 */
     if ((n) <= (21958)) {
         if ((paylen) != (72)) {
             return failf("T10PF1 paylen");
@@ -39403,7 +39907,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12769: T10PFA: 16-row tab b0,11,64-67 */
+    /* T12880: T10PFA: 16-row tab b0,11,64-67 */
     if ((n) <= (21974)) {
         off = (((n) - (21959)));
         if ((paylen) != (72)) {
@@ -39435,7 +39939,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12784: T10PFB: 10-row tab b0,1,11-13,68-71 */
+    /* T12895: T10PFB: 10-row tab b0,1,11-13,68-71 */
     if ((n) <= (21984)) {
         off = (((n) - (21975)));
         if ((paylen) != (72)) {
@@ -39470,7 +39974,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12800: T10PFQ: 4x16 m-tab b16,17,68-71 + q b0,1,11-13,64-67 */
+    /* T12911: T10PFQ: 4x16 m-tab b16,17,68-71 + q b0,1,11-13,64-67 */
     if ((n) <= (22048)) {
         off = (((n) - (21985)));
         if ((paylen) != (72)) {
@@ -39522,7 +40026,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12823: T10R14: 16x16 m-tab b20-22,56-59 + q=PFM b16,17,68-71 */
+    /* T12934: T10R14: 16x16 m-tab b20-22,56-59 + q=PFM b16,17,68-71 */
     if ((n) <= (22304)) {
         off = (((n) - (22049)));
         if ((paylen) != (72)) {
@@ -39572,7 +40076,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12845: T10PG0: singleton P-head row b0=7a */
+    /* T12956: T10PG0: singleton P-head row b0=7a */
     if ((n) <= (22305)) {
         if ((paylen) != (72)) {
             return failf("T10PG0 paylen");
@@ -39591,7 +40095,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12856: T10PG1: singleton P-head row b2=d0 */
+    /* T12967: T10PG1: singleton P-head row b2=d0 */
     if ((n) <= (22306)) {
         if ((paylen) != (72)) {
             return failf("T10PG1 paylen");
@@ -39610,7 +40114,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12867: T10PGA: 16-row tab b29,30,64-67 */
+    /* T12978: T10PGA: 16-row tab b29,30,64-67 */
     if ((n) <= (22322)) {
         off = (((n) - (22307)));
         if ((paylen) != (72)) {
@@ -39642,7 +40146,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12882: T10PGB: 10-row tab b13,14,28-33,68-71 */
+    /* T12993: T10PGB: 10-row tab b13,14,28-33,68-71 */
     if ((n) <= (22332)) {
         off = (((n) - (22323)));
         if ((paylen) != (72)) {
@@ -39680,7 +40184,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12898: T10PGQ: 4x16 m-tab b33,34,68-71 + q b16,17,23,28-32,64-67 */
+    /* T13009: T10PGQ: 4x16 m-tab b33,34,68-71 + q b16,17,23,28-32,64-67 */
     if ((n) <= (22396)) {
         off = (((n) - (22333)));
         if ((paylen) != (72)) {
@@ -39732,7 +40236,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12919: T10R15: 16x16 m-tab b36,37,60-63 + q=PGM b33,34,68-71 */
+    /* T13030: T10R15: 16x16 m-tab b36,37,60-63 + q=PGM b33,34,68-71 */
     if ((n) <= (22652)) {
         off = (((n) - (22397)));
         if ((paylen) != (72)) {
@@ -39781,7 +40285,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12941: T10PH0: singleton P-head row b2=0e */
+    /* T13052: T10PH0: singleton P-head row b2=0e */
     if ((n) <= (22653)) {
         if ((paylen) != (72)) {
             return failf("T10PH0 paylen");
@@ -39800,7 +40304,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12952: T10PH1: singleton P-head row b2=08 */
+    /* T13063: T10PH1: singleton P-head row b2=08 */
     if ((n) <= (22654)) {
         if ((paylen) != (72)) {
             return failf("T10PH1 paylen");
@@ -39819,7 +40323,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12963: T10PHA: 16-row tab b5,25,46,47,64-67 */
+    /* T13074: T10PHA: 16-row tab b5,25,46,47,64-67 */
     if ((n) <= (22670)) {
         off = (((n) - (22655)));
         if ((paylen) != (72)) {
@@ -39853,7 +40357,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12978: T10PHB: 10-row tab b2,15,45-47,68-71 */
+    /* T13089: T10PHB: 10-row tab b2,15,45-47,68-71 */
     if ((n) <= (22680)) {
         off = (((n) - (22671)));
         if ((paylen) != (72)) {
@@ -39888,7 +40392,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T12994: T10PHQ: 4x16 m-tab b5-7,64-67 + q b2,3,15,45-47,68-71 */
+    /* T13105: T10PHQ: 4x16 m-tab b5-7,64-67 + q b2,3,15,45-47,68-71 */
     if ((n) <= (22744)) {
         off = (((n) - (22681)));
         if ((paylen) != (72)) {
@@ -39939,7 +40443,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13015: T10R16: 16x16 76B-pay, m-tab b9,14,15,68-71 + q=PHM[1:] */
+    /* T13126: T10R16: 16x16 76B-pay, m-tab b9,14,15,68-71 + q=PHM[1:] */
     if ((n) <= (23000)) {
         off = (((n) - (22745)));
         if ((paylen) != (76)) {
@@ -39989,7 +40493,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13037: T10PI0: singleton P-head row b2=2b */
+    /* T13148: T10PI0: singleton P-head row b2=2b */
     if ((n) <= (23001)) {
         if ((paylen) != (72)) {
             return failf("T10PI0 paylen");
@@ -40008,7 +40512,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13048: T10PI1: singleton P-head row b0=bc */
+    /* T13159: T10PI1: singleton P-head row b0=bc */
     if ((n) <= (23002)) {
         if ((paylen) != (72)) {
             return failf("T10PI1 paylen");
@@ -40027,7 +40531,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13059: T10PIA: 16-row 76B tab b20,21,72-75 */
+    /* T13170: T10PIA: 16-row 76B tab b20,21,72-75 */
     if ((n) <= (23018)) {
         off = (((n) - (23003)));
         if ((paylen) != (76)) {
@@ -40059,7 +40563,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13074: T10PIB: 10-row tab b16-20,68-71 */
+    /* T13185: T10PIB: 10-row tab b16-20,68-71 */
     if ((n) <= (23028)) {
         off = (((n) - (23019)));
         if ((paylen) != (72)) {
@@ -40094,7 +40598,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13090: T10PIQ: 4x16 m-tab b21,22,56-59 + q b2,3,13-15,68-71 */
+    /* T13201: T10PIQ: 4x16 m-tab b21,22,56-59 + q b2,3,13-15,68-71 */
     if ((n) <= (23092)) {
         off = (((n) - (23029)));
         if ((paylen) != (72)) {
@@ -40149,7 +40653,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13115: T10R17: 16x16 76B-pay, m-tab b29,30,72-75 + q b24-26,60-63 */
+    /* T13226: T10R17: 16x16 76B-pay, m-tab b29,30,72-75 + q b24-26,60-63 */
     if ((n) <= (23348)) {
         off = (((n) - (23093)));
         if ((paylen) != (76)) {
@@ -40199,7 +40703,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13137: T10PJ0: singleton P-head row b2=ae */
+    /* T13248: T10PJ0: singleton P-head row b2=ae */
     if ((n) <= (23349)) {
         if ((paylen) != (72)) {
             return failf("T10PJ0 paylen");
@@ -40218,7 +40722,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13148: T10PJ1: singleton P-head row b2=f1 */
+    /* T13259: T10PJ1: singleton P-head row b2=f1 */
     if ((n) <= (23350)) {
         if ((paylen) != (72)) {
             return failf("T10PJ1 paylen");
@@ -40237,7 +40741,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13159: T10PJA: 16-row 76B tab b37,38,72-75 */
+    /* T13270: T10PJA: 16-row 76B tab b37,38,72-75 */
     if ((n) <= (23366)) {
         off = (((n) - (23351)));
         if ((paylen) != (76)) {
@@ -40269,7 +40773,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13174: T10PJB: 10-row tab b17,32-36,68-71 */
+    /* T13285: T10PJB: 10-row tab b17,32-36,68-71 */
     if ((n) <= (23376)) {
         off = (((n) - (23367)));
         if ((paylen) != (72)) {
@@ -40305,7 +40809,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13190: T10PJQ: 4x16 76B m-tab b40-42,68-71 + q b28,29,36-39,72-75 */
+    /* T13301: T10PJQ: 4x16 76B m-tab b40-42,68-71 + q b28,29,36-39,72-75 */
     if ((n) <= (23440)) {
         off = (((n) - (23377)));
         if ((paylen) != (76)) {
@@ -40359,7 +40863,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13213: T10R18: 16x16 76B-pay, m-tab b45-47,68-71 + q=PJM b40-42,64-67 */
+    /* T13324: T10R18: 16x16 76B-pay, m-tab b45-47,68-71 + q=PJM b40-42,64-67 */
     if ((n) <= (23696)) {
         off = (((n) - (23441)));
         if ((paylen) != (76)) {
@@ -40410,7 +40914,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13235: T10PK0: singleton P-head row b2=ae */
+    /* T13346: T10PK0: singleton P-head row b2=ae */
     if ((n) <= (23697)) {
         if ((paylen) != (72)) {
             return failf("T10PK0 paylen");
@@ -40429,7 +40933,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13246: T10PK1: singleton P-head row b2=f1 */
+    /* T13357: T10PK1: singleton P-head row b2=f1 */
     if ((n) <= (23698)) {
         if ((paylen) != (72)) {
             return failf("T10PK1 paylen");
@@ -40448,7 +40952,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13257: T10PKA: 16-row 76B tab b5-7,68-71 */
+    /* T13368: T10PKA: 16-row 76B tab b5-7,68-71 */
     if ((n) <= (23714)) {
         off = (((n) - (23699)));
         if ((paylen) != (76)) {
@@ -40481,7 +40985,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13272: T10PKB: 10-row tab b5-10,68-71 */
+    /* T13383: T10PKB: 10-row tab b5-10,68-71 */
     if ((n) <= (23724)) {
         off = (((n) - (23715)));
         if ((paylen) != (72)) {
@@ -40517,7 +41021,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13288: T10PKQ: 4x16 76B m-tab b9,15,68-71 + q b5-7,12,13,72-75 */
+    /* T13399: T10PKQ: 4x16 76B m-tab b9,15,68-71 + q b5-7,12,13,72-75 */
     if ((n) <= (23788)) {
         off = (((n) - (23725)));
         if ((paylen) != (76)) {
@@ -40566,7 +41070,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13309: T10R19: 16x16 76B-pay, m-tab b18,19,68-71 + q=PKM[1:]+X14 */
+    /* T13420: T10R19: 16x16 76B-pay, m-tab b18,19,68-71 + q=PKM[1:]+X14 */
     if ((n) <= (24044)) {
         off = (((n) - (23789)));
         if ((paylen) != (76)) {
@@ -40617,7 +41121,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13333: T10PL0: singleton P-head row sig 69fd1201 */
+    /* T13444: T10PL0: singleton P-head row sig 69fd1201 */
     if ((n) <= (24045)) {
         if ((paylen) != (72)) {
             return failf("T10PL0 paylen");
@@ -40636,7 +41140,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13344: T10PL1: singleton P-head row sig 3e5fbb89 */
+    /* T13455: T10PL1: singleton P-head row sig 3e5fbb89 */
     if ((n) <= (24046)) {
         if ((paylen) != (72)) {
             return failf("T10PL1 paylen");
@@ -40655,7 +41159,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13355: T10PLA: 16-row 76B tab b24-26,56-59 */
+    /* T13466: T10PLA: 16-row 76B tab b24-26,56-59 */
     if ((n) <= (24062)) {
         off = (((n) - (24047)));
         if ((paylen) != (76)) {
@@ -40688,7 +41192,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13370: T10PLB: 10-row 72B tab b5,24-29,68-71 */
+    /* T13481: T10PLB: 10-row 72B tab b5,24-29,68-71 */
     if ((n) <= (24072)) {
         off = (((n) - (24063)));
         if ((paylen) != (72)) {
@@ -40725,7 +41229,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13386: T10PLQ: 4x16 76B m-tab b33,72-75 + q b24-27,68-71 + b32 q3dec */
+    /* T13497: T10PLQ: 4x16 76B m-tab b33,72-75 + q b24-27,68-71 + b32 q3dec */
     if ((n) <= (24136)) {
         off = (((n) - (24073)));
         if ((paylen) != (76)) {
@@ -40775,7 +41279,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13408: T10R20: 16x16 76B-pay, m-tab b37,38,72-75 + q-tab b32,68-71 */
+    /* T13519: T10R20: 16x16 76B-pay, m-tab b37,38,72-75 + q-tab b32,68-71 */
     if ((n) <= (24392)) {
         off = (((n) - (24137)));
         if ((paylen) != (76)) {
@@ -40823,7 +41327,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13430: T10PM0: singleton P-head row sig 3e5f1201 */
+    /* T13541: T10PM0: singleton P-head row sig 3e5f1201 */
     if ((n) <= (24393)) {
         if ((paylen) != (72)) {
             return failf("T10PM0 paylen");
@@ -40842,7 +41346,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13441: T10PM1: singleton P-head row sig 01000000 */
+    /* T13552: T10PM1: singleton P-head row sig 01000000 */
     if ((n) <= (24394)) {
         if ((paylen) != (76)) {
             return failf("T10PM1 paylen");
@@ -40861,7 +41365,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13452: T10PMA: 16-row 76B tab b41-43,64-67 */
+    /* T13563: T10PMA: 16-row 76B tab b41-43,64-67 */
     if ((n) <= (24410)) {
         off = (((n) - (24395)));
         if ((paylen) != (76)) {
@@ -40894,7 +41398,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13467: T10PMB: 10-row 72B tab b40-44,64-67 */
+    /* T13578: T10PMB: 10-row 72B tab b40-44,64-67 */
     if ((n) <= (24420)) {
         off = (((n) - (24411)));
         if ((paylen) != (72)) {
@@ -40929,7 +41433,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13482: T10PMQ: 4x16 76B m-tab b49,50,72-75 + q-tab b44-48,68-71 */
+    /* T13593: T10PMQ: 4x16 76B m-tab b49,50,72-75 + q-tab b44-48,68-71 */
     if ((n) <= (24484)) {
         off = (((n) - (24421)));
         if ((paylen) != (76)) {
@@ -40981,7 +41485,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13504: T10R21: 16x16 76B-pay, m-tab b6,7,68-71 + q=PMM + b5 m-tab */
+    /* T13615: T10R21: 16x16 76B-pay, m-tab b6,7,68-71 + q=PMM + b5 m-tab */
     if ((n) <= (24740)) {
         off = (((n) - (24485)));
         if ((paylen) != (76)) {
@@ -41030,7 +41534,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13526: T10PN0: singleton P-head row sig 3e5f2402 */
+    /* T13637: T10PN0: singleton P-head row sig 3e5f2402 */
     if ((n) <= (24741)) {
         if ((paylen) != (72)) {
             return failf("T10PN0 paylen");
@@ -41049,7 +41553,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13537: T10PN1: singleton P-head row sig 02000000 */
+    /* T13648: T10PN1: singleton P-head row sig 02000000 */
     if ((n) <= (24742)) {
         if ((paylen) != (76)) {
             return failf("T10PN1 paylen");
@@ -41068,7 +41572,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13548: T10PNA: 16-row 76B tab b13,68-71 */
+    /* T13659: T10PNA: 16-row 76B tab b13,68-71 */
     if ((n) <= (24758)) {
         off = (((n) - (24743)));
         if ((paylen) != (76)) {
@@ -41099,7 +41603,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13563: T10PNB: 10-row 76B tab b8-10,14-17,72-75 */
+    /* T13674: T10PNB: 10-row 76B tab b8-10,14-17,72-75 */
     if ((n) <= (24768)) {
         off = (((n) - (24759)));
         if ((paylen) != (76)) {
@@ -41136,7 +41640,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13579: T10PNQ: 4x16 76B m-tab b18,19,72-75 + q-tab b8-10,14-17,68-71 */
+    /* T13690: T10PNQ: 4x16 76B m-tab b18,19,72-75 + q-tab b8-10,14-17,68-71 */
     if ((n) <= (24832)) {
         off = (((n) - (24769)));
         if ((paylen) != (76)) {
@@ -41190,7 +41694,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13602: T10R22: 16x16 76B-pay, m-tab b24-26,52-55 + q=PNM */
+    /* T13713: T10R22: 16x16 76B-pay, m-tab b24-26,52-55 + q=PNM */
     if ((n) <= (25088)) {
         off = (((n) - (24833)));
         if ((paylen) != (76)) {
@@ -41240,7 +41744,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13624: T10PO0: singleton P-head row sig 79261609 */
+    /* T13735: T10PO0: singleton P-head row sig 79261609 */
     if ((n) <= (25089)) {
         if ((paylen) != (72)) {
             return failf("T10PO0 paylen");
@@ -41259,7 +41763,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13635: T10PO1: singleton P-head row sig 0b000000 */
+    /* T13746: T10PO1: singleton P-head row sig 0b000000 */
     if ((n) <= (25090)) {
         if ((paylen) != (76)) {
             return failf("T10PO1 paylen");
@@ -41278,7 +41782,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13646: T10POA: 16-row 76B tab b32,33,68-71 */
+    /* T13757: T10POA: 16-row 76B tab b32,33,68-71 */
     if ((n) <= (25106)) {
         off = (((n) - (25091)));
         if ((paylen) != (76)) {
@@ -41310,7 +41814,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13661: T10POB: 10-row 76B tab b28,32-37,72-75 */
+    /* T13772: T10POB: 10-row 76B tab b28,32-37,72-75 */
     if ((n) <= (25116)) {
         off = (((n) - (25107)));
         if ((paylen) != (76)) {
@@ -41347,7 +41851,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13677: T10POQ: 4x16 76B m-tab b37,38,72-75 + q-tab b28,32-36,68-71 */
+    /* T13788: T10POQ: 4x16 76B m-tab b37,38,72-75 + q-tab b28,32-36,68-71 */
     if ((n) <= (25180)) {
         off = (((n) - (25117)));
         if ((paylen) != (76)) {
@@ -41397,7 +41901,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13698: T10R23: 16x16 76B-pay, m-tab b40-43,56-59 + q-tab b36,37,72-75 */
+    /* T13809: T10R23: 16x16 76B-pay, m-tab b40-43,56-59 + q-tab b36,37,72-75 */
     if ((n) <= (25436)) {
         off = (((n) - (25181)));
         if ((paylen) != (76)) {
@@ -41448,7 +41952,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13720: T10PP0: singleton P-head row sig 79265a24 */
+    /* T13831: T10PP0: singleton P-head row sig 79265a24 */
     if ((n) <= (25437)) {
         if ((paylen) != (72)) {
             return failf("T10PP0 paylen");
@@ -41467,7 +41971,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13731: T10PP1: singleton P-head row sig 27000000 */
+    /* T13842: T10PP1: singleton P-head row sig 27000000 */
     if ((n) <= (25438)) {
         if ((paylen) != (76)) {
             return failf("T10PP1 paylen");
@@ -41486,7 +41990,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13742: T10PPA: 16-row 76B tab b50,51,68-71 */
+    /* T13853: T10PPA: 16-row 76B tab b50,51,68-71 */
     if ((n) <= (25454)) {
         off = (((n) - (25439)));
         if ((paylen) != (76)) {
@@ -41518,7 +42022,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13757: T10PPB: 10-row 76B tab b30,31,49-51,72-75 */
+    /* T13868: T10PPB: 10-row 76B tab b30,31,49-51,72-75 */
     if ((n) <= (25464)) {
         off = (((n) - (25455)));
         if ((paylen) != (76)) {
@@ -41553,7 +42057,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13772: T10PPQ: 4x16 76B m-tab b6,7,72-75 + q-tab b30,31,49-51,68-71 */
+    /* T13883: T10PPQ: 4x16 76B m-tab b6,7,72-75 + q-tab b30,31,49-51,68-71 */
     if ((n) <= (25528)) {
         off = (((n) - (25465)));
         if ((paylen) != (76)) {
@@ -41605,7 +42109,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13794: T10R24: 16x16 76B-pay, m-tab b13,14,64-67 + q=PPM + b5 q-bit7 */
+    /* T13905: T10R24: 16x16 76B-pay, m-tab b13,14,64-67 + q=PPM + b5 q-bit7 */
     if ((n) <= (25784)) {
         off = (((n) - (25529)));
         if ((paylen) != (76)) {
@@ -41654,7 +42158,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13816: T10PQ0: singleton P-head row sig 7926fe53 */
+    /* T13927: T10PQ0: singleton P-head row sig 7926fe53 */
     if ((n) <= (25785)) {
         if ((paylen) != (72)) {
             return failf("T10PQ0 paylen");
@@ -41673,7 +42177,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13827: T10PQ1: singleton P-head row sig 29000000 */
+    /* T13938: T10PQ1: singleton P-head row sig 29000000 */
     if ((n) <= (25786)) {
         if ((paylen) != (76)) {
             return failf("T10PQ1 paylen");
@@ -41692,7 +42196,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13838: T10PQA: 16-row 76B tab b10,18,19,68-71 */
+    /* T13949: T10PQA: 16-row 76B tab b10,18,19,68-71 */
     if ((n) <= (25802)) {
         off = (((n) - (25787)));
         if ((paylen) != (76)) {
@@ -41725,7 +42229,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13853: T10PQB: 10-row 76B tab b10,11,17-20,72-75 */
+    /* T13964: T10PQB: 10-row 76B tab b10,11,17-20,72-75 */
     if ((n) <= (25812)) {
         off = (((n) - (25803)));
         if ((paylen) != (76)) {
@@ -41761,7 +42265,7 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
         return 0;
     }
 
-    /* T13869: T10PQQ: 4x16 76B m-tab b21-23,68-71 + q-tab b10,11,17-20,72-75 */
+    /* T13980: T10PQQ: 4x16 76B m-tab b21-23,68-71 + q-tab b10,11,17-20,72-75 */
     if ((n) <= (25876)) {
         off = (((n) - (25813)));
         if ((paylen) != (76)) {
@@ -41812,6 +42316,216 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
             }
         }
         printf("CLOSED T10PQQ N=%ld off=%ld\n", (long)(n), (long)(off));
+        return 0;
+    }
+
+    /* T14003: T10R25: 16x16 76B-pay, m-tab b28-30,68-71 + q=PQM */
+    if ((n) <= (26132)) {
+        off = (((n) - (25877)));
+        if ((paylen) != (76)) {
+            return failf("T10R25 paylen");
+        }
+        l10 = (((((((n) << (1))) | (1))) & (1023)));
+        if (((pay[4])) != (((l10) & (255)))) {
+            return failf("T10R25 lencode");
+        }
+        m = (((off) & (15)));
+        q = (((off) >> (4)));
+        if (((pay[5])) != (((((202) + ((off) >= (107)))) + ((off) >= (235))))) {
+            return failf("T10R25 b5");
+        }
+        { uint8_t _b701[7];
+        _b701[0] = (uint8_t)((pay[28]));
+        _b701[1] = (uint8_t)((pay[29]));
+        _b701[2] = (uint8_t)((pay[30]));
+        _b701[3] = (uint8_t)((pay[68]));
+        _b701[4] = (uint8_t)((pay[69]));
+        _b701[5] = (uint8_t)((pay[70]));
+        _b701[6] = (uint8_t)((pay[71]));
+        hex_of(_b701, 7, _t1142); }
+        strcpy(_t1143, _T10R25M[m]);
+        if (!((strcmp(_t1142, _t1143) == 0))) {
+            return failf("T10R25 mtab");
+        }
+        { uint8_t _b702[7];
+        _b702[0] = (uint8_t)((pay[21]));
+        _b702[1] = (uint8_t)((pay[22]));
+        _b702[2] = (uint8_t)((pay[23]));
+        _b702[3] = (uint8_t)((pay[64]));
+        _b702[4] = (uint8_t)((pay[65]));
+        _b702[5] = (uint8_t)((pay[66]));
+        _b702[6] = (uint8_t)((pay[67]));
+        hex_of(_b702, 7, _t1144); }
+        strcpy(_t1145, _T10PQM[q]);
+        if (!((strcmp(_t1144, _t1145) == 0))) {
+            return failf("T10R25 qtab");
+        }
+        for (long _i703 = 0; _i703 < _T10R25C_N; _i703++) {
+            b = _T10R25C[_i703][0]; v = _T10R25C[_i703][1];
+            if (((pay[b])) != (v)) {
+                return failf("T10R25 const %ld", (long)(b));
+            }
+        }
+        printf("CLOSED T10R25 N=%ld off=%ld\n", (long)(n), (long)(off));
+        return 0;
+    }
+
+    /* T14025: T10PR0: singleton P-head row sig 780b12d3 */
+    if ((n) <= (26133)) {
+        if ((paylen) != (72)) {
+            return failf("T10PR0 paylen");
+        }
+        l10 = (((((((n) << (1))) | (1))) & (1023)));
+        if (((pay[4])) != (((l10) & (255)))) {
+            return failf("T10PR0 lencode");
+        }
+        for (long _i704 = 0; _i704 < _T10PR0C_N; _i704++) {
+            b = _T10PR0C[_i704][0]; v = _T10PR0C[_i704][1];
+            if (((pay[b])) != (v)) {
+                return failf("T10PR0 const %ld", (long)(b));
+            }
+        }
+        printf("CLOSED T10PR0 N=%ld\n", (long)(n));
+        return 0;
+    }
+
+    /* T14036: T10PR1: singleton P-head row sig 68000000 */
+    if ((n) <= (26134)) {
+        if ((paylen) != (76)) {
+            return failf("T10PR1 paylen");
+        }
+        l10 = (((((((n) << (1))) | (1))) & (1023)));
+        if (((pay[4])) != (((l10) & (255)))) {
+            return failf("T10PR1 lencode");
+        }
+        for (long _i705 = 0; _i705 < _T10PR1C_N; _i705++) {
+            b = _T10PR1C[_i705][0]; v = _T10PR1C[_i705][1];
+            if (((pay[b])) != (v)) {
+                return failf("T10PR1 const %ld", (long)(b));
+            }
+        }
+        printf("CLOSED T10PR1 N=%ld\n", (long)(n));
+        return 0;
+    }
+
+    /* T14047: T10PRA: 16-row 76B tab b33-35,68-71 */
+    if ((n) <= (26150)) {
+        off = (((n) - (26135)));
+        if ((paylen) != (76)) {
+            return failf("T10PRA paylen");
+        }
+        l10 = (((((((n) << (1))) | (1))) & (1023)));
+        if (((pay[4])) != (((l10) & (255)))) {
+            return failf("T10PRA lencode");
+        }
+        { uint8_t _b706[7];
+        _b706[0] = (uint8_t)((pay[33]));
+        _b706[1] = (uint8_t)((pay[34]));
+        _b706[2] = (uint8_t)((pay[35]));
+        _b706[3] = (uint8_t)((pay[68]));
+        _b706[4] = (uint8_t)((pay[69]));
+        _b706[5] = (uint8_t)((pay[70]));
+        _b706[6] = (uint8_t)((pay[71]));
+        hex_of(_b706, 7, _t1146); }
+        strcpy(_t1147, _T10PRA[off]);
+        if (!((strcmp(_t1146, _t1147) == 0))) {
+            return failf("T10PRA tab");
+        }
+        for (long _i707 = 0; _i707 < _T10PRAC_N; _i707++) {
+            b = _T10PRAC[_i707][0]; v = _T10PRAC[_i707][1];
+            if (((pay[b])) != (v)) {
+                return failf("T10PRA const %ld", (long)(b));
+            }
+        }
+        printf("CLOSED T10PRA N=%ld off=%ld\n", (long)(n), (long)(off));
+        return 0;
+    }
+
+    /* T14062: T10PRB: 10-row 76B tab b24,25,32-36,72-75 */
+    if ((n) <= (26160)) {
+        off = (((n) - (26151)));
+        if ((paylen) != (76)) {
+            return failf("T10PRB paylen");
+        }
+        l10 = (((((((n) << (1))) | (1))) & (1023)));
+        if (((pay[4])) != (((l10) & (255)))) {
+            return failf("T10PRB lencode");
+        }
+        { uint8_t _b708[11];
+        _b708[0] = (uint8_t)((pay[24]));
+        _b708[1] = (uint8_t)((pay[25]));
+        _b708[2] = (uint8_t)((pay[32]));
+        _b708[3] = (uint8_t)((pay[33]));
+        _b708[4] = (uint8_t)((pay[34]));
+        _b708[5] = (uint8_t)((pay[35]));
+        _b708[6] = (uint8_t)((pay[36]));
+        _b708[7] = (uint8_t)((pay[72]));
+        _b708[8] = (uint8_t)((pay[73]));
+        _b708[9] = (uint8_t)((pay[74]));
+        _b708[10] = (uint8_t)((pay[75]));
+        hex_of(_b708, 11, _t1148); }
+        strcpy(_t1149, _T10PRB[off]);
+        if (!((strcmp(_t1148, _t1149) == 0))) {
+            return failf("T10PRB tab");
+        }
+        for (long _i709 = 0; _i709 < _T10PRBC_N; _i709++) {
+            b = _T10PRBC[_i709][0]; v = _T10PRBC[_i709][1];
+            if (((pay[b])) != (v)) {
+                return failf("T10PRB const %ld", (long)(b));
+            }
+        }
+        printf("CLOSED T10PRB N=%ld off=%ld\n", (long)(n), (long)(off));
+        return 0;
+    }
+
+    /* T14078: T10PRQ: 4x16 76B m-tab b37-39,60-63 + q-tab b24,25,32-35,72-75 */
+    if ((n) <= (26224)) {
+        off = (((n) - (26161)));
+        if ((paylen) != (76)) {
+            return failf("T10PRQ paylen");
+        }
+        l10 = (((((((n) << (1))) | (1))) & (1023)));
+        if (((pay[4])) != (((l10) & (255)))) {
+            return failf("T10PRQ lencode");
+        }
+        m = (((off) & (15)));
+        q = (((off) >> (4)));
+        { uint8_t _b710[7];
+        _b710[0] = (uint8_t)((pay[37]));
+        _b710[1] = (uint8_t)((pay[38]));
+        _b710[2] = (uint8_t)((pay[39]));
+        _b710[3] = (uint8_t)((pay[60]));
+        _b710[4] = (uint8_t)((pay[61]));
+        _b710[5] = (uint8_t)((pay[62]));
+        _b710[6] = (uint8_t)((pay[63]));
+        hex_of(_b710, 7, _t1150); }
+        strcpy(_t1151, _T10PRM[m]);
+        if (!((strcmp(_t1150, _t1151) == 0))) {
+            return failf("T10PRQ mtab");
+        }
+        { uint8_t _b711[10];
+        _b711[0] = (uint8_t)((pay[24]));
+        _b711[1] = (uint8_t)((pay[25]));
+        _b711[2] = (uint8_t)((pay[32]));
+        _b711[3] = (uint8_t)((pay[33]));
+        _b711[4] = (uint8_t)((pay[34]));
+        _b711[5] = (uint8_t)((pay[35]));
+        _b711[6] = (uint8_t)((pay[72]));
+        _b711[7] = (uint8_t)((pay[73]));
+        _b711[8] = (uint8_t)((pay[74]));
+        _b711[9] = (uint8_t)((pay[75]));
+        hex_of(_b711, 10, _t1152); }
+        strcpy(_t1153, _T10PRQ[q]);
+        if (!((strcmp(_t1152, _t1153) == 0))) {
+            return failf("T10PRQ qtab");
+        }
+        for (long _i712 = 0; _i712 < _T10PRQC_N; _i712++) {
+            b = _T10PRQC[_i712][0]; v = _T10PRQC[_i712][1];
+            if (((pay[b])) != (v)) {
+                return failf("T10PRQ const %ld", (long)(b));
+            }
+        }
+        printf("CLOSED T10PRQ N=%ld off=%ld\n", (long)(n), (long)(off));
         return 0;
     }
 
