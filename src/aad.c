@@ -192,9 +192,44 @@ static void emit_badval(unsigned long long pay, unsigned long long raw,
             pay, raw, bsize);
 }
 
+/* chained line before the worker stanza (TIP2e chain-together
+ * law, DPROBE-15): scan trailing bytes from payload_end as a
+ * chain. r<16 -> framing(r/16); pair invalid -> badval STOP;
+ * valid + short payload -> truncpay-line STOP; valid + full
+ * payload -> skip 16+P + recurse. Header + blob alike (MZT). */
+static void emit_chain(const unsigned char *d, size_t pend,
+                       unsigned long long h2, unsigned long long bsize) {
+    unsigned long long r = h2;
+    size_t p = pend;
+    for (;;) {
+        if (r == 0)
+            return;
+        if (r < 16) {
+            fprintf(stderr, "Truncated block header (%llu/16 bytes read)\n",
+                    r);
+            return;
+        }
+        uint64_t R = rd64be(d + p), P = rd64be(d + p + 8);
+        if (R > bsize || P > bsize) {
+            fprintf(stderr, "Invalid block header payload=0x%llx raw=0x%llx "
+                    "block=0x%llx\n\n",
+                    (unsigned long long)P, (unsigned long long)R, bsize);
+            return;
+        }
+        if (16 + P > r) {
+            fprintf(stderr, "Truncated block payload (%llu/%llu bytes "
+                    "read)\n", r - 16, (unsigned long long)P);
+            return;
+        }
+        p += (size_t)(16 + P);
+        r -= 16 + P;
+    }
+}
+
 static void emit_decfail(unsigned long long k, unsigned long long pay,
                          unsigned long long raw, long long out, int blob,
-                         unsigned long long have2) {
+                         const unsigned char *d, size_t pend,
+                         unsigned long long h2, unsigned long long bsize) {
     fprintf(stderr, "Extraction failed\n"
             "extract failedError 0xbd009800\n"
             "istream read error\n");
@@ -205,9 +240,7 @@ static void emit_decfail(unsigned long long k, unsigned long long pay,
         fprintf(stderr, "refill buffer\n"
                 "archive stream read error (header)\n");
     fprintf(stderr, "flushing shared buffer\n");
-    if (!blob && have2 >= 1 && have2 <= 4)
-        fprintf(stderr, "Truncated block header (%llu/16 bytes read)\n",
-                have2);
+    emit_chain(d, pend, h2, bsize);
     fprintf(stderr, "invalid output size/decoder error: block=%llu, inSize=%llu, "
             "outSize=%lld, expectedOutSize=%llu\n"
             "worker proc reported an error\n"
@@ -227,9 +260,12 @@ typedef struct {
     unsigned long long whole;   /* decoded bytes before failing block */
     unsigned long long kcut;    /* failing block index */
     long long out;              /* decfail actual outSize, -1 undecodable */
+    unsigned long long h2;      /* decfail trailing bytes after payload */
+    unsigned long long pend;    /* decfail payload_end file offset */
+    unsigned long long bsize;   /* decfail outer bsize (pair gate) */
 } MidFail;
 
-static void emit_midblob(const MidFail *mf) {
+static void emit_midblob(const MidFail *mf, const Buf *file) {
     switch (mf->kind) {
     case MF_TRUNCHDR:
         emit_trunc("header", mf->a, mf->b, 1);
@@ -241,7 +277,8 @@ static void emit_midblob(const MidFail *mf) {
         emit_badval(mf->a, mf->b, mf->c, 1);
         break;
     case MF_DECFAIL:
-        emit_decfail(mf->a, mf->b, mf->c, mf->out, 1, 0);
+        emit_decfail(mf->a, mf->b, mf->c, mf->out, 1, file->data,
+                     (size_t)mf->pend, mf->h2, mf->bsize);
         break;
     }
 }
@@ -347,7 +384,9 @@ static int parse_chain(const Buf *file, Buf *inner, MidFail *mf,
                 (unsigned long long)(n - off - 16 - comp);
             if (!blob) {
                 emit_decfail(k, (unsigned long long)pay,
-                             (unsigned long long)raw, out, 0, have2);
+                             (unsigned long long)raw, out, 0, d,
+                             off + 16 + comp, have2,
+                             (unsigned long long)bsize);
                 fails = 1;
                 goto err;
             }
@@ -357,6 +396,9 @@ static int parse_chain(const Buf *file, Buf *inner, MidFail *mf,
             mf->whole = (unsigned long long)acc.len;
             mf->kcut = k;
             mf->out = out;
+            mf->h2 = have2;
+            mf->pend = (unsigned long long)(off + 16 + comp);
+            mf->bsize = (unsigned long long)bsize;
             *inner = acc;
             return 1;
         }
@@ -923,20 +965,30 @@ static int extract(const Item *items, size_t nitems, const char *root,
                     if (shortend + 0ULL <= (nch - j) * 262144ULL) hch++;
                     else break;
                 }
-                /* M2-dev (NOTE-060, verified 10/10): truncpay LONG
-                 * (nch>=2, !datcomplete): held -= dev; big
-                 * (bsize>=192K): dev = nch/2-1; small: dev =
-                 * (nch>=4). Trunchdr: held capped at 2ch. w3
-                 * (n>=10) + frac + tr6-creation stay OPEN. */
+                /* M2-dev (NOTE-060) + TIP2e whole-step: truncpay
+                 * LONG (nch>=2, !datcomplete): held -= dev; big
+                 * (bsize>=192K): dev = nch/2-1 + (whole>=3M:
+                 * 7500/rnd3m 4ch-locked both contents); small:
+                 * dev = (nch>=4). */
                 if (midchain && !datcomplete && nch >= 2 &&
                     mfkind == MF_TRUNCPAY) {
                     unsigned long long dev = obs >= 196608ULL ?
-                        nch / 2 - 1 : (nch >= 4 ? 1 : 0);
+                        nch / 2 - 1 + (whole >= 3145728ULL ? 1 : 0) :
+                        (nch >= 4 ? 1 : 0);
                     if (dev > hch) dev = hch;
                     hch -= dev;
                 } else if (midchain && !datcomplete &&
-                           mfkind == MF_TRUNCHDR && hch > 2) {
-                    hch = 2;
+                           mfkind == MF_TRUNCHDR) {
+                    /* TIP2e prefix-scaled cap: 1ch/2ch/4ch per
+                     * whole 1M/2M/3M (m2th locks; 128k-HDR
+                     * refutes kcut-form; whole>=4M doubling
+                     * extrapolated, DPROBE-15). */
+                    unsigned long long w1m = whole / 1048576ULL;
+                    unsigned sh = w1m > 31 ? 30 : w1m ?
+                        (unsigned)(w1m - 1) : 0;
+                    unsigned long long cap = w1m ? (1ULL << sh) : 1ULL;
+                    if (hch > cap)
+                        hch = cap;
                 }
                 unsigned long long want = hch * 262144ULL;
                 size_t wlen = datcomplete ? dl :
@@ -1241,9 +1293,8 @@ static int extract(const Item *items, size_t nitems, const char *root,
             break;
         }
     }
-    /* M1 tails: NEVER emitted (modal is rp0/fc1 everywhere; tails race
-     * phase-dependently, incl single-block — M1sc fixed-tails claim
-     * WITHDRAWN after in-session flip to 0t/c1 4/4, NOTE-061). */
+    /* M1 tails: emitted in main (midchain path only), never here:
+     * modal x2 unless short-whole or kcut1 (TIP2e). */
     /* phase 2: files meta, strict reverse (bad2, Q1 re-probe) */
     for (size_t i = nfiles; i-- > 0;) {
         const Item *it = &items[files[i].idx];
@@ -1397,7 +1448,12 @@ int main(int argc, char **argv) {
                       65536ULL;
         extract(items, nitems, argv[2], fcls, fsub, shortidx, 1, present,
                 mf.whole, shortend, obs, mf.kind);
-        emit_midblob(&mf);
+        emit_midblob(&mf, &file);
+        /* TIP2e M1: modal x2 tails, except short-whole (<512K:
+         * mc2/mc3 x0) and kcut==1 any-kind (tp1a/b + m2th1
+         * x0-locked, NOTE-180/183; pooled kcut1 65/70 x0). */
+        if (mf.whole >= 524288ULL && mf.kcut != 1)
+            fprintf(stderr, "reading payload\nreading payload\n");
         fprintf(stderr, "1 entries failed to extract\n");
         fails = 1;
         goto out;
