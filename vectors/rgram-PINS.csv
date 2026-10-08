@@ -822,3 +822,11 @@ g-z7424-closed,str,CLOSED,76,test_rgram.sh,27.0.1,ct-lzraven
 g-z7424,sha,270b1df9f7f7f15f0513410ff3576b8144b5a2c8951d50ae765923fd9d3b6b08,76,test_rgram.sh,27.0.1,ct-lzraven
 g-z7432-closed,str,CLOSED,76,test_rgram.sh,27.0.1,ct-lzraven
 g-z7432,sha,2460b787d0146760a1ea32a7dfffe77366888e4e5ddf40aebc1797dff836596a,76,test_rgram.sh,27.0.1,ct-lzraven
+g-z7433-closed,str,CLOSED,76,test_rgram.sh,27.0.1,ct-lzraven
+g-z7433,sha,aabd943e807e7e65d017bafdc7032ef35f309c65229fddac1341450801fd8d5e,76,test_rgram.sh,27.0.1,ct-lzraven
+g-z7552-closed,str,CLOSED,76,test_rgram.sh,27.0.1,ct-lzraven
+g-z7552,sha,54b3f88b733ac5f7b7ba69818a66290fa276b3ad64c65a8a0c4687973a72ec96,76,test_rgram.sh,27.0.1,ct-lzraven
+g-z7680-closed,str,CLOSED,76,test_rgram.sh,27.0.1,ct-lzraven
+g-z7680,sha,58ef8409390d4fb88b4d8d33a22882d2846920c1b2ed25be7eb0e24810900959,76,test_rgram.sh,27.0.1,ct-lzraven
+g-z7688-closed,str,CLOSED,76,test_rgram.sh,27.0.1,ct-lzraven
+g-z7688,sha,5e69285fb1c200a6a9953a66a08d3d583139045b678793a1cbc386b66846d9f2,76,test_rgram.sh,27.0.1,ct-lzraven

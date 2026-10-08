@@ -979,6 +979,31 @@ _T7I3C = ((0, 0x4c), (1, 0x6a), (2, 0x01), (3, 0x00),
           (50, 0x7d), (51, 0xfe), (52, 0xb2), (53, 0x7b),
           (54, 0x92), (55, 0xfc), (56, 0x2d), (57, 0xcb),
           (58, 0xb7), (59, 0xf1))
+_T7JT = ("b71582c8e094", "f7dd9dc8e0b3", "d7e59dc8e05b",
+          "f72d9ec860e4", "d79560c9e08d", "b72d81c960f4",
+          "f77581c9e07c", "d70dc5c96099", "b715c5c96041",
+          "f77587cae042", "d745a3cae009", "f78da3ca6092",
+          "d725aacae0d5", "b72dc4cae0a0", "f75588cb609e",
+          "d75d88cb6046")
+_T7JB = ("1e2e17e7b5e2126b", "3e2e17e735e3726b",
+          "9e1814e735e3e26c", "de9e166735fcc26c",
+          "eeb3166735fbd26c", "eeb416e735e2d26c",
+          "fec916e735e1e26c", "fe361667b5faa26d",
+          "9e3a1667b5fa326d", "be3a166735fb926d",
+          "2e4d16e7b5e1126d", "1e121567b5fc026e",
+          "cebd1567b5fa626e", "ded21567b5f9726e",
+          "fed2156735fad26e", "de9714e735e5126f")
+_T7JC = ((3, 0x00), (6, 0x53), (7, 0x7b), (8, 0xfc),
+         (9, 0xd1), (10, 0xbd), (11, 0x19), (12, 0x00),
+         (13, 0x7c), (14, 0xfc), (15, 0x76), (16, 0x39),
+         (17, 0x76), (18, 0x0c), (20, 0x49), (21, 0x5f),
+         (22, 0x4d), (23, 0x82), (24, 0x32), (25, 0xdd),
+         (28, 0xc3), (29, 0x3c), (30, 0x46), (31, 0xfe),
+         (32, 0x37), (33, 0xc6), (34, 0x85), (41, 0x24),
+         (44, 0x53), (45, 0xa9), (46, 0xb5), (47, 0x7a),
+         (48, 0xfb), (49, 0xfc), (50, 0x35), (51, 0x84),
+         (52, 0xb2), (53, 0x7b), (54, 0x92), (55, 0xfc),
+         (56, 0x2d), (57, 0xcb), (58, 0xb7), (59, 0xf1))
 _T7CC = ((0, 0x75), (1, 0x01), (2, 0x00), (3, 0x00), (6, 0xc1),
          (7, 0x6b), (8, 0xfa), (9, 0xf6), (10, 0xcf),
          (11, 0x25), (12, 0x00), (13, 0xad), (14, 0xfc),
@@ -3370,6 +3395,30 @@ def main():
             if pay[b] != v:
                 return fail("T7I3 const %d" % b)
         print("CLOSED T7I3 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 7688:  # T7J: 16x16 band-run, tab + 8B block words
+        off = n - 6041
+        if len(pay) != 60:
+            return fail("T7J paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if pay[4] != (l10 & 0xFF):
+            return fail("T7J lencode")
+        m = (off - 1392) & 15
+        q = (off - 1392) >> 4
+        if pay[5] != (0xda + (off >= 1511) + (off >= 1639)):
+            return fail("T7J b5")
+        tab = bytes((pay[36], pay[37], pay[38], pay[39], pay[42],
+                     pay[43])).hex()
+        if tab != _T7JT[m]:
+            return fail("T7J tab")
+        blk = bytes((pay[0], pay[1], pay[2], pay[19], pay[26],
+                     pay[27], pay[35], pay[40])).hex()
+        if blk != _T7JB[q]:
+            return fail("T7J blk")
+        for b, v in _T7JC:
+            if pay[b] != v:
+                return fail("T7J const %d" % b)
+        print("CLOSED T7J N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
