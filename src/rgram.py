@@ -6971,6 +6971,31 @@ _T10PVQC = ((0, 0x11), (1, 0x64), (2, 0x00), (3, 0x00), (5, 0x57),
          (53, 0x47), (54, 0x85), (55, 0x60), (56, 0x0e), (57, 0x7c),
          (58, 0x75), (59, 0xbf), (60, 0x29), (61, 0x80), (62, 0x61),
          (63, 0x54), (64, 0xb6), (65, 0xfb), (66, 0x44), (67, 0xe2))
+_T10R30M = ("7579cef776b0", "7779893bd3ec",
+           "8979a53c3c0e", "8979e33a7799",
+           "b37917f9b9ed", "b77926b7143a",
+           "b7794378133b", "b779d0ba57fb",
+           "15f8b3ba7a44", "15f89af719b1",
+           "25f87df89473", "27f8b7baec40",
+           "27f8a6bced40", "29f82b7b326f",
+           "47f8fbfa8ef4", "83f8d67adbb8")
+_T10R30QH = ("d71b", "571d", "971d", "971d",
+             "171e", "d71f", "d71f", "5724",
+             "5725", "5725", "9725", "572a",
+             "172c", "d72c", "172d", "d730")
+_T10R30C = ((0, 0xf2), (1, 0x40), (2, 0x05), (3, 0x00), (6, 0x0a),
+         (7, 0x9e), (8, 0x0d), (9, 0x4e), (10, 0x02), (11, 0x78),
+         (12, 0x8e), (13, 0x43), (14, 0x04), (15, 0x40), (16, 0xf1),
+         (19, 0x37), (20, 0xc4), (23, 0xe9), (24, 0x87), (25, 0x2f),
+         (26, 0xd7), (27, 0x93), (28, 0x09), (29, 0x48), (30, 0x7e),
+         (31, 0x74), (32, 0x62), (33, 0x54), (34, 0x6d), (35, 0x09),
+         (36, 0x5f), (37, 0x60), (38, 0xee), (39, 0x9c), (40, 0x41),
+         (41, 0x3c), (42, 0x73), (43, 0x73), (44, 0x82), (45, 0x37),
+         (46, 0xb9), (47, 0xd7), (48, 0xb1), (49, 0xd9), (50, 0x4d),
+         (51, 0x1f), (52, 0x0e), (53, 0x7c), (54, 0x75), (55, 0xbf),
+         (56, 0x29), (57, 0x80), (58, 0x61), (59, 0x54), (60, 0xb6),
+         (61, 0xfb), (62, 0x44), (63, 0xe2), (64, 0xd4), (65, 0xfe),
+         (66, 0xc8), (67, 0x69))
 _T10P5QC = ((0, 0x1d), (1, 0x02), (2, 0x00), (3, 0x00), (6, 0xc1),
          (7, 0xcc), (8, 0xa8), (9, 0x78), (10, 0xfb), (11, 0x8f),
          (12, 0x00), (13, 0x13), (14, 0x64), (15, 0x0d), (16, 0xc4),
@@ -14930,6 +14955,28 @@ def main():
             if pay[b] != v:
                 return fail("T10PVQ const %d" % b)
         print("CLOSED T10PVQ N=%d off=%d" % (n, off))
+        return 0
+    if n <= 27872:  # T10R30: 16x16 76B-pay, m-tab b21,22,72-75 + q=PVM-suf + qhead b17,18
+        off = n - 27617
+        if len(pay) != 76:
+            return fail("T10R30 paylen")
+        l16 = (((n << 1) | 1) ^ 0x8000) & 0xFFFF
+        if pay[4] != (l16 & 0xFF) or pay[5] != (l16 >> 8):
+            return fail("T10R30 lencode")
+        m = off & 15
+        q = off >> 4
+        if bytes((pay[21], pay[22], pay[72], pay[73], pay[74],
+                   pay[75])).hex() != _T10R30M[m]:
+            return fail("T10R30 mtab")
+        if bytes((pay[17], pay[18])).hex() != _T10R30QH[q]:
+            return fail("T10R30 qhead")
+        if bytes((pay[68], pay[69], pay[70],
+                   pay[71])).hex() != _T10PVM[q][4:]:
+            return fail("T10R30 qtab")
+        for b, v in _T10R30C:
+            if pay[b] != v:
+                return fail("T10R30 const %d" % b)
+        print("CLOSED T10R30 N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
