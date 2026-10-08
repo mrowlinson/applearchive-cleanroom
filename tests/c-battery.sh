@@ -1107,7 +1107,7 @@ for e in 511 512 750 800 600 350; do
   sh "$ADAPTER" aar-encode --alg lzfse --block 128k --threads 1 "$WORK/dsrc$e" "$WORK/dv-edge$e.aar" >/dev/null 2>&1 || die "dev encode edge$e"
 done
 # spec blk:k:fracN:fracD:kind:expC:oset  (kind=pay|hdr|hard; oset=oracle sizes, 0=empty-file)
-for spec in "128k:6:1:2:pay:0:0" "128k:8:1:2:pay:262144:262144,0" "128k:10:1:2:pay:524288:524288,262144" "128k:12:1:2:pay:524288:524288,262144" "128k:14:1:2:pay:786432:786432,524288" "128k:16:1:2:pay:1048576:1048576,786432" "1m:2:1:2:pay:786432:524288,786432,1048576,1310720" "1m:2:1:4:pay:786432:524288,786432,1048576" "1m:2:3:4:pay:786432:524288,786432,1048576" "1m:1:1:2:pay:262144:262144,0" "1m:0:1:2:hard:ABS:ABS" "256k:8:1:2:pay:786432:524288,786432" "1m:2:10:1:HDR:524288:524288,786432,1048576" "128k:8:10:1:HDR:262144:262144,0" "128k:5:1:2:pay:ABS:ABS" "128k:7:1:2:pay:0:0,ABS" "edge511:6:1:2:pay:0:0" "edge512:6:1:2:pay:ABS:ABS" "edge750:8:1:2:pay:0:0" "edge800:8:1:2:pay:ABS:ABS" "edge600:7:1:2:pay:ABS:ABS" "edge350:4:1:2:pay:ABS:ABS"; do
+for spec in "128k:6:1:2:pay:0:0" "128k:8:1:2:pay:262144:262144,0" "128k:10:1:2:pay:524288:524288,262144" "128k:12:1:2:pay:524288:524288,262144" "128k:14:1:2:pay:786432:786432,524288" "128k:16:1:2:pay:1048576:1048576,786432" "1m:2:1:2:pay:786432:524288,786432,1048576,1310720" "1m:2:1:4:pay:786432:524288,786432,1048576" "1m:2:3:4:pay:786432:524288,786432,1048576" "1m:1:1:2:pay:262144:262144,0" "1m:0:1:2:hard:ABS:ABS" "256k:8:1:2:pay:786432:524288,786432,1048576" "1m:2:10:1:HDR:524288:524288,786432,1048576" "128k:8:10:1:HDR:262144:262144,0" "128k:5:1:2:pay:ABS:ABS" "128k:7:1:2:pay:0:0,ABS" "edge511:6:1:2:pay:0:0" "edge512:6:1:2:pay:ABS:ABS" "edge750:8:1:2:pay:0:0" "edge800:8:1:2:pay:ABS:ABS" "edge600:7:1:2:pay:ABS:ABS" "edge350:4:1:2:pay:ABS:ABS"; do
   blk=$(echo "$spec" | cut -d: -f1); k=$(echo "$spec" | cut -d: -f2); fn=$(echo "$spec" | cut -d: -f3); fd=$(echo "$spec" | cut -d: -f4); kind=$(echo "$spec" | cut -d: -f5); exp=$(echo "$spec" | cut -d: -f6); oset=$(echo "$spec" | cut -d: -f7)
   T=dv$blk$k$fn$fd$kind
   if [ "$kind" = "HDR" ]; then
@@ -1139,11 +1139,12 @@ print(bs[$k][0]+16+bs[$k][2]*$fn//$fd)") || die "dev cut $spec"
   if [ "$kind" = "hard" ]; then
     [ -z "$(ls "$WORK/dvo-$T")" ] && [ -z "$(ls "$WORK/dvc-$T")" ] && pass "$T-empty" || fail "$T-empty"
   else
-    if [ "$blk" = "edge800" ]; then # A-029 race-pin (Q-029 CLOSED): oracle big1 modal-vs-minority {FULL,524288-partial,ABSENT}; C modal FULL; partial = byte-prefix
+    if [ "$blk" = "edge800" ] || [ "$blk" = "edge600" ]; then # A-029 race-pin (Q-029 CLOSED): oracle big1 modal-vs-minority {FULL,chunk-partial,ABSENT}; C modal FULL; partial = byte-prefix
+      if [ "$blk" = "edge800" ]; then FULL1=819200; PART1=524288; else FULL1=614400; PART1=262144; fi # edge600 minority 262144 first-hand (sweep GATE-d110318 flake-2; A-029 family)
       OSZ1=$([ -f "$WORK/dvo-$T/big1" ] && stat -f %z "$WORK/dvo-$T/big1" || echo ABS)
-      case ",819200,524288,ABS," in *,"$OSZ1,"*) pass "$T-big1";; *) fail "$T-big1";; esac
-      if [ -f "$WORK/dvo-$T/big1" ]; then head -c "$OSZ1" "$WORK/dsrc800/big1" | cmp -s - "$WORK/dvo-$T/big1" && pass "$T-oprefix" || fail "$T-oprefix"; else pass "$T-oprefix"; fi
-      cmp -s "$WORK/dsrc800/big1" "$WORK/dvc-$T/big1" && pass "$T-cbig1full" || fail "$T-cbig1full"
+      case ",$FULL1,$PART1,ABS," in *,"$OSZ1,"*) pass "$T-big1";; *) fail "$T-big1";; esac
+      if [ -f "$WORK/dvo-$T/big1" ]; then head -c "$OSZ1" "$WORK/dsrc${blk#edge}/big1" | cmp -s - "$WORK/dvo-$T/big1" && pass "$T-oprefix" || fail "$T-oprefix"; else pass "$T-oprefix"; fi
+      cmp -s "$WORK/dsrc${blk#edge}/big1" "$WORK/dvc-$T/big1" && pass "$T-cbig1full" || fail "$T-cbig1full"
     else cmp -s "$WORK/dvo-$T/big1" "$WORK/dvc-$T/big1" && pass "$T-big1" || fail "$T-big1"; fi
     case ",$oset," in *,"$OSZ,"*) pass "$T-oshape";; *) fail "$T-oshape";; esac
     if [ -f "$WORK/dvo-$T/big2" ] && [ -f "$WORK/dvc-$T/big2" ]; then
