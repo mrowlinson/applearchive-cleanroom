@@ -2868,6 +2868,26 @@ _T9F2CC = ((0, 0x87), (1, 0x06), (2, 0x00), (3, 0x00), (5, 0xef),
           (46, 0x5a), (47, 0x9c), (52, 0xf7), (53, 0xf8), (54, 0x20),
           (55, 0x70), (60, 0x0a), (61, 0xdf), (62, 0x57), (63, 0x55),
           (64, 0x34), (65, 0x3c), (66, 0x88), (67, 0x75))
+# T9F2Q: 5B tab (b6,b60-63) m0..15 + b5 m-tab (+1 q>=1 m<6) + 8B words.
+_T9F2QT = ("74885bf6db", "74af5a38dd", "74035f73dd", "7460d977dd",
+           "740dde7204", "7511daed6b", "774adb89aa", "77785be4c0",
+           "77785fe4c0", "77d5d9e8c0", "77cd5e2ac9", "78e659104e",
+           "78abd84bf7", "79b8dea658", "791559ab58", "746dde3caf")
+_T9F2Q5 = (0x6f, 0x6f, 0x6f, 0x6f, 0xaf, 0x6f, 0x30, 0x30,
+           0x30, 0x30, 0x30, 0x30, 0x30, 0xb0, 0xb0, 0x30)
+_T9F2QB = ("7b7441c0d97b6dd6", "fbcbedb1f1bba33c",
+           "7b7641c0b77d6076", "fbc7d7aa383d75d0")
+_T9F2QC = ((0, 0x76), (1, 0x68), (2, 0x00), (3, 0x00), (7, 0x2a),
+          (8, 0x88), (9, 0x13), (10, 0x60), (11, 0x0d), (12, 0x41),
+          (13, 0xde), (14, 0x18), (15, 0xb4), (16, 0xee), (17, 0xb6),
+          (18, 0x58), (19, 0xdb), (20, 0xb8), (21, 0xe5), (22, 0x17),
+          (23, 0x5a), (24, 0xdc), (25, 0x3c), (26, 0x35), (27, 0x20),
+          (28, 0xfb), (29, 0xac), (30, 0x6c), (31, 0xc3), (32, 0x0b),
+          (33, 0xfc), (34, 0x83), (35, 0x28), (36, 0x5b), (37, 0x64),
+          (38, 0xfd), (39, 0x76), (40, 0xed), (41, 0xde), (42, 0xcf),
+          (43, 0x8d), (44, 0xd7), (45, 0x75), (46, 0x5a), (47, 0x9c),
+          (52, 0xf7), (53, 0xf8), (54, 0x20), (55, 0x70), (64, 0x34),
+          (65, 0x3c), (66, 0x88), (67, 0x75))
 _T7CC = ((0, 0x75), (1, 0x01), (2, 0x00), (3, 0x00), (6, 0xc1),
          (7, 0x6b), (8, 0xfa), (9, 0xf6), (10, 0xcf),
          (11, 0x25), (12, 0x00), (13, 0xad), (14, 0xfc),
@@ -7159,6 +7179,29 @@ def main():
             if pay[b] != v:
                 return fail("T9F2C const %d" % b)
         print("CLOSED T9F2C N=%d off=%d" % (n, off))
+        return 0
+    if n <= 14381:  # T9F2Q: 3x16+4 tab b6,b60-63 + b5 + 8B words, k15 carry
+        off = n - 14330
+        if len(pay) != 68:
+            return fail("T9F2Q paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if pay[4] != (l10 & 0xFF):
+            return fail("T9F2Q lencode")
+        m = off & 15
+        q = off >> 4
+        if pay[5] != _T9F2Q5[m] + (q >= 1 and m < 6):
+            return fail("T9F2Q b5")
+        if bytes((pay[6], pay[60], pay[61], pay[62],
+                   pay[63])).hex() != _T9F2QT[m]:
+            return fail("T9F2Q tab")
+        blk = bytes((pay[48], pay[49], pay[50], pay[51], pay[56],
+                     pay[57], pay[58], pay[59])).hex()
+        if blk != (_T9F2QB[q] if m < 15 else _T9F2QB[q + 1]):
+            return fail("T9F2Q blk")
+        for b, v in _T9F2QC:
+            if pay[b] != v:
+                return fail("T9F2Q const %d" % b)
+        print("CLOSED T9F2Q N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
