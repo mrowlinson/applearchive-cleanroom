@@ -2625,6 +2625,29 @@ _T9Y1C = ((0, 0x6e), (1, 0x0e), (2, 0x00), (3, 0x00), (7, 0xf3),
           (43, 0xa4), (44, 0x17), (45, 0x69), (46, 0x39), (47, 0x28),
           (50, 0xe4), (51, 0x11), (52, 0x00), (53, 0x97), (54, 0xd7),
           (55, 0xd1), (64, 0xb8), (65, 0x3c), (66, 0x97), (67, 0x7e))
+_T9Z1T = ("932ada49d8", "932ade49d8", "93a8dd62df", "93735e19e2",
+           "939f5fca0e", "94195e2a09", "94ac5c202c", "941ed9202c",
+           "94405cb0b3", "94e6ddeee8", "940ddd30ea", "94f8de34ea",
+           "94add98b00", "95a8de6b51", "95ab59247a", "95ee58059d")
+_T9Z1B = ("bd5e057cb58d", "bd64cafc842b", "bd640b3d963e",
+           "bd6493bb9c3e", "bd667f7e2246", "bd6647fc9d48",
+           "3d77093ebab5", "bd77e8bface7", "bd792ffb35ef",
+           "3d7a01fc6e27", "3d7c21be2c44")
+_T9Z1HI = (0x2, 0x2, 0x2, 0x2, 0xa, 0x2, 0x6, 0x6,
+            0x6, 0xa, 0xa, 0xa, 0xe, 0xa, 0xa, 0xe)
+_T9Z1LO = (0x8, 0x9, 0x9, 0x9, 0x9, 0x9, 0x9, 0x9, 0x9, 0xa, 0xa)
+_T9Z1C = ((0, 0x6e), (1, 0x0e), (2, 0x00), (3, 0x00), (7, 0xf3),
+          (8, 0x87), (9, 0x96), (10, 0xfc), (11, 0xc6), (12, 0x00),
+          (13, 0x63), (14, 0x4f), (15, 0x16), (16, 0x20), (17, 0x90),
+          (18, 0xbb), (19, 0xee), (20, 0x98), (21, 0x1e), (22, 0x5d),
+          (23, 0x11), (24, 0x6d), (25, 0x7c), (26, 0xc0), (27, 0x6f),
+          (28, 0x5a), (29, 0x38), (30, 0xf6), (31, 0xc9), (32, 0xdd),
+          (33, 0xbf), (34, 0xe7), (35, 0x6d), (36, 0x1a), (37, 0xcc),
+          (38, 0xea), (39, 0x36), (40, 0x7c), (41, 0xd9), (42, 0x72),
+          (43, 0xa4), (44, 0x17), (45, 0x69), (46, 0x39), (47, 0x28),
+          (50, 0xe4), (51, 0x11), (52, 0x00), (53, 0x97),
+          (54, 0xd7), (55, 0xd1), (64, 0xb8), (65, 0x3c), (66, 0x97),
+          (67, 0x7e))
 _T7CC = ((0, 0x75), (1, 0x01), (2, 0x00), (3, 0x00), (6, 0xc1),
          (7, 0x6b), (8, 0xfa), (9, 0xf6), (10, 0xcf),
          (11, 0x25), (12, 0x00), (13, 0xad), (14, 0xfc),
@@ -6661,6 +6684,30 @@ def main():
             if pay[b] != v:
                 return fail("T9Y1 const %d" % b)
         print("CLOSED T9Y1 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 13604:  # T9Z1: 11x16 tab b6,b60-63 + 6B words + b5 HI/LO
+        off = n - 13429
+        if len(pay) != 68:
+            return fail("T9Z1 paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if pay[4] != (l10 & 0xFF):
+            return fail("T9Z1 lencode")
+        m = off & 15
+        q = off >> 4
+        lo = _T9Z1LO[q + 1] if m >= 11 and q < 10 else _T9Z1LO[q]
+        if pay[5] != (_T9Z1HI[m] << 4) | lo:
+            return fail("T9Z1 b5")
+        if bytes((pay[6], pay[60], pay[61], pay[62],
+                   pay[63])).hex() != _T9Z1T[m]:
+            return fail("T9Z1 tab")
+        blk = bytes((pay[48], pay[49], pay[56], pay[57], pay[58],
+                     pay[59])).hex()
+        if blk != _T9Z1B[q]:
+            return fail("T9Z1 blk")
+        for b, v in _T9Z1C:
+            if pay[b] != v:
+                return fail("T9Z1 const %d" % b)
+        print("CLOSED T9Z1 N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
