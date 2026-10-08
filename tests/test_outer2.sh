@@ -196,6 +196,56 @@ for a in lzfse lzma lz4 zlib lzraven lzbitmap; do
   chk "m-txt-$a-rule" str "$(rule_of "m-txt-$a" "$WORK/m-txt-raw.aar")" "$s"
   chk "m-txt-$a" sha "$h" "$s"
 done
+TCMP() { # tag srcdir alg : t1-vs-t18 EQ/DIFF + t1 sha (NOTE-w2s7-8 beds)
+  tag=$1; src=$2; alg=$3
+  sh "$ADAPTER" aar-encode --alg "$alg" --threads 1 "$IN/$src" "$WORK/m-$tag-1.aar" 2>/dev/null
+  sh "$ADAPTER" aar-encode --alg "$alg" --threads 18 "$IN/$src" "$WORK/m-$tag-18.aar" 2>/dev/null
+  cmp -s "$WORK/m-$tag-1.aar" "$WORK/m-$tag-18.aar" && v=EQ || v=DIFF
+  chk "m-$tag-cmp" str "$v" "$(sz "$WORK/m-$tag-1.aar")"
+  chk "m-$tag" sha "$(sha "$WORK/m-$tag-1.aar")" "$(sz "$WORK/m-$tag-1.aar")"
+}
+mk1file t5z 5000000 z; mk1file t5r 5000000 seed7
+for a in raw zlib lzma; do
+  TCMP "tt-$a-z" t5z "$a"; TCMP "tt-$a-r" t5r "$a"
+done
+mk1file t10z 10000000 z; mk1file t10r 10000000 seed11
+TCMP tt-lz-z10 t10z lzfse; TCMP tt-lz-r10 t10r lzfse
+BECHO() { # tag srcdir alg block : BE-echo:nb str + sha (NOTE-w2s7-8 beds)
+  tag=$1; src=$2; alg=$3; blk=$4
+  set -- $(AAR "m-$tag" "$src" "$alg" "$blk"); s=$2 h=$3
+  v=$(python3 -c "
+import struct
+b = open('$WORK/m-$tag.aar','rb').read()
+bs = struct.unpack('>I', b[8:12])[0]
+p = 12; nb = 0
+while p < len(b):
+  z1, u, z2, c = struct.unpack('>IIII', b[p:p+16])
+  assert z1 == 0 and z2 == 0
+  nb += 1; p += 16 + c
+assert p == len(b)
+print(f'{bs}:{nb}')")
+  chk "m-$tag-echo" str "$v" "$s"
+  chk "m-$tag" sha "$h" "$s"
+}
+BECHO bb-1m t5z lzfse 1m; BECHO bb-64k t5z lzfse 64k
+BECHO bb-4k t5z lzfse 4096; BECHO bb-16m t5z lzfse 16777216
+BIG() { # tag srcdir alg [block] : nb + unc-chain str + sha (NOTE-w2s7-8 beds)
+  tag=$1; src=$2; alg=$3; blk=${4:-}
+  set -- $(AAR "m-$tag" "$src" "$alg" "$blk"); s=$2 h=$3
+  v=$(python3 -c "
+import struct
+b = open('$WORK/m-$tag.aar','rb').read()
+p = 12; su = 0; nb = 0
+while p < len(b):
+  z1, u, z2, c = struct.unpack('>IIII', b[p:p+16])
+  assert z1 == 0 and z2 == 0, (nb, z1, z2)
+  su += u; nb += 1; p += 16 + c
+print(('CHAIN-EQ' if p == len(b) else f'CHAIN-DIFF-{p}') + f'-NB{nb}-SU{su}')")
+  chk "m-$tag-big" str "$v" "$s"
+  chk "m-$tag" sha "$h" "$s"
+}
+BIG bg-z10 t10z lzfse; BIG bg-r10 t10r lzfse
+BIG bg-z10-1m t10z lzfse 1m; BIG bg-r10-1m t10r lzfse 1m
 echo "== AEA =="
 AEA=${AEA:-/usr/bin/aea}
 PW="0123456789abcdef0123456789abcdef"
