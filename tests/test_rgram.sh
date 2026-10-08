@@ -50,7 +50,7 @@ GCELL() { # nbytes : closed + sha pins
   else echo "FAIL g$n rgram: $(head -1 "$WORK/g$n.rgram")"; FAIL=1; fi
 }
 echo "== rgram zeros-N (stored + T0 + edge + T1 + T2) =="
-for s in 0 1 63 64 65 124 125 126 127 128 129 189 253 255 256 257 511; do
+for s in 0 1 63 64 65 124 125 126 127 128 129 189 253 255 256 257 380 381 384 409 473 474 511; do
   GCELL "$s"
 done
 [ -n "${RECORD:-}" ] && mv "$PINS.new" "$PINS" && echo "RECORDED $PINS"

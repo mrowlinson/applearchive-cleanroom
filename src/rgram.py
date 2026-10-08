@@ -101,11 +101,42 @@ def main():
                 return fail("T1 marker %d" % m)
         print("CLOSED T1 N=%d off=%d" % (n, off))
         return 0
-    if n <= 511:  # T2 (length-code only; regime open)
+    if n <= 511:  # T2 (NOTE-w2s6-9/10: pre-edge echo + regimes)
         off = n - 256
         if grp(pay, (32, 33, 34, 35, 36, 37, 38, 39, 40)) != \
                 ((off << 1) | 1):
             return fail("T2 lencode")
+        op3 = off + 3
+        g307 = grp(pay, (307, 308, 309, 310))
+        g270 = grp(pay, (270, 271, 272, 273))
+        g51 = grp(pay, (51, 52, 53, 54))
+        if off <= 124:
+            if (pay[0], pay[1], pay[2], pay[8]) != (0x00, 0x10, 0x00, 0x09):
+                return fail("T2 pre-head")
+            if g307 != op3 & 15 or g270 != ((op3 >> 4) | 8):
+                return fail("T2 pre-echo")
+        elif off == 125:
+            if (pay[0], pay[1], pay[2], pay[8], g307) != \
+                    (0x10, 0x00, 0x00, 0x09, 0):
+                return fail("T2 r125")
+        elif off == 126:
+            if (pay[0], pay[1], g307) != (0x00, 0x08, 1):
+                return fail("T2 r126")
+        elif off <= 152:
+            if (pay[1], pay[2], pay[8], g307) != (0x80, 0x00, 0x09, 1):
+                return fail("T2 regA")
+        elif off <= 216:
+            if (pay[1], pay[2], pay[8]) != (0x00, 0x08, 0x0d) or \
+                    g51 != (off - 153) & 15:
+                return fail("T2 regB")
+        elif off == 217:
+            if (pay[0], pay[1], pay[2], pay[8], g51) != \
+                    (0x00, 0x00, 0x80, 0x0d, 0):
+                return fail("T2 piv217")
+        else:
+            if pay[0] != (((off - 217) & 15) << 4) or \
+                    (pay[1], pay[2], pay[8]) != (0x00, 0x80, 0x0d):
+                return fail("T2 regC")
         print("CLOSED T2 N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
