@@ -2781,6 +2781,50 @@ _T9C2QC = ((0, 0x87), (1, 0x12), (2, 0x00), (3, 0x00), (5, 0xed),
           (55, 0x76), (56, 0xce), (57, 0xf0), (58, 0x17), (59, 0xda),
           (60, 0x0a), (61, 0xdf), (62, 0x57), (63, 0x55), (64, 0x34),
           (65, 0x3c), (66, 0x88), (67, 0x75))
+_T9E20 = "87360100bbeda7c22401d660c1dd166b98a706842dbfd0dcfbfcef4f67651b065ff925c744ab89a77b7c62fb2cb41c84ddd5700a955b42bbcef017da0adf5755343c8875"
+_T9E2T = ("695d961fbb85", "065e344a5b86", "afdf01795b86", "c8df93a09b86",
+           "4f5efda09b86", "135dc6b5fb87", "485c2d0fbb88", "745970c1bb88",
+           "85dc74c1bb88", "255ac6c1bb88", "33da4eddfb88", "36de74e9fb88",
+           "f65d6b531b8b", "1f5ba2861b8b", "3fdaa97f5b8b")
+_T9E2C = ((0, 0x87), (1, 0x12), (2, 0x00), (3, 0x00), (5, 0xed),
+          (6, 0xa7), (7, 0xc2), (8, 0x24), (9, 0x01), (10, 0xd6),
+          (11, 0x60), (12, 0xc1), (13, 0xe6), (14, 0xa9), (15, 0x01),
+          (16, 0xee), (17, 0xb6), (18, 0x58), (19, 0xdb), (20, 0xb8),
+          (21, 0xe5), (22, 0x17), (23, 0x9a), (24, 0xdb), (25, 0xfc),
+          (26, 0xc7), (27, 0x38), (28, 0x67), (29, 0x65), (30, 0x1b),
+          (31, 0xf6), (32, 0xdf), (33, 0xd5), (34, 0x70), (35, 0x0a),
+          (36, 0x7e), (37, 0x71), (38, 0x0d), (39, 0xa6), (46, 0x96),
+          (47, 0x83), (48, 0x72), (49, 0xbc), (50, 0x31), (51, 0xab),
+          (52, 0x59), (53, 0xb8), (54, 0x84), (55, 0x76), (56, 0xce),
+          (57, 0xf0), (58, 0x17), (59, 0xda), (60, 0x0a), (61, 0xdf),
+          (62, 0x57), (63, 0x55), (64, 0x34), (65, 0x3c), (66, 0x88),
+          (67, 0x75))
+_T9E2QT = ("fb7cf848bcb15b", "db7c42aa3cb45b", "1b3c13ab44b45b",
+           "1b3c14ab44b45b", "5b3c3602a4b55b", "1bbcb182bcb75b",
+           "9b3c412854fe5b", "dbfce2a124195c", "7b7c78ac4c195c",
+           "3b7c57dfe41c5c", "db7cc0388c275c", "fbfc226374275c",
+           "3bbcf3637c275c", "db3c460bac435c", "9bbc61b644815c",
+           "7b7c62fb84955b")
+_T9E2QB = ("36845ff925c7a72c", "36249fd665f9a72d",
+           "36847fe045a32732", "36e4fffa1d90a732",
+           "b6449ffc3d092734", "b644ffe4d50fa734",
+           "b6643fd1655ca73f", "36049fc4d5f22745",
+           "b6845f9705172745", "b6845fc84d17a745",
+           "b6845fa2651ca745", "b6a43fa3edd4a747",
+           "b6c47fe34d972747", "36a47fdfb5362758",
+           "b604ffb1256aa758")
+_T9E2QN = "36e4ffa39dfaa75a"
+_T9E2QC = ((0, 0x87), (2, 0x01), (3, 0x00), (6, 0xa7),
+          (7, 0xc2), (8, 0x24), (9, 0x01), (10, 0xd6), (11, 0x60),
+          (12, 0xc1), (13, 0xdd), (14, 0x16), (15, 0x6b), (16, 0x98),
+          (17, 0xa7), (18, 0x06), (20, 0x2d), (21, 0xbf), (22, 0xd0),
+          (23, 0xdc), (24, 0xfb), (25, 0xfc), (26, 0xef), (27, 0x4f),
+          (28, 0x67), (29, 0x65), (30, 0x1b), (31, 0x06), (36, 0x44),
+          (37, 0xab), (38, 0x89), (45, 0xb4), (46, 0x1c), (48, 0xdd),
+          (49, 0xd5), (50, 0x70), (51, 0x0a), (54, 0x42),
+          (55, 0xbb), (56, 0xce), (57, 0xf0), (58, 0x17), (59, 0xda),
+          (60, 0x0a), (61, 0xdf), (62, 0x57), (63, 0x55), (64, 0x34),
+          (65, 0x3c), (66, 0x88), (67, 0x75))
 _T7CC = ((0, 0x75), (1, 0x01), (2, 0x00), (3, 0x00), (6, 0xc1),
          (7, 0x6b), (8, 0xfa), (9, 0xf6), (10, 0xcf),
          (11, 0x25), (12, 0x00), (13, 0xad), (14, 0xfc),
@@ -6995,6 +7039,51 @@ def main():
             if pay[b] != v:
                 return fail("T9C2Q const %d" % b)
         print("CLOSED T9C2Q N=%d off=%d" % (n, off))
+        return 0
+    if n <= 14045:  # T9E2: 15-row tab b40-45 + single 14045
+        off = n - 14030
+        if len(pay) != 68:
+            return fail("T9E2 paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if pay[4] != (l10 & 0xFF):
+            return fail("T9E2 lencode")
+        if n == 14045:
+            if pay.hex() != _T9E20:
+                return fail("T9E20 lit")
+            print("CLOSED T9E20 N=%d off=%d" % (n, off))
+            return 0
+        if bytes((pay[40], pay[41], pay[42], pay[43], pay[44],
+                   pay[45])).hex() != _T9E2T[off]:
+            return fail("T9E2 tab")
+        for b, v in _T9E2C:
+            if pay[b] != v:
+                return fail("T9E2 const %d" % b)
+        print("CLOSED T9E2 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 14285:  # T9E2Q: 15x16 tab b40-43,47,52,53 + 8B words, k15 edge
+        off = n - 14046
+        if len(pay) != 68:
+            return fail("T9E2Q paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if pay[4] != (l10 & 0xFF):
+            return fail("T9E2Q lencode")
+        m = off & 15
+        q = off >> 4
+        if pay[5] != 0xed + (off >= 34) + (off >= 162):
+            return fail("T9E2Q b5")
+        if bytes((pay[40], pay[41], pay[42], pay[43], pay[47], pay[52],
+                   pay[53])).hex() != _T9E2QT[m]:
+            return fail("T9E2Q tab")
+        blk = bytes((pay[1], pay[19], pay[32], pay[33], pay[34], pay[35],
+                     pay[39], pay[44])).hex()
+        exp = _T9E2QB[q] if m < 15 else (_T9E2QB[q + 1] if q < 14
+                                        else _T9E2QN)
+        if blk != exp:
+            return fail("T9E2Q blk")
+        for b, v in _T9E2QC:
+            if pay[b] != v:
+                return fail("T9E2Q const %d" % b)
+        print("CLOSED T9E2Q N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
