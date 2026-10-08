@@ -326,6 +326,43 @@ def main():
             return fail("dip1077 bytes")
         print("CLOSED DIP44 N=1077")
         return 0
+    if n <= 1152:  # T4 plateau B4 (NOTE-w2s7-13: k-form + j-counter)
+        if n <= 1104:
+            print("N out of scope", file=sys.stderr)
+            return 2
+        if len(pay) != 48:
+            return fail("T4B4 paylen")
+        off = n - 821
+        if grp(pay, tuple(range(32, 42))) != (((n << 1) | 1) & 0x3FF):
+            return fail("T4B4 lencode")
+        if pay[5] & 0xFC != 0:
+            return fail("T4B4 b5hi")
+        k = (off - 284) >> 4
+        j = (off - 284) & 15
+        if pay[33] != (0x41 | ((k & 1) << 7)):
+            return fail("T4B4 b33")
+        if pay[34] != (0x82 | ((k >> 1) & 1) | ((9 - 3 * k) << 2)):
+            return fail("T4B4 b34")
+        if pay[35] != (0xD0 | (k + 1)):
+            return fail("T4B4 b35")
+        if pay[42] != (0x07 | ((j & 7) << 5)):
+            return fail("T4B4 b42")
+        if pay[43] != ((j >> 3) & 1):
+            return fail("T4B4 b43")
+        for b, v in ((0, 0xe0), (1, 0), (2, 0), (3, 0), (6, 0), (7, 0),
+                     (8, 0x0c), (9, 0), (10, 0x7c), (11, 0xd1), (12, 0),
+                     (13, 0), (14, 0x3c), (15, 0), (16, 0x0e), (17, 0),
+                     (18, 0), (19, 0xeb), (20, 0x24), (21, 0xdc),
+                     (22, 0x33), (23, 0x05), (24, 0x06), (25, 0xc0),
+                     (26, 0x43), (27, 0xf0), (28, 0x86), (29, 0xef),
+                     (30, 0xf8), (31, 0xbd), (32, 0x69), (36, 0x05),
+                     (37, 0x7c), (38, 0x30), (39, 0x42), (40, 0x01),
+                     (41, 0x80), (44, 0x0a), (45, 0x80), (46, 0x85),
+                     (47, 0xdb)):
+            if pay[b] != v:
+                return fail("T4B4 const %d" % b)
+        print("CLOSED T4B4 N=%d off=%d" % (n, off))
+        return 0
     print("N out of scope", file=sys.stderr)
     return 2
 
