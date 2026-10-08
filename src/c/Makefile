@@ -11,6 +11,12 @@ LDLIBS = -lz $(LZMA_DYLIB)
 
 all: $(BUILDDIR)/aae $(BUILDDIR)/rgramc
 
+# Phony short names (PV-0f57814): bare `make rgramc` must NOT fall
+# through to the implicit rule (which drops ./rgramc in the repo).
+.PHONY: aae rgramc
+aae: $(BUILDDIR)/aae
+rgramc: $(BUILDDIR)/rgramc
+
 $(BUILDDIR)/aae: aae.c lz4c.c lz4c.h
 	mkdir -p $(BUILDDIR)
 	$(CC) $(CFLAGS) -o $@ aae.c lz4c.c $(LDLIBS)
