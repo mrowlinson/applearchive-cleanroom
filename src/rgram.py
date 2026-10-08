@@ -107,6 +107,61 @@ _T5DIP = ("947f38024b438a0df0e201006e44228b57b5b916088e845fe9049ef1b"
           "07d7f47e934adb748e0a75608fc164b49285bfb")
 _T5DIP604 = ("747c52fc0356ef9d5337800091251d59e65a8c48088e845fe9049e51b"
              "07d7f47e934adb748e0a75608fc164b49285bfb")
+# T5G tables: action moves to b28-39. G1b/G2 = fixed row-tabs
+# (OPEN why); G3 = 16-tabs + k2 segs.
+_T5G0 = ("7d0000000556ef9d5337804000747c5291251dae55df39d1694e309f"
+        "2fe28f67bebfa313e934adb748e0a75608fc164b49285bfb")
+_T5G1T = ("a7fc8f3c", "92bfd33c", "a8bfdb3c", "bebfe33c",
+          "d4bfeb3c", "eabff33c", "00fcfb3c", "16fc033d",
+          "2cfc0b3d", "42fc133d", "2dbf573d", "43bf5f3d",
+          "59bf673d", "6fbf6f3d", "85bf773d", "9bbf7f3d")
+_T5G1C = ((0, 0xa8), (1, 0x0f), (2, 0x00), (3, 0x00), (5, 0x56),
+          (6, 0xef), (7, 0x9d), (8, 0x53), (9, 0x37), (10, 0x80),
+          (11, 0xcb), (12, 0x00), (13, 0x74), (14, 0x7c),
+          (15, 0x52), (16, 0x91), (17, 0x25), (18, 0x1d),
+          (19, 0x97), (20, 0x55), (21, 0xdf), (22, 0x39),
+          (23, 0xd1), (24, 0x69), (25, 0x8e), (26, 0x08),
+          (27, 0x6f), (28, 0xb0), (29, 0x04), (30, 0x60),
+          (31, 0xf1), (36, 0x2d), (37, 0x4e), (38, 0xd3),
+          (39, 0x7a), (40, 0x48), (41, 0xe0), (42, 0xa7),
+          (43, 0x56), (44, 0x08), (45, 0xfc), (46, 0x16),
+          (47, 0x4b), (48, 0x49), (49, 0x28), (50, 0x5b),
+          (51, 0xfb))
+_T5G2T = ("d6fc1f02ce48", "c0fcb7d4ae41", "37fcaf2f6e3f",
+          "c0bffb830e44", "20fcbf950e3d", "19bfc72f6e3f",
+          "adbf17d5ae41", "24bf0f306e3f", "bafc13306e3f",
+          "5bfc1b306e3f")
+_T5G2C = ((0, 0xea), (1, 0x03), (2, 0x00), (3, 0x00), (5, 0x56),
+          (6, 0xef), (7, 0x9d), (8, 0x53), (9, 0x37), (10, 0x80),
+          (11, 0x39), (12, 0x00), (13, 0x74), (14, 0x7c),
+          (15, 0x52), (16, 0x91), (17, 0x25), (18, 0x1d),
+          (19, 0xfa), (20, 0x55), (21, 0xdf), (22, 0x39),
+          (23, 0xd1), (24, 0x69), (25, 0x8e), (26, 0x02),
+          (27, 0x3f), (28, 0xed), (29, 0x84), (30, 0x58),
+          (31, 0x3c), (38, 0xa0), (39, 0xf5), (40, 0x48),
+          (41, 0xe0), (42, 0xa7), (43, 0x56), (44, 0x08),
+          (45, 0xfc), (46, 0x16), (47, 0x4b), (48, 0x49),
+          (49, 0x28), (50, 0x5b), (51, 0xfb))
+_T5G3T30 = (0x58, 0x58, 0xf8, 0x88, 0x28, 0xb8, 0x58, 0xe8,
+            0xf8, 0x88, 0x28, 0xb8, 0x58, 0xe8, 0xf8, 0x88)
+_T5G3T31 = (0xc2, 0xc2, 0xc2, 0xc3, 0xc4, 0xc4, 0xc5, 0xc5,
+            0xc5, 0xc6, 0xc7, 0xc7, 0xc8, 0xc8, 0xc8, 0xc9)
+_T5G3T38 = (0xa0, 0xa0, 0xa8, 0x30, 0x38, 0xc0, 0xc8, 0x50,
+            0xd0, 0x58, 0x60, 0xe8, 0xf0, 0x78, 0xf8, 0x80)
+_T5G3T39 = (0xd6, 0xf6, 0xd9, 0xf2, 0xd5, 0xed, 0xd0, 0xe9,
+            0xd3, 0xec, 0xcf, 0xe7, 0xca, 0xe3, 0xcd, 0xe6)
+_T5G3K = ("e4bf67840e44", "9bbf2b306e3f", "24bf77840e44",
+          "aafc2306ce3a")
+_T5G3C = ((0, 0xab), (1, 0x3e), (2, 0x00), (3, 0x00), (5, 0x56),
+          (6, 0xef), (7, 0x9d), (8, 0x53), (9, 0x37), (10, 0x80),
+          (11, 0x39), (12, 0x00), (13, 0x74), (14, 0x7c),
+          (15, 0x52), (16, 0x91), (17, 0x25), (18, 0x1d),
+          (19, 0xfa), (20, 0x55), (21, 0xdf), (22, 0x39),
+          (23, 0xd1), (24, 0x69), (25, 0x8e), (26, 0x02),
+          (27, 0x3f), (28, 0xed), (29, 0x84), (40, 0x2c),
+          (41, 0x04), (42, 0x7e), (43, 0x6a), (44, 0x08),
+          (45, 0xfc), (46, 0x16), (47, 0x4b), (48, 0x49),
+          (49, 0x28), (50, 0x5b), (51, 0xfb))
 _T5ET5H = (0x20, 0x20, 0x40, 0x60, 0x60, 0x80, 0x80, 0xa0, 0xa0, 0xc0,
            0xc0, 0xe0, 0xe0, 0x00, 0x00, 0x20)
 _T5ET6 = (0xb9, 0xf9, 0xc0, 0x87, 0xc7, 0x8e, 0xce, 0x95, 0xd5, 0x9c,
@@ -1055,6 +1110,59 @@ def main():
         if len(pay) != 48 or pay.hex() != _T5DIP604:
             return fail("T5DIP604")
         print("CLOSED T5DIP604 N=2817")
+        return 0
+    if n == 2818:  # 52B transition singleton (off=605)
+        if len(pay) != 52 or pay.hex() != _T5G0:
+            return fail("T5G0")
+        print("CLOSED T5G0 N=2818")
+        return 0
+    if n <= 2834:  # T5G1: 16-row b32-35 tab + frozen body
+        off = n - 2213
+        if len(pay) != 52:
+            return fail("T5G1 paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if grp(pay, tuple(range(32, 42))) != l10:
+            return fail("T5G1 lencode")
+        if pay[32:36].hex() != _T5G1T[off - 606]:
+            return fail("T5G1 row")
+        for b, v in _T5G1C:
+            if pay[b] != v:
+                return fail("T5G1 const %d" % b)
+        print("CLOSED T5G1 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 2844:  # T5G2: 10-row b32-37 tab + frozen body
+        off = n - 2213
+        if len(pay) != 52:
+            return fail("T5G2 paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if grp(pay, tuple(range(32, 42))) != l10:
+            return fail("T5G2 lencode")
+        if pay[32:38].hex() != _T5G2T[off - 622]:
+            return fail("T5G2 row")
+        for b, v in _T5G2C:
+            if pay[b] != v:
+                return fail("T5G2 const %d" % b)
+        print("CLOSED T5G2 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 2908:  # T5G3: 16-tabs b30/31/38/39 + k2 b32-37
+        off = n - 2213
+        if len(pay) != 52:
+            return fail("T5G3 paylen")
+        l10 = (((n << 1) | 1) & 0x3FF)
+        if grp(pay, tuple(range(32, 42))) != l10:
+            return fail("T5G3 lencode")
+        m = (off - 632) & 15
+        k2 = (off - 632) >> 4
+        if pay[30] != _T5G3T30[m] or pay[31] != _T5G3T31[m]:
+            return fail("T5G3 tab30")
+        if pay[32:38].hex() != _T5G3K[k2]:
+            return fail("T5G3 k2")
+        if pay[38] != _T5G3T38[m] or pay[39] != _T5G3T39[m]:
+            return fail("T5G3 tab38")
+        for b, v in _T5G3C:
+            if pay[b] != v:
+                return fail("T5G3 const %d" % b)
+        print("CLOSED T5G3 N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
