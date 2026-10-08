@@ -21,6 +21,9 @@ _T2SCRAM = (0x8dbe, 0x1386, 0x9d42, 0x230a, 0xacc6, 0x328e, 0xbc4a,
 _T2W32 = (0x5196, 0xdb52, 0x611a, 0xead6, 0x709e)
 _T2W240 = ((0x82, 0x10), (0x72, 0x0f), (0x82, 0x10), (0x72, 0x0f),
            (0x82, 0x10))
+# N=1077 dip-44 payload literal (formula OPEN).
+_T4DIP1077 = ("780000066b0000000c0000000e00000060dd170dc40078000600e001"
+              "048060840000000001000f000658b8fd")
 
 
 def bit(p, i):
@@ -55,9 +58,11 @@ def main():
             return fail("stored content not zeros")
         print("CLOSED stored N=%d" % n)
         return 0
-    if len(pay) != 44:
-        return fail("paylen %d != 44" % len(pay))
+    if len(pay) not in (44, 48):
+        return fail("paylen %d" % len(pay))
     if n <= 127:  # T0
+        if len(pay) != 44:
+            return fail("T0 paylen")
         off = n - 64
         if pay[4] != ((off << 1) | 1):
             return fail("T0 byte4 %02x" % pay[4])
@@ -100,6 +105,8 @@ def main():
         print("CLOSED T0 N=%d off=%d" % (n, off))
         return 0
     if n <= 255:  # T1
+        if len(pay) != 44:
+            return fail("T1 paylen")
         off = n - 128
         if pay[4] != ((off << 1) | 1) & 0xFF:
             return fail("T1 lencode")
@@ -116,6 +123,8 @@ def main():
         print("CLOSED T1 N=%d off=%d" % (n, off))
         return 0
     if n <= 511:  # T2 (NOTE-w2s6-9/10: pre-edge echo + regimes)
+        if len(pay) != 44:
+            return fail("T2 paylen")
         off = n - 256
         if grp(pay, (32, 33, 34, 35, 36, 37, 38, 39, 40)) != \
                 ((off << 1) | 1):
@@ -184,6 +193,8 @@ def main():
         print("CLOSED T2 N=%d off=%d" % (n, off))
         return 0
     if n <= 820:  # T3 (NOTE-w2s7-2/3: halted clock C + cascade table)
+        if len(pay) != 44:
+            return fail("T3 paylen")
         off = n - 512
         if grp(pay, tuple(range(32, 42))) != ((off << 1) | 1):
             return fail("T3 lencode")
@@ -270,6 +281,50 @@ def main():
         elif b16.hex() != _T3P245[3]:
             return fail("T3 p293")
         print("CLOSED T3 N=%d off=%d" % (n, off))
+        return 0
+    if n <= 1076:  # T4 plateau A (NOTE-w2s7-11: unified L10 + 1024 flip)
+        if len(pay) != 48:
+            return fail("T4A paylen")
+        off = n - 821
+        if grp(pay, tuple(range(32, 42))) != (((n << 1) | 1) & 0x3FF):
+            return fail("T4A lencode")
+        if pay[5] & 0xFC != 0:
+            return fail("T4A b5hi")
+        f = off >= 203
+        if pay[0] != (0x0D if f else 0x06):
+            return fail("T4A b0")
+        if pay[8] != (0x6C if f else 0x2B):
+            return fail("T4A b8")
+        if pay[11] != (0x00 if f else 0x80):
+            return fail("T4A b11")
+        if pay[15] != (0xC0 if f else 0xE0):
+            return fail("T4A b15")
+        if pay[45] != (0x58 if f else 0x50):
+            return fail("T4A b45")
+        if pay[19] != (0x20 if (off >> 3) & 1 else 0x00):
+            return fail("T4A b19")
+        if pay[27] != ((off >> 4) << 2):
+            return fail("T4A b27")
+        if pay[31] != (0x1E | ((off & 7) << 5)):
+            return fail("T4A b31")
+        for b, v in ((1, 0), (2, 0), (3, 0), (6, 0), (7, 0), (9, 0),
+                     (10, 0), (12, 0), (13, 0), (14, 0), (16, 0x0e),
+                     (17, 0), (18, 0), (20, 0x55), (21, 0x56), (22, 0xbe),
+                     (23, 0xff), (24, 0x05), (25, 0), (26, 0xf0),
+                     (28, 0x0a), (29, 0), (30, 0), (32, 0x08), (33, 0),
+                     (34, 0x08), (35, 0x46), (36, 0), (37, 0), (38, 0),
+                     (39, 0), (40, 0x01), (41, 0), (42, 0x0f), (43, 0),
+                     (44, 0x06), (46, 0xb8), (47, 0xfd)):
+            if pay[b] != v:
+                return fail("T4A const %d" % b)
+        print("CLOSED T4A N=%d off=%d" % (n, off))
+        return 0
+    if n == 1077:  # dip-44 literal (formula OPEN)
+        if len(pay) != 44:
+            return fail("dip1077 paylen")
+        if pay.hex() != _T4DIP1077:
+            return fail("dip1077 bytes")
+        print("CLOSED DIP44 N=1077")
         return 0
     print("N out of scope", file=sys.stderr)
     return 2

@@ -251,7 +251,17 @@ AEA=${AEA:-/usr/bin/aea}
 PW="0123456789abcdef0123456789abcdef"
 python3 -c "import random; open('$WORK/key32.bin','wb').write(random.Random(4242).randbytes(32))"
 HEX=$(xxd -p "$WORK/key32.bin" | tr -d '\n')
-openssl ecparam -name prime256v1 -genkey -noout -out "$WORK/ec-priv.pem" 2>/dev/null
+# regen until 32B EC private: aea rejects LibreSSL minimal-length 31B keys
+# (~1/256 fresh keys; flake was a-p0/p2/p4 rc + p3 RT-DIFF in one run).
+i=0
+while [ "$i" -lt 10 ]; do
+  openssl ecparam -name prime256v1 -genkey -noout -out "$WORK/ec-priv.pem" 2>/dev/null
+  if python3 -c "import sys,base64
+pem = open('$WORK/ec-priv.pem').read().splitlines()
+der = base64.b64decode(''.join(pem[1:-1]))
+sys.exit(0 if der[5] == 0x04 and der[6] == 0x20 else 1)"; then break; fi
+  i=$((i + 1))
+done
 openssl ec -in "$WORK/ec-priv.pem" -pubout -out "$WORK/ec-pub.pem" 2>/dev/null
 for n in 0 1 100 1000 5000; do
   if [ "$n" = 0 ]; then : > "$IN/a$n.bin"; else head -c "$n" /dev/zero > "$IN/a$n.bin"; fi
