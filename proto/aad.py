@@ -99,23 +99,39 @@ def decode_block(magic, payload, unc, comp):
 
 
 def parse_chain(data):
-    """-> (inner_bytes, metas). PRE-002: 12B prefix + [16B hdr + comp]*."""
+    """-> (inner_bytes, metas). 12B prefix + [16B hdr + comp]* (DPROBE-08):
+    prefix = magic(4) + bsize u64be; block hdr = raw u64be + pay u64be."""
     if bytes(data[:4]) in INNER_MAGICS:
         return bytes(data), [{"alg": "raw", "stored": True,
                               "unc": len(data), "comp": len(data)}]
     if bytes(data[:3]) != b"pbz" or len(data) < 28:
         raise FmtErr("bad outer magic")
     magic = bytes(data[:4])
-    if data[4:8] != b"\0\0\0\0":
-        raise FmtErr("prefix zeros nonzero")
-    bsize = struct.unpack(">I", data[8:12])[0]
+    (bsize,) = struct.unpack(">Q", data[4:12])
+    if bsize == 0 or bsize > 0x8000000:
+        raise FmtErr("Failed to create decompression stream\n"
+                     "Error creating input stream\n"
+                     "extract failedError 0x9404c000\n"
+                     "invalid block size")
     inner, metas, off = bytearray(), [], 12
     while off < len(data):
         if off + 16 > len(data):
             raise FmtErr("block header past EOF at %d" % off)
-        z1, unc, z2, comp = struct.unpack(">4sI4sI", data[off:off + 16])
-        if z1 != b"\0\0\0\0" or z2 != b"\0\0\0\0":
-            raise FmtErr("block zeros nonzero at %d" % off)
+        raw, pay = struct.unpack(">QQ", data[off:off + 16])
+        if raw > bsize or pay > bsize:
+            raise FmtErr("Extraction failed\n"
+                         "extract failedError 0xbd009800\n"
+                         "istream read error\n"
+                         "refill buffer\n"
+                         "archive stream read error (header)\n"
+                         "flushing shared buffer\n"
+                         "Invalid block header payload=0x%x raw=0x%x block=0x%x\n"
+                         "\n"
+                         "NOP received\n"
+                         "processStream\n"
+                         "decoder failed\n"
+                         "stream cancelled" % (pay, raw, bsize))
+        unc, comp = raw, pay
         payload = bytes(data[off + 16:off + 16 + comp])
         if len(payload) != comp:
             raise FmtErr("block data past EOF at %d" % off)
@@ -286,15 +302,16 @@ def apply_rest(target, entries, blobs, islink):
     _, gid = _get(entries, b"GID")
     _, mtm = _get(entries, b"MTM")
     if not islink:
-        if mod is not None:
-            try:
-                os.chmod(target, mod & 0o7777)
-            except OSError:
-                pass
+        # chown BEFORE chmod: successful chown strips SUID/SGID (191).
         if uid is not None or gid is not None:
             try:
                 os.chown(target, -1 if uid is None else uid,
                          -1 if gid is None else gid)
+            except OSError:
+                pass
+        if mod is not None:
+            try:
+                os.chmod(target, mod & 0o7777)
             except OSError:
                 pass
     if mtm is not None:

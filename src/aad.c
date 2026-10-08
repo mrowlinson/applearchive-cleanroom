@@ -28,6 +28,7 @@ static uint32_t rd32le(const unsigned char *p) {
     return (uint32_t)p[0] | ((uint32_t)p[1] << 8) |
            ((uint32_t)p[2] << 16) | ((uint32_t)p[3] << 24);
 }
+static uint32_t rd32be(const unsigned char *p) __attribute__((unused));
 static uint32_t rd32be(const unsigned char *p) {
     return ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16) |
            ((uint32_t)p[2] << 8) | (uint32_t)p[3];
@@ -36,6 +37,11 @@ static uint64_t rd64le(const unsigned char *p) __attribute__((unused));
 static uint64_t rd64le(const unsigned char *p) {
     uint64_t v = 0;
     for (int i = 7; i >= 0; i--) v = (v << 8) | p[i];
+    return v;
+}
+static uint64_t rd64be(const unsigned char *p) {
+    uint64_t v = 0;
+    for (int i = 0; i < 8; i++) v = (v << 8) | p[i];
     return v;
 }
 
@@ -125,16 +131,40 @@ static int parse_chain(const Buf *file, Buf *inner) {
     if (n < 28 || memcmp(d, "pbz", 3)) { FAIL("bad outer magic\n"); return -1; }
     unsigned char magic[4];
     memcpy(magic, d, 4);
-    if (memcmp(d + 4, "\0\0\0\0", 4)) { FAIL("prefix zeros\n"); return -1; }
+    /* prefix = magic(4) + bsize u64be; no zero fields (DPROBE-08). */
+    uint64_t bsize = rd64be(d + 4);
+    if (bsize == 0 || bsize > 0x8000000ULL) {
+        fprintf(stderr, "Failed to create decompression stream\n"
+                "Error creating input stream\n"
+                "extract failedError 0x9404c000\n"
+                "invalid block size\n");
+        fails = 1;
+        return -1;
+    }
     Buf acc = { NULL, 0 };
     size_t off = 12;
     while (off < n) {
         if (off + 16 > n) { FAIL("block hdr past EOF\n"); goto err; }
-        if (memcmp(d + off, "\0\0\0\0", 4) ||
-            memcmp(d + off + 8, "\0\0\0\0", 4)) {
-            FAIL("block zeros @%zu\n", off); goto err;
+        uint64_t raw = rd64be(d + off), pay = rd64be(d + off + 8);
+        if (raw > bsize || pay > bsize) {
+            fprintf(stderr, "Extraction failed\n"
+                    "extract failedError 0xbd009800\n"
+                    "istream read error\n"
+                    "refill buffer\n"
+                    "archive stream read error (header)\n"
+                    "flushing shared buffer\n"
+                    "Invalid block header payload=0x%llx raw=0x%llx block=0x%llx\n"
+                    "\n"
+                    "NOP received\n"
+                    "processStream\n"
+                    "decoder failed\n"
+                    "stream cancelled\n",
+                    (unsigned long long)pay, (unsigned long long)raw,
+                    (unsigned long long)bsize);
+            fails = 1;
+            goto err;
         }
-        uint32_t unc = rd32be(d + off + 4), comp = rd32be(d + off + 12);
+        uint32_t unc = (uint32_t)raw, comp = (uint32_t)pay;
         if (off + 16 + comp > n) { FAIL("block data past EOF\n"); goto err; }
         Buf blk = { NULL, 0 };
         if (decode_block(magic, d + off + 16, comp, unc, &blk)) goto err;
@@ -388,15 +418,16 @@ static int apply_xattr_only(const char *target, const Item *it, int islink) {
 static void apply_rest(const char *target, const Item *it, int islink) {
     const Entry *e;
     if (!islink) {
-        e = find_ent(it, "MOD");
-        if (e && (e->st == '1' || e->st == '2' || e->st == '4' || e->st == '8'))
-            chmod(target, (mode_t)(e->num & 07777));
+        /* chown BEFORE chmod: successful chown strips SUID/SGID (191). */
         e = find_ent(it, "UID");
         uint64_t uid = e ? e->num : (uint64_t)-1;
         e = find_ent(it, "GID");
         uint64_t gid = e ? e->num : (uint64_t)-1;
         if (uid != (uint64_t)-1 || gid != (uint64_t)-1)
             chown(target, (uid_t)uid, (gid_t)gid); /* EPERM-tolerant */
+        e = find_ent(it, "MOD");
+        if (e && (e->st == '1' || e->st == '2' || e->st == '4' || e->st == '8'))
+            chmod(target, (mode_t)(e->num & 07777));
     } else {
         e = find_ent(it, "UID");
         uint64_t uid = e ? e->num : (uint64_t)-1;

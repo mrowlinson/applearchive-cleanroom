@@ -40,8 +40,11 @@ def sig(root):
             if os.path.islink(p):
                 v = ("link", os.readlink(p))
             elif os.path.isfile(p):
-                with open(p, "rb") as f:
-                    v = ("file", f.read())
+                try:
+                    with open(p, "rb") as f:
+                        v = ("file", f.read())
+                except OSError:
+                    v = ("unreadable",)
             else:
                 v = ("other", stat.S_IFMT(s.st_mode))
             d[os.path.relpath(p, root)] = (oct(s.st_mode), v)
@@ -80,21 +83,41 @@ def run(argv, timeout):
         return ("error", -2)
 
 
-def run_oracle(aar, outdir):
-    shutil.rmtree(outdir, ignore_errors=True)
+def _rmshell(func, path, _exc):
+    # corrupt FLG/MOD may leave uchg / 000-perm outputs; clear then retry.
+    try:
+        if hasattr(os, "chflags"):
+            os.chflags(path, 0)
+    except OSError:
+        pass
+    try:
+        os.chmod(path, 0o700)
+    except OSError:
+        pass
+    try:
+        func(path)
+    except OSError:
+        pass
+
+
+def _fresh(outdir):
+    if os.path.lexists(outdir):
+        shutil.rmtree(outdir, onerror=_rmshell)
     os.makedirs(outdir, exist_ok=True)
+
+
+def run_oracle(aar, outdir):
+    _fresh(outdir)
     return run(["sh", ORACLE_AD, "aar-decode", aar, outdir], 25)
 
 
 def run_c(aar, outdir):
-    shutil.rmtree(outdir, ignore_errors=True)
-    os.makedirs(outdir, exist_ok=True)
+    _fresh(outdir)
     return run([C_BIN, aar, outdir], 10)
 
 
 def run_proto(aar, outdir):
-    shutil.rmtree(outdir, ignore_errors=True)
-    os.makedirs(outdir, exist_ok=True)
+    _fresh(outdir)
     return run(["python3", PROTO, aar, outdir], 30)
 
 

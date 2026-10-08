@@ -510,5 +510,55 @@ diff -r "$WORK/o-nh" "$WORK/c-nh" >/dev/null 2>&1 && pass "nh-tree" || fail "nh-
 grep -q "final state" "$WORK/nh.err" && grep -q "process hlinks" "$WORK/nh.err" && ! grep -q "entries failed" "$WORK/nh.err" && pass "nh-shape" || fail "nh-shape"
 
 echo "== $WORK =="
+echo "== cell outer-bsize (u64 bsize rule, stderr IDENT) =="
+python3 "$HERE/craft.py" setbsize "$V/aar/empty-lzfse.aar" "$WORK/bs0.aar" 0000000000000000 || die "craft-bs0"
+python3 "$HERE/craft.py" setbsize "$V/aar/empty-lzfse.aar" "$WORK/bsm.aar" 0000000008000001 || die "craft-bsm"
+python3 "$HERE/craft.py" setbsize "$V/aar/empty-lzfse.aar" "$WORK/bshi.aar" ff00000000400000 || die "craft-bshi"
+for T in bs0 bsm bshi; do
+  ORC=0; sh "$ADAPTER" aar-decode "$WORK/$T.aar" "$WORK/o-$T" >/dev/null 2>"$WORK/$T-o.err" || ORC=$?
+  mkdir -p "$WORK/c-$T"
+  CRC=0; "$AAD" "$WORK/$T.aar" "$WORK/c-$T" 2>"$WORK/$T.err" || CRC=$?
+  [ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "$T-exit" || fail "$T-exit"
+  diff -r "$WORK/o-$T" "$WORK/c-$T" >/dev/null 2>&1 && pass "$T-tree" || fail "$T-tree"
+  diff "$WORK/$T-o.err" "$WORK/$T.err" >/dev/null 2>&1 && pass "$T-shape" || fail "$T-shape"
+done
+
+echo "== cell outer-blkhdr (unc>bsize cascade, stderr IDENT) =="
+python3 "$HERE/craft.py" setbsize "$V/aar/hello-lzfse.aar" "$WORK/oh.aar" 00000000000003e8 || die "craft-oh"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/oh.aar" "$WORK/o-oh" >/dev/null 2>"$WORK/oh-o.err" || ORC=$?
+mkdir -p "$WORK/c-oh"
+CRC=0; "$AAD" "$WORK/oh.aar" "$WORK/c-oh" 2>"$WORK/oh.err" || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "oh-exit" || fail "oh-exit"
+diff -r "$WORK/o-oh" "$WORK/c-oh" >/dev/null 2>&1 && pass "oh-tree" || fail "oh-tree"
+diff "$WORK/oh-o.err" "$WORK/oh.err" >/dev/null 2>&1 && pass "oh-shape" || fail "oh-shape"
+
+echo "== cell outer-raw64 (u64 raw naming, stderr IDENT) =="
+python3 "$HERE/craft.py" setblk "$V/aar/empty-lzfse.aar" "$WORK/r64.aar" 0 01000000000000710000000000000071 || die "craft-r64"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/r64.aar" "$WORK/o-r64" >/dev/null 2>"$WORK/r64-o.err" || ORC=$?
+mkdir -p "$WORK/c-r64"
+CRC=0; "$AAD" "$WORK/r64.aar" "$WORK/c-r64" 2>"$WORK/r64.err" || CRC=$?
+[ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "r64-exit" || fail "r64-exit"
+diff -r "$WORK/o-r64" "$WORK/c-r64" >/dev/null 2>&1 && pass "r64-tree" || fail "r64-tree"
+diff "$WORK/r64-o.err" "$WORK/r64.err" >/dev/null 2>&1 && pass "r64-shape" || fail "r64-shape"
+
+echo "== cell outer-multiblock (2-block chains) =="
+python3 "$HERE/craft.py" mbcat "$V/aar/hello-lzfse.aar" "$WORK/mb12.aar" "$V/aar/empty-lzfse.aar" || die "craft-mb12"
+python3 "$HERE/craft.py" mbcat "$V/aar/empty-lzfse.aar" "$WORK/mb21.aar" "$V/aar/hello-lzfse.aar" || die "craft-mb21"
+for T in mb12 mb21; do
+  ORC=0; sh "$ADAPTER" aar-decode "$WORK/$T.aar" "$WORK/o-$T" >/dev/null 2>&1 || ORC=$?
+  CRC=0; "$AAD" "$WORK/$T.aar" "$WORK/c-$T" 2>/dev/null || CRC=$?
+  [ "$ORC" -eq 0 ] && [ "$CRC" -eq 0 ] && pass "$T-exit" || fail "$T-exit"
+  diff -r "$WORK/o-$T" "$WORK/c-$T" >/dev/null 2>&1 && pass "$T-tree" || fail "$T-tree"
+done
+
+echo "== cell mode-suid (chown-before-chmod keeps setgid) =="
+python3 "$HERE/craft.py" setmod "$V/aar/hello-raw.aar" "$WORK/suid.aar" hello/greet.txt 3244 || die "craft-suid"
+ORC=0; sh "$ADAPTER" aar-decode "$WORK/suid.aar" "$WORK/o-suid" >/dev/null 2>&1 || ORC=$?
+CRC=0; "$AAD" "$WORK/suid.aar" "$WORK/c-suid" 2>/dev/null || CRC=$?
+[ "$ORC" -eq 0 ] && [ "$CRC" -eq 0 ] && pass "suid-exit" || fail "suid-exit"
+[ "$(stat -f %p "$WORK/o-suid/hello/greet.txt")" = "$(stat -f %p "$WORK/c-suid/hello/greet.txt")" ] && [ "$(stat -f %p "$WORK/c-suid/hello/greet.txt")" = "103244" ] && pass "suid-mode" || fail "suid-mode"
+chmod u+r "$WORK/o-suid/hello/greet.txt" "$WORK/c-suid/hello/greet.txt"
+diff -r "$WORK/o-suid" "$WORK/c-suid" >/dev/null 2>&1 && pass "suid-tree" || fail "suid-tree"
+
 [ "$FAIL" -eq 0 ] && echo CBATTERY-GREEN || echo CBATTERY-RED
 exit "$FAIL"

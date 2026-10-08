@@ -20,6 +20,9 @@ Usage: craft.py CMD IN OUT ARGS...
   setbloblen IN OUT PAT KEY N set blob-len field (width-kept)
   settyprec IN OUT IDX HEX    replace whole TYP record, fix hsize
   append IN OUT HEX           append raw hex bytes at EOF
+  setbsize IN OUT HEX16       patch outer bsize u64be (16 hex chars)
+  setblk IN OUT BLK HEX32     replace block BLK 16B header (32 hex chars)
+  mbcat IN OUT EXTRA          append EXTRA's blocks to IN (same magic+bsize)
 """
 import struct
 import sys
@@ -111,8 +114,48 @@ def save(d, raw, stored, path):
     open(path, "wb").write(bytes(d))
 
 
+def blocks_of(d):
+    assert bytes(d[:3]) == b"pbz" and len(d) >= 12, "outer magic"
+    out, off = [], 12
+    while off < len(d):
+        assert off + 16 <= len(d), "blk hdr"
+        raw, pay = struct.unpack(">QQ", d[off:off + 16])
+        assert off + 16 + pay <= len(d), "blk data"
+        out.append((off, raw, pay))
+        off += 16 + pay
+    assert off == len(d), "chain overrun"
+    return out
+
+
+def outer_cmd(cmd, src, dst, args):
+    d = bytearray(open(src, "rb").read())
+    if cmd == "setbsize":
+        v = bytes.fromhex(args[0])
+        assert len(v) == 8 and len(d) >= 12 and bytes(d[:3]) == b"pbz"
+        d[4:12] = v
+    elif cmd == "setblk":
+        blks = blocks_of(d)
+        off, _, _ = blks[int(args[0])]
+        v = bytes.fromhex(args[1])
+        assert len(v) == 16
+        d[off:off + 16] = v
+    elif cmd == "mbcat":
+        extra = bytearray(open(args[0], "rb").read())
+        assert bytes(extra[:4]) == bytes(d[:4]), "magic match"
+        assert bytes(extra[4:12]) == bytes(d[4:12]), "bsize match"
+        blocks_of(d)
+        blocks_of(extra)
+        d += extra[12:]
+    else:
+        raise SystemExit("unknown outer cmd")
+    open(dst, "wb").write(bytes(d))
+
+
 def main():
     cmd, src, dst, args = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4:]
+    if cmd in ("setbsize", "setblk", "mbcat"):
+        outer_cmd(cmd, src, dst, args)
+        return
     d, raw, stored = load(src)
     items = items_of(raw)
 
