@@ -102,5 +102,6 @@ Never commit vendor binaries from elsewhere.
 
 ## License
 
-Not yet chosen (private repo). No license file until the owner picks
-one; nothing here is released under any terms yet.
+0BSD (BSD Zero Clause License) — see LICENSE. Public-domain-equivalent:
+use, copy, modify, and distribute for any purpose with or without fee,
+no attribution required.
