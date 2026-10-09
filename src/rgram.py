@@ -9038,6 +9038,41 @@ _T10P45QC = (
         (53, 0x3a), (54, 0x37), (55, 0xe9), (56, 0xff), (57, 0x50),
         (58, 0xf8), (59, 0x78), (60, 0x12), (61, 0xfa), (62, 0xf9),
         (63, 0x1b), (68, 0x8b), (69, 0xfa), (70, 0x1f), (71, 0xdf))
+_T10R44M = (
+           "4cc70b1b49",
+           "4c2fc7825e",
+           "5391502f3e",
+           "535fcf5040",
+           "54d1192760",
+           "56b05b9990",
+           "56e591ea9d",
+           "57cc594198",
+           "806218a155",
+           "807e004b80",
+           "8a03e0445b",
+           "915316b335",
+           "9d3b140844",
+           "b2dd4d60c9",
+           "b347a47cb9",
+           "c22ac4ea61")
+_T10R44QH = ("de7d3f", "de7d3f", "de7dbf", "de7d3f",
+             "de7d3f", "de7dbf", "de7dbf", "de7d3f",
+             "de7d3f", "de7dbf", "5e7ebf", "5e7ebf",
+             "5e7e3f", "5e7ebf", "5e7e3f", "5e7ebf")
+_T10R44C = (
+        (0, 0x01), (1, 0x00), (2, 0x00), (3, 0x00), (6, 0x9c),
+        (7, 0x08), (8, 0xcf), (9, 0x47), (10, 0xbb), (11, 0x2c),
+        (12, 0x81), (13, 0x07), (14, 0x00), (15, 0x71), (16, 0x2a),
+        (17, 0xd8), (20, 0xff), (21, 0xda), (22, 0x88), (23, 0x1f),
+        (24, 0xe2), (25, 0x23), (26, 0xfe), (27, 0xfb), (28, 0xea),
+        (32, 0x88), (33, 0x7b), (34, 0xd5), (35, 0x4a), (37, 0x5a),
+        (38, 0x34), (39, 0x62), (40, 0x85), (41, 0xa8), (42, 0xf1),
+        (43, 0x86), (44, 0x83), (45, 0x4f), (46, 0xa3), (47, 0x97),
+        (48, 0xbd), (49, 0x85), (50, 0xb1), (51, 0x42), (52, 0x51),
+        (53, 0xfa), (54, 0xf2), (55, 0x13), (56, 0xc2), (57, 0x3a),
+        (58, 0x37), (59, 0xe9), (60, 0xff), (61, 0x50), (62, 0xf8),
+        (63, 0x78), (64, 0x12), (65, 0xfa), (66, 0xf9), (67, 0x1b),
+        (76, 0x44), (77, 0xe6), (78, 0x80), (79, 0x1f))
 _T10P5QC = ((0, 0x1d), (1, 0x02), (2, 0x00), (3, 0x00), (6, 0xc1),
          (7, 0xcc), (8, 0xa8), (9, 0x78), (10, 0xfb), (11, 0x8f),
          (12, 0x00), (13, 0x13), (14, 0x64), (15, 0x0d), (16, 0xc4),
@@ -9469,7 +9504,7 @@ def main():
             return fail("stored content not zeros")
         print("CLOSED stored N=%d" % n)
         return 0
-    if len(pay) not in (44, 48, 52, 56, 60, 64, 68, 72, 76):
+    if len(pay) not in (44, 48, 52, 56, 60, 64, 68, 72, 76, 80):
         return fail("paylen %d" % len(pay))
     if n <= 127:  # T0
         if len(pay) != 44:
@@ -18366,6 +18401,28 @@ def main():
             if pay[b] != v:
                 return fail("T10P45Q const %d" % b)
         print("CLOSED T10P45Q N=%d off=%d" % (n, off))
+        return 0
+    if n <= 32744:  # T10R44: 16x16 80B-pay, m-tab b36,72-75 + q=P45M-suf + qhead (raw lencode)
+        off = n - 32489
+        if len(pay) != 80:
+            return fail("T10R44 paylen")
+        l16 = ((n << 1) | 1) & 0xFFFF
+        if pay[4] != (l16 & 0xFF) or pay[5] != (l16 >> 8):
+            return fail("T10R44 lencode")
+        m = off & 15
+        q = off >> 4
+        if bytes((pay[36], pay[72], pay[73], pay[74],
+                   pay[75])).hex() != _T10R44M[m]:
+            return fail("T10R44 mtab")
+        if bytes((pay[18], pay[19], pay[29])).hex() != _T10R44QH[q]:
+            return fail("T10R44 qhead")
+        if bytes((pay[30], pay[31], pay[68], pay[69], pay[70],
+                   pay[71])).hex() != _T10P45M[q][2:]:
+            return fail("T10R44 qtab")
+        for b, v in _T10R44C:
+            if pay[b] != v:
+                return fail("T10R44 const %d" % b)
+        print("CLOSED T10R44 N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
