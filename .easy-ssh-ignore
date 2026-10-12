@@ -1,0 +1,8 @@
+tmp/
+build/
+*.log
+DerivedData/
+.build/
+target/
+__pycache__/
+*.pyc
