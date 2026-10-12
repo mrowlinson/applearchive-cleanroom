@@ -12490,6 +12490,76 @@ _T10P81BC = (
         (62, 0xc5), (63, 0x53), (64, 0x82), (65, 0xbb), (66, 0x59),
         (67, 0x35), (68, 0x88), (69, 0x52), (70, 0x5a), (71, 0xba),
         (72, 0x6f), (73, 0x79), (74, 0x2d), (75, 0xb1))
+_T10R80AM = (
+           "fcd8351713c0",
+           "44d9df964893",
+           "69d95e4b020f",
+           "6ad903159d3c",
+           "3bda90cde464",
+           "3bda59d8816a",
+           "46dad465ac01",
+           "58da8f997a01",
+           "98da33d943f4",
+           "dedaca59b299",
+           "18dbd495f20a",
+           "4cdb61cf6a7f",
+           "4cdb30602481",
+           "4ddb3d406e33",
+           "56db8fc374c3",
+           "56db8fc774c3",
+)
+_T10R80AQ = (
+           "7d172e314d817b9ae38abf",
+           "fd16e6bebbd8be46dac83e",
+           "7d172e314d867b43c7c542",
+           "fd16885974163e79119b09",
+)
+_T10R80AC = (
+        (0, 0x10), (3, 0x00), (5, 0x5f), (8, 0x16), (9, 0x6e),
+        (10, 0xdc), (11, 0x2f), (12, 0x00), (13, 0xaa), (14, 0x3c),
+        (15, 0xab), (16, 0xed), (17, 0x5a), (18, 0x5e), (19, 0x6f),
+        (20, 0x45), (21, 0xad), (22, 0x91), (23, 0x11), (24, 0x49),
+        (25, 0xbc), (26, 0xf6), (27, 0x8b), (28, 0x87), (29, 0x0d),
+        (30, 0xc6), (31, 0xff), (32, 0xe7), (33, 0xbb), (34, 0xaa),
+        (35, 0x1d), (36, 0x24), (40, 0xc9), (41, 0xfc), (42, 0x37),
+        (43, 0x7d), (44, 0x86), (45, 0x86), (48, 0xe4), (49, 0xc3),
+        (50, 0xac), (51, 0xcc), (52, 0x10), (53, 0x86), (54, 0x53),
+        (55, 0xcd), (56, 0xcc), (57, 0x7b), (58, 0x8d), (59, 0xd7),
+        (60, 0x86), (61, 0x38), (62, 0xc5), (63, 0x53), (64, 0x88),
+        (65, 0x52), (66, 0x5a), (67, 0xba), (68, 0x6f), (69, 0x79),
+        (70, 0x2d), (71, 0xb1))
+_T10R80BM = (
+           "40fcf25194d78e00",
+           "4efcf251e7ce6ee3",
+           "4efcf251366742e4",
+           "50fcf251eaa21c65",
+           "51fcf2513b836352",
+           "52fcf251444f0921",
+           "52fcf2515e51e9d4",
+           "53fcf251151ff77d",
+           "93bc07715e5266f7",
+           "9cbc07717ee66492",
+           "9dbc07714d21996f",
+           "9dbc0771601ec77f",
+           "a3bc0771cacb76a2",
+           "a3bc07719248d8c3",
+           "bdbc0771530c7577",
+           "bebc0771dad933f8",
+)
+_T10R80BC = (
+        (0, 0x02), (1, 0xd1), (2, 0x77), (3, 0x01), (8, 0x16),
+        (9, 0x6e), (10, 0xdc), (11, 0xb7), (12, 0x00), (17, 0xaf),
+        (18, 0xe5), (19, 0xf5), (20, 0x45), (21, 0xad), (22, 0x91),
+        (23, 0x11), (24, 0x49), (25, 0xbc), (26, 0xf6), (27, 0x8b),
+        (28, 0x87), (29, 0x0d), (30, 0xc6), (31, 0xff), (32, 0xe7),
+        (33, 0xbb), (34, 0xaa), (35, 0x1d), (36, 0x24), (37, 0xc8),
+        (38, 0x44), (39, 0x97), (40, 0xc9), (41, 0xfc), (42, 0x37),
+        (43, 0x7d), (44, 0x86), (45, 0x86), (46, 0xc3), (47, 0x7c),
+        (48, 0x10), (49, 0x86), (50, 0x53), (51, 0xcd), (52, 0xcc),
+        (53, 0x7b), (54, 0x8d), (55, 0xd7), (56, 0x86), (57, 0x38),
+        (58, 0xc5), (59, 0x53), (60, 0x88), (61, 0x52), (62, 0x5a),
+        (63, 0xba), (64, 0x6f), (65, 0x79), (66, 0x2d), (67, 0xb1),
+        (76, 0xe8), (77, 0x67), (78, 0xe9), (79, 0x7f))
 _T10R62AM = (
            "7a5b2ab9456ef6",
            "515e2f55533b08",
@@ -26384,6 +26454,47 @@ def main():
             if pay[b] != v:
                 return fail("T10P81B const %d" % b)
         print("CLOSED T10P81B N=%d off=%d" % (n, off))
+        return 0
+    if n <= 45016:  # T10R80A: 4x16 80B-pay, m-tab b6,7,72-75 + q-tab b1,2,37-39,46,47,76-79 (raw lencode)
+        off = n - 44953
+        if len(pay) != 80:
+            return fail("T10R80A paylen")
+        l16 = ((n << 1) | 1) & 0xFFFF
+        if pay[4] != (l16 & 0xFF) or pay[5] != (l16 >> 8):
+            return fail("T10R80A lencode")
+        m = off & 15
+        q = off >> 4
+        if bytes((pay[6], pay[7], pay[72], pay[73], pay[74],
+                   pay[75])).hex() != _T10R80AM[m]:
+            return fail("T10R80A mtab")
+        if bytes((pay[1], pay[2], pay[37], pay[38], pay[39],
+                   pay[46], pay[47], pay[76], pay[77], pay[78],
+                   pay[79])).hex() != _T10R80AQ[q]:
+            return fail("T10R80A qtab")
+        for b, v in _T10R80AC:
+            if pay[b] != v:
+                return fail("T10R80A const %d" % b)
+        print("CLOSED T10R80A N=%d off=%d" % (n, off))
+        return 0
+    if n <= 45272:  # T10R80B: 16x16 80B-pay, m-tab b13-16,72-75 + q=AM full (raw lencode)
+        off = n - 45017
+        if len(pay) != 80:
+            return fail("T10R80B paylen")
+        l16 = ((n << 1) | 1) & 0xFFFF
+        if pay[4] != (l16 & 0xFF) or pay[5] != (l16 >> 8):
+            return fail("T10R80B lencode")
+        m = off & 15
+        q = off >> 4
+        if bytes((pay[13], pay[14], pay[15], pay[16], pay[72],
+                   pay[73], pay[74], pay[75])).hex() != _T10R80BM[m]:
+            return fail("T10R80B mtab")
+        if bytes((pay[6], pay[7], pay[68], pay[69], pay[70],
+                   pay[71])).hex() != _T10R80AM[q]:
+            return fail("T10R80B qtab")
+        for b, v in _T10R80BC:
+            if pay[b] != v:
+                return fail("T10R80B const %d" % b)
+        print("CLOSED T10R80B N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
