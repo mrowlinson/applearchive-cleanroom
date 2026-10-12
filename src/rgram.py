@@ -14343,6 +14343,40 @@ _T10P94QC = (
         (62, 0x1c), (63, 0x65), (64, 0xfb), (65, 0xfa), (66, 0x4a),
         (67, 0x9a), (68, 0x5f), (69, 0x94), (70, 0x86), (71, 0x47),
 )
+_T10R92M = (
+           "27dbd58032abf9",
+           "4fdbd51cbc8308",
+           "53dbd551fb7e6f",
+           "badbd510339da5",
+           "e9d9d99b378fd1",
+           "80dad9dd7242eb",
+           "81dad90c366b50",
+           "85dad99e7d4ec0",
+           "91dad97ef21659",
+           "91dad923b5dfeb",
+           "bcdad980f4f1cb",
+           "ccdad91ff683ca",
+           "f6dad9d77fd98c",
+           "02dbd9d374b502",
+           "a3dbd9eff83847",
+           "a3dbd9fb3c4748",
+)
+_T10R92C = (
+        (0, 0x01), (1, 0x00), (2, 0x00), (3, 0x00), (8, 0x97),
+        (9, 0xc3), (10, 0x5f), (11, 0xad), (13, 0x28), (14, 0x49),
+        (15, 0x00), (16, 0x4e), (17, 0xad), (18, 0x15), (19, 0x26),
+        (20, 0xe4), (21, 0x11), (22, 0x65), (23, 0x57), (24, 0xc6),
+        (25, 0x11), (26, 0xe2), (27, 0xb5), (28, 0x88), (29, 0x0e),
+        (30, 0x49), (31, 0x01), (32, 0x19), (33, 0xbf), (34, 0x73),
+        (35, 0x37), (36, 0xa8), (37, 0xec), (38, 0x66), (39, 0x5b),
+        (40, 0x05), (41, 0x00), (42, 0xf0), (43, 0xd4), (46, 0xfb),
+        (47, 0xbb), (48, 0x91), (49, 0x0a), (52, 0x57), (53, 0x56),
+        (54, 0x93), (55, 0x12), (56, 0x63), (57, 0x3c), (58, 0x72),
+        (59, 0x8c), (60, 0x9f), (61, 0x4e), (62, 0x1c), (63, 0x65),
+        (64, 0xfb), (65, 0xfa), (66, 0x4a), (67, 0x9a), (68, 0x5f),
+        (69, 0x94), (70, 0x86), (71, 0x47), (80, 0x48), (81, 0x7d),
+        (82, 0x79), (83, 0xe8),
+)
 _T10R62AM = (
            "7a5b2ab9456ef6",
            "515e2f55533b08",
@@ -16262,7 +16296,7 @@ def main():
             return fail("stored content not zeros")
         print("CLOSED stored N=%d" % n)
         return 0
-    if len(pay) not in (44, 48, 52, 56, 60, 64, 68, 72, 76, 80):
+    if len(pay) not in (44, 48, 52, 56, 60, 64, 68, 72, 76, 80, 84):
         return fail("paylen %d" % len(pay))
     if n <= 127:  # T0
         if len(pay) != 44:
@@ -29368,6 +29402,25 @@ def main():
             if pay[b] != v:
                 return fail("T10P94Q const %d" % b)
         print("CLOSED T10P94Q N=%d off=%d" % (n, off))
+        return 0
+    if n <= 49796:  # T10R92: 16x16 84B-pay, m-tab b6,7,12,76-79 + q=P94M verbatim b44,45,50,51,72-75
+        off = n - 49541
+        if len(pay) != 84:
+            return fail("T10R92 paylen")
+        if pay[4] != (0x0b + 2*off) & 0xFF or pay[5] != 0x83 + (off >= 123) + (off >= 251):
+            return fail("T10R92 b45")
+        m = off & 15
+        q = off >> 4
+        if bytes((pay[6], pay[7], pay[12], pay[76], pay[77],
+                   pay[78], pay[79])).hex() != _T10R92M[m]:
+            return fail("T10R92 mtab")
+        if bytes((pay[44], pay[45], pay[50], pay[51], pay[72],
+                   pay[73], pay[74], pay[75])).hex() != _T10P94M[q]:
+            return fail("T10R92 qtab")
+        for b, v in _T10R92C:
+            if pay[b] != v:
+                return fail("T10R92 const %d" % b)
+        print("CLOSED T10R92 N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
