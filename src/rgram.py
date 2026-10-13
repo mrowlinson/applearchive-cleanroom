@@ -15835,6 +15835,40 @@ _T10R102C = (
         (67, 0x87), (68, 0x67), (69, 0x37), (70, 0x77), (71, 0x5a),
         (80, 0xd9), (81, 0x72), (82, 0xc8), (83, 0xa2),
 )
+_T10R103M = (
+           "d37c2064a52b",
+           "e27cb223e89a",
+           "e77cb3db0bf3",
+           "e77c87d70bf9",
+           "19bc634642cf",
+           "42bc4c665c68",
+           "57bca658bc29",
+           "8fbc46d1665b",
+           "94bc52992b14",
+           "94bcfe0638c7",
+           "a2bcacddb81c",
+           "aabc46c12ac6",
+           "b0bc74a491eb",
+           "dcbcf69eaff3",
+           "dfbc6ea59f5f",
+           "ebbcb5214f6a",
+)
+_T10R103C = (
+        (0, 0x2b), (1, 0x00), (2, 0x00), (3, 0x00), (9, 0xd1),
+        (10, 0x40), (11, 0x85), (12, 0x00), (15, 0x67), (16, 0x72),
+        (17, 0xa5), (18, 0x71), (19, 0xa5), (20, 0xd5), (21, 0x5d),
+        (22, 0xdc), (23, 0xb9), (24, 0xc6), (25, 0x0c), (26, 0xe3),
+        (27, 0x8d), (28, 0xa9), (29, 0xc4), (30, 0x88), (31, 0xf0),
+        (32, 0xa9), (33, 0xbf), (34, 0x0f), (35, 0x5f), (36, 0x89),
+        (37, 0x81), (38, 0x22), (39, 0xd7), (40, 0x45), (41, 0xb1),
+        (42, 0xf3), (43, 0xd1), (44, 0x48), (45, 0xb6), (46, 0x1d),
+        (47, 0x2d), (48, 0x0b), (49, 0x90), (50, 0xe3), (51, 0xff),
+        (52, 0x4d), (53, 0x58), (54, 0x65), (55, 0xc0), (56, 0x7d),
+        (57, 0xf7), (58, 0xb8), (59, 0x52), (60, 0x15), (61, 0x3b),
+        (62, 0x6b), (63, 0xb3), (64, 0x1a), (65, 0x87), (66, 0x49),
+        (67, 0x9c), (68, 0x2d), (69, 0xfb), (70, 0xb9), (71, 0xd7),
+        (80, 0xfb), (81, 0x7c), (82, 0x68), (83, 0x54),
+)
 _T10P104S0 = "fca20900839d54dbb40d54e400247cb64e1a0fddc664792c38bc7171a8fcec7748fac93be5f62f69299c6748870d877957972c317689f51bc90738d5617a901d849013718e3a7f81440e16876737775a"
 _T10P104S1 = "48f86c13859d54dbb40d5400eecefdbdd2787517c654e5b13146098b67bf637948fac93be5f62f69299c6748870d877957972c317689f51b4d5865c0849013718e3a7f81440e16876737775ad32ae562"
 _T10P104AM = (
@@ -31922,6 +31956,28 @@ def main():
             if pay[b] != v:
                 return fail("T10P105Q const %d" % b)
         print("CLOSED T10P105Q N=%d off=%d" % (n, off))
+        return 0
+    if n <= 53624:  # T10R103: 16x16 84B-pay, 6B m-tab b13,14,76-79 + q=P105M[0:2]+[3:7] b6,7,72-75
+        off = n - 53369
+        if len(pay) != 84:
+            return fail("T10R103 paylen")
+        if pay[4] != (0xf3 + 2*off) & 0xFF or pay[5] != 0xa0 + (off >= 7) + (off >= 135):
+            return fail("T10R103 b45")
+        m = off & 15
+        q = off >> 4
+        if pay[8] != (0x98 if q <= 10 else 0xb8):
+            return fail("T10R103 b8")
+        if bytes((pay[13], pay[14], pay[76], pay[77], pay[78],
+                   pay[79])).hex() != _T10R103M[m]:
+            return fail("T10R103 mtab")
+        qexp = bytes.fromhex(_T10P105M[q])
+        if (pay[6], pay[7], pay[72], pay[73], pay[74], pay[75]) != \
+                (qexp[0], qexp[1], qexp[3], qexp[4], qexp[5], qexp[6]):
+            return fail("T10R103 qtab")
+        for b, v in _T10R103C:
+            if pay[b] != v:
+                return fail("T10R103 const %d" % b)
+        print("CLOSED T10R103 N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
