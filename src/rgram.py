@@ -14942,6 +14942,58 @@ _T10P98QC = (
         (63, 0xbc), (64, 0x3d), (65, 0x1e), (66, 0x04), (67, 0xea),
         (68, 0x7e), (69, 0xfc), (70, 0x25), (71, 0x7d),
 )
+_T10R96M = (
+           "8c6aff3bb8676d84",
+           "8ceac03fb298492f",
+           "8cfac03f369e864b",
+           "8c8ac23f6817f556",
+           "8c9ac23f70237007",
+           "8caac23fe39f0d21",
+           "8caac23ff4dec021",
+           "8c7ac53ff20d97cc",
+           "8c6ac63fcc4d225a",
+           "8c6ac63f9ec24a5f",
+           "8c9ac63f78211540",
+           "8ceac63fb7425e66",
+           "ec0af5fb99a84d9d",
+           "ec2af5fb16a7e0ec",
+           "ecdaf6fb8adf13ec",
+           "eccaf7fbadd0462b",
+)
+_T10R96Q = (
+           "b5927cf15495d5d9",
+           "b592a4f14e4a7cfa",
+           "b592d4f2bc2795f4",
+           "6596b4f225d80089",
+           "659634f330e624a7",
+           "45ae98f0b3934d33",
+           "45ae98f0ede49f39",
+           "45ae98f009085b48",
+           "45ae38f2c0449944",
+           "45ae38f2a0433e48",
+           "45ae38f2124fb45c",
+           "45ae38f2599cb45c",
+           "fdb094f2f9055851",
+           "fdb094f2e0445b51",
+           "fdb0e8f33fc91769",
+           "05b104f0f5530c80",
+)
+_T10R96C = (
+        (0, 0x01), (1, 0x00), (2, 0x00), (3, 0x00), (6, 0x27),
+        (7, 0x5a), (8, 0x73), (9, 0xbc), (10, 0xc3), (11, 0xcf),
+        (12, 0xed), (13, 0x88), (14, 0x06), (15, 0x70), (16, 0xee),
+        (17, 0x56), (20, 0x11), (21, 0xdb), (22, 0x8f), (23, 0x32),
+        (24, 0x8d), (25, 0xd6), (29, 0x15), (30, 0x75), (31, 0x1a),
+        (32, 0xb5), (36, 0x4c), (37, 0x2d), (38, 0xdf), (39, 0xbd),
+        (40, 0xe5), (41, 0x56), (42, 0x3a), (43, 0xda), (44, 0xc0),
+        (45, 0x9e), (46, 0x1f), (47, 0xfa), (48, 0x07), (49, 0x0a),
+        (50, 0x87), (51, 0xfa), (52, 0x5e), (53, 0x59), (54, 0xc9),
+        (55, 0x10), (56, 0xab), (57, 0xb7), (58, 0x1f), (59, 0xa4),
+        (60, 0x2d), (61, 0x79), (62, 0xa3), (63, 0xbc), (64, 0x3d),
+        (65, 0x1e), (66, 0x04), (67, 0xea), (68, 0x7e), (69, 0xfc),
+        (70, 0x25), (71, 0x7d), (80, 0xe3), (81, 0x1e), (82, 0xa5),
+        (83, 0x10),
+)
 _T10R62AM = (
            "7a5b2ab9456ef6",
            "515e2f55533b08",
@@ -30301,6 +30353,25 @@ def main():
             if pay[b] != v:
                 return fail("T10P98Q const %d" % b)
         print("CLOSED T10P98Q N=%d off=%d" % (n, off))
+        return 0
+    if n <= 51188:  # T10R96: 16x16 84B-pay, m-tab b28,33,34,35,76-79 + q-tab b18,19,26,27,72-75 (P98M-tail4)
+        off = n - 50933
+        if len(pay) != 84:
+            return fail("T10R96 paylen")
+        if pay[4] != (0xeb + 2*off) & 0xFF or pay[5] != 0x8d + (off >= 11) + (off >= 139):
+            return fail("T10R96 b45")
+        m = off & 15
+        q = off >> 4
+        if bytes((pay[28], pay[33], pay[34], pay[35], pay[76],
+                   pay[77], pay[78], pay[79])).hex() != _T10R96M[m]:
+            return fail("T10R96 mtab")
+        if bytes((pay[18], pay[19], pay[26], pay[27], pay[72],
+                   pay[73], pay[74], pay[75])).hex() != _T10R96Q[q]:
+            return fail("T10R96 qtab")
+        for b, v in _T10R96C:
+            if pay[b] != v:
+                return fail("T10R96 const %d" % b)
+        print("CLOSED T10R96 N=%d off=%d" % (n, off))
         return 0
     print("N out of scope", file=sys.stderr)
     return 2
