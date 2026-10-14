@@ -19018,6 +19018,41 @@ _T10P127QC = (
         (72, 0x68), (73, 0xc2), (74, 0x3a), (75, 0xed),
 )
 
+_T10R125M = (
+           "35a5b0ccc6",
+           "361c320776",
+           "361933c09f",
+           "4649337c66",
+           "6fdab1f3b8",
+           "7ee0f8cc53",
+           "909ff20fc5",
+           "92ae331e4c",
+           "a59fb96963",
+           "ab87b9d819",
+           "c49cfbf03a",
+           "cad471b496",
+           "d106fc8636",
+           "da61b3bfac",
+           "ec597be03f",
+           "ff24798467",
+)
+_T10R125C = (
+        (0, 0x6f), (1, 0x08), (2, 0x00), (3, 0x00), (6, 0x12), (7, 0xd9),
+        (8, 0x35), (9, 0xca), (10, 0x58), (11, 0xe8), (12, 0x00),
+        (13, 0x1a), (14, 0x3c), (15, 0x97), (16, 0xb7), (17, 0x50),
+        (18, 0xe6), (19, 0x01), (24, 0x8b), (25, 0x83), (27, 0xbc),
+        (28, 0xcd), (29, 0x40), (30, 0x1b), (31, 0xaf), (32, 0x21),
+        (33, 0xbf), (34, 0x7b), (35, 0xfe), (36, 0x09), (37, 0x30),
+        (38, 0x95), (39, 0x96), (40, 0xc6), (41, 0xd9), (42, 0x0e),
+        (43, 0xa7), (44, 0x4c), (45, 0x7c), (46, 0xc5), (47, 0x25),
+        (48, 0x28), (49, 0x18), (50, 0xa6), (51, 0xed), (52, 0x5c),
+        (53, 0x92), (54, 0xef), (55, 0xf7), (56, 0x6c), (57, 0xbd),
+        (58, 0x76), (59, 0xda), (60, 0x76), (61, 0x0b), (62, 0x33),
+        (63, 0x25), (64, 0xce), (65, 0xf6), (66, 0xe2), (67, 0xd3),
+        (68, 0x68), (69, 0xc2), (70, 0x3a), (71, 0xed), (80, 0x7b),
+        (81, 0x66), (82, 0xd2), (83, 0xd1),
+)
+
 _T10P104S0 = "fca20900839d54dbb40d54e400247cb64e1a0fddc664792c38bc7171a8fcec7748fac93be5f62f69299c6748870d877957972c317689f51bc90738d5617a901d849013718e3a7f81440e16876737775a"
 _T10P104S1 = "48f86c13859d54dbb40d5400eecefdbdd2787517c654e5b13146098b67bf637948fac93be5f62f69299c6748870d877957972c317689f51b4d5865c0849013718e3a7f81440e16876737775ad32ae562"
 _T10P104AM = (
@@ -37053,6 +37088,26 @@ def main():
             if pay[b] != v:
                 return fail("T10P127Q const %d" % b)
         print("CLOSED T10P127Q N=%d off=%d" % (n, off))
+        return 0
+
+    if n <= 61280:  # T10R125: 16x16 84B-pay, 5B m-tab b26,76-79 + q=P127M verbatim b20-23,72-75
+        off = n - 61025
+        if len(pay) != 84:
+            return fail("T10R125 paylen")
+        if pay[4] != (0xc3 + 2*off) & 0xFF or pay[5] != 0xdc + (off >= 31) + (off >= 159):
+            return fail("T10R125 b45")
+        m = off & 15
+        q = off >> 4
+        if bytes((pay[26], pay[76], pay[77], pay[78],
+                   pay[79])).hex() != _T10R125M[m]:
+            return fail("T10R125 mtab")
+        if bytes((pay[20], pay[21], pay[22], pay[23], pay[72],
+                   pay[73], pay[74], pay[75])).hex() != _T10P127M[q]:
+            return fail("T10R125 qtab")
+        for b, v in _T10R125C:
+            if pay[b] != v:
+                return fail("T10R125 const %d" % b)
+        print("CLOSED T10R125 N=%d off=%d" % (n, off))
         return 0
 
 
