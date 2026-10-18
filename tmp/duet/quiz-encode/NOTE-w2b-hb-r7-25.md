@@ -1,0 +1,1 @@
+NOTE-w2b-hb-r7-25 P178 CUT: census 92/92 first-hand, ALL geometry confirms A-234 (multi-sig Q rows1==2, Q b5 step @78720, all sigs/VPOS/M/tails). ins178 SYNTAX-OK, sweep 92/92 (78681..78772), DET16 appended (S0/S1/A-h+mid+t/S2/B-h+mid+t/Qr0-h+step-pair/Qr1-h/Qr2-h/Qr3-h/tail; SING+MULTISIG tier). RECORD in flight.

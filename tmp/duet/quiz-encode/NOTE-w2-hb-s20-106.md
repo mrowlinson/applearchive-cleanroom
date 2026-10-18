@@ -1,0 +1,7 @@
+# NOTE-w2-hb-s20-106 — P137 CHAIN 92/92, shadow stack 4 deep
+bump-20
+- A-150 CONSUMED: P137 CONFIRM all-3 (PB0/PB1=a7000000/PBA16/SING=a6000000/PBB9/single-sig QUAD r0==r3 1st; b5 f7 const; no dips)
+- CHAIN: p137-patch (8..119/121..189) onto shadow -> 92/92 CLOSED T10P137 on cen-p137r135, 0 bad
+- P137 PINS (13, w2s15 plan): 64413,64414,64415,64430,64431,64432,64440,64441,64452,64457,64473,64489,64504
+- SHADOW STACK verified: R133 + P136(15) + R134(11) + P137(13), all first-hand sweeps GREEN
+- NEXT: R135 (Q-145/A-151) -> poll RECORD

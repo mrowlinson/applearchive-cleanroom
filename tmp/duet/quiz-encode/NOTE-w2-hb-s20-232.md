@@ -1,0 +1,9 @@
+# NOTE-w2-hb-s20-232 — r10 REFILL HANDOFF (2 rows landed, R149 cut-ready in WT)
+
+bump-20
+
+- LANDED (local-only, never pushed): 4982fa8 T10R147 (68681..68936, sigc1240300, 8B m-tab, 89th verbatim, 8486 REC, DET 12/12) + 5f6d6a3 T10R148 (69029..69284, sig53da0300, 6B m-tab, 90th verbatim, 8510 REC, DET 12/12). Every gate first-hand each row: RECORD RC=0 0FAIL + PINS pure-add +24 ALL-CLOSED + VERIFY PASS/0FAIL RGRAM-GREEN + DET 12/12 fresh-oracle + SMOKE-GREEN + COMPILE-OK.
+- R149 CUT-READY IN WT (uncommitted, rgram.py + test only, PINS untouched): applied via wt-apply-r9.py (ts=7 te=58 hs=60; single-blank junctions verified both) + 12 cells appended (69377..69632) + COMPILE-OK + guard `n <= 69632` verified + own shadow sweep 256/256 CLOSED (sweep-r9.py vs r149-derive-r8 beds). SUCCESSOR: fresh RECORD under OWN name (my bat-r148-r10/ver-r148-r10 done+logged; nothing running handed off — batteries die with session) -> PINS -> VERIFY -> DET -> smoke -> commit `T10R149 (69377..69632): dual-sig 16x16 100B zone (256e/266e), 9B m-tab, R149Q own-copy q (91st verbatim in place) (8534 REC, DET 12/12)`.
+- QUEUE BEHIND: R150..R153 staged-verified cell-for-cell + A-grounded (own read-only, -r8m files ONLY) -> R154..R159 r9 patch-vs-derive pre-checked (M/Q 16/16, C 13-14/14; own shadow re-sweep owed at each cut). R152/R153 staged had 10 cells, +2 spread already in patches. R156/R157 13-line CONSTS (wt-apply handles).
+- STATE: lane lanes/encode-writer2 @5f6d6a3 + uncommitted R149; P136 stash@{0} aside (writer2b turf, LEAVE); PARENT tail PARENT-069 consumed; Q/A tails Q-361/A-361 consumed (A-362..367 = viewer P-heads, not my turf); no joint DONE. TMPDIR /Volumes/NVME/.../tmp/encode-writer2. Never push. Wall intact (staged reads = compare-only).
+- r10 EXIT @~112 calls for refill; seat alive, single-occupant all run.

@@ -1,0 +1,8 @@
+# NOTE-cport-hb132: r10 refill-exit, R135-combine handoff (staged)
+
+- run totals r10: 3 bands (b188 07533a3, b189 fac36c9, b190 05efb6d) + 3 merges (be21af9/d335153/8079ebb), all GREEN fh (PYID 4090/4101/4115, C+py 8180/8202/8230, 0w). tip 05efb6d + staged R135 combine.
+- handoff: R135 66b9bd2 (w2) merged --no-commit, 3 conflicts resolved fh via resolve-b191.py (same shape as b189: tables from blob sources P137 104 + R135 52, hunk sides == blob slices; chain R134<P137Q<R135; PINS 8254 unique chronological; sizes union 4127). verified: 0 removed vs HEAD and vs w2, py_compile OK. staged (M x3), MERGE_HEAD=66b9bd2. SMOKE-GREEN rc=0 (mrg-b191-smoke-r10.log).
+- r10 launched NO py battery for b191 (batteries die with session). successor: launch mrg-b191-py-r11 FRESH fh, expect 8254/8254, then merge commit + band191 cut (T10R135 n<=64760, 854 tiers; PYID expect 4127/4127; seed pyidb191-fh/corpus from b190). merge msg lane style, note w2 origin.
+- queue after R135 oldest-first (tips w2 65ee394 R152 / w2b 96a302d P146): P138 34684a9(w2b), R136 555d15e, P139 c16ad2d(w2b), R137 ef9bbf0, P140 b3ec35c(w2b), R138 2b38c3c, P141 76b080e(w2b), R139 f82ac5e, P142 557c98f(w2b), R140 c14cec6, P143 a05c4cb(w2b), R141 b701d00, P144 fa38cd1(w2b), R142 1de0986, P145 1991268(w2b), R143 4a2dbcf, P146 96a302d(w2b,new), R144 4e70d52, R145 c9aac21, R146 8e75ea8, R147 4982fa8, R148 5f6d6a3, R149 77c282f, R150 a286112, R151 3b83e62(new), R152 65ee394(new) (+new; re-list at takeover).
+- standing: P-lane merges may auto-merge rgram.py with DESCENDING chain (b190) — always verify ascending; R-lane merges conflict 3x with xdiff-aligned closers (b189/b191) — blob-source reconstruction, never hunk stitching.
+- no joint DONE. never push. claim needs successor holder overwrite.

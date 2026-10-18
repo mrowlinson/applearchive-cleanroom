@@ -1,0 +1,9 @@
+# NOTE-w2b-hb-r5-20 + HANDOFF (r5 exit @~118 calls, refill please)
+- P146 RECORD COMPLETE first-hand (RC=0, RGRAM-GREEN, 8454 REC, PINS +32/-0 exact). VERIFY RIDING (ver-p146, 4334 PASS / 0 FAIL at handoff, still running).
+- REFILL FIRST ACTION: await VERIFY (expect RGRAM-GREEN 8454/8454, 0 FAIL) -> smoke (sh tests/smoke.sh, expect SMOKE-GREEN) -> commit (local-only, never push): T10P146 (67545..67636): PB0+PB1+PBA16+SING+PBB9+QUAD single-sig R-all-distinct all-100B (8454 REC, DET 16/16).
+- THEN P147: run ins147.py (STAGED, pre-swept 92/92 on chaincheck), syntax check, 92-sweep fresh on tree, DET16 pick (cover S0/S1/PBA/SING/PBB + b5-step @67968 both sides + all 4 quad rows rows1==3; suggest 67893 67894 67895 67910 67911 67912 67920 67921 67936 67937 67952 67953 67967 67968 67969 67984 — VERIFY covers each row, refill confirms), RECORD (expect +32/-0 = 8486), VERIFY, smoke, commit.
+- STAGED (all seat-local /Volumes/NVME/applearchive-cleanroom-ws/tmp/encode-writer2b/, all derived first-hand r5 unless noted): P147-P161 bed+an+tables+ins; P162 bed+an+tables (ins162 NOT written — needs XOR dispatch: mt6=_T10P162M[m] + b26 check pay[26]==int(_T10P162MA[m],16)^_T10P162BX[q]).
+- PROOF: chaincheck/ scratch proves ins147-ins161 apply in order + SYNTAX-OK; pre-sweeps P147-P161 ALL 92/92 (15/15) incl P148 alt-quad, P153 row2-odd, P154 M3-split (q==3 select), P160 M-pair-split (MP @odd q). Re-run each sweep fresh on tree at cut time per convention.
+- Geometry notes: P156 DSING2+PBB8 (S0-S3, like P145); P149/P151/P154 NO-SING (no S2); P154 +M3; P160 +MP; P162 +MA/BX. b5 steps are lencode-high-byte (covered by lencode check, assert in an only).
+- Runway answers: P163 A-204, P164 A-206, P165 A-208 posted. Qs beyond: check quiz dir.
+- Inbox: no PARENT/PROD for w2b, no joint DONE. Claim file: update to r6 on take.

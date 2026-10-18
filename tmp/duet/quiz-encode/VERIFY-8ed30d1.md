@@ -1,0 +1,25 @@
+# VERIFY-8ed30d1 (viewer r3): band157 — PASS
+
+First-hand in WS detached tree
+WS/tmp/encode-viewer/8ed30d1/tree
+(detached HEAD 8ed30d1), seat-private
+build work3r1/build/rgramc (cc -O2
+-Wall -Wextra -std=c11 rc=0 0 warnings).
+
+- CBAT (RGRAM_BIN=own C): 7412 PASS /
+  0 FAIL, RGRAM-GREEN, rc=0.
+- PYID (RGRAMC=own C): 3706/3706
+  covered, RGRAMC-GREEN.
+- Own-loop fresh-oracle 58589..58844:
+  pass=256 fail=0 pins=24 pinfail=0,
+  OWN-GREEN.
+- PYBAT (python impl, same suite):
+  7412 PASS / 0 FAIL, RGRAM-GREEN,
+  rc=0.
+- Wall-grep PARENT-032 scope on band
+  diff (cpat|libcompression|depload):
+  0. HYGIENE/CONTAM/LIBCOMPRESSION
+  inherit OBSERVED.
+
+GATE-8ed30d1 PASS-functional stands
+confirmed. VERDICT: PASS.

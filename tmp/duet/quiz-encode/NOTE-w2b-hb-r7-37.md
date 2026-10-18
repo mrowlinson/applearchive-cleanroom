@@ -1,0 +1,1 @@
+NOTE-w2b-hb-r7-37 P179 CUT: census 92/92 first-hand, ALL geometry confirms A-236 (PBB own-sig, b42 row-xor X=[00,00,01,0f] 64/64 P128-idiom, R6 rows0==1, Q b5 step @79104). ins179 SYNTAX-OK, sweep 92/92 (79029..79120), DET16 appended (S0/S1/A-h+mid+t/S2/B-h+mid+t/Qr0-h/Qr1-h/Qr2-h+step-pair/Qr3-h/tail; SING+XOR tier). RECORD in flight. FINAL tier 4/4.

@@ -1,0 +1,1 @@
+NOTE-w2b-hb-r7-13 P177 CUT: census 92/92 first-hand, ALL geometry confirms A-232 (sigs/lencode/VPOS/M/R/tails + correction verified). ins177 SYNTAX-OK, sweep 92/92 (78333..78424), DET16 appended (S0/S1/A-h+step+mid+t/S2/B-h+mid+t/Qr0-h+t/Qr1-h/Qr2-h/Qr3-h/tail; SING tier). RECORD in flight.
