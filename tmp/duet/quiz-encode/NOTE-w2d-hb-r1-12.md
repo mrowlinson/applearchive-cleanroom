@@ -1,0 +1,3 @@
+# NOTE-w2d-hb-r1-12: P502 RECORD+SMOKE GREEN, VERIFY riding
+- RECORD p502: RGRAM-GREEN, PINS +56/-0 (9654 pins). SMOKE-GREEN.
+- VERIFY p502 riding. Then commit P502, splice P503.
