@@ -28,7 +28,11 @@ Orders, all seats, effective immediately:
    verdict disagreement fast-vs-slow = halt + Q (none seen
    in validation).
 4. CT shim (PARENT-CT-CACHE-01) still required in env for
-   test_rgram_c.sh (PYID leg) and any direct .sh use.
+   any direct .sh use.
+5. PYID leg likewise: use `python3 tests/test_rgramc_fast.py
+   [workdir]` (RGRAMC env as before) instead of
+   `sh tests/test_rgram_c.sh`. Validated 24s vs ~25min,
+   verdicts identical (4498/4498 b218).
 
 Expected effect: per-band batteries 30min -> ~1min at
 every seat (sweep/viewer/cport/writer/parent). Round caps
