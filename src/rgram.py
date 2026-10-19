@@ -22591,6 +22591,57 @@ _T10R177C = (
         (71, 0x85), (80, 0x1e), (81, 0x3b), (82, 0x57), (83, 0x2e),
 )
 
+_T10R178M = (
+           "e3db65398e8da5",
+           "00dc655de1b588",
+           "0cdc656cd535e8",
+           "29dc65ff508944",
+           "48dc658a2aa2d0",
+           "5fdc6577e02d0e",
+           "76dc65e390b09e",
+           "92dc6598604c4e",
+           "addc6539c5849e",
+           "19df6a88e981ed",
+           "1edf6a50a19f95",
+           "21df6a4b02d08d",
+           "47df6a5681c32b",
+           "4adf6a3dde564d",
+           "5edf6a9c4520ae",
+           "79df6a950dbdde",
+)
+_T10R178Q = (
+           "28ef70426e",
+           "29fcb9022b",
+           "2acc31477b",
+           "325ff0f349",
+           "4d172f723b",
+           "57be78935b",
+           "89d635bb3d",
+           "89c0b4f9d8",
+           "c000321e17",
+           "c991faa7b9",
+           "ce42f40af4",
+           "ce1e3b0bf4",
+           "cf4130bef5",
+           "e547b0709d",
+           "e99a30b0b9",
+           "f225b24e5b",
+)
+_T10R178C = (
+        (0, 0x57), (1, 0x34), (2, 0x67), (3, 0x1), (6, 0xb4), (7, 0xba),
+        (8, 0xff), (9, 0x17), (10, 0x5b), (11, 0x3b), (12, 0x0), (14, 0x3c),
+        (15, 0xf5), (16, 0xf5), (17, 0x4e), (18, 0x6d), (19, 0xa0), (23, 0xf8),
+        (24, 0x8c), (25, 0xcd), (26, 0x7), (27, 0xf9), (28, 0xeb), (29, 0x26),
+        (30, 0x6b), (31, 0xdf), (32, 0x49), (33, 0xbf), (34, 0x5f), (35, 0xc6),
+        (36, 0x4b), (37, 0x2e), (38, 0x75), (39, 0x5e), (40, 0x67), (41, 0xb8),
+        (42, 0xd0), (43, 0xe7), (44, 0xdf), (45, 0x7c), (46, 0xd7), (47, 0x36),
+        (48, 0x6a), (49, 0x8d), (50, 0xf8), (51, 0xc6), (52, 0x40), (53, 0x1c),
+        (54, 0x64), (55, 0xeb), (56, 0x5d), (57, 0x1e), (58, 0xd8), (59, 0x93),
+        (60, 0xc8), (61, 0x74), (62, 0x91), (63, 0x85), (64, 0x48), (65, 0x4d),
+        (66, 0x29), (67, 0xbd), (68, 0x68), (69, 0x75), (70, 0x7b), (71, 0x1b),
+        (80, 0x92), (81, 0x7a), (82, 0xb7), (83, 0xdf),
+)
+
 _T10P104S0 = "fca20900839d54dbb40d54e400247cb64e1a0fddc664792c38bc7171a8fcec7748fac93be5f62f69299c6748870d877957972c317689f51bc90738d5617a901d849013718e3a7f81440e16876737775a"
 _T10P104S1 = "48f86c13859d54dbb40d5400eecefdbdd2787517c654e5b13146098b67bf637948fac93be5f62f69299c6748870d877957972c317689f51b4d5865c0849013718e3a7f81440e16876737775ad32ae562"
 _T10P104AM = (
@@ -42246,6 +42297,25 @@ def main():
             if pay[b] != v:
                 return fail("T10R177 const %d" % b)
         print("CLOSED T10R177 N=%d off=%d" % (n, off))
+        return 0
+
+    if n <= 79724:  # T10R178: 16x16 84B-pay, 7B m-tab b20,21,22,72,73,74,75 + q=R178Q own-copy b13,76,77,78,79
+        off = n - 79469
+        if len(pay) != 84:
+            return fail("T10R178 paylen")
+        if pay[4] != (0xdb + 2*off) & 0xFF or pay[5] != 0x6c + (off >= 19) + (off >= 147):
+            return fail("T10R178 b45")
+        m = off & 15
+        q = off >> 4
+        if bytes((pay[20], pay[21], pay[22], pay[72], pay[73],
+                   pay[74], pay[75])).hex() != _T10R178M[m]:
+            return fail("T10R178 mtab")
+        if bytes((pay[13], pay[76], pay[77], pay[78], pay[79])).hex() != _T10R178Q[q]:
+            return fail("T10R178 qtab")
+        for b, v in _T10R178C:
+            if pay[b] != v:
+                return fail("T10R178 const %d" % b)
+        print("CLOSED T10R178 N=%d off=%d" % (n, off))
         return 0
 
     print("N out of scope", file=sys.stderr)
