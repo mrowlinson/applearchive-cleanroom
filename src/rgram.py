@@ -25428,6 +25428,110 @@ _T10P183QC = (
         (66, 0x68), (67, 0xc4), (68, 0x02), (69, 0x85), (70, 0xff), (71, 0xa2),
         (72, 0x15), (73, 0xbc), (74, 0xa3), (75, 0x0b),
 )
+_T10P184S0 = "d00200000377aeb41741a2d60011fc9611cd8a58addfc9134980020f0b3717c0b5fcbf5beb2ec55ec739c944b33cd1cd0a9598c0bbc32897df04e103613a5656c5b5708ca8c7b6ea51b968c40285ffa215bca30b"
+_T10P184S1 = "9f3404000577aeb41741a2760011fc9611cd4af3c9056068033e7807f4f60b2eb5fcbf5beb2ec55ec739c944b33cd1cd0a9598c0bbc32897df04e103613a5656d4bfc74451b968c40285ffa215bca30b4c3d3eb4"
+_T10P184AM = (
+           "8bbf63ab1f3be0c0",
+           "a6bf63abe8b2af2a",
+           "c5bf63ab0072eb82",
+           "c9bf63abe7bd38c1",
+           "c1fcf7af863a9cf9",
+           "1bbffbaf91b7d92e",
+           "5dbffbaf117cecf7",
+           "8bbffbaf33ef1f3b",
+           "d4bffbaf207a3bbc",
+           "e4bffbafddb2da59",
+           "13fcfbaf81726614",
+           "14fcfbaff0b29bbe",
+           "2cfcfbafd5b5c3c6",
+           "3cfcfbafa8bcffa8",
+           "3ffcfbaf8bbbf03a",
+           "b3fcfbaf9e364f35",
+)
+_T10P184AC = (
+        (0, 0x9f), (1, 0x34), (2, 0x58), (3, 0x00), (6, 0xae), (7, 0xb4),
+        (8, 0x17), (9, 0x41), (10, 0xa2), (11, 0x76), (12, 0x00), (13, 0x11),
+        (14, 0xfc), (15, 0x96), (16, 0x11), (17, 0xcd), (18, 0x4a), (19, 0xf3),
+        (20, 0xc9), (21, 0x85), (22, 0x00), (23, 0x86), (24, 0x03), (25, 0x3e),
+        (26, 0x78), (27, 0x07), (28, 0xf4), (29, 0xf6), (30, 0x0b), (31, 0xea),
+        (36, 0xaf), (37, 0xee), (38, 0x52), (39, 0xec), (40, 0xc7), (41, 0x39),
+        (42, 0xc9), (43, 0x44), (44, 0xb3), (45, 0x3c), (46, 0xd1), (47, 0xcd),
+        (48, 0x0a), (49, 0x95), (50, 0x98), (51, 0xc0), (52, 0xbb), (53, 0xc3),
+        (54, 0x28), (55, 0x97), (56, 0xdf), (57, 0x04), (58, 0xe1), (59, 0x03),
+        (60, 0x61), (61, 0x3a), (62, 0x56), (63, 0x56), (64, 0xd4), (65, 0xbf),
+        (66, 0xc7), (67, 0x44), (68, 0x02), (69, 0x85), (70, 0xff), (71, 0xa2),
+        (72, 0x15), (73, 0xbc), (74, 0xa3), (75, 0x0b), (80, 0x72), (81, 0x3d),
+        (82, 0x3e), (83, 0xb4),
+)
+_T10P184S2 = "9f3404002777aeb41741a2760011fc9611cd4af329c1a87a03a078a62b48a4fcb42e80a1b5ee52ecc739c944b33cd1cd0a9598c0bbc32897df04e103613a5656d4bfc7446356ca8b0285ffa215bca30bbffec8e5"
+_T10P184BM = (
+           "b38e6ebf8cd12a61a9b6c9",
+           "a71bd8fc0c722a32520781",
+           "733646fc20382b9bdf3c1c",
+           "c3eeadbfe9182a48de1207",
+           "733646fc20382b12a2941c",
+           "c3eeadbfe9182abade1207",
+           "a71bd9fc0c722a9de14cd2",
+           "8baf1dfcf5a02afde3937d",
+           "a71bdafc0c722a1025d53e",
+)
+_T10P184BC = (
+        (2, 0x02), (3, 0x00), (6, 0xae), (7, 0xb4), (8, 0x17), (9, 0x41),
+        (10, 0xa2), (11, 0x06), (12, 0x00), (13, 0x11), (14, 0xfc), (15, 0x96),
+        (16, 0x11), (17, 0xcd), (18, 0x0a), (19, 0x4d), (20, 0xcd), (21, 0xdf),
+        (22, 0x27), (23, 0x0d), (24, 0x69), (25, 0x00), (26, 0x14), (27, 0xcf),
+        (28, 0x2b), (29, 0x48), (32, 0x53), (33, 0x17), (34, 0xc0), (35, 0xd0),
+        (39, 0xf6), (40, 0xc7), (41, 0x39), (42, 0xc9), (43, 0x44), (44, 0xb3),
+        (45, 0x3c), (46, 0xd1), (47, 0xcd), (48, 0x0a), (49, 0x95), (50, 0x98),
+        (51, 0xc0), (52, 0xbb), (53, 0xc3), (54, 0x28), (55, 0x97), (56, 0xdf),
+        (57, 0x04), (58, 0xe1), (59, 0x03), (60, 0x61), (61, 0x3a), (62, 0x56),
+        (63, 0x56), (64, 0xd4), (65, 0xbf), (66, 0xc7), (67, 0x44), (68, 0x63),
+        (69, 0x56), (70, 0xca), (71, 0x8b), (72, 0x02), (73, 0x85), (74, 0xff),
+        (75, 0xa2), (76, 0x15), (77, 0xbc), (78, 0xa3), (79, 0x0b),
+)
+_T10P184M = (
+           "d85c12abca20",
+           "e55ca9a20ee5",
+           "f55c460d8b38",
+           "065d9ae35d24",
+           "075de4dbd8ed",
+           "0f5db129f71f",
+           "2d5deb53416b",
+           "405d4363138f",
+           "635d2e23b208",
+           "695d4c10e093",
+           "775d21d1454c",
+           "9e5d4758cb99",
+           "af5de342b807",
+           "b25d89dd4a6c",
+           "ef5d731be347",
+           "f05d5ee32ce3",
+)
+_T10P184QR = (
+           "ac636fbf93315a",
+           "fc6cf0fc339748",
+           "e26b1dfcb31e54",
+           "fc6cf1fc339748",
+)
+_T10P184QT = (
+           "42e3ba25",
+           "80cdb485",
+           "d619af7d",
+           "b65ed108",
+)
+_T10P184QC = (
+        (0, 0x9f), (1, 0x34), (2, 0x2c), (3, 0x00), (6, 0xae), (7, 0xb4),
+        (8, 0x17), (9, 0x41), (10, 0xa2), (11, 0x76), (12, 0x00), (13, 0x11),
+        (14, 0xfc), (15, 0x96), (16, 0x11), (17, 0xcd), (18, 0x4a), (19, 0xf3),
+        (20, 0x29), (21, 0xc1), (24, 0x03), (25, 0xa0), (26, 0x78), (27, 0xa6),
+        (28, 0x2b), (29, 0x48), (35, 0x04), (38, 0xf8), (39, 0x00), (40, 0x8b),
+        (41, 0x9d), (42, 0x93), (43, 0x4c), (44, 0xb3), (45, 0x3c), (46, 0xd1),
+        (47, 0xcd), (48, 0x0a), (49, 0x95), (50, 0x98), (51, 0xc0), (52, 0xdf),
+        (53, 0x04), (54, 0xe1), (55, 0x03), (56, 0x61), (57, 0x3a), (58, 0x56),
+        (59, 0x56), (60, 0xd4), (61, 0xbf), (62, 0xc7), (63, 0x44), (64, 0x63),
+        (65, 0x56), (66, 0xca), (67, 0x8b), (68, 0x02), (69, 0x85), (70, 0xff),
+        (71, 0xa2), (72, 0x15), (73, 0xbc), (74, 0xa3), (75, 0x0b),
+)
 _T10P104S0 = "fca20900839d54dbb40d54e400247cb64e1a0fddc664792c38bc7171a8fcec7748fac93be5f62f69299c6748870d877957972c317689f51bc90738d5617a901d849013718e3a7f81440e16876737775a"
 _T10P104S1 = "48f86c13859d54dbb40d5400eecefdbdd2787517c654e5b13146098b67bf637948fac93be5f62f69299c6748870d877957972c317689f51b4d5865c0849013718e3a7f81440e16876737775ad32ae562"
 _T10P104AM = (
@@ -47507,6 +47611,75 @@ def main():
             if pay[b] != v:
                 return fail("T10P183Q const %d" % b)
         print("CLOSED T10P183Q N=%d off=%d" % (n, off))
+        return 0
+    if n == 80769:  # T10P1840 singleton 84B (PB0, sig d0020000 NEW)
+        if len(pay) != 84 or pay.hex() != _T10P184S0:
+            return fail("T10P1840 const")
+        print("CLOSED T10P1840 N=%d off=0" % n)
+        return 0
+    if n == 80770:  # T10P1841 singleton 84B (fat PB1, sig 9f340400 NEW)
+        if len(pay) != 84 or pay.hex() != _T10P184S1:
+            return fail("T10P1841 const")
+        print("CLOSED T10P1841 N=%d off=1" % n)
+        return 0
+    if 80771 <= n <= 80786:  # T10P184A: 16x84B 100B-PBA (sig 9f345800 NEW), m-tab b32-35,76-79 (raw lencode)
+        off = n - 80771
+        if len(pay) != 84:
+            return fail("T10P184A paylen")
+        l16 = ((n << 1) | 1) & 0xFFFF
+        if pay[4] != (l16 & 0xFF) or pay[5] != (l16 >> 8):
+            return fail("T10P184A lencode")
+        if bytes((pay[32], pay[33], pay[34], pay[35], pay[76],
+                   pay[77], pay[78], pay[79])).hex() != _T10P184AM[off]:
+            return fail("T10P184A mtab")
+        for b, v in _T10P184AC:
+            if pay[b] != v:
+                return fail("T10P184A const %d" % b)
+        print("CLOSED T10P184A N=%d off=%d" % (n, off))
+        return 0
+    if n == 80787:  # T10P1842 singleton 84B (SING-echoes-PB1 sig only, 9f340400)
+        if len(pay) != 84 or pay.hex() != _T10P184S2:
+            return fail("T10P1842 const")
+        print("CLOSED T10P1842 N=%d off=18" % n)
+        return 0
+    if 80788 <= n <= 80796:  # T10P184B: 9x84B MID9 (per-N sigs, no SING/PBB split), 11B m-tab b0,1,30,31,36-38,80-83 (raw lencode)
+        off = n - 80788
+        if len(pay) != 84:
+            return fail("T10P184B paylen")
+        l16 = ((n << 1) | 1) & 0xFFFF
+        if pay[4] != (l16 & 0xFF) or pay[5] != (l16 >> 8):
+            return fail("T10P184B lencode")
+        if bytes((pay[0], pay[1], pay[30], pay[31], pay[36],
+                   pay[37], pay[38], pay[80], pay[81], pay[82],
+                   pay[83])).hex() != _T10P184BM[off]:
+            return fail("T10P184B mtab")
+        for b, v in _T10P184BC:
+            if pay[b] != v:
+                return fail("T10P184B const %d" % b)
+        print("CLOSED T10P184B N=%d off=%d" % (n, off))
+        return 0
+    if 80797 <= n <= 80860:  # T10P184Q: 4x16 84B-pay single-sig quad all-4-distinct R, m-tab b36,37,76-79 + rb7 b22,23,30-34/tails b80-83 (raw lencode)
+        off = n - 80797
+        if len(pay) != 84:
+            return fail("T10P184Q paylen")
+        l16 = ((n << 1) | 1) & 0xFFFF
+        if pay[4] != (l16 & 0xFF) or pay[5] != (l16 >> 8):
+            return fail("T10P184Q lencode")
+        m = off & 15
+        q = off >> 4
+        if bytes((pay[36], pay[37], pay[76], pay[77],
+                   pay[78], pay[79])).hex() != _T10P184M[m]:
+            return fail("T10P184Q mtab")
+        if bytes((pay[22], pay[23], pay[30], pay[31], pay[32],
+                   pay[33], pay[34])).hex() != _T10P184QR[q]:
+            return fail("T10P184Q rtab")
+        if bytes((pay[80], pay[81], pay[82],
+                   pay[83])).hex() != _T10P184QT[q]:
+            return fail("T10P184Q ttab")
+        for b, v in _T10P184QC:
+            if pay[b] != v:
+                return fail("T10P184Q const %d" % b)
+        print("CLOSED T10P184Q N=%d off=%d" % (n, off))
         return 0
 
     print("N out of scope", file=sys.stderr)
