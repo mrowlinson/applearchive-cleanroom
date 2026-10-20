@@ -1,0 +1,18 @@
+===== POSTMERGE master 8e42b659 Tue Oct 20 16:14:37 EDT 2026
+cc -O2 -Wall -Wextra -std=c11 -I/opt/homebrew/opt/xz/include -o /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-postmerge-b310/build/rgramc rgramc.c
+build_rc=0
+--- py:
+RGRAM-GREEN
+--- C:
+RGRAM-GREEN
+--- PYID:
+RGRAMC-PYID 5952/5952 covered=5952/5952
+RGRAMC-GREEN
+--- smoke:
+SMOKE-GREEN
+--- PINS purity:
+-n added=
+246
+-n removed=
+0
+ALLDONE
