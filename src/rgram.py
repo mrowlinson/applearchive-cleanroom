@@ -38923,6 +38923,160 @@ _T10P264RC = (
         (70, 0x14), (71, 0xba), (72, 0x30), (73, 0xfa), (74, 0xf0), (75, 0x08),
         (84, 0xf3), (85, 0x6a), (86, 0x97), (87, 0xb8),
 )
+_T10P265S0 = "a05603003b5385b47879ff14009f7c919200b0a863defbac0a186efe0cfd36e0d2fc0316acebfabac8fcfb1a587ca7256b60b19b109059b509dc195f1abdd699f075b58bc16014ba30faf008b02349b0f7f57db1"
+_T10P265S1 = "bdcfaa063d5385b47879fff4009f7c919200b0310a980316dcfca3020cfda4f9acebcae61b5dd923e8dc8d07f4539750b19bdfd7109059b51abdd699f075b58bc16014ba30faf008b02349b0853beb30d7a9ded2"
+_T10P265AM = (
+           "519b503dd2f6",
+           "919bec2d6347",
+           "31a4d375cc6e",
+           "d1a5afb2b461",
+           "71a89cfbe608",
+           "31a9b86f1296",
+           "11ad83b8f508",
+           "71af67b09eb2",
+           "71b0b63b6e54",
+           "71b0523a9675",
+           "b1b398fce88b",
+           "91b5127406ec",
+           "51bbbab0b1bd",
+           "71bcf4776593",
+           "f1bd78f7619e",
+           "f1be75f27e4f",
+)
+_T10P265AC = (
+        (0, 0xe0), (1, 0x93), (2, 0x2f), (3, 0x72), (6, 0x85), (7, 0xb4),
+        (8, 0x78), (9, 0x79), (10, 0xff), (11, 0x14), (12, 0xf2), (13, 0x7d),
+        (14, 0xd6), (15, 0x56), (16, 0x04), (17, 0x80), (18, 0x8d), (19, 0x79),
+        (20, 0x0a), (21, 0x98), (22, 0x03), (23, 0x16), (24, 0xdc), (25, 0xfc),
+        (26, 0xa3), (27, 0x02), (28, 0x0c), (29, 0xfd), (30, 0xa4), (31, 0xf9),
+        (32, 0xac), (33, 0xeb), (34, 0xca), (35, 0x66), (36, 0x1b), (37, 0x5d),
+        (38, 0xd9), (39, 0x23), (40, 0xe8), (41, 0xdc), (42, 0x8d), (43, 0x07),
+        (44, 0xf4), (45, 0x53), (46, 0x97), (47, 0x16), (50, 0x17), (51, 0x80),
+        (52, 0x10), (53, 0x90), (54, 0x59), (55, 0xb5), (56, 0xf0), (57, 0x75),
+        (58, 0xb5), (59, 0x8b), (60, 0xc1), (61, 0x60), (62, 0x14), (63, 0xba),
+        (64, 0x30), (65, 0xfa), (66, 0xf0), (67, 0x08), (68, 0xb0), (69, 0x23),
+        (70, 0x49), (71, 0xb0), (72, 0x85), (73, 0x3b), (74, 0xeb), (75, 0x30),
+        (80, 0x2d), (81, 0x4e), (82, 0x30), (83, 0xd3),
+)
+_T10P265CM = (
+           "aa06d29651b17687762c30f8e6",
+           "aa06d29651b17687764c30f8e6",
+           "aa06d29651b17687766c30f8e6",
+           "aa06d29651b17687768c30f8e6",
+           "7a0692975e316717ac1df5d87c",
+           "fa0492300151b47fcea56d4db7",
+           "1a055273935166e7b70375fb22",
+           "3a0552438451798fe75bfa51e8",
+           "7a0592ce9eb1805f9a0c7456dc",
+           "7a0592ce9eb1805f9ace2e4ee8",
+)
+_T10P265CC = (
+        (0, 0xbd), (1, 0xcf), (6, 0x85), (7, 0xb4), (8, 0x78), (9, 0x79),
+        (10, 0xff), (11, 0xf4), (12, 0x00), (13, 0x9f), (14, 0x7c), (15, 0x91),
+        (16, 0x92), (17, 0x00), (18, 0xb0), (19, 0x31), (20, 0x0a), (21, 0x98),
+        (22, 0x03), (23, 0x16), (24, 0xdc), (25, 0xfc), (26, 0xa3), (27, 0x02),
+        (28, 0x0c), (29, 0xfd), (30, 0xa4), (31, 0xf9), (32, 0xac), (33, 0xeb),
+        (34, 0x28), (36, 0x1b), (37, 0x5d), (38, 0xd9), (39, 0x23), (40, 0xe8),
+        (41, 0x9c), (42, 0x84), (43, 0x77), (44, 0xeb), (45, 0x6c), (52, 0x10),
+        (53, 0x90), (54, 0x59), (55, 0xb5), (56, 0x50), (57, 0x16), (58, 0x55),
+        (59, 0x15), (60, 0xf0), (61, 0x75), (62, 0xb5), (63, 0x8b), (64, 0xc1),
+        (65, 0x60), (66, 0x14), (67, 0xba), (68, 0x30), (69, 0xfa), (70, 0xf0),
+        (71, 0x08), (72, 0xb0), (73, 0x23), (74, 0x49), (75, 0xb0), (76, 0x85),
+        (77, 0x3b), (78, 0xeb), (79, 0x30),
+)
+_T10P265M = (
+           "f7ba59ac166a",
+           "f9bae05f0130",
+           "4fbbd54950d2",
+           "c1bbd68e0f7a",
+           "c9bb65e38514",
+           "15bc6d1baed8",
+           "4fbcc1428bc9",
+           "c3bca4832232",
+           "f5bc528e4bc9",
+           "35bd855ebc55",
+           "43bdec968187",
+           "99bd8a16de03",
+           "05bed25638aa",
+           "2bbe2c55d64c",
+           "35be764e2f0c",
+           "45be60134586",
+)
+_T10P265QR = (
+           "59d2ffd8b1a56722",
+           "5c52a392917ed792",
+           "5c52a392917ed792",
+           "5792ce9eb1805f9a",
+)
+_T10P265QT = (
+           "473b6a01",
+           "c2fac80f",
+           "756b3610",
+           "652f4ee8",
+)
+_T10P265QC = (
+        (0, 0xdf), (1, 0xfb), (2, 0xac), (8, 0x3c), (9, 0xcf), (10, 0xf7),
+        (11, 0x4f), (12, 0x00), (13, 0x9f), (14, 0x7c), (15, 0x91), (16, 0x92),
+        (17, 0x00), (18, 0xb0), (19, 0x31), (20, 0x0a), (21, 0x98), (22, 0x03),
+        (23, 0x16), (24, 0xdc), (25, 0xfc), (26, 0xa3), (27, 0x02), (28, 0x0c),
+        (29, 0xfd), (30, 0xa4), (31, 0xf9), (32, 0xac), (33, 0xeb), (34, 0x28),
+        (36, 0x1b), (37, 0x5d), (38, 0xd9), (39, 0x23), (40, 0xe8), (41, 0x9c),
+        (42, 0x84), (43, 0x77), (44, 0xeb), (45, 0x6c), (52, 0x10), (53, 0x90),
+        (54, 0x59), (55, 0xb5), (56, 0x50), (57, 0x16), (58, 0x55), (59, 0x15),
+        (60, 0xc1), (61, 0x60), (62, 0x14), (63, 0xba), (64, 0x30), (65, 0xfa),
+        (66, 0xf0), (67, 0x08), (68, 0xb0), (69, 0x23), (70, 0x49), (71, 0xb0),
+        (72, 0x85), (73, 0x3b), (74, 0xeb), (75, 0x30),
+)
+_T10P265RM = (
+           "6079e13f0ab0a6c1",
+           "8c79e13f4afd6e7e",
+           "9c79e13f7e38feac",
+           "eaf90a40cb2f70e2",
+           "02780b4011bc7af9",
+           "76780b403ef49366",
+           "2e790b4074f93d6c",
+           "46790b4023315983",
+           "78790b403a36622e",
+           "f2790b402a70673a",
+           "9cf80b40583854aa",
+           "12f90b40503ad816",
+           "54f90b4033726117",
+           "8af90b40797dac35",
+           "a4f90b40f3afa4c7",
+           "aef90b40f8f08fa7",
+)
+_T10P265RQ = (
+           "f7ba59ac166a",
+           "f9bae05f0130",
+           "4fbbd54950d2",
+           "c1bbd68e0f7a",
+           "c9bb65e38514",
+           "15bc6d1baed8",
+           "4fbcc1428bc9",
+           "c3bca4832232",
+           "f5bc528e4bc9",
+           "35bd855ebc55",
+           "43bdec968187",
+           "99bd8a16de03",
+           "05bed25638aa",
+           "2bbe2c55d64c",
+           "35be764e2f0c",
+           "45be60134586",
+)
+_T10P265RC = (
+        (1, 0x00), (2, 0x00), (3, 0x00), (8, 0x1c), (12, 0x79), (13, 0xbe),
+        (14, 0x7f), (15, 0x0a), (16, 0xf6), (17, 0xde), (18, 0x67), (19, 0xad),
+        (21, 0x00), (22, 0xd8), (23, 0x98), (24, 0x0a), (25, 0x98), (26, 0x03),
+        (27, 0x16), (28, 0xdc), (29, 0xfc), (30, 0xa3), (31, 0x02), (32, 0x0c),
+        (33, 0xfd), (34, 0xa4), (35, 0xf9), (36, 0xac), (37, 0xeb), (38, 0x28),
+        (39, 0x52), (40, 0x1b), (41, 0x5d), (42, 0xd9), (43, 0x23), (44, 0xe8),
+        (45, 0x9c), (46, 0x84), (47, 0x77), (48, 0xeb), (49, 0x6c), (50, 0xe6),
+        (51, 0xda), (52, 0x31), (53, 0x8e), (54, 0x67), (55, 0x0b), (56, 0x10),
+        (57, 0x90), (58, 0x59), (59, 0xb5), (60, 0x50), (61, 0x16), (62, 0x55),
+        (63, 0x15), (64, 0x30), (65, 0xfa), (66, 0xf0), (67, 0x08), (68, 0xb0),
+        (69, 0x23), (70, 0x49), (71, 0xb0), (72, 0x85), (73, 0x3b), (74, 0xeb),
+        (75, 0x30), (84, 0x20), (85, 0x32), (86, 0xbe), (87, 0xd2),
+)
 _T10P104S0 = "fca20900839d54dbb40d54e400247cb64e1a0fddc664792c38bc7171a8fcec7748fac93be5f62f69299c6748870d877957972c317689f51bc90738d5617a901d849013718e3a7f81440e16876737775a"
 _T10P104S1 = "48f86c13859d54dbb40d5400eecefdbdd2787517c654e5b13146098b67bf637948fac93be5f62f69299c6748870d877957972c317689f51b4d5865c0849013718e3a7f81440e16876737775ad32ae562"
 _T10P104AM = (
@@ -68438,6 +68592,91 @@ def main():
             if pay[b] != v:
                 return fail("T10P264R const %d" % b)
         print("CLOSED T10P264R N=%d off=%d" % (n, off))
+        return 0
+    if n == 108957:  # T10P2650 singleton 84B (PB0, sig a0560300 NEW)
+        if len(pay) != 84 or pay.hex() != _T10P265S0:
+            return fail("T10P2650 const")
+        print("CLOSED T10P2650 N=%d off=0" % n)
+        return 0
+    if n == 108958:  # T10P2651 singleton 84B (fat PB1, sig bdcfaa06 ==P264PB1)
+        if len(pay) != 84 or pay.hex() != _T10P265S1:
+            return fail("T10P2651 const")
+        print("CLOSED T10P2651 N=%d off=1" % n)
+        return 0
+    if 108959 <= n <= 108974:  # T10P265A: 16x84B 100B-PBA PLAIN (sig e0932f72 ==P264PBA/QUAD, b0 const e0), m-tab b48,49,76-79, b5 const (raw lencode)
+        off = n - 108959
+        if len(pay) != 84:
+            return fail("T10P265A paylen")
+        l16 = ((n << 1) | 1) & 0xFFFF
+        if pay[4] != (l16 & 0xFF) or pay[5] != (l16 >> 8):
+            return fail("T10P265A lencode")
+        if bytes((pay[48], pay[49], pay[76], pay[77], pay[78],
+                   pay[79])).hex() != _T10P265AM[off]:
+            return fail("T10P265A mtab")
+        for b, v in _T10P265AC:
+            if pay[b] != v:
+                return fail("T10P265A const %d" % b)
+        print("CLOSED T10P265A N=%d off=%d" % (n, off))
+        return 0
+    if 108975 <= n <= 108984:  # T10P265C: 10x84B C10-6SIG (bdcfaa06x4 + 5 distinct + last-x2; b0,b1 const bd,cf), m-tab b2,3,35,46-51,80-83 (sig b2,b3 in tab), b5 const (raw lencode)
+        off = n - 108975
+        if len(pay) != 84:
+            return fail("T10P265C paylen")
+        l16 = ((n << 1) | 1) & 0xFFFF
+        if pay[4] != (l16 & 0xFF) or pay[5] != (l16 >> 8):
+            return fail("T10P265C lencode")
+        if bytes((pay[2], pay[3], pay[35], pay[46], pay[47],
+                   pay[48], pay[49], pay[50], pay[51], pay[80],
+                   pay[81], pay[82], pay[83])).hex() != _T10P265CM[off]:
+            return fail("T10P265C mtab")
+        for b, v in _T10P265CC:
+            if pay[b] != v:
+                return fail("T10P265C const %d" % b)
+        print("CLOSED T10P265C N=%d off=%d" % (n, off))
+        return 0
+    if 108985 <= n <= 109048:  # T10P265Q: 4x16 84B-pay QUADms 3-sig row-led (dffbac59/5c/57) R8 r1==r2 MID-PAIRED, m-tab b6,7,76-79 (NO frags: b6,7 COL-pure, R ROW-pure) + sigr8 b3,35,46-51/tails b80-83 (no shared suffix) (raw lencode, b5 const 53)
+        off = n - 108985
+        if len(pay) != 84:
+            return fail("T10P265Q paylen")
+        l16 = ((n << 1) | 1) & 0xFFFF
+        if pay[4] != (l16 & 0xFF) or pay[5] != (l16 >> 8):
+            return fail("T10P265Q lencode")
+        m = off & 15
+        q = off >> 4
+        if bytes((pay[6], pay[7], pay[76], pay[77], pay[78],
+                   pay[79])).hex() != _T10P265M[m]:
+            return fail("T10P265Q mtab")
+        if bytes((pay[3], pay[35], pay[46], pay[47], pay[48],
+                   pay[49], pay[50], pay[51])).hex() != _T10P265QR[q]:
+            return fail("T10P265Q rtab")
+        if bytes((pay[80], pay[81], pay[82],
+                   pay[83])).hex() != _T10P265QT[q]:
+            return fail("T10P265Q ttab")
+        for b, v in _T10P265QC:
+            if pay[b] != v:
+                return fail("T10P265Q const %d" % b)
+        print("CLOSED T10P265Q N=%d off=%d" % (n, off))
+        return 0
+    if 109049 <= n <= 109304:  # T10P265R: 256x88B T88-ring SPLIT-b0 (b0 = 05 iff col<3 else 04, 48x05+208x04; b1-3 const 000000; FIRST split ring), TM8 b9-11,20,80-83 by COL off&15 + TR6 b6,7,76-79 by ROW off>>4 (SPLIT tails, UNPAIRED), b84-87 const, b4=(0xf3+2off)&FF b5=0x53+(off>=7)+(off>=135)
+        off = n - 109049
+        if len(pay) != 88:
+            return fail("T10P265R paylen")
+        if pay[4] != ((0xF3 + 2 * off) & 0xFF) or pay[5] != (0x53 + int(off >= 7) + int(off >= 135)):
+            return fail("T10P265R counter")
+        c = off & 15
+        r = off >> 4
+        if pay[0] != (0x05 if c < 3 else 0x04):
+            return fail("T10P265R b0split")
+        if bytes((pay[9], pay[10], pay[11], pay[20], pay[80],
+                   pay[81], pay[82], pay[83])).hex() != _T10P265RM[c]:
+            return fail("T10P265R mtab")
+        if bytes((pay[6], pay[7], pay[76], pay[77], pay[78],
+                   pay[79])).hex() != _T10P265RQ[r]:
+            return fail("T10P265R qtab")
+        for b, v in _T10P265RC:
+            if pay[b] != v:
+                return fail("T10P265R const %d" % b)
+        print("CLOSED T10P265R N=%d off=%d" % (n, off))
         return 0
 
     print("N out of scope", file=sys.stderr)
