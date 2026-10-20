@@ -45859,6 +45859,156 @@ _T10P308RC = (
         (70, 0x46), (71, 0x71), (72, 0xe8), (73, 0x78), (74, 0xb7), (75, 0x4a),
         (84, 0xe9), (85, 0x6a), (86, 0x63), (87, 0x11),
 )
+_T10P309S0 = "ab689400dbcacbb8f91aeecc00ee3c11f2447f962a18ef84e5eef1d54d33a4ffad6ef530dca1f02b4958234facc492800410a97e4f187a81bf964cc149b5e00cf2fd524e83c3feb5da75473b4d214671e878b74a"
+_T10P309S1 = "01000000ddcacbb899011f0ad7706700f27ceb8406fe4f705308acde7b7c75304d33a4ffad6ef530dca1f02b4958234facc492800410a97e4f187a81bf964cc149b5e00cf2fd524eec96b7f54d214671e878b74a8ab46904"
+_T10P309AM = (
+           "e03c401d2485",
+           "f53c1d2aef2c",
+           "517c9b9cb93c",
+           "6e7c6cc05839",
+           "817c3ccbda0c",
+           "8e7c834b409b",
+           "937c782524e9",
+           "aa7c64cd2466",
+           "c67ca3492393",
+           "f37cc2ebe5a1",
+           "f57ca041a879",
+           "1cbc98845063",
+           "3fbc1e0435ce",
+           "5abc3b500f51",
+           "9bbcbbc003d1",
+           "aebce2e556a6",
+)
+_T10P309AC = (
+        (0, 0x12), (1, 0x00), (2, 0x00), (3, 0x00), (6, 0xcb), (7, 0xb8),
+        (8, 0x99), (9, 0x01), (10, 0x1f), (11, 0x0a), (12, 0xd7), (13, 0x70),
+        (14, 0x67), (15, 0x00), (16, 0xd2), (17, 0xc0), (18, 0xff), (19, 0x4e),
+        (20, 0x13), (21, 0xdc), (22, 0xf9), (23, 0xd6), (24, 0x53), (25, 0x08),
+        (26, 0xac), (27, 0xef), (30, 0x85), (31, 0xde), (32, 0x51), (33, 0x34),
+        (34, 0x43), (35, 0xfa), (36, 0xad), (37, 0x6e), (38, 0xf5), (39, 0x30),
+        (40, 0xdc), (41, 0xa1), (42, 0xf0), (43, 0x2b), (44, 0x49), (45, 0x58),
+        (46, 0x23), (47, 0x4f), (48, 0xac), (49, 0xc4), (50, 0x92), (51, 0x80),
+        (52, 0x04), (53, 0x10), (54, 0xa9), (55, 0x7e), (56, 0xbf), (57, 0x96),
+        (58, 0x4c), (59, 0xc1), (60, 0x49), (61, 0xb5), (62, 0xe0), (63, 0x0c),
+        (64, 0xf2), (65, 0xfd), (66, 0x52), (67, 0x4e), (68, 0xec), (69, 0x96),
+        (70, 0xb7), (71, 0xf5), (72, 0x4d), (73, 0x21), (74, 0x46), (75, 0x71),
+        (76, 0xe8), (77, 0x78), (78, 0xb7), (79, 0x4a), (84, 0xab), (85, 0xb4),
+        (86, 0x69), (87, 0x04),
+)
+_T10P309CM = (
+           "fefc54708b66e6e7ea97",
+           "fffc54708b6610d3e30d",
+           "fffc54708b6607ccee24",
+           "fffc54708b6646ccee24",
+           "fffc54708b6666ccee24",
+           "fffc54708b6686ccee24",
+           "fffc54708b66a6ccee24",
+           "fffc54708b66c6ccee24",
+           "fffc54708b66e6ccee24",
+           "e97cb0796025de2e9f71",
+)
+_T10P309CC = (
+        (0, 0x01), (1, 0x00), (2, 0x00), (3, 0x00), (6, 0xcb), (7, 0xb8),
+        (8, 0x99), (9, 0x01), (10, 0x1f), (11, 0x0a), (12, 0xd7), (13, 0x70),
+        (14, 0x67), (15, 0x00), (16, 0xb2), (17, 0xf7), (18, 0x9f), (19, 0x84),
+        (20, 0x06), (21, 0xfe), (22, 0x17), (23, 0x72), (24, 0xca), (25, 0xe3),
+        (26, 0xff), (27, 0xde), (32, 0x56), (35, 0x48), (36, 0xad), (37, 0x6e),
+        (38, 0xf5), (39, 0x30), (40, 0xdc), (41, 0xa1), (42, 0xf0), (43, 0x2b),
+        (44, 0x49), (45, 0x58), (46, 0x23), (47, 0x4f), (48, 0xac), (49, 0xc4),
+        (50, 0x92), (51, 0x80), (52, 0x04), (53, 0x10), (54, 0xa9), (55, 0x7e),
+        (56, 0xbf), (57, 0x96), (58, 0x4c), (59, 0xc1), (60, 0x49), (61, 0xb5),
+        (62, 0xe0), (63, 0x0c), (64, 0xf2), (65, 0xfd), (66, 0x52), (67, 0x4e),
+        (68, 0xec), (69, 0x96), (70, 0xb7), (71, 0xf5), (72, 0xdd), (73, 0x3a),
+        (74, 0x89), (75, 0x2a), (76, 0x4d), (77, 0x21), (78, 0x46), (79, 0x71),
+        (80, 0xe8), (81, 0x78), (82, 0xb7), (83, 0x4a),
+)
+_T10P309M = (
+           "7fbfe37f57b3c7f973fc",
+           "7fbfe37f57dbd979d0e6",
+           "7fbf63f85753bb3207e4",
+           "7fbf63f857bbaab84af4",
+           "7fbf63f857c3926f58b4",
+           "7fbf63f957c7c0b0ef37",
+           "7fbf63f957c756b986f3",
+           "7fbfe3f957b35ebc277f",
+           "7fbf637e5f8ffb2e208a",
+           "7fbf637e5f9f72faedaf",
+           "7fbfe37e5f3b2cf3270d",
+           "ffc3e3f8870bd8f0c8a9",
+           "ffc3e3f887bfa96e2dab",
+           "ffc363f98757f72e514f",
+           "ffc363f987cbbcb4cce4",
+           "ffc3e3f987b3befbe8f5",
+)
+_T10P309QR = (
+           "7dbc559c75fc127642375e",
+           "823c06ca15ee43c90c66f8",
+           "823c06ca15ee43ee0c66f8",
+           "823c06ca15ee437825d7fd",
+)
+_T10P309QC = (
+        (0, 0x08), (1, 0x00), (2, 0x00), (3, 0x00), (6, 0xcb), (7, 0xb8),
+        (8, 0x99), (9, 0x01), (10, 0x1f), (11, 0xca), (12, 0xd7), (13, 0x70),
+        (14, 0x67), (15, 0x00), (16, 0xd2), (17, 0xc0), (20, 0x85), (21, 0x5c),
+        (22, 0xef), (23, 0x3f), (24, 0xca), (36, 0x71), (37, 0xb8), (38, 0x43),
+        (39, 0x0f), (40, 0x85), (41, 0x5f), (42, 0xa9), (43, 0x5b), (44, 0x49),
+        (45, 0x58), (46, 0x23), (47, 0x4f), (48, 0xac), (49, 0xc4), (50, 0x92),
+        (51, 0x80), (52, 0x04), (53, 0x10), (54, 0xa9), (55, 0x7e), (56, 0xbf),
+        (57, 0x96), (58, 0x4c), (59, 0xc1), (60, 0x49), (61, 0xb5), (62, 0xe0),
+        (63, 0x0c), (64, 0xf2), (65, 0xfd), (66, 0x52), (67, 0x4e), (68, 0xec),
+        (69, 0x96), (70, 0xb7), (71, 0xf5), (72, 0xdd), (73, 0x3a), (74, 0x89),
+        (75, 0x2a), (76, 0xe8), (77, 0x78), (78, 0xb7), (79, 0x4a),
+)
+_T10P309RM = (
+           "5cddab169a0f34",
+           "73ddab41d9c07c",
+           "deddabbd169524",
+           "32deab5021f43e",
+           "6bdeaba65b98e4",
+           "78deabe6a04696",
+           "a1deab0d5a905a",
+           "dfdeab98ce6f28",
+           "37dfab7ec4f198",
+           "49dfab93250e6b",
+           "88dfab07c122d3",
+           "9259acf5819a33",
+           "a659ac7be90f34",
+           "d45fb05f545da8",
+           "68d9b0e50051f5",
+           "6dd9b0f4d22abe",
+)
+_T10P309RQ = (
+           "aefcc29bfdc7f973fc",
+           "aefcc2dbfed979d0e6",
+           "affcc29b82bb3207e4",
+           "affcc2db85aab84af4",
+           "affcc21b86926f58b4",
+           "affcc23b96c0b0ef37",
+           "affcc23b9656b986f3",
+           "affcc29b9d5ebc277f",
+           "befcc27be4fb2e208a",
+           "befcc2fbe472faedaf",
+           "befcc2dbe92cf3270d",
+           "0f0fc35b88d8f0c8a9",
+           "0f0fc3fb8da96e2dab",
+           "0f0fc3bb92f72e514f",
+           "0f0fc35b96bcb4cce4",
+           "0f0fc39b9dbefbe8f5",
+)
+_T10P309RC = (
+        (0, 0x8b), (1, 0x00), (2, 0x00), (3, 0x00), (6, 0xcb), (7, 0xb8),
+        (8, 0xf9), (9, 0x1a), (10, 0xee), (11, 0xcc), (12, 0x00), (13, 0x06),
+        (14, 0x7c), (15, 0x28), (16, 0xd2), (17, 0xc0), (18, 0xff), (19, 0x2c),
+        (20, 0x85), (21, 0x5c), (22, 0xef), (23, 0x3f), (24, 0xca), (25, 0xe3),
+        (26, 0x48), (27, 0xde), (28, 0xf5), (32, 0xc3), (33, 0xbc), (36, 0x71),
+        (37, 0xb8), (38, 0x03), (39, 0xf5), (43, 0xb4), (44, 0xad), (45, 0x84),
+        (46, 0x35), (47, 0xf2), (48, 0xac), (49, 0xc4), (50, 0x92), (51, 0x80),
+        (52, 0x04), (53, 0x10), (54, 0xa9), (55, 0x7e), (56, 0xbf), (57, 0x96),
+        (58, 0x4c), (59, 0xc1), (60, 0x49), (61, 0xb5), (62, 0xe0), (63, 0x0c),
+        (64, 0xf2), (65, 0xfd), (66, 0x52), (67, 0x4e), (68, 0xec), (69, 0x96),
+        (70, 0xb7), (71, 0xf5), (72, 0xdd), (73, 0x3a), (74, 0x89), (75, 0x2a),
+        (84, 0x3d), (85, 0xcf), (86, 0x97), (87, 0xf7),
+)
 _T10P104S0 = "fca20900839d54dbb40d54e400247cb64e1a0fddc664792c38bc7171a8fcec7748fac93be5f62f69299c6748870d877957972c317689f51bc90738d5617a901d849013718e3a7f81440e16876737775a"
 _T10P104S1 = "48f86c13859d54dbb40d5400eecefdbdd2787517c654e5b13146098b67bf637948fac93be5f62f69299c6748870d877957972c317689f51b4d5865c0849013718e3a7f81440e16876737775ad32ae562"
 _T10P104AM = (
@@ -79063,6 +79213,89 @@ def main():
             if pay[b] != v:
                 return fail("T10P308R const %d" % b)
         print("CLOSED T10P308R N=%d off=%d" % (n, off))
+        return 0
+    if n == 124269:  # T10P3090 singleton 84B (PB0, sig ab689400 NEW)
+        if len(pay) != 84 or pay.hex() != _T10P309S0:
+            return fail("T10P3090 const")
+        print("CLOSED T10P3090 N=%d off=0" % n)
+        return 0
+    if n == 124270:  # T10P3091 singleton 88B (fat PB1, sig 01000000 sig-eq-P308PB1, 53/88 payload diff vs n123922 first-hand, NOT byte-equal; sig SAME-as-own-C10, 41/88 diff vs n124287, NOT byte-equal)
+        if len(pay) != 88 or pay.hex() != _T10P309S1:
+            return fail("T10P3091 const")
+        print("CLOSED T10P3091 N=%d off=%d" % (n, 1))
+        return 0
+    if 124271 <= n <= 124286:  # T10P309A: 16x88B 104B-PBA88 PLAIN (sig 12000000, b0 const 12), m-tab b28,29,80-83, raw lencode b4/b5 (b5 const ca)
+        off = n - 124271
+        if len(pay) != 88:
+            return fail("T10P309A paylen")
+        l16 = ((n << 1) | 1) & 0xFFFF
+        if pay[4] != (l16 & 0xFF) or pay[5] != (l16 >> 8):
+            return fail("T10P309A lencode")
+        if bytes((pay[28], pay[29], pay[80], pay[81], pay[82],
+                   pay[83])).hex() != _T10P309AM[off]:
+            return fail("T10P309A mtab")
+        for b, v in _T10P309AC:
+            if pay[b] != v:
+                return fail("T10P309A const %d" % b)
+        print("CLOSED T10P309A N=%d off=%d" % (n, off))
+        return 0
+    if 124287 <= n <= 124296:  # T10P309C: 10x88B C10-1SIG-88-STEP (01000000 x10 SAME-as-PB1-sig, pay88), m-tab b28-31,33,34,84-87, b5 0xca+(o>=1) step o0->o1 (raw lencode)
+        off = n - 124287
+        if len(pay) != 88:
+            return fail("T10P309C paylen")
+        l16 = ((n << 1) | 1) & 0xFFFF
+        if pay[4] != (l16 & 0xFF) or pay[5] != (l16 >> 8):
+            return fail("T10P309C lencode")
+        if bytes((pay[28], pay[29], pay[30], pay[31], pay[33],
+                   pay[34], pay[84], pay[85], pay[86],
+                   pay[87])).hex() != _T10P309CM[off]:
+            return fail("T10P309C mtab")
+        for b, v in _T10P309CC:
+            if pay[b] != v:
+                return fail("T10P309C const %d" % b)
+        print("CLOSED T10P309C N=%d off=%d" % (n, off))
+        return 0
+    if 124297 <= n <= 124360:  # T10P309Q: 4x16 88B-pay QUAD88-4R 1-sig 08000000, m-tab b18,19,25-27,35,80-83 (QM10) + r11 b28-34,84-87 R11 4/4 UNPAIRED NO frags (tails b84-87 4 distinct: r1r2 3B pair-only 0c66f8, r0+r3 lcs=0) (raw lencode, b5 const cb, b4 range 13..91 NO edge)
+        off = n - 124297
+        if len(pay) != 88:
+            return fail("T10P309Q paylen")
+        l16 = ((n << 1) | 1) & 0xFFFF
+        if pay[4] != (l16 & 0xFF) or pay[5] != (l16 >> 8):
+            return fail("T10P309Q lencode")
+        m = off & 15
+        q = off >> 4
+        if bytes((pay[18], pay[19], pay[25], pay[26], pay[27],
+                   pay[35], pay[80], pay[81], pay[82],
+                   pay[83])).hex() != _T10P309M[m]:
+            return fail("T10P309Q mtab")
+        if bytes((pay[28], pay[29], pay[30], pay[31], pay[32],
+                   pay[33], pay[34], pay[84], pay[85], pay[86],
+                   pay[87])).hex() != _T10P309QR[q]:
+            return fail("T10P309Q rtab")
+        for b, v in _T10P309QC:
+            if pay[b] != v:
+                return fail("T10P309Q const %d" % b)
+        print("CLOSED T10P309Q N=%d off=%d" % (n, off))
+        return 0
+    if 124361 <= n <= 124616:  # T10P309R: 256x88B T88-ring SWAPPED-tails (sig 8b000000), TM7 b40,41,42,76-79 by COL off&15 + TR9 b29,30,31,34,35,80-83 by ROW off>>4 (SWAPPED tails, UNPAIRED), b84-87 const, b4=(0x93+2off)&FF b5=0xcb+(off>=55)+(off>=183)
+        off = n - 124361
+        if len(pay) != 88:
+            return fail("T10P309R paylen")
+        if pay[4] != ((0x93 + 2 * off) & 0xFF) or pay[5] != (0xCB + int(off >= 55) + int(off >= 183)):
+            return fail("T10P309R counter")
+        c = off & 15
+        r = off >> 4
+        if bytes((pay[40], pay[41], pay[42], pay[76], pay[77],
+                   pay[78], pay[79])).hex() != _T10P309RM[c]:
+            return fail("T10P309R mtab")
+        if bytes((pay[29], pay[30], pay[31], pay[34], pay[35],
+                   pay[80], pay[81], pay[82],
+                   pay[83])).hex() != _T10P309RQ[r]:
+            return fail("T10P309R qtab")
+        for b, v in _T10P309RC:
+            if pay[b] != v:
+                return fail("T10P309R const %d" % b)
+        print("CLOSED T10P309R N=%d off=%d" % (n, off))
         return 0
 
     print("N out of scope", file=sys.stderr)
