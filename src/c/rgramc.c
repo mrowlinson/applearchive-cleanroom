@@ -108566,6 +108566,412 @@ static const long _T10P226RC[][PAIRW__T10P226RC] = {
     {83, 224},
 };
 static const long _T10P226RC_N = 66;
+static const char _T10P227S0[] = "bf250000ebeb62b8f8fb304400cd3c2851c63cee5edf71cc896b34af2c0a700c64fc37a18bfdf0de68e986688a7cf0cf6af9d8e998102d72d8e6a5e74276f370f4f225ee7dc79a93ac7935bbc895b6d0ceb99853";
+static const char _T10P227S1[] = "8e634e00edeb62b8f8fb30e400cd3c2851c6bcd749e6f92c5c7d78e32c0b06fab4710cdf651e0def68e986688a7cf0cf6af9d8e998102d720c1258b0f4f225ee7dc79a93ac7935bbc895b6d0ceb99853d5b631a9";
+static const char *_T10P227AM[] = {
+    "b4db60dae9f6",
+    "badbf24f7f8d",
+    "1fdc0f6a6f4e",
+    "46dc254cd789",
+    "68dc4b89133d",
+    "85dcce96137a",
+    "8edc9a15ebb4",
+    "8fdc4f69ac4c",
+    "96dcd81500ab",
+    "a5dc0faa417e",
+    "f6dc88d974a4",
+    "02dddb17e5a6",
+    "40ddb84bdf3f",
+    "58dd17a768fc",
+    "7add0f49f065",
+    "a8ddea0e51d9",
+};
+enum { PAIRW__T10P227AC = 2 };
+static const long _T10P227AC[][PAIRW__T10P227AC] = {
+    {0, 142},
+    {1, 99},
+    {2, 182},
+    {3, 4},
+    {6, 98},
+    {7, 184},
+    {8, 248},
+    {9, 251},
+    {10, 48},
+    {11, 228},
+    {12, 0},
+    {13, 205},
+    {14, 60},
+    {15, 40},
+    {16, 81},
+    {17, 198},
+    {18, 188},
+    {19, 215},
+    {20, 137},
+    {21, 235},
+    {22, 249},
+    {23, 172},
+    {24, 62},
+    {25, 188},
+    {26, 113},
+    {27, 153},
+    {28, 44},
+    {29, 11},
+    {30, 6},
+    {31, 250},
+    {32, 180},
+    {33, 204},
+    {34, 163},
+    {35, 237},
+    {38, 6},
+    {39, 99},
+    {40, 12},
+    {41, 151},
+    {42, 110},
+    {43, 136},
+    {44, 138},
+    {45, 124},
+    {46, 240},
+    {47, 207},
+    {48, 106},
+    {49, 249},
+    {50, 216},
+    {51, 233},
+    {52, 152},
+    {53, 16},
+    {54, 45},
+    {55, 114},
+    {56, 12},
+    {57, 18},
+    {58, 88},
+    {59, 176},
+    {60, 125},
+    {61, 199},
+    {62, 154},
+    {63, 147},
+    {64, 172},
+    {65, 121},
+    {66, 53},
+    {67, 187},
+    {68, 200},
+    {69, 149},
+    {70, 182},
+    {71, 208},
+    {72, 206},
+    {73, 185},
+    {74, 152},
+    {75, 83},
+    {80, 248},
+    {81, 182},
+    {82, 49},
+    {83, 169},
+};
+static const long _T10P227AC_N = 76;
+static const char *_T10P227BM[] = {
+    "968fcc12a2bdab5acb5d91e1d20d5c534886",
+    "968fcc12a2bdab5acb5d91e1d20d7c534886",
+    "968fcc12a2bd0bddff2d5101c40dc8609f18",
+    "4e0f0ca8d1de9610e3dd300bf5861118eec8",
+    "4e0fac98d0de96c0bd5d10a8f9864348dded",
+    "4e0facf3d0de9650c5e5d0adfd86760316e1",
+    "4e0facd6d1de96b0a985b025ff8645625684",
+    "4e0fac98d0de96d0bd5d10a8f98699149836",
+    "4e0fac98d0de96d0bd5d10a8f986c7149836",
+    "4e0fac98d0de96d0bd5d10a8f986f5149836",
+};
+enum { PAIRW__T10P227BC = 2 };
+static const long _T10P227BC[][PAIRW__T10P227BC] = {
+    {0, 142},
+    {1, 99},
+    {3, 0},
+    {6, 98},
+    {7, 184},
+    {8, 248},
+    {9, 251},
+    {10, 48},
+    {11, 228},
+    {12, 0},
+    {13, 205},
+    {14, 60},
+    {15, 40},
+    {16, 81},
+    {17, 198},
+    {18, 188},
+    {19, 215},
+    {20, 73},
+    {21, 230},
+    {22, 155},
+    {24, 92},
+    {25, 125},
+    {26, 120},
+    {27, 227},
+    {28, 44},
+    {29, 11},
+    {30, 134},
+    {31, 127},
+    {44, 138},
+    {45, 124},
+    {46, 240},
+    {47, 207},
+    {48, 106},
+    {49, 249},
+    {50, 216},
+    {51, 233},
+    {52, 152},
+    {53, 16},
+    {54, 45},
+    {55, 114},
+    {56, 12},
+    {57, 18},
+    {58, 88},
+    {59, 176},
+    {60, 135},
+    {61, 247},
+    {62, 106},
+    {63, 162},
+    {64, 125},
+    {65, 199},
+    {66, 154},
+    {67, 147},
+    {68, 172},
+    {69, 121},
+    {70, 53},
+    {71, 187},
+    {72, 200},
+    {73, 149},
+    {74, 182},
+    {75, 208},
+    {76, 206},
+    {77, 185},
+    {78, 152},
+    {79, 83},
+};
+static const long _T10P227BC_N = 64;
+static const char *_T10P227M[] = {
+    "ee1ec18597fccb70",
+    "eeceed9781fb9ca9",
+    "eeceed97de73f7aa",
+    "eeceed9e417356f8",
+    "eedeed86bbf3020e",
+    "eedeed8ed1f0bc0f",
+    "eedeed9012305b99",
+    "eedeed958f7ddc98",
+    "eedeed9b0a7df87a",
+    "eedeed9b8d3a5e2d",
+    "eedeed9cecb2c0a5",
+    "f62ec988c9af7e6f",
+    "f62ec996a0f3f164",
+    "f62ec99df9b3a368",
+    "f63ec981923958d8",
+    "f6eef59789b4583a",
+};
+static const char *_T10P227X42[] = {
+    "00",
+    "03",
+    "05",
+    "04",
+};
+static const char *_T10P227M42[] = {
+    "9c",
+    "9c",
+    "9c",
+    "3c",
+    "3c",
+    "1c",
+    "bc",
+    "7c",
+    "5c",
+    "bc",
+    "7c",
+    "5c",
+    "3c",
+    "3c",
+    "dc",
+    "3c",
+};
+static const char *_T10P227QR[] = {
+    "cb5bae95f046",
+    "9b5a58ebb025",
+    "dddb554c10a8",
+    "46de61cff06d",
+};
+static const char *_T10P227QT[] = {
+    "4b696cac",
+    "f3c5f3b1",
+    "bd589836",
+    "5c9fa7af",
+};
+enum { PAIRW__T10P227QC = 2 };
+static const long _T10P227QC[][PAIRW__T10P227QC] = {
+    {0, 142},
+    {1, 99},
+    {3, 4},
+    {6, 98},
+    {7, 184},
+    {8, 248},
+    {9, 251},
+    {10, 48},
+    {11, 228},
+    {12, 0},
+    {13, 205},
+    {14, 60},
+    {15, 40},
+    {16, 81},
+    {17, 198},
+    {18, 188},
+    {19, 215},
+    {20, 137},
+    {21, 235},
+    {22, 155},
+    {23, 143},
+    {24, 62},
+    {25, 188},
+    {26, 113},
+    {27, 153},
+    {28, 44},
+    {29, 11},
+    {30, 134},
+    {31, 127},
+    {32, 204},
+    {33, 18},
+    {44, 110},
+    {45, 67},
+    {46, 180},
+    {47, 183},
+    {48, 188},
+    {49, 124},
+    {50, 236},
+    {51, 244},
+    {52, 152},
+    {53, 16},
+    {54, 45},
+    {55, 114},
+    {56, 12},
+    {57, 18},
+    {58, 88},
+    {59, 176},
+    {60, 135},
+    {61, 247},
+    {62, 106},
+    {63, 162},
+    {64, 172},
+    {65, 121},
+    {66, 53},
+    {67, 187},
+    {68, 200},
+    {69, 149},
+    {70, 182},
+    {71, 208},
+    {72, 206},
+    {73, 185},
+    {74, 152},
+    {75, 83},
+};
+static const long _T10P227QC_N = 63;
+static const char *_T10P227RM[] = {
+    "51fabf62d5fa5cef",
+    "d16fc762f938caac",
+    "b172c762d075c409",
+    "d173c762faf1841f",
+    "917cc76213307c62",
+    "d1c82763caf7025a",
+    "71cc27636637953f",
+    "71cc2763617c5f46",
+    "11d527637f33a716",
+    "71fc377217fb115f",
+    "51663f725dbca693",
+    "71673f729c730f58",
+    "f1693f7232fba48b",
+    "b1763f7263bc756a",
+    "31773f72c6b487a7",
+    "f1803f72e06ea616",
+};
+static const char *_T10P227RQ[] = {
+    "731ec19c8597fccb70",
+    "73ceed9c9781fb9ca9",
+    "73ceed9c97de73f7aa",
+    "73ceed3c9e417356f8",
+    "73deed3c86bbf3020e",
+    "73deed1c8ed1f0bc0f",
+    "73deedbc9012305b99",
+    "73deed7c958f7ddc98",
+    "73deed5c9b0a7df87a",
+    "73deedbc9b8d3a5e2d",
+    "73deed7c9cecb2c0a5",
+    "b32ec95c88c9af7e6f",
+    "b32ec93c96a0f3f164",
+    "b32ec93c9df9b3a368",
+    "b33ec9dc81923958d8",
+    "b3eef53c9789b4583a",
+};
+enum { PAIRW__T10P227RC = 2 };
+static const long _T10P227RC[][PAIRW__T10P227RC] = {
+    {0, 160},
+    {1, 153},
+    {2, 7},
+    {3, 69},
+    {6, 98},
+    {7, 184},
+    {8, 248},
+    {9, 251},
+    {10, 48},
+    {11, 4},
+    {12, 113},
+    {13, 28},
+    {15, 95},
+    {16, 50},
+    {17, 230},
+    {18, 189},
+    {19, 190},
+    {20, 137},
+    {21, 235},
+    {22, 155},
+    {23, 143},
+    {24, 62},
+    {25, 188},
+    {26, 113},
+    {27, 153},
+    {28, 44},
+    {29, 11},
+    {30, 134},
+    {31, 127},
+    {32, 204},
+    {33, 18},
+    {36, 203},
+    {37, 91},
+    {38, 174},
+    {39, 149},
+    {40, 240},
+    {41, 70},
+    {44, 142},
+    {45, 151},
+    {46, 63},
+    {47, 123},
+    {52, 152},
+    {53, 16},
+    {54, 45},
+    {55, 114},
+    {56, 12},
+    {57, 18},
+    {58, 88},
+    {59, 176},
+    {60, 135},
+    {61, 247},
+    {62, 106},
+    {63, 162},
+    {64, 200},
+    {65, 149},
+    {66, 182},
+    {67, 208},
+    {68, 206},
+    {69, 185},
+    {70, 152},
+    {71, 83},
+    {80, 254},
+    {81, 105},
+    {82, 108},
+    {83, 172},
+};
+static const long _T10P227RC_N = 65;
 
 int rgram_verify(const uint8_t *raw, long rawlen, long n) {
     const uint8_t *pay = 0;
@@ -113496,6 +113902,26 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
     char _t4851[512];
     char _t4852[512];
     char _t4853[512];
+    char _t4854[512];
+    char _t4855[512];
+    char _t4856[512];
+    char _t4857[512];
+    char _t4858[512];
+    char _t4859[512];
+    char _t4860[512];
+    char _t4861[512];
+    char _t4862[512];
+    char _t4863[512];
+    char _t4864[512];
+    char _t4865[512];
+    char _t4866[512];
+    char _t4867[512];
+    char _t4868[512];
+    char _t4869[512];
+    char _t4870[512];
+    char _t4871[512];
+    char _t4872[512];
+    char _t4873[512];
 
     if ((rawlen) < (12)) {
         return failf("short file");
@@ -169822,6 +170248,216 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
             }
         }
         printf("CLOSED T10P226R N=%ld off=%ld\n", (long)(n), (long)(off));
+        return 0;
+    }
+    /* T62661: T10P2270 singleton 84B (PB0, sig bf250000 REPEAT ==P226PB0) */
+    if ((n) == (95733)) {
+        hex_of(pay, paylen, _t4854);
+        strcpy(_t4855, _T10P227S0);
+        if ((paylen) != (84) || !((strcmp(_t4854, _t4855) == 0))) {
+            return failf("T10P2270 const");
+        }
+        printf("CLOSED T10P2270 N=%ld off=0\n", (long)(n));
+        return 0;
+    }
+
+    /* T62666: T10P2271 singleton 84B (fat PB1, sig 8e634e00 NEW) */
+    if ((n) == (95734)) {
+        hex_of(pay, paylen, _t4856);
+        strcpy(_t4857, _T10P227S1);
+        if ((paylen) != (84) || !((strcmp(_t4856, _t4857) == 0))) {
+            return failf("T10P2271 const");
+        }
+        printf("CLOSED T10P2271 N=%ld off=1\n", (long)(n));
+        return 0;
+    }
+
+    /* T62671: T10P227A: 16x84B 100B-PBA (sig 8e63b604 NEW), m-tab b36,37,76-79, b5-carry via raw lencode (ff->01 @95743->95744) */
+    if ((95735) <= (n) && (n) <= (95750)) {
+        off = (((n) - (95735)));
+        if ((paylen) != (84)) {
+            return failf("T10P227A paylen");
+        }
+        l16 = (((((((n) << (1))) | (1))) & (65535)));
+        if (((pay[4])) != (((l16) & (255))) || ((pay[5])) != (((l16) >> (8)))) {
+            return failf("T10P227A lencode");
+        }
+        { uint8_t _b2978[6];
+        _b2978[0] = (uint8_t)((pay[36]));
+        _b2978[1] = (uint8_t)((pay[37]));
+        _b2978[2] = (uint8_t)((pay[76]));
+        _b2978[3] = (uint8_t)((pay[77]));
+        _b2978[4] = (uint8_t)((pay[78]));
+        _b2978[5] = (uint8_t)((pay[79]));
+        hex_of(_b2978, 6, _t4858); }
+        strcpy(_t4859, _T10P227AM[off]);
+        if (!((strcmp(_t4858, _t4859) == 0))) {
+            return failf("T10P227A mtab");
+        }
+        for (long _i2979 = 0; _i2979 < _T10P227AC_N; _i2979++) {
+            b = _T10P227AC[_i2979][0]; v = _T10P227AC[_i2979][1];
+            if (((pay[b])) != (v)) {
+                return failf("T10P227A const %ld", (long)(b));
+            }
+        }
+        printf("CLOSED T10P227A N=%ld off=%ld\n", (long)(n), (long)(off));
+        return 0;
+    }
+
+    /* T62686: T10P227B: 10x84B PBB10 2-sig (96x3 8e639600 + 4ex7 8e634e00==PB1), m-tab b2,23,32-43,80-83 (sig byte in tab), b5 const (raw lencode) */
+    if ((95751) <= (n) && (n) <= (95760)) {
+        off = (((n) - (95751)));
+        if ((paylen) != (84)) {
+            return failf("T10P227B paylen");
+        }
+        l16 = (((((((n) << (1))) | (1))) & (65535)));
+        if (((pay[4])) != (((l16) & (255))) || ((pay[5])) != (((l16) >> (8)))) {
+            return failf("T10P227B lencode");
+        }
+        { uint8_t _b2980[18];
+        _b2980[0] = (uint8_t)((pay[2]));
+        _b2980[1] = (uint8_t)((pay[23]));
+        _b2980[2] = (uint8_t)((pay[32]));
+        _b2980[3] = (uint8_t)((pay[33]));
+        _b2980[4] = (uint8_t)((pay[34]));
+        _b2980[5] = (uint8_t)((pay[35]));
+        _b2980[6] = (uint8_t)((pay[36]));
+        _b2980[7] = (uint8_t)((pay[37]));
+        _b2980[8] = (uint8_t)((pay[38]));
+        _b2980[9] = (uint8_t)((pay[39]));
+        _b2980[10] = (uint8_t)((pay[40]));
+        _b2980[11] = (uint8_t)((pay[41]));
+        _b2980[12] = (uint8_t)((pay[42]));
+        _b2980[13] = (uint8_t)((pay[43]));
+        _b2980[14] = (uint8_t)((pay[80]));
+        _b2980[15] = (uint8_t)((pay[81]));
+        _b2980[16] = (uint8_t)((pay[82]));
+        _b2980[17] = (uint8_t)((pay[83]));
+        hex_of(_b2980, 18, _t4860); }
+        strcpy(_t4861, _T10P227BM[off]);
+        if (!((strcmp(_t4860, _t4861) == 0))) {
+            return failf("T10P227B mtab");
+        }
+        for (long _i2981 = 0; _i2981 < _T10P227BC_N; _i2981++) {
+            b = _T10P227BC[_i2981][0]; v = _T10P227BC[_i2981][1];
+            if (((pay[b])) != (v)) {
+                return failf("T10P227B const %ld", (long)(b));
+            }
+        }
+        printf("CLOSED T10P227B N=%ld off=%ld\n", (long)(n), (long)(off));
+        return 0;
+    }
+
+    /* T62703: T10P227Q: 4x16 84B-pay QUADmotif 2-sig (ee04 cols0-10/f604 cols11-15) R6 unpaired, m-tab b2,34,35,43,76-79 + b42 row-xor X=[00,03,05,04] + sigr6 b36-41/tails b80-83 (raw lencode, b5 const ec) */
+    if ((95761) <= (n) && (n) <= (95824)) {
+        off = (((n) - (95761)));
+        if ((paylen) != (84)) {
+            return failf("T10P227Q paylen");
+        }
+        l16 = (((((((n) << (1))) | (1))) & (65535)));
+        if (((pay[4])) != (((l16) & (255))) || ((pay[5])) != (((l16) >> (8)))) {
+            return failf("T10P227Q lencode");
+        }
+        m = (((off) & (15)));
+        q = (((off) >> (4)));
+        { uint8_t _b2982[8];
+        _b2982[0] = (uint8_t)((pay[2]));
+        _b2982[1] = (uint8_t)((pay[34]));
+        _b2982[2] = (uint8_t)((pay[35]));
+        _b2982[3] = (uint8_t)((pay[43]));
+        _b2982[4] = (uint8_t)((pay[76]));
+        _b2982[5] = (uint8_t)((pay[77]));
+        _b2982[6] = (uint8_t)((pay[78]));
+        _b2982[7] = (uint8_t)((pay[79]));
+        hex_of(_b2982, 8, _t4862); }
+        strcpy(_t4863, _T10P227M[m]);
+        if (!((strcmp(_t4862, _t4863) == 0))) {
+            return failf("T10P227Q mtab");
+        }
+        snprintf(_t4864, sizeof _t4864, "%02lx", (long)((((pay[42])) ^ (hexval(_T10P227X42[q], (long)strlen(_T10P227X42[q]))))));
+        strcpy(_t4865, _T10P227M42[m]);
+        if (!((strcmp(_t4864, _t4865) == 0))) {
+            return failf("T10P227Q b42xor");
+        }
+        { uint8_t _b2983[6];
+        _b2983[0] = (uint8_t)((pay[36]));
+        _b2983[1] = (uint8_t)((pay[37]));
+        _b2983[2] = (uint8_t)((pay[38]));
+        _b2983[3] = (uint8_t)((pay[39]));
+        _b2983[4] = (uint8_t)((pay[40]));
+        _b2983[5] = (uint8_t)((pay[41]));
+        hex_of(_b2983, 6, _t4866); }
+        strcpy(_t4867, _T10P227QR[q]);
+        if (!((strcmp(_t4866, _t4867) == 0))) {
+            return failf("T10P227Q rtab");
+        }
+        { uint8_t _b2984[4];
+        _b2984[0] = (uint8_t)((pay[80]));
+        _b2984[1] = (uint8_t)((pay[81]));
+        _b2984[2] = (uint8_t)((pay[82]));
+        _b2984[3] = (uint8_t)((pay[83]));
+        hex_of(_b2984, 4, _t4868); }
+        strcpy(_t4869, _T10P227QT[q]);
+        if (!((strcmp(_t4868, _t4869) == 0))) {
+            return failf("T10P227Q ttab");
+        }
+        for (long _i2985 = 0; _i2985 < _T10P227QC_N; _i2985++) {
+            b = _T10P227QC[_i2985][0]; v = _T10P227QC[_i2985][1];
+            if (((pay[b])) != (v)) {
+                return failf("T10P227Q const %ld", (long)(b));
+            }
+        }
+        printf("CLOSED T10P227Q N=%ld off=%ld\n", (long)(n), (long)(off));
+        return 0;
+    }
+
+    /* T62728: T10P227R: 256x84B T-ring STANDARD (sig a0990745 ==P226T), M8 b48-51,76-79 by COL off&15 + R9 b14,34,35,42,43,72-75 by ROW off>>4, b4=(0xa3+2off)&FF b5=0xec+(off>=47)+(off>=175) */
+    if ((95825) <= (n) && (n) <= (96080)) {
+        off = (((n) - (95825)));
+        if ((paylen) != (84)) {
+            return failf("T10P227R paylen");
+        }
+        if (((pay[4])) != (((((163) + (((2) * (off))))) & (255))) || ((pay[5])) != (((((236) + ((off) >= (47)))) + ((off) >= (175))))) {
+            return failf("T10P227R counter");
+        }
+        c = (((off) & (15)));
+        r = (((off) >> (4)));
+        { uint8_t _b2986[8];
+        _b2986[0] = (uint8_t)((pay[48]));
+        _b2986[1] = (uint8_t)((pay[49]));
+        _b2986[2] = (uint8_t)((pay[50]));
+        _b2986[3] = (uint8_t)((pay[51]));
+        _b2986[4] = (uint8_t)((pay[76]));
+        _b2986[5] = (uint8_t)((pay[77]));
+        _b2986[6] = (uint8_t)((pay[78]));
+        _b2986[7] = (uint8_t)((pay[79]));
+        hex_of(_b2986, 8, _t4870); }
+        strcpy(_t4871, _T10P227RM[c]);
+        if (!((strcmp(_t4870, _t4871) == 0))) {
+            return failf("T10P227R mtab");
+        }
+        { uint8_t _b2987[9];
+        _b2987[0] = (uint8_t)((pay[14]));
+        _b2987[1] = (uint8_t)((pay[34]));
+        _b2987[2] = (uint8_t)((pay[35]));
+        _b2987[3] = (uint8_t)((pay[42]));
+        _b2987[4] = (uint8_t)((pay[43]));
+        _b2987[5] = (uint8_t)((pay[72]));
+        _b2987[6] = (uint8_t)((pay[73]));
+        _b2987[7] = (uint8_t)((pay[74]));
+        _b2987[8] = (uint8_t)((pay[75]));
+        hex_of(_b2987, 9, _t4872); }
+        strcpy(_t4873, _T10P227RQ[r]);
+        if (!((strcmp(_t4872, _t4873) == 0))) {
+            return failf("T10P227R qtab");
+        }
+        for (long _i2988 = 0; _i2988 < _T10P227RC_N; _i2988++) {
+            b = _T10P227RC[_i2988][0]; v = _T10P227RC[_i2988][1];
+            if (((pay[b])) != (v)) {
+                return failf("T10P227R const %ld", (long)(b));
+            }
+        }
+        printf("CLOSED T10P227R N=%ld off=%ld\n", (long)(n), (long)(off));
         return 0;
     }
 
