@@ -1,0 +1,53 @@
+HEAD is now at 1c414b50 encode-cport: C port rgram band299 T10P191 (pins 83205..83296, 1074 tiers sealed) (RGRAMC-PYID 5630/5630, RGRAM-GREEN 11260/11260 via RGRAM_BIN=C + python + SMOKE/UNITS first-hand)
+===== PV b299 (1c414b50) Tue Oct 20 14:19:05 EDT 2026
+cc -O2 -Wall -Wextra -std=c11 -I/opt/homebrew/opt/xz/include -o /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-1c414b50/build/rgramc rgramc.c
+build_rc=0
+--- py:
+RGRAM-GREEN
+--- C:
+RGRAM-GREEN
+--- PYID:
+RGRAMC-PYID 5630/5630 covered=5630/5630
+RGRAMC-GREEN
+--- smoke:
+SMOKE-GREEN
+HEAD is now at 850d20f4 encode-cport: C port rgram band300 T10P192 (pins 83553..83900, 1089 tiers sealed) (RGRAMC-PYID 5659/5659, RGRAM-GREEN 11318/11318 via RGRAM_BIN=C + python + SMOKE/UNITS first-hand)
+===== PV b300 (850d20f4) Tue Oct 20 14:20:25 EDT 2026
+cc -O2 -Wall -Wextra -std=c11 -I/opt/homebrew/opt/xz/include -o /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-850d20f4/build/rgramc rgramc.c
+build_rc=0
+--- py:
+RGRAM-GREEN
+--- C:
+RGRAM-GREEN
+--- PYID:
+RGRAMC-PYID 5659/5659 covered=5659/5659
+RGRAMC-GREEN
+--- smoke:
+SMOKE-GREEN
+HEAD is now at 55308f7c encode-cport: C port rgram band301 T10P193 (pins 83901..84248, 1098 tiers sealed) (RGRAMC-PYID 5685/5685, RGRAM-GREEN 11370/11370 via RGRAM_BIN=C + python + SMOKE/UNITS first-hand)
+===== PV b301 (55308f7c) Tue Oct 20 14:21:21 EDT 2026
+cc -O2 -Wall -Wextra -std=c11 -I/opt/homebrew/opt/xz/include -o /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-55308f7c/build/rgramc rgramc.c
+build_rc=0
+--- py:
+RGRAM-GREEN
+--- C:
+RGRAM-GREEN
+--- PYID:
+RGRAMC-PYID 5685/5685 covered=5685/5685
+RGRAMC-GREEN
+--- smoke:
+SMOKE-GREEN
+HEAD is now at de815ae0 encode-cport: C port rgram band302 T10P194 (pins 84249..84596, 1105 tiers sealed) (RGRAMC-PYID 5712/5712, RGRAM-GREEN 11424/11424 via RGRAM_BIN=C + python + SMOKE/UNITS first-hand)
+===== PV b302 (de815ae0) Tue Oct 20 14:22:15 EDT 2026
+cc -O2 -Wall -Wextra -std=c11 -I/opt/homebrew/opt/xz/include -o /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-de815ae0/build/rgramc rgramc.c
+build_rc=0
+--- py:
+RGRAM-GREEN
+--- C:
+RGRAM-GREEN
+--- PYID:
+RGRAMC-PYID 5712/5712 covered=5712/5712
+RGRAMC-GREEN
+--- smoke:
+SMOKE-GREEN
+ALLDONE
