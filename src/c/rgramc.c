@@ -142133,6 +142133,405 @@ static const long _T10P308RC[][PAIRW__T10P308RC] = {
     {87, 17},
 };
 static const long _T10P308RC_N = 70;
+static const char _T10P309S0[] = "ab689400dbcacbb8f91aeecc00ee3c11f2447f962a18ef84e5eef1d54d33a4ffad6ef530dca1f02b4958234facc492800410a97e4f187a81bf964cc149b5e00cf2fd524e83c3feb5da75473b4d214671e878b74a";
+static const char _T10P309S1[] = "01000000ddcacbb899011f0ad7706700f27ceb8406fe4f705308acde7b7c75304d33a4ffad6ef530dca1f02b4958234facc492800410a97e4f187a81bf964cc149b5e00cf2fd524eec96b7f54d214671e878b74a8ab46904";
+static const char *_T10P309AM[] = {
+    "e03c401d2485",
+    "f53c1d2aef2c",
+    "517c9b9cb93c",
+    "6e7c6cc05839",
+    "817c3ccbda0c",
+    "8e7c834b409b",
+    "937c782524e9",
+    "aa7c64cd2466",
+    "c67ca3492393",
+    "f37cc2ebe5a1",
+    "f57ca041a879",
+    "1cbc98845063",
+    "3fbc1e0435ce",
+    "5abc3b500f51",
+    "9bbcbbc003d1",
+    "aebce2e556a6",
+};
+enum { PAIRW__T10P309AC = 2 };
+static const long _T10P309AC[][PAIRW__T10P309AC] = {
+    {0, 18},
+    {1, 0},
+    {2, 0},
+    {3, 0},
+    {6, 203},
+    {7, 184},
+    {8, 153},
+    {9, 1},
+    {10, 31},
+    {11, 10},
+    {12, 215},
+    {13, 112},
+    {14, 103},
+    {15, 0},
+    {16, 210},
+    {17, 192},
+    {18, 255},
+    {19, 78},
+    {20, 19},
+    {21, 220},
+    {22, 249},
+    {23, 214},
+    {24, 83},
+    {25, 8},
+    {26, 172},
+    {27, 239},
+    {30, 133},
+    {31, 222},
+    {32, 81},
+    {33, 52},
+    {34, 67},
+    {35, 250},
+    {36, 173},
+    {37, 110},
+    {38, 245},
+    {39, 48},
+    {40, 220},
+    {41, 161},
+    {42, 240},
+    {43, 43},
+    {44, 73},
+    {45, 88},
+    {46, 35},
+    {47, 79},
+    {48, 172},
+    {49, 196},
+    {50, 146},
+    {51, 128},
+    {52, 4},
+    {53, 16},
+    {54, 169},
+    {55, 126},
+    {56, 191},
+    {57, 150},
+    {58, 76},
+    {59, 193},
+    {60, 73},
+    {61, 181},
+    {62, 224},
+    {63, 12},
+    {64, 242},
+    {65, 253},
+    {66, 82},
+    {67, 78},
+    {68, 236},
+    {69, 150},
+    {70, 183},
+    {71, 245},
+    {72, 77},
+    {73, 33},
+    {74, 70},
+    {75, 113},
+    {76, 232},
+    {77, 120},
+    {78, 183},
+    {79, 74},
+    {84, 171},
+    {85, 180},
+    {86, 105},
+    {87, 4},
+};
+static const long _T10P309AC_N = 80;
+static const char *_T10P309CM[] = {
+    "fefc54708b66e6e7ea97",
+    "fffc54708b6610d3e30d",
+    "fffc54708b6607ccee24",
+    "fffc54708b6646ccee24",
+    "fffc54708b6666ccee24",
+    "fffc54708b6686ccee24",
+    "fffc54708b66a6ccee24",
+    "fffc54708b66c6ccee24",
+    "fffc54708b66e6ccee24",
+    "e97cb0796025de2e9f71",
+};
+enum { PAIRW__T10P309CC = 2 };
+static const long _T10P309CC[][PAIRW__T10P309CC] = {
+    {0, 1},
+    {1, 0},
+    {2, 0},
+    {3, 0},
+    {6, 203},
+    {7, 184},
+    {8, 153},
+    {9, 1},
+    {10, 31},
+    {11, 10},
+    {12, 215},
+    {13, 112},
+    {14, 103},
+    {15, 0},
+    {16, 178},
+    {17, 247},
+    {18, 159},
+    {19, 132},
+    {20, 6},
+    {21, 254},
+    {22, 23},
+    {23, 114},
+    {24, 202},
+    {25, 227},
+    {26, 255},
+    {27, 222},
+    {32, 86},
+    {35, 72},
+    {36, 173},
+    {37, 110},
+    {38, 245},
+    {39, 48},
+    {40, 220},
+    {41, 161},
+    {42, 240},
+    {43, 43},
+    {44, 73},
+    {45, 88},
+    {46, 35},
+    {47, 79},
+    {48, 172},
+    {49, 196},
+    {50, 146},
+    {51, 128},
+    {52, 4},
+    {53, 16},
+    {54, 169},
+    {55, 126},
+    {56, 191},
+    {57, 150},
+    {58, 76},
+    {59, 193},
+    {60, 73},
+    {61, 181},
+    {62, 224},
+    {63, 12},
+    {64, 242},
+    {65, 253},
+    {66, 82},
+    {67, 78},
+    {68, 236},
+    {69, 150},
+    {70, 183},
+    {71, 245},
+    {72, 221},
+    {73, 58},
+    {74, 137},
+    {75, 42},
+    {76, 77},
+    {77, 33},
+    {78, 70},
+    {79, 113},
+    {80, 232},
+    {81, 120},
+    {82, 183},
+    {83, 74},
+};
+static const long _T10P309CC_N = 76;
+static const char *_T10P309M[] = {
+    "7fbfe37f57b3c7f973fc",
+    "7fbfe37f57dbd979d0e6",
+    "7fbf63f85753bb3207e4",
+    "7fbf63f857bbaab84af4",
+    "7fbf63f857c3926f58b4",
+    "7fbf63f957c7c0b0ef37",
+    "7fbf63f957c756b986f3",
+    "7fbfe3f957b35ebc277f",
+    "7fbf637e5f8ffb2e208a",
+    "7fbf637e5f9f72faedaf",
+    "7fbfe37e5f3b2cf3270d",
+    "ffc3e3f8870bd8f0c8a9",
+    "ffc3e3f887bfa96e2dab",
+    "ffc363f98757f72e514f",
+    "ffc363f987cbbcb4cce4",
+    "ffc3e3f987b3befbe8f5",
+};
+static const char *_T10P309QR[] = {
+    "7dbc559c75fc127642375e",
+    "823c06ca15ee43c90c66f8",
+    "823c06ca15ee43ee0c66f8",
+    "823c06ca15ee437825d7fd",
+};
+enum { PAIRW__T10P309QC = 2 };
+static const long _T10P309QC[][PAIRW__T10P309QC] = {
+    {0, 8},
+    {1, 0},
+    {2, 0},
+    {3, 0},
+    {6, 203},
+    {7, 184},
+    {8, 153},
+    {9, 1},
+    {10, 31},
+    {11, 202},
+    {12, 215},
+    {13, 112},
+    {14, 103},
+    {15, 0},
+    {16, 210},
+    {17, 192},
+    {20, 133},
+    {21, 92},
+    {22, 239},
+    {23, 63},
+    {24, 202},
+    {36, 113},
+    {37, 184},
+    {38, 67},
+    {39, 15},
+    {40, 133},
+    {41, 95},
+    {42, 169},
+    {43, 91},
+    {44, 73},
+    {45, 88},
+    {46, 35},
+    {47, 79},
+    {48, 172},
+    {49, 196},
+    {50, 146},
+    {51, 128},
+    {52, 4},
+    {53, 16},
+    {54, 169},
+    {55, 126},
+    {56, 191},
+    {57, 150},
+    {58, 76},
+    {59, 193},
+    {60, 73},
+    {61, 181},
+    {62, 224},
+    {63, 12},
+    {64, 242},
+    {65, 253},
+    {66, 82},
+    {67, 78},
+    {68, 236},
+    {69, 150},
+    {70, 183},
+    {71, 245},
+    {72, 221},
+    {73, 58},
+    {74, 137},
+    {75, 42},
+    {76, 232},
+    {77, 120},
+    {78, 183},
+    {79, 74},
+};
+static const long _T10P309QC_N = 65;
+static const char *_T10P309RM[] = {
+    "5cddab169a0f34",
+    "73ddab41d9c07c",
+    "deddabbd169524",
+    "32deab5021f43e",
+    "6bdeaba65b98e4",
+    "78deabe6a04696",
+    "a1deab0d5a905a",
+    "dfdeab98ce6f28",
+    "37dfab7ec4f198",
+    "49dfab93250e6b",
+    "88dfab07c122d3",
+    "9259acf5819a33",
+    "a659ac7be90f34",
+    "d45fb05f545da8",
+    "68d9b0e50051f5",
+    "6dd9b0f4d22abe",
+};
+static const char *_T10P309RQ[] = {
+    "aefcc29bfdc7f973fc",
+    "aefcc2dbfed979d0e6",
+    "affcc29b82bb3207e4",
+    "affcc2db85aab84af4",
+    "affcc21b86926f58b4",
+    "affcc23b96c0b0ef37",
+    "affcc23b9656b986f3",
+    "affcc29b9d5ebc277f",
+    "befcc27be4fb2e208a",
+    "befcc2fbe472faedaf",
+    "befcc2dbe92cf3270d",
+    "0f0fc35b88d8f0c8a9",
+    "0f0fc3fb8da96e2dab",
+    "0f0fc3bb92f72e514f",
+    "0f0fc35b96bcb4cce4",
+    "0f0fc39b9dbefbe8f5",
+};
+enum { PAIRW__T10P309RC = 2 };
+static const long _T10P309RC[][PAIRW__T10P309RC] = {
+    {0, 139},
+    {1, 0},
+    {2, 0},
+    {3, 0},
+    {6, 203},
+    {7, 184},
+    {8, 249},
+    {9, 26},
+    {10, 238},
+    {11, 204},
+    {12, 0},
+    {13, 6},
+    {14, 124},
+    {15, 40},
+    {16, 210},
+    {17, 192},
+    {18, 255},
+    {19, 44},
+    {20, 133},
+    {21, 92},
+    {22, 239},
+    {23, 63},
+    {24, 202},
+    {25, 227},
+    {26, 72},
+    {27, 222},
+    {28, 245},
+    {32, 195},
+    {33, 188},
+    {36, 113},
+    {37, 184},
+    {38, 3},
+    {39, 245},
+    {43, 180},
+    {44, 173},
+    {45, 132},
+    {46, 53},
+    {47, 242},
+    {48, 172},
+    {49, 196},
+    {50, 146},
+    {51, 128},
+    {52, 4},
+    {53, 16},
+    {54, 169},
+    {55, 126},
+    {56, 191},
+    {57, 150},
+    {58, 76},
+    {59, 193},
+    {60, 73},
+    {61, 181},
+    {62, 224},
+    {63, 12},
+    {64, 242},
+    {65, 253},
+    {66, 82},
+    {67, 78},
+    {68, 236},
+    {69, 150},
+    {70, 183},
+    {71, 245},
+    {72, 221},
+    {73, 58},
+    {74, 137},
+    {75, 42},
+    {84, 61},
+    {85, 207},
+    {86, 151},
+    {87, 247},
+};
+static const long _T10P309RC_N = 70;
 
 int rgram_verify(const uint8_t *raw, long rawlen, long n) {
     const uint8_t *pay = 0;
@@ -148596,6 +148995,22 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
     char _t6374[512];
     char _t6375[512];
     char _t6376[512];
+    char _t6377[512];
+    char _t6378[512];
+    char _t6379[512];
+    char _t6380[512];
+    char _t6381[512];
+    char _t6382[512];
+    char _t6383[512];
+    char _t6384[512];
+    char _t6385[512];
+    char _t6386[512];
+    char _t6387[512];
+    char _t6388[512];
+    char _t6389[512];
+    char _t6390[512];
+    char _t6391[512];
+    char _t6392[512];
 
     if ((rawlen) < (12)) {
         return failf("short file");
@@ -221653,6 +222068,199 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
             }
         }
         printf("CLOSED T10P308R N=%ld off=%ld\n", (long)(n), (long)(off));
+        return 0;
+    }
+    /* T83289: T10P3090 singleton 84B (PB0, sig ab689400 NEW) */
+    if ((n) == (124269)) {
+        hex_of(pay, paylen, _t6377);
+        strcpy(_t6378, _T10P309S0);
+        if ((paylen) != (84) || !((strcmp(_t6377, _t6378) == 0))) {
+            return failf("T10P3090 const");
+        }
+        printf("CLOSED T10P3090 N=%ld off=0\n", (long)(n));
+        return 0;
+    }
+
+    /* T83294: T10P3091 singleton 88B (fat PB1, sig 01000000 sig-eq-P308PB1, 53/88 payload diff vs n123922 first-hand, NOT byte-equal; sig SAME-as-own-C10, 41/88 diff vs n124287, NOT byte-equal) */
+    if ((n) == (124270)) {
+        hex_of(pay, paylen, _t6379);
+        strcpy(_t6380, _T10P309S1);
+        if ((paylen) != (88) || !((strcmp(_t6379, _t6380) == 0))) {
+            return failf("T10P3091 const");
+        }
+        printf("CLOSED T10P3091 N=%ld off=%ld\n", (long)(n), (long)(1));
+        return 0;
+    }
+
+    /* T83299: T10P309A: 16x88B 104B-PBA88 PLAIN (sig 12000000, b0 const 12), m-tab b28,29,80-83, raw lencode b4/b5 (b5 const ca) */
+    if ((124271) <= (n) && (n) <= (124286)) {
+        off = (((n) - (124271)));
+        if ((paylen) != (88)) {
+            return failf("T10P309A paylen");
+        }
+        l16 = (((((((n) << (1))) | (1))) & (65535)));
+        if (((pay[4])) != (((l16) & (255))) || ((pay[5])) != (((l16) >> (8)))) {
+            return failf("T10P309A lencode");
+        }
+        { uint8_t _b3865[6];
+        _b3865[0] = (uint8_t)((pay[28]));
+        _b3865[1] = (uint8_t)((pay[29]));
+        _b3865[2] = (uint8_t)((pay[80]));
+        _b3865[3] = (uint8_t)((pay[81]));
+        _b3865[4] = (uint8_t)((pay[82]));
+        _b3865[5] = (uint8_t)((pay[83]));
+        hex_of(_b3865, 6, _t6381); }
+        strcpy(_t6382, _T10P309AM[off]);
+        if (!((strcmp(_t6381, _t6382) == 0))) {
+            return failf("T10P309A mtab");
+        }
+        for (long _i3866 = 0; _i3866 < _T10P309AC_N; _i3866++) {
+            b = _T10P309AC[_i3866][0]; v = _T10P309AC[_i3866][1];
+            if (((pay[b])) != (v)) {
+                return failf("T10P309A const %ld", (long)(b));
+            }
+        }
+        printf("CLOSED T10P309A N=%ld off=%ld\n", (long)(n), (long)(off));
+        return 0;
+    }
+
+    /* T83314: T10P309C: 10x88B C10-1SIG-88-STEP (01000000 x10 SAME-as-PB1-sig, pay88), m-tab b28-31,33,34,84-87, b5 0xca+(o>=1) step o0->o1 (raw lencode) */
+    if ((124287) <= (n) && (n) <= (124296)) {
+        off = (((n) - (124287)));
+        if ((paylen) != (88)) {
+            return failf("T10P309C paylen");
+        }
+        l16 = (((((((n) << (1))) | (1))) & (65535)));
+        if (((pay[4])) != (((l16) & (255))) || ((pay[5])) != (((l16) >> (8)))) {
+            return failf("T10P309C lencode");
+        }
+        { uint8_t _b3867[10];
+        _b3867[0] = (uint8_t)((pay[28]));
+        _b3867[1] = (uint8_t)((pay[29]));
+        _b3867[2] = (uint8_t)((pay[30]));
+        _b3867[3] = (uint8_t)((pay[31]));
+        _b3867[4] = (uint8_t)((pay[33]));
+        _b3867[5] = (uint8_t)((pay[34]));
+        _b3867[6] = (uint8_t)((pay[84]));
+        _b3867[7] = (uint8_t)((pay[85]));
+        _b3867[8] = (uint8_t)((pay[86]));
+        _b3867[9] = (uint8_t)((pay[87]));
+        hex_of(_b3867, 10, _t6383); }
+        strcpy(_t6384, _T10P309CM[off]);
+        if (!((strcmp(_t6383, _t6384) == 0))) {
+            return failf("T10P309C mtab");
+        }
+        for (long _i3868 = 0; _i3868 < _T10P309CC_N; _i3868++) {
+            b = _T10P309CC[_i3868][0]; v = _T10P309CC[_i3868][1];
+            if (((pay[b])) != (v)) {
+                return failf("T10P309C const %ld", (long)(b));
+            }
+        }
+        printf("CLOSED T10P309C N=%ld off=%ld\n", (long)(n), (long)(off));
+        return 0;
+    }
+
+    /* T83330: T10P309Q: 4x16 88B-pay QUAD88-4R 1-sig 08000000, m-tab b18,19,25-27,35,80-83 (QM10) + r11 b28-34,84-87 R11 4/4 UNPAIRED NO frags (tails b84-87 4 distinct: r1r2 3B pair-only 0c66f8, r0+r3 lcs=0) (raw lencode, b5 const cb, b4 range 13..91 NO edge) */
+    if ((124297) <= (n) && (n) <= (124360)) {
+        off = (((n) - (124297)));
+        if ((paylen) != (88)) {
+            return failf("T10P309Q paylen");
+        }
+        l16 = (((((((n) << (1))) | (1))) & (65535)));
+        if (((pay[4])) != (((l16) & (255))) || ((pay[5])) != (((l16) >> (8)))) {
+            return failf("T10P309Q lencode");
+        }
+        m = (((off) & (15)));
+        q = (((off) >> (4)));
+        { uint8_t _b3869[10];
+        _b3869[0] = (uint8_t)((pay[18]));
+        _b3869[1] = (uint8_t)((pay[19]));
+        _b3869[2] = (uint8_t)((pay[25]));
+        _b3869[3] = (uint8_t)((pay[26]));
+        _b3869[4] = (uint8_t)((pay[27]));
+        _b3869[5] = (uint8_t)((pay[35]));
+        _b3869[6] = (uint8_t)((pay[80]));
+        _b3869[7] = (uint8_t)((pay[81]));
+        _b3869[8] = (uint8_t)((pay[82]));
+        _b3869[9] = (uint8_t)((pay[83]));
+        hex_of(_b3869, 10, _t6385); }
+        strcpy(_t6386, _T10P309M[m]);
+        if (!((strcmp(_t6385, _t6386) == 0))) {
+            return failf("T10P309Q mtab");
+        }
+        { uint8_t _b3870[11];
+        _b3870[0] = (uint8_t)((pay[28]));
+        _b3870[1] = (uint8_t)((pay[29]));
+        _b3870[2] = (uint8_t)((pay[30]));
+        _b3870[3] = (uint8_t)((pay[31]));
+        _b3870[4] = (uint8_t)((pay[32]));
+        _b3870[5] = (uint8_t)((pay[33]));
+        _b3870[6] = (uint8_t)((pay[34]));
+        _b3870[7] = (uint8_t)((pay[84]));
+        _b3870[8] = (uint8_t)((pay[85]));
+        _b3870[9] = (uint8_t)((pay[86]));
+        _b3870[10] = (uint8_t)((pay[87]));
+        hex_of(_b3870, 11, _t6387); }
+        strcpy(_t6388, _T10P309QR[q]);
+        if (!((strcmp(_t6387, _t6388) == 0))) {
+            return failf("T10P309Q rtab");
+        }
+        for (long _i3871 = 0; _i3871 < _T10P309QC_N; _i3871++) {
+            b = _T10P309QC[_i3871][0]; v = _T10P309QC[_i3871][1];
+            if (((pay[b])) != (v)) {
+                return failf("T10P309Q const %ld", (long)(b));
+            }
+        }
+        printf("CLOSED T10P309Q N=%ld off=%ld\n", (long)(n), (long)(off));
+        return 0;
+    }
+
+    /* T83352: T10P309R: 256x88B T88-ring SWAPPED-tails (sig 8b000000), TM7 b40,41,42,76-79 by COL off&15 + TR9 b29,30,31,34,35,80-83 by ROW off>>4 (SWAPPED tails, UNPAIRED), b84-87 const, b4=(0x93+2off)&FF b5=0xcb+(off>=55)+(off>=183) */
+    if ((124361) <= (n) && (n) <= (124616)) {
+        off = (((n) - (124361)));
+        if ((paylen) != (88)) {
+            return failf("T10P309R paylen");
+        }
+        if (((pay[4])) != (((((147) + (((2) * (off))))) & (255))) || ((pay[5])) != (((((203) + ((off) >= (55)))) + ((off) >= (183))))) {
+            return failf("T10P309R counter");
+        }
+        c = (((off) & (15)));
+        r = (((off) >> (4)));
+        { uint8_t _b3872[7];
+        _b3872[0] = (uint8_t)((pay[40]));
+        _b3872[1] = (uint8_t)((pay[41]));
+        _b3872[2] = (uint8_t)((pay[42]));
+        _b3872[3] = (uint8_t)((pay[76]));
+        _b3872[4] = (uint8_t)((pay[77]));
+        _b3872[5] = (uint8_t)((pay[78]));
+        _b3872[6] = (uint8_t)((pay[79]));
+        hex_of(_b3872, 7, _t6389); }
+        strcpy(_t6390, _T10P309RM[c]);
+        if (!((strcmp(_t6389, _t6390) == 0))) {
+            return failf("T10P309R mtab");
+        }
+        { uint8_t _b3873[9];
+        _b3873[0] = (uint8_t)((pay[29]));
+        _b3873[1] = (uint8_t)((pay[30]));
+        _b3873[2] = (uint8_t)((pay[31]));
+        _b3873[3] = (uint8_t)((pay[34]));
+        _b3873[4] = (uint8_t)((pay[35]));
+        _b3873[5] = (uint8_t)((pay[80]));
+        _b3873[6] = (uint8_t)((pay[81]));
+        _b3873[7] = (uint8_t)((pay[82]));
+        _b3873[8] = (uint8_t)((pay[83]));
+        hex_of(_b3873, 9, _t6391); }
+        strcpy(_t6392, _T10P309RQ[r]);
+        if (!((strcmp(_t6391, _t6392) == 0))) {
+            return failf("T10P309R qtab");
+        }
+        for (long _i3874 = 0; _i3874 < _T10P309RC_N; _i3874++) {
+            b = _T10P309RC[_i3874][0]; v = _T10P309RC[_i3874][1];
+            if (((pay[b])) != (v)) {
+                return failf("T10P309R const %ld", (long)(b));
+            }
+        }
+        printf("CLOSED T10P309R N=%ld off=%ld\n", (long)(n), (long)(off));
         return 0;
     }
 
