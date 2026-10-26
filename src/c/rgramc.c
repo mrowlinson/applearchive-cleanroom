@@ -169445,6 +169445,423 @@ static const long _T10P374RC[][PAIRW__T10P374RC] = {
     {87, 184},
 };
 static const long _T10P374RC_N = 70;
+static const char _T10P375S0[] = "6e5869114b7e046d3aebd97c00a1bcc4f360a431eb757e2e33bc71bd8d1ecbfe2d8149b1bdd77a8b8a95593e4c821c1c222bfd7ced9569356f1cbf70b1ba708ccc31ee6ea6caa1612af440d3b54935757574d08d";
+static const char _T10P375S1[] = "220000004d7e9ccde3dcb0d200a1bcc4f360a431eb757e2e33bc71bd8d1ecbfe2d8149b1bdd77a8b8a95593e8ce31a1e222b27ffe75eab61ed9569356f1cbf70b1ba708ccc31ee6ea6caa1612af440d3c7ce4123cd26cd6d";
+static const char *_T10P375AM[] = {
+    "0843bc84c8cb05",
+    "086cbc75aa7fd5",
+    "0888bcfc47facc",
+    "0894bc19df46ee",
+    "08abbc476a273d",
+    "08d7bce491e223",
+    "10133ce0c813bf",
+    "241ffcdf8c0b69",
+    "2427fcb9dc84b3",
+    "242afcc10a843b",
+    "2444fc01ed5d07",
+    "2454fcadaada13",
+    "2473fcce800c8f",
+    "248afc0a13c1ce",
+    "24affc984ce7ce",
+    "24cbfc499f70a8",
+};
+enum { PAIRW__T10P375AC = 2 };
+static const long _T10P375AC[][PAIRW__T10P375AC] = {
+    {1, 2},
+    {2, 0},
+    {3, 0},
+    {6, 156},
+    {7, 205},
+    {8, 227},
+    {9, 0},
+    {12, 215},
+    {13, 13},
+    {14, 43},
+    {15, 45},
+    {16, 130},
+    {17, 48},
+    {18, 210},
+    {19, 24},
+    {20, 235},
+    {21, 117},
+    {22, 126},
+    {23, 46},
+    {24, 51},
+    {25, 188},
+    {26, 113},
+    {27, 189},
+    {28, 141},
+    {29, 30},
+    {30, 203},
+    {31, 254},
+    {32, 45},
+    {33, 129},
+    {34, 73},
+    {35, 177},
+    {36, 189},
+    {37, 215},
+    {38, 122},
+    {39, 139},
+    {40, 138},
+    {41, 149},
+    {42, 89},
+    {43, 62},
+    {44, 140},
+    {45, 227},
+    {46, 26},
+    {47, 30},
+    {48, 34},
+    {49, 43},
+    {50, 39},
+    {51, 255},
+    {52, 231},
+    {53, 94},
+    {54, 171},
+    {55, 97},
+    {56, 237},
+    {57, 149},
+    {58, 105},
+    {59, 53},
+    {60, 177},
+    {61, 186},
+    {62, 112},
+    {63, 140},
+    {64, 204},
+    {65, 49},
+    {66, 238},
+    {67, 110},
+    {68, 166},
+    {69, 202},
+    {70, 161},
+    {71, 97},
+    {72, 42},
+    {73, 244},
+    {74, 64},
+    {75, 211},
+    {76, 199},
+    {77, 206},
+    {78, 65},
+    {79, 35},
+    {84, 237},
+    {85, 38},
+    {86, 205},
+    {87, 109},
+};
+static const long _T10P375AC_N = 79;
+static const char *_T10P375CM[] = {
+    "e6e9d2e8ea",
+    "e746071a33",
+    "e75790f575",
+    "e76792f575",
+    "e759ecf575",
+    "e779ecf575",
+    "e799ecf575",
+    "e7b9ecf575",
+    "e7df63c985",
+    "e7ff63c985",
+};
+enum { PAIRW__T10P375CC = 2 };
+static const long _T10P375CC[][PAIRW__T10P375CC] = {
+    {0, 69},
+    {1, 0},
+    {2, 0},
+    {3, 0},
+    {6, 24},
+    {7, 122},
+    {8, 187},
+    {9, 127},
+    {10, 123},
+    {11, 4},
+    {12, 0},
+    {14, 252},
+    {15, 98},
+    {16, 156},
+    {17, 168},
+    {18, 193},
+    {19, 72},
+    {20, 49},
+    {21, 220},
+    {22, 176},
+    {23, 210},
+    {24, 235},
+    {25, 117},
+    {26, 126},
+    {27, 46},
+    {28, 51},
+    {29, 188},
+    {30, 113},
+    {31, 189},
+    {32, 141},
+    {33, 30},
+    {34, 203},
+    {35, 254},
+    {36, 45},
+    {37, 129},
+    {38, 73},
+    {39, 177},
+    {40, 189},
+    {41, 215},
+    {42, 122},
+    {43, 139},
+    {44, 138},
+    {45, 149},
+    {46, 89},
+    {47, 62},
+    {48, 140},
+    {49, 227},
+    {50, 26},
+    {51, 30},
+    {52, 34},
+    {53, 43},
+    {54, 39},
+    {55, 255},
+    {56, 237},
+    {57, 149},
+    {58, 105},
+    {59, 53},
+    {60, 177},
+    {61, 186},
+    {62, 112},
+    {63, 140},
+    {64, 204},
+    {65, 49},
+    {66, 238},
+    {67, 110},
+    {68, 166},
+    {69, 202},
+    {70, 161},
+    {71, 97},
+    {72, 42},
+    {73, 244},
+    {74, 64},
+    {75, 211},
+    {76, 199},
+    {77, 206},
+    {78, 65},
+    {79, 35},
+    {80, 245},
+    {81, 246},
+    {82, 203},
+    {83, 157},
+};
+static const long _T10P375CC_N = 81;
+static const char *_T10P375M[] = {
+    "ca5dc51e26ae8862",
+    "de5dc51e1ab60714",
+    "1b5ec51e2eee3d3d",
+    "3a5ec51e0df101d4",
+    "635ec51ea0323805",
+    "7b5ec51ea5f97a3b",
+    "9c5ec51e4bbd1d4f",
+    "ce5ec51e8aeea23a",
+    "d25ec51e14edfa7e",
+    "d75ec51e99f0ffe4",
+    "0c5fc51e4db1b5cf",
+    "265fc51ee2b21fc6",
+    "445fc51ec1ee542f",
+    "585fc51e297c6ccd",
+    "5fdf44211eb7d086",
+    "88df44214b39ec3c",
+};
+static const char *_T10P375QR[] = {
+    "1f",
+    "3f",
+    "5f",
+    "7f",
+};
+enum { PAIRW__T10P375QC = 2 };
+static const long _T10P375QC[][PAIRW__T10P375QC] = {
+    {0, 69},
+    {1, 4},
+    {2, 0},
+    {3, 0},
+    {6, 24},
+    {7, 122},
+    {8, 187},
+    {9, 127},
+    {10, 123},
+    {11, 4},
+    {12, 0},
+    {13, 231},
+    {14, 252},
+    {15, 98},
+    {16, 156},
+    {17, 168},
+    {18, 193},
+    {19, 72},
+    {24, 175},
+    {25, 95},
+    {26, 231},
+    {27, 231},
+    {28, 51},
+    {29, 188},
+    {30, 113},
+    {31, 189},
+    {32, 141},
+    {33, 30},
+    {34, 203},
+    {35, 254},
+    {36, 45},
+    {37, 129},
+    {38, 73},
+    {39, 177},
+    {40, 189},
+    {41, 215},
+    {42, 122},
+    {43, 139},
+    {44, 138},
+    {45, 149},
+    {46, 89},
+    {47, 62},
+    {48, 140},
+    {49, 227},
+    {50, 26},
+    {51, 30},
+    {52, 34},
+    {53, 43},
+    {54, 39},
+    {55, 255},
+    {56, 237},
+    {57, 149},
+    {58, 105},
+    {59, 53},
+    {60, 204},
+    {61, 49},
+    {62, 238},
+    {63, 110},
+    {64, 166},
+    {65, 202},
+    {66, 161},
+    {67, 97},
+    {68, 42},
+    {69, 244},
+    {70, 64},
+    {71, 211},
+    {72, 199},
+    {73, 206},
+    {74, 65},
+    {75, 35},
+    {76, 245},
+    {77, 246},
+    {78, 203},
+    {79, 157},
+    {85, 100},
+    {86, 201},
+    {87, 133},
+};
+static const long _T10P375QC_N = 77;
+static const char *_T10P375RM[] = {
+    "773caa572242",
+    "b43ccae1c4a4",
+    "cf3c23d1ff20",
+    "167ca01bfd8b",
+    "7f7c376146e5",
+    "aa7cc0ebd9e9",
+    "cb7cbe91f739",
+    "e67c7f8174b3",
+    "fb7c949a4baa",
+    "1bbc481c45d8",
+    "54bcbde18cea",
+    "78bc2229a95e",
+    "8ebcb6a92d6d",
+    "ddbce191fd05",
+    "33fc1f82c4d9",
+    "59fcd70b4438",
+};
+static const char *_T10P375RQ[] = {
+    "ca5dc51e26ae8862",
+    "de5dc51e1ab60714",
+    "1b5ec51e2eee3d3d",
+    "3a5ec51e0df101d4",
+    "635ec51ea0323805",
+    "7b5ec51ea5f97a3b",
+    "9c5ec51e4bbd1d4f",
+    "ce5ec51e8aeea23a",
+    "d25ec51e14edfa7e",
+    "d75ec51e99f0ffe4",
+    "0c5fc51e4db1b5cf",
+    "265fc51ee2b21fc6",
+    "445fc51ec1ee542f",
+    "585fc51e297c6ccd",
+    "5fdf44211eb7d086",
+    "88df44214b39ec3c",
+};
+enum { PAIRW__T10P375RC = 2 };
+static const long _T10P375RC[][PAIRW__T10P375RC] = {
+    {0, 93},
+    {1, 68},
+    {2, 0},
+    {3, 0},
+    {6, 24},
+    {7, 122},
+    {8, 187},
+    {9, 127},
+    {10, 123},
+    {11, 4},
+    {12, 0},
+    {13, 231},
+    {14, 252},
+    {15, 98},
+    {16, 156},
+    {17, 168},
+    {18, 193},
+    {19, 72},
+    {24, 175},
+    {25, 95},
+    {26, 247},
+    {27, 126},
+    {30, 3},
+    {31, 211},
+    {32, 113},
+    {33, 233},
+    {34, 177},
+    {35, 236},
+    {36, 45},
+    {37, 129},
+    {38, 73},
+    {39, 177},
+    {40, 189},
+    {41, 215},
+    {42, 122},
+    {43, 139},
+    {44, 138},
+    {45, 149},
+    {46, 89},
+    {47, 62},
+    {48, 140},
+    {49, 227},
+    {50, 26},
+    {51, 30},
+    {52, 34},
+    {53, 43},
+    {54, 39},
+    {55, 255},
+    {56, 237},
+    {57, 149},
+    {58, 105},
+    {59, 53},
+    {60, 166},
+    {61, 202},
+    {62, 161},
+    {63, 97},
+    {64, 42},
+    {65, 244},
+    {66, 64},
+    {67, 211},
+    {68, 199},
+    {69, 206},
+    {70, 65},
+    {71, 35},
+    {72, 245},
+    {73, 246},
+    {74, 203},
+    {75, 157},
+    {84, 159},
+    {85, 100},
+    {86, 201},
+    {87, 133},
+};
+static const long _T10P375RC_N = 72;
 
 int rgram_verify(const uint8_t *raw, long rawlen, long n) {
     const uint8_t *pay = 0;
@@ -176986,6 +177403,22 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
     char _t7450[512];
     char _t7451[512];
     char _t7452[512];
+    char _t7453[512];
+    char _t7454[512];
+    char _t7455[512];
+    char _t7456[512];
+    char _t7457[512];
+    char _t7458[512];
+    char _t7459[512];
+    char _t7460[512];
+    char _t7461[512];
+    char _t7462[512];
+    char _t7463[512];
+    char _t7464[512];
+    char _t7465[512];
+    char _t7466[512];
+    char _t7467[512];
+    char _t7468[512];
 
     if ((rawlen) < (12)) {
         return failf("short file");
@@ -262126,6 +262559,181 @@ int rgram_verify(const uint8_t *raw, long rawlen, long n) {
             }
         }
         printf("CLOSED T10P374R N=%ld off=%ld\n", (long)(n), (long)(off));
+        return 0;
+    }
+    /* T98835: T10P3750 singleton 84B (PB0, sig 6e586911 NEW-sig, 32/84 payload diff vs n146889 first-hand, NOT byte-equal) */
+    if ((n) == (147237)) {
+        hex_of(pay, paylen, _t7453);
+        strcpy(_t7454, _T10P375S0);
+        if ((paylen) != (84) || !((strcmp(_t7453, _t7454) == 0))) {
+            return failf("T10P3750 const");
+        }
+        printf("CLOSED T10P3750 N=%ld off=0\n", (long)(n));
+        return 0;
+    }
+
+    /* T98840: T10P3751 singleton 88B (fat PB1, sig 22000000 NEW-sig, 62/88 payload diff vs n146890 first-hand, NOT byte-equal; sig DIFFERS-from-own-C10) */
+    if ((n) == (147238)) {
+        hex_of(pay, paylen, _t7455);
+        strcpy(_t7456, _T10P375S1);
+        if ((paylen) != (88) || !((strcmp(_t7455, _t7456) == 0))) {
+            return failf("T10P3751 const");
+        }
+        printf("CLOSED T10P3751 N=%ld off=%ld\n", (long)(n), (long)(1));
+        return 0;
+    }
+
+    /* T98845: T10P375A: 16x88B 104B-PBA88 3SIG-M7b0 (08020000 x6 + 10020000 x1 + 24020000 x9 ORDERED; b5 CONST 7e NO step NO edge; positions staged P359A), m-tab b0,10,11,80-83, raw lencode b4=(0x4f+2off)&FF */
+    if ((147239) <= (n) && (n) <= (147254)) {
+        off = (((n) - (147239)));
+        if ((paylen) != (88)) {
+            return failf("T10P375A paylen");
+        }
+        l16 = (((((((n) << (1))) | (1))) & (65535)));
+        if (((pay[4])) != (((l16) & (255))) || ((pay[5])) != (((l16) >> (8)))) {
+            return failf("T10P375A lencode");
+        }
+        { uint8_t _b4526[7];
+        _b4526[0] = (uint8_t)((pay[0]));
+        _b4526[1] = (uint8_t)((pay[10]));
+        _b4526[2] = (uint8_t)((pay[11]));
+        _b4526[3] = (uint8_t)((pay[80]));
+        _b4526[4] = (uint8_t)((pay[81]));
+        _b4526[5] = (uint8_t)((pay[82]));
+        _b4526[6] = (uint8_t)((pay[83]));
+        hex_of(_b4526, 7, _t7457); }
+        strcpy(_t7458, _T10P375AM[off]);
+        if (!((strcmp(_t7457, _t7458) == 0))) {
+            return failf("T10P375A mtab");
+        }
+        for (long _i4527 = 0; _i4527 < _T10P375AC_N; _i4527++) {
+            b = _T10P375AC[_i4527][0]; v = _T10P375AC[_i4527][1];
+            if (((pay[b])) != (v)) {
+                return failf("T10P375A const %ld", (long)(b));
+            }
+        }
+        printf("CLOSED T10P375A N=%ld off=%ld\n", (long)(n), (long)(off));
+        return 0;
+    }
+
+    /* T98860: T10P375C: 10x88B C10-DIFFSIG-M5b13 (45000000 x10 DIFFERS-from-PB1-sig, pay88; positions FIRST this lane), m-tab b13,84,85,86,87, b5 const (raw lencode) */
+    if ((147255) <= (n) && (n) <= (147264)) {
+        off = (((n) - (147255)));
+        if ((paylen) != (88)) {
+            return failf("T10P375C paylen");
+        }
+        l16 = (((((((n) << (1))) | (1))) & (65535)));
+        if (((pay[4])) != (((l16) & (255))) || ((pay[5])) != (((l16) >> (8)))) {
+            return failf("T10P375C lencode");
+        }
+        { uint8_t _b4528[5];
+        _b4528[0] = (uint8_t)((pay[13]));
+        _b4528[1] = (uint8_t)((pay[84]));
+        _b4528[2] = (uint8_t)((pay[85]));
+        _b4528[3] = (uint8_t)((pay[86]));
+        _b4528[4] = (uint8_t)((pay[87]));
+        hex_of(_b4528, 5, _t7459); }
+        strcpy(_t7460, _T10P375CM[off]);
+        if (!((strcmp(_t7459, _t7460) == 0))) {
+            return failf("T10P375C mtab");
+        }
+        for (long _i4529 = 0; _i4529 < _T10P375CC_N; _i4529++) {
+            b = _T10P375CC[_i4529][0]; v = _T10P375CC[_i4529][1];
+            if (((pay[b])) != (v)) {
+                return failf("T10P375C const %ld", (long)(b));
+            }
+        }
+        printf("CLOSED T10P375C N=%ld off=%ld\n", (long)(n), (long)(off));
+        return 0;
+    }
+
+    /* T98875: T10P375Q: 4x16 88B-pay QUAD88-1SIG-QM8/R1-B5EDGE 1-sig 45040000 DIFFERS-from-PBA-sigs, m-tab b20,21,22,23,80-83 (QM8; positions staged P327Q) + r1 b84 R1 4/4 UNPAIRED + NO frags (b85 const 64, b86 const c9, b87 const 85; full-tail pairs all lcs 3) (raw lencode, b5=0x7e+(off>=63) + edge 147327->147328 last boundary) */
+    if ((147265) <= (n) && (n) <= (147328)) {
+        off = (((n) - (147265)));
+        if ((paylen) != (88)) {
+            return failf("T10P375Q paylen");
+        }
+        l16 = (((((((n) << (1))) | (1))) & (65535)));
+        if (((pay[4])) != (((l16) & (255))) || ((pay[5])) != (((l16) >> (8)))) {
+            return failf("T10P375Q lencode");
+        }
+        m = (((off) & (15)));
+        q = (((off) >> (4)));
+        { uint8_t _b4530[8];
+        _b4530[0] = (uint8_t)((pay[20]));
+        _b4530[1] = (uint8_t)((pay[21]));
+        _b4530[2] = (uint8_t)((pay[22]));
+        _b4530[3] = (uint8_t)((pay[23]));
+        _b4530[4] = (uint8_t)((pay[80]));
+        _b4530[5] = (uint8_t)((pay[81]));
+        _b4530[6] = (uint8_t)((pay[82]));
+        _b4530[7] = (uint8_t)((pay[83]));
+        hex_of(_b4530, 8, _t7461); }
+        strcpy(_t7462, _T10P375M[m]);
+        if (!((strcmp(_t7461, _t7462) == 0))) {
+            return failf("T10P375Q mtab");
+        }
+        { uint8_t _b4531[1];
+        _b4531[0] = (uint8_t)((pay[84]));
+        hex_of(_b4531, 1, _t7463); }
+        strcpy(_t7464, _T10P375QR[q]);
+        if (!((strcmp(_t7463, _t7464) == 0))) {
+            return failf("T10P375Q rtab");
+        }
+        for (long _i4532 = 0; _i4532 < _T10P375QC_N; _i4532++) {
+            b = _T10P375QC[_i4532][0]; v = _T10P375QC[_i4532][1];
+            if (((pay[b])) != (v)) {
+                return failf("T10P375Q const %ld", (long)(b));
+            }
+        }
+        printf("CLOSED T10P375Q N=%ld off=%ld\n", (long)(n), (long)(off));
+        return 0;
+    }
+
+    /* T98894: T10P375R: 256x88B T88-ring SWAPPED-split (sig 5d440000), RM6 b28,29,76-79 by COL off&15 (positions FIRST this lane) + RQ8 b20,21,22,23,80-83 by ROW off>>4 (SWAPPED tails, UNPAIRED; positions staged P327R), b0 const 5d, b84-87 const, b4=(0x03+2off)&FF b5=0x7f+(off>=127)+(off>=255) */
+    if ((147329) <= (n) && (n) <= (147584)) {
+        off = (((n) - (147329)));
+        if ((paylen) != (88)) {
+            return failf("T10P375R paylen");
+        }
+        if (((pay[4])) != (((((3) + (((2) * (off))))) & (255))) || ((pay[5])) != (((((127) + ((off) >= (127)))) + ((off) >= (255))))) {
+            return failf("T10P375R counter");
+        }
+        c = (((off) & (15)));
+        r = (((off) >> (4)));
+        { uint8_t _b4533[6];
+        _b4533[0] = (uint8_t)((pay[28]));
+        _b4533[1] = (uint8_t)((pay[29]));
+        _b4533[2] = (uint8_t)((pay[76]));
+        _b4533[3] = (uint8_t)((pay[77]));
+        _b4533[4] = (uint8_t)((pay[78]));
+        _b4533[5] = (uint8_t)((pay[79]));
+        hex_of(_b4533, 6, _t7465); }
+        strcpy(_t7466, _T10P375RM[c]);
+        if (!((strcmp(_t7465, _t7466) == 0))) {
+            return failf("T10P375R mtab");
+        }
+        { uint8_t _b4534[8];
+        _b4534[0] = (uint8_t)((pay[20]));
+        _b4534[1] = (uint8_t)((pay[21]));
+        _b4534[2] = (uint8_t)((pay[22]));
+        _b4534[3] = (uint8_t)((pay[23]));
+        _b4534[4] = (uint8_t)((pay[80]));
+        _b4534[5] = (uint8_t)((pay[81]));
+        _b4534[6] = (uint8_t)((pay[82]));
+        _b4534[7] = (uint8_t)((pay[83]));
+        hex_of(_b4534, 8, _t7467); }
+        strcpy(_t7468, _T10P375RQ[r]);
+        if (!((strcmp(_t7467, _t7468) == 0))) {
+            return failf("T10P375R qtab");
+        }
+        for (long _i4535 = 0; _i4535 < _T10P375RC_N; _i4535++) {
+            b = _T10P375RC[_i4535][0]; v = _T10P375RC[_i4535][1];
+            if (((pay[b])) != (v)) {
+                return failf("T10P375R const %ld", (long)(b));
+            }
+        }
+        printf("CLOSED T10P375R N=%ld off=%ld\n", (long)(n), (long)(off));
         return 0;
     }
 
