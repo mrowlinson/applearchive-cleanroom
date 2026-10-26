@@ -1,0 +1,96 @@
+===== PV b375 (e59e5d25) Mon Oct 26 12:59:51 EDT 2026
+build_rc=0
+--- warnings:
+0
+-rwxr-xr-x@ 1 mrowlinson  staff  3434584 Oct 26 13:00 /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat14/pv-e59e5d25/build/rgramc
+py_rc=0
+PASS g-z110000
+== /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat14/pv-e59e5d25/pywork ==
+RGRAM-GREEN
+c_rc=0
+PASS g-z110000
+== /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat14/pv-e59e5d25/cwork ==
+RGRAM-GREEN
+pyid_rc=0
+RGRAMC-PYID 7835/7835 covered=7835/7835
+RGRAMC-GREEN
+smoke_rc=0
+PASS aar-encode
+PASS aar-decode
+PASS aar-bytes
+PASS aea-encrypt
+PASS aea-decrypt
+PASS aea-bytes
+SMOKE-GREEN
+VERDICT b375 GREEN
+===== PV b376 (42e6be18) Mon Oct 26 13:01:35 EDT 2026
+build_rc=0
+--- warnings:
+0
+-rwxr-xr-x@ 1 mrowlinson  staff  3434984 Oct 26 13:02 /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat14/pv-42e6be18/build/rgramc
+py_rc=0
+== /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat14/pv-42e6be18/pywork ==
+RGRAM-GREEN
+15734
+c_rc=0
+RGRAM-GREEN
+15734
+pyid_rc=0
+RGRAMC-PYID 7867/7867 covered=7867/7867
+RGRAMC-GREEN
+smoke_rc=0
+PASS aar-encode
+PASS aar-decode
+PASS aar-bytes
+PASS aea-encrypt
+PASS aea-decrypt
+PASS aea-bytes
+SMOKE-GREEN
+VERDICT b376 GREEN
+===== PV b377 (376bc6a9) Mon Oct 26 13:03:05 EDT 2026
+build_rc=0
+--- warnings:
+0
+-rwxr-xr-x@ 1 mrowlinson  staff  3468408 Oct 26 13:03 /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat14/pv-376bc6a9/build/rgramc
+py_rc=0
+RGRAM-GREEN
+15798
+c_rc=0
+RGRAM-GREEN
+15798
+pyid_rc=0
+RGRAMC-PYID 7899/7899 covered=7899/7899
+RGRAMC-GREEN
+smoke_rc=0
+PASS aar-encode
+PASS aar-decode
+PASS aar-bytes
+PASS aea-encrypt
+PASS aea-decrypt
+PASS aea-bytes
+SMOKE-GREEN
+VERDICT b377 GREEN
+===== PV b378 (9b8d6052) Mon Oct 26 13:04:39 EDT 2026
+build_rc=0
+--- warnings:
+0
+-rwxr-xr-x@ 1 mrowlinson  staff  3485304 Oct 26 13:05 /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat14/pv-9b8d6052/build/rgramc
+py_rc=0
+RGRAM-GREEN
+15864
+c_rc=0
+RGRAM-GREEN
+15864
+pyid_rc=0
+RGRAMC-PYID 7932/7932 covered=7932/7932
+RGRAMC-GREEN
+smoke_rc=0
+PASS aar-encode
+PASS aar-decode
+PASS aar-bytes
+PASS aea-encrypt
+PASS aea-decrypt
+PASS aea-bytes
+SMOKE-GREEN
+VERDICT b378 GREEN
+ALLDONE
