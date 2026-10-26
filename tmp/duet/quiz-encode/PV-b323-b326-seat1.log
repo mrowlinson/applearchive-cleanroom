@@ -1,0 +1,103 @@
+===== PV b323 (99ecfdb8) Mon Oct 26 09:31:41 EDT 2026
+Preparing worktree (detached HEAD 99ecfdb8)
+HEAD is now at 99ecfdb8 encode-cport: C port rgram band323 T10P215 (pins 91557..91904, 1272 tiers sealed) (RGRAMC-PYID 6290/6290, RGRAM-GREEN 12580/12580 via RGRAM_BIN=C + python + SMOKE/UNITS first-hand)
+cc -O2 -Wall -Wextra -std=c11 -I/opt/homebrew/opt/xz/include -o /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat1/pv-99ecfdb8/build/rgramc rgramc.c
+build_rc=0
+--- warnings:
+-rwxr-xr-x@ 1 mrowlinson  staff  2853000 Oct 26 09:32 /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat1/pv-99ecfdb8/build/rgramc
+--- py:
+py_rc=0
+PASS g-z91903
+PASS g-z91904-closed
+PASS g-z91904
+== /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat1/pv-99ecfdb8/pywork ==
+RGRAM-GREEN
+12580
+0
+--- C:
+c_rc=0
+PASS g-z91904
+== /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat1/pv-99ecfdb8/cwork ==
+RGRAM-GREEN
+-n pass=
+12580
+-n fail=
+0
+--- PYID:
+pyid_rc=0
+RGRAMC-PYID 6290/6290 covered=6290/6290
+RGRAMC-GREEN
+--- smoke:
+smoke_rc=0
+PASS aea-decrypt
+PASS aea-bytes
+== /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat1/pv-99ecfdb8/smokework ==
+SMOKE-GREEN
+===== PV b324 (35792e99) Mon Oct 26 09:37:14 EDT 2026
+Preparing worktree (detached HEAD 35792e99)
+HEAD is now at 35792e99 encode-cport: C port rgram band324 T10P216 (pins 91905..92252, 1278 tiers sealed) (RGRAMC-PYID 6316/6316, RGRAM-GREEN 12632/12632 via RGRAM_BIN=C + python + SMOKE/UNITS first-hand)
+cc -O2 -Wall -Wextra -std=c11 -I/opt/homebrew/opt/xz/include -o /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat1/pv-35792e99/build/rgramc rgramc.c
+build_rc=0
+--- warnings:
+-rwxr-xr-x@ 1 mrowlinson  staff  2853336 Oct 26 09:38 /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat1/pv-35792e99/build/rgramc
+--- py:
+py_rc=0
+== /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat1/pv-35792e99/pywork ==
+RGRAM-GREEN
+pass=12632 fail=0
+--- C:
+c_rc=0
+RGRAM-GREEN
+pass=12632 fail=0
+--- PYID:
+pyid_rc=0
+RGRAMC-PYID 6316/6316 covered=6316/6316
+RGRAMC-GREEN
+--- smoke:
+smoke_rc=0
+SMOKE-GREEN
+===== PV b325 (f0b205de) Mon Oct 26 09:45:10 EDT 2026
+Preparing worktree (detached HEAD f0b205de)
+HEAD is now at f0b205de encode-cport: C port rgram band325 T10P217 (pins 92253..92600, 1284 tiers sealed) (RGRAMC-PYID 6342/6342, RGRAM-GREEN 12684/12684 via RGRAM_BIN=C + python + SMOKE/UNITS first-hand)
+cc -O2 -Wall -Wextra -std=c11 -I/opt/homebrew/opt/xz/include -o /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat1/pv-f0b205de/build/rgramc rgramc.c
+build_rc=0
+--- warnings:
+-rwxr-xr-x@ 1 mrowlinson  staff  2870328 Oct 26 09:48 /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat1/pv-f0b205de/build/rgramc
+--- py:
+py_rc=0
+RGRAM-GREEN
+pass=12684 fail=0
+--- C:
+c_rc=0
+RGRAM-GREEN
+pass=12684 fail=0
+--- PYID:
+pyid_rc=0
+RGRAMC-PYID 6342/6342 covered=6342/6342
+RGRAMC-GREEN
+--- smoke:
+smoke_rc=0
+SMOKE-GREEN
+===== PV b326 (7828ec30) Mon Oct 26 09:55:44 EDT 2026
+Preparing worktree (detached HEAD 7828ec30)
+HEAD is now at 7828ec30 encode-cport: C port rgram band326 T10P218 (pins 92601..92948, 1290 tiers sealed) (RGRAMC-PYID 6368/6368, RGRAM-GREEN 12736/12736 via RGRAM_BIN=C + python + SMOKE/UNITS first-hand)
+cc -O2 -Wall -Wextra -std=c11 -I/opt/homebrew/opt/xz/include -o /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat1/pv-7828ec30/build/rgramc rgramc.c
+build_rc=0
+--- warnings:
+-rwxr-xr-x@ 1 mrowlinson  staff  2887176 Oct 26 09:56 /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat1/pv-7828ec30/build/rgramc
+--- py:
+py_rc=0
+RGRAM-GREEN
+pass=12736 fail=0
+--- C:
+c_rc=0
+RGRAM-GREEN
+pass=12736 fail=0
+--- PYID:
+pyid_rc=0
+RGRAMC-PYID 6368/6368 covered=6368/6368
+RGRAMC-GREEN
+--- smoke:
+smoke_rc=0
+SMOKE-GREEN
+ALLDONE
