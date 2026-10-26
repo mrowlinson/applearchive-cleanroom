@@ -1,0 +1,101 @@
+===== PV b355 (4b8d0444) Mon Oct 26 12:37:13 EDT 2026
+build_rc=0
+--- warnings:
+0
+-rwxr-xr-x@ 1 mrowlinson  staff  3212232 Oct 26 12:37 /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat9b/pv-4b8d0444/build/rgramc
+py_rc=0
+PASS g-z103039
+PASS g-z103040-closed
+PASS g-z103040
+== /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat9b/pv-4b8d0444/pywork ==
+RGRAM-GREEN
+PASS=14430 FAIL=0
+c_rc=0
+PASS g-z103040
+== /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat9b/pv-4b8d0444/cwork ==
+RGRAM-GREEN
+PASS=14430 FAIL=0
+pyid_rc=0
+RGRAMC-PYID 7215/7215 covered=7215/7215
+RGRAMC-GREEN
+smoke_rc=0
+PASS aar-encode
+PASS aar-decode
+PASS aar-bytes
+PASS aea-encrypt
+PASS aea-decrypt
+PASS aea-bytes
+SMOKE-GREEN
+===== PV b356 (f9bb207b) Mon Oct 26 12:38:44 EDT 2026
+build_rc=0
+--- warnings:
+0
+-rwxr-xr-x@ 1 mrowlinson  staff  3229048 Oct 26 12:39 /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat9b/pv-f9bb207b/build/rgramc
+py_rc=0
+== /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat9b/pv-f9bb207b/pywork ==
+RGRAM-GREEN
+PASS=14492 FAIL=0
+c_rc=0
+== /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat9b/pv-f9bb207b/cwork ==
+RGRAM-GREEN
+PASS=14492 FAIL=0
+pyid_rc=0
+RGRAMC-PYID 7246/7246 covered=7246/7246
+RGRAMC-GREEN
+smoke_rc=0
+PASS aar-encode
+PASS aar-decode
+PASS aar-bytes
+PASS aea-encrypt
+PASS aea-decrypt
+PASS aea-bytes
+SMOKE-GREEN
+===== PV b357 (d719c39d) Mon Oct 26 12:40:09 EDT 2026
+build_rc=0
+--- warnings:
+0
+-rwxr-xr-x@ 1 mrowlinson  staff  3245928 Oct 26 12:40 /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat9b/pv-d719c39d/build/rgramc
+py_rc=0
+== /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat9b/pv-d719c39d/pywork ==
+RGRAM-GREEN
+PASS=14554 FAIL=0
+c_rc=0
+== /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat9b/pv-d719c39d/cwork ==
+RGRAM-GREEN
+PASS=14554 FAIL=0
+pyid_rc=0
+RGRAMC-PYID 7277/7277 covered=7277/7277
+RGRAMC-GREEN
+smoke_rc=0
+PASS aar-encode
+PASS aar-decode
+PASS aar-bytes
+PASS aea-encrypt
+PASS aea-decrypt
+PASS aea-bytes
+SMOKE-GREEN
+===== PV b358 (00142e87) Mon Oct 26 12:41:35 EDT 2026
+build_rc=0
+--- warnings:
+0
+-rwxr-xr-x@ 1 mrowlinson  staff  3262776 Oct 26 12:42 /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat9b/pv-00142e87/build/rgramc
+py_rc=0
+== /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat9b/pv-00142e87/pywork ==
+RGRAM-GREEN
+PASS=14616 FAIL=0
+c_rc=0
+== /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat9b/pv-00142e87/cwork ==
+RGRAM-GREEN
+PASS=14616 FAIL=0
+pyid_rc=0
+RGRAMC-PYID 7308/7308 covered=7308/7308
+RGRAMC-GREEN
+smoke_rc=0
+PASS aar-encode
+PASS aar-decode
+PASS aar-bytes
+PASS aea-encrypt
+PASS aea-decrypt
+PASS aea-bytes
+SMOKE-GREEN
+ALLDONE
