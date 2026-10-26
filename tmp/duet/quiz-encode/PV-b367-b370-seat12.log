@@ -1,0 +1,101 @@
+===== PV b367 (eded0ac9) Mon Oct 26 12:51:42 EDT 2026
+build_rc=0
+--- warnings:
+0
+-rwxr-xr-x@ 1 mrowlinson  staff  3349000 Oct 26 12:50 /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat12/pv-eded0ac9/build/rgramc
+py_rc=0
+== /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat12/pv-eded0ac9/pywork ==
+RGRAM-GREEN
+PASS=15174 FAIL=0
+c_rc=0
+== /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat12/pv-eded0ac9/cwork ==
+RGRAM-GREEN
+PASS=15174 FAIL=0
+pyid_rc=0
+RGRAMC-PYID 7587/7587 covered=7587/7587
+RGRAMC-GREEN
+smoke_rc=0
+PASS aar-encode
+PASS aar-decode
+PASS aar-bytes
+PASS aea-encrypt
+PASS aea-decrypt
+PASS aea-bytes
+SMOKE-GREEN
+VERDICT b367 GREEN
+===== PV b368 (8676784a) Mon Oct 26 12:53:51 EDT 2026
+build_rc=0
+--- warnings:
+0
+-rwxr-xr-x@ 1 mrowlinson  staff  3365864 Oct 26 12:52 /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat12/pv-8676784a/build/rgramc
+py_rc=0
+== /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat12/pv-8676784a/pywork ==
+RGRAM-GREEN
+PASS=15236 FAIL=0
+c_rc=0
+== /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat12/pv-8676784a/cwork ==
+RGRAM-GREEN
+PASS=15236 FAIL=0
+pyid_rc=0
+RGRAMC-PYID 7618/7618 covered=7618/7618
+RGRAMC-GREEN
+smoke_rc=0
+PASS aar-encode
+PASS aar-decode
+PASS aar-bytes
+PASS aea-encrypt
+PASS aea-decrypt
+PASS aea-bytes
+SMOKE-GREEN
+VERDICT b368 GREEN
+===== PV b369 (1268dd1b) Mon Oct 26 12:55:39 EDT 2026
+build_rc=0
+--- warnings:
+0
+-rwxr-xr-x@ 1 mrowlinson  staff  3366200 Oct 26 12:54 /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat12/pv-1268dd1b/build/rgramc
+py_rc=0
+== /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat12/pv-1268dd1b/pywork ==
+RGRAM-GREEN
+PASS=15298 FAIL=0
+c_rc=0
+== /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat12/pv-1268dd1b/cwork ==
+RGRAM-GREEN
+PASS=15298 FAIL=0
+pyid_rc=0
+RGRAMC-PYID 7649/7649 covered=7649/7649
+RGRAMC-GREEN
+smoke_rc=0
+PASS aar-encode
+PASS aar-decode
+PASS aar-bytes
+PASS aea-encrypt
+PASS aea-decrypt
+PASS aea-bytes
+SMOKE-GREEN
+VERDICT b369 GREEN
+===== PV b370 (a9247512) Mon Oct 26 12:57:11 EDT 2026
+build_rc=0
+--- warnings:
+0
+-rwxr-xr-x@ 1 mrowlinson  staff  3383048 Oct 26 12:56 /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat12/pv-a9247512/build/rgramc
+py_rc=0
+== /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat12/pv-a9247512/pywork ==
+RGRAM-GREEN
+PASS=15360 FAIL=0
+c_rc=0
+== /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-seat12/pv-a9247512/cwork ==
+RGRAM-GREEN
+PASS=15360 FAIL=0
+pyid_rc=0
+RGRAMC-PYID 7680/7680 covered=7680/7680
+RGRAMC-GREEN
+smoke_rc=0
+PASS aar-encode
+PASS aar-decode
+PASS aar-bytes
+PASS aea-encrypt
+PASS aea-decrypt
+PASS aea-bytes
+SMOKE-GREEN
+VERDICT b370 GREEN
+ALLDONE

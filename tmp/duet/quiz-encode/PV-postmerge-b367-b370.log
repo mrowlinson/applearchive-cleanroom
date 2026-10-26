@@ -1,0 +1,19 @@
+===== POSTMERGE master c37aeb39 Mon Oct 26 12:58:00 EDT 2026
+build_rc=0
+--- py:
+PASS g-z108260
+== /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-postmerge-b370/work-py ==
+RGRAM-GREEN
+--- C:
+PASS g-z108260
+== /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-postmerge-b370/work-c ==
+RGRAM-GREEN
+--- PYID:
+RGRAMC-PYID 7680/7680 covered=7680/7680
+RGRAMC-GREEN
+--- smoke:
+== /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-postmerge-b370/work-smoke ==
+SMOKE-GREEN
+--- PINS purity:
+248	0	vectors/rgram-PINS.csv
+ALLDONE
