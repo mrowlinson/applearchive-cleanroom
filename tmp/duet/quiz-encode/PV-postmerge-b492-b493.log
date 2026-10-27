@@ -1,0 +1,20 @@
+===== POSTMERGE master d3524635 Tue Oct 27 10:03:27 EDT 2026
+build_rc=0
+--- py:
+PASS g-z151064
+== /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-postmerge-b493/work-py ==
+RGRAM-GREEN
+--- C:
+PASS g-z151064
+== /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-postmerge-b493/work-c ==
+RGRAM-GREEN
+--- PYID:
+RGRAMC-PYID 11380/11380 covered=11380/11438
+RGRAMC-GREEN
+--- smoke:
+== /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-postmerge-b493/work-smoke ==
+SMOKE-GREEN
+--- PINS purity:
+116	0	vectors/rgram-PINS.csv
+ALLDONE
+--- CORRECTION (parent, same session): (1) PYID leg above used stale default RGRAMC binary (b491-era build); re-ran with RGRAMC=<fresh build> -> RGRAMC-PYID 11438/11438 covered=11438/11438 RGRAMC-GREEN. Standing: PYID leg requires RGRAMC= (not RGRAM_BIN). (2) PINS purity +232/-0 above is xdiff misalignment on repetitive CSV; TRUE delta = line-count +116 (22762->22878) = per-commit sum (+58 x2). Standing: purity = line-count delta + per-commit agreement + byte-identity, never bare endpoint numstat.
