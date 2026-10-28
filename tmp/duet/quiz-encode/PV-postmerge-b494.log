@@ -1,0 +1,17 @@
+===== POSTMERGE master 9760f87c Wed Oct 28 2026 (records-b retry)
+build_rc=0 warnings=0 (make -C src/c, BUILDDIR=NVME pv-postmerge-b494r/build, cc -O2 -Wall -Wextra -std=c11)
+--- py:
+py_rc=0 PASS 22934 FAIL 0 RGRAM-GREEN (tests/test_rgram_fast.py, NVME work-py)
+--- C:
+c_rc=0 PASS 22934 FAIL 0 RGRAM-GREEN (RGRAM_BIN=fresh build above, NVME work-c)
+--- PYID:
+pyid_rc=0 RGRAMC-PYID 11467/11467 covered=11467/11467 RGRAMC-GREEN (RGRAMC=fresh build explicit, NVME work-pyid)
+--- smoke:
+smoke_rc=0 6/6 SMOKE-GREEN (tests/smoke.sh, NVME work-smoke)
+--- PINS purity:
+tip 22936 lines == lane 381f65a1 22936 lines, cmp IDENTICAL
+per-commit: 21ba6ecf..381f65a1 PINS 58/0 (py-merge leg; C-port leg zero PINS rows)
+merge diff: rgramc.c 608 + rgram.py 231 + test_rgram.sh 1/1 + PINS 58, matches lane content
+Verdict: POSTMERGE-GREEN. Ready to land records.
+scratch: /Volumes/NVME/applearchive-cleanroom-ws/tmp/pv-postmerge-b494r/ (build/build.log/build.err/py.log/c.log/pyid.log/smoke.log/work-*)
+note: stale pv-postmerge-b494/work-py (dropped predecessor partial, 09:22) left untouched; retry used pv-postmerge-b494r.
