@@ -114,7 +114,7 @@ static void emit_seq(obuf *o, const uint8_t *lit, size_t litn, size_t ml,
     }
 }
 
-lz4_chunk *lz4_encode_all(const uint8_t *inner, size_t ilen, size_t *nch) {
+lz4_chunk *lz4_encode_all(const uint8_t *inner, size_t ilen, size_t blocksize, size_t *nch) {
     tab t;
     t.tab = calloc(LZ4_BUCKETS, sizeof(bucket));
     if (!t.tab) exit(1);
@@ -122,14 +122,25 @@ lz4_chunk *lz4_encode_all(const uint8_t *inner, size_t ilen, size_t *nch) {
     t.ilen = ilen;
     size_t nchs = (ilen + LZ4_CHUNK - 1) / LZ4_CHUNK;
     if (!nchs) nchs = 1;
+    if (!blocksize) blocksize = 4 * 1024 * 1024;
+    size_t nblk = (ilen + blocksize - 1) / blocksize;
+    if (!nblk) nblk = 1;
     lz4_chunk *chs = calloc(nchs ? nchs : 1, sizeof(lz4_chunk));
     if (!chs) exit(1);
-    for (size_t ci = 0; ci < nchs; ci++) {
-        size_t base = ci * LZ4_CHUNK;
+    size_t ci = 0;
+    for (size_t bi = 0; bi < nblk; bi++) {
+      memset(t.tab, 0, LZ4_BUCKETS * sizeof(bucket)); /* per-block reset (mb) */
+      size_t bbase = bi * blocksize;
+      size_t blen = ilen - bbase > blocksize ? blocksize : ilen - bbase;
+      size_t nchb = (blen + LZ4_CHUNK - 1) / LZ4_CHUNK;
+      if (!nchb) nchb = 1;
+      for (size_t bci = 0; bci < nchb; bci++, ci++) {
+        size_t base = bbase + bci * LZ4_CHUNK;
         size_t n = ilen - base > LZ4_CHUNK ? LZ4_CHUNK : ilen - base;
-        int fin = ci == nchs - 1;
+        int fin = bci == nchb - 1;
         uint32_t ilim = fin ? UINT32_MAX : (uint32_t)(base + LZ4_CHUNK - LZ4_NEVER_K);
-        uint32_t FBOUND = (uint32_t)(base + n - 122);
+        uint32_t FBOUND = (uint32_t)(base + n - 125); /* A: anchor-rem>=129 */
+        uint32_t BBOUND = (uint32_t)(base + n - 122); /* B: gpos-rem>=126 */
         uint32_t LIMB = (uint32_t)(base + n - 121);
         obuf o = {0};
         size_t anchor = 0, ip = 0;
@@ -137,9 +148,11 @@ lz4_chunk *lz4_encode_all(const uint8_t *inner, size_t ilen, size_t *nch) {
             uint32_t gpos = (uint32_t)(base + ip);
             if (ip + 12 >= n) break;
             uint32_t occ = UINT32_MAX;
-            if (gpos >= 16 && gpos + 4 <= FBOUND) {
+            int rseed = 0;
+            if (gpos >= 16 && gpos + 4 <= BBOUND && base + anchor + 4 <= FBOUND) {
                 occ = tab_lookup(&t, gpos);
-                if (occ == UINT32_MAX && ip == 0 && ci >= 1) {
+                rseed = (occ == UINT32_MAX && ip == 0 && bci >= 1);
+                if (rseed) {
                     const uint8_t *g = inner + gpos;
                     for (int32_t _o = (int32_t)gpos - 4;
                          _o >= (int32_t)gpos - 8; _o--) {
@@ -191,6 +204,11 @@ lz4_chunk *lz4_encode_all(const uint8_t *inner, size_t ilen, size_t *nch) {
                     if (p1 < ilim && p1 + 4 <= ilen)
                         tab_put(&t, p1, inner + p1);
                 }
+                if (rseed && gpos + 8 < mend) { /* P8 rescan-path seed */
+                    uint32_t p8 = gpos + 8;
+                    if (p8 < ilim && p8 + 4 <= ilen)
+                        tab_put(&t, p8, inner + p8);
+                }
                 if (mend - (uint32_t)base < n - 12) {
                     if (tab_lookup(&t, mend) == UINT32_MAX) {
                         uint32_t s = LZ4_BKT(inner + mend);
@@ -224,6 +242,7 @@ lz4_chunk *lz4_encode_all(const uint8_t *inner, size_t ilen, size_t *nch) {
         chs[ci].unc = n;
         chs[ci].blk = o.p ? o.p : calloc(1, 1);
         chs[ci].blen = o.n;
+      }
     }
     free(t.tab);
     *nch = nchs;

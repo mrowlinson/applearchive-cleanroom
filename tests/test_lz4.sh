@@ -36,12 +36,20 @@ mkdir -p "$W/in/rzs" "$W/in/rzc"
 python3 -c "import random;random.seed(21);open('$W/in/rzs/n','wb').write(bytes(random.randrange(256) for _ in range(4000))+b'\x00'*340)"; fix "$W/in/rzs"
 python3 -c "import random;random.seed(21);open('$W/in/rzc/n','wb').write(bytes(random.randrange(256) for _ in range(4000))+b'\x00'*370)"; fix "$W/in/rzc"
 cell rzs ""
+# mb/mix/m1a/r361 UNPARKED (anchor+B gates + per-block reset fix the
+# -9B over-match class; all green). rzc stays parked (7B random-pressure
+# residual: impl (4000,4,4134)@4181 vs oracle (4001,284,1); mtime-sensitive
+# bucket-0 eviction fit, needs hash/eviction refit beyond this lane).
 # rzc PARKED (finding frontier: older-occ (181,4001,284) vs mine
 # (181,4000,4); o4-class; needs bucket order/skip fit):
 # cell rzc ""
-# PARKED (finding frontier: systematic -9B over-match (one extra ml=12) on
-# run-adjacent multi-chunk data; needs eviction (Q-28/A-33) + selective inserts):
-#   mb (5MB const, -b 1m), mix (1MB rand + 600KB zeros, -b 1m),
-#   m1a (50KB rand + 100KB zeros + 100KB periodic), r361 (razor-STORE side).
+mkdir -p "$W/in/mb"; python3 -c "open('$W/in/mb/n','wb').write(b'\\x00'*(5*1024*1024))"; fix "$W/in/mb"
+cell mb "1m"
+mkdir -p "$W/in/mix"; python3 -c "import random;random.seed(7);open('$W/in/mix/n','wb').write(bytes(random.randrange(256) for _ in range(1024*1024))+b'\\x00'*600000)"; fix "$W/in/mix"
+cell mix "1m"
+mkdir -p "$W/in/m1a"; python3 -c "import random;random.seed(11);open('$W/in/m1a/n','wb').write(bytes(random.randrange(256) for _ in range(50*1024))+b'\\x00'*(100*1024)+(b'abcdefgh'*12500)[:100000])"; fix "$W/in/m1a"
+cell m1a ""
+mkdir -p "$W/in/r361"; python3 -c "import random;random.seed(21);open('$W/in/r361/n','wb').write(bytes(random.randrange(256) for _ in range(4000))+b'\\x00'*361)"; fix "$W/in/r361"
+cell r361 ""
 [ $fail -eq 0 ] && echo LZ4-GREEN || echo LZ4-RED
 exit $fail

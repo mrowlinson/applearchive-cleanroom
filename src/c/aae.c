@@ -676,7 +676,7 @@ int main(int argc, char **argv) {
         bput(&out, inner.p, inner.n);
     } else if (!strcmp(alg, "lz4")) {
         size_t nch = 0;
-        lz4_chunk *chs = lz4_encode_all(inner.p, inner.n, &nch);
+        lz4_chunk *chs = lz4_encode_all(inner.p, inner.n, block, &nch);
         size_t olen = 0;
         uint8_t *o = lz4_wrap_pbz4(inner.p, inner.n, chs, nch, block,
                                    &olen);

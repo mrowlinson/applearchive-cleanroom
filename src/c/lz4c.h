@@ -28,8 +28,9 @@ typedef struct {
 } lz4_chunk;
 
 /* encode full inner -> malloc'd chunk array (count in *nch, free via
- * lz4_free_chunks). mirrors lz4enc.lz4_encode(inner,2048,5,'shift'). */
-lz4_chunk *lz4_encode_all(const uint8_t *inner, size_t ilen, size_t *nch);
+ * lz4_free_chunks). mirrors lz4enc.lz4_encode(inner,2048,5,'shift',bs).
+ * per-block independent streams: table resets each block. */
+lz4_chunk *lz4_encode_all(const uint8_t *inner, size_t ilen, size_t blocksize, size_t *nch);
 void lz4_free_chunks(lz4_chunk *chs, size_t nch);
 
 /* pbz4 outer wrap (mirrors wrap_pbz4). malloc'd, len in *olen. */
