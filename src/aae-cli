@@ -1,0 +1,291 @@
+#!/usr/bin/env python3
+"""aae-cli — unified impl-only entry point (aa archive/extract/list + aea encrypt/decrypt/id).
+
+Contract: harness/CLI-CONTRACT.md. Same argv shapes as oracle-adapter.sh,
+but backends are cleanroom impl ONLY — zero oracle passthrough:
+  probe       provenance of impl components (never touches /usr/bin/aa|aea)
+  aar-encode  src/encode.py (raw/lzfse/zlib/lzma/lz4; lzraven+lzbitmap = UNSUPPORTED)
+  aar-decode  C binary src/aad.c via $AAD_BIN (all 7 algs; built with make OUTDIR=<nvme>)
+  aar-list    proto/aad.py parse (pure-stdlib path list, no backend tools)
+  aea-encrypt UNSUPPORTED (sibling lane building it; no stub, honest error)
+  aea-decrypt proto/aead.py via $AEAD_PY (venv python with cryptography+lz4)
+  aea-id      proto/aead.py archive_id via $AEAD_PY
+Env:
+  AAD_BIN     C decode binary (default <nvme-ws>/build/decode-writer/aad)
+  AEAD_PY     python with aead deps (default <nvme-ws>/writer2/.venv/bin/python)
+  LZFSE_DYLIB OSS lzfse dylib for lzfse encode (see src/pbze.py)
+  TMPDIR      scratch root (MUST be NVME, never /tmp or repo tmp/)
+Exit: 0 ok; 1 operation failure; 2 usage/harness/UNSUPPORTED.
+"""
+import hashlib
+import os
+import platform
+import struct
+import subprocess
+import sys
+from datetime import datetime, timezone
+
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_ROOT = os.path.dirname(_HERE)
+_NVME = "/Volumes/NVME/applearchive-cleanroom-ws"
+_AAD_DEFAULT = os.path.join(_NVME, "build", "decode-writer", "aad")
+_AEAD_PY_DEFAULT = os.path.join(_NVME, "writer2", ".venv", "bin", "python")
+_SUPPORTED_ALGS = ("raw", "lzfse", "zlib", "lzma", "lz4")
+_PARKED_ALGS = ("lzraven", "lzbitmap")
+
+
+def _die(msg, code=2):
+    sys.stderr.write("aae-cli: %s\n" % msg)
+    return code
+
+
+def _sha(path):
+    try:
+        with open(path, "rb") as f:
+            return hashlib.sha256(f.read()).hexdigest()
+    except OSError:
+        return "missing"
+
+
+def cmd_probe(argv):
+    if argv:
+        return _die("usage: aae-cli probe")
+    out = [
+        "backend=impl-unified(aae-cli)",
+        "date_utc=%s" % datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "os=%s" % platform.system(),
+        "arch=%s" % platform.machine(),
+        "cli=%s sha256=%s" % (__file__, _sha(__file__)),
+        "encode=%s sha256=%s" % (os.path.join(_HERE, "encode.py"),
+                                 _sha(os.path.join(_HERE, "encode.py"))),
+        "aad_c=%s sha256=%s" % (os.path.join(_ROOT, "src", "aad.c"),
+                                _sha(os.path.join(_ROOT, "src", "aad.c"))),
+        "aad_proto=%s sha256=%s" % (os.path.join(_ROOT, "proto", "aad.py"),
+                                   _sha(os.path.join(_ROOT, "proto", "aad.py"))),
+        "aead_proto=%s sha256=%s" % (os.path.join(_ROOT, "proto", "aead.py"),
+                                    _sha(os.path.join(_ROOT, "proto", "aead.py"))),
+        "aad_bin=%s" % os.environ.get("AAD_BIN", _AAD_DEFAULT),
+        "aead_py=%s" % os.environ.get("AEAD_PY", _AEAD_PY_DEFAULT),
+        "python=%s" % sys.version.split()[0],
+    ]
+    sys.stdout.write("\n".join(out) + "\n")
+    return 0
+
+
+def _parse_kv(argv, flags):
+    """Pop --flag value pairs in place; return (dict, positionals)."""
+    got, pos, i = {}, [], 0
+    while i < len(argv):
+        a = argv[i]
+        if a == "--":
+            pos.extend(argv[i + 1:])
+            break
+        if a in flags:
+            if i + 1 >= len(argv):
+                return None, "flag %s needs a value" % a
+            got[a[2:]] = argv[i + 1]
+            i += 2
+        elif a == "-":
+            pos.append(a)
+            i += 1
+        elif a.startswith("-"):
+            return None, "unknown flag: %s" % a
+        else:
+            pos.append(a)
+            i += 1
+    return got, pos
+
+
+def cmd_aar_encode(argv):
+    opts, pos = _parse_kv(argv, ("--alg", "--block", "--threads"))
+    if opts is None:
+        return _die("aar-encode: %s" % pos)
+    alg = opts.get("alg", "raw")
+    if alg in _PARKED_ALGS:
+        sys.stderr.write("UNSUPPORTED: aar-encode --alg %s not yet implemented "
+                         "(sibling lane; no stub)\n" % alg)
+        return 2
+    if alg not in _SUPPORTED_ALGS:
+        return _die("aar-encode: unsupported alg %r (supported: %s; parked: %s)"
+                    % (alg, ",".join(_SUPPORTED_ALGS), ",".join(_PARKED_ALGS)))
+    if len(pos) != 2:
+        return _die("usage: aae-cli aar-encode --alg ALG [--block S] [--threads N] SRCDIR OUT.aar")
+    sys.path.insert(0, _HERE)
+    import encode
+    args = [pos[0], pos[1], "--alg", alg]
+    if "block" in opts:
+        args += ["--block", opts["block"]]
+    if "threads" in opts:
+        args += ["--threads", opts["threads"]]
+    try:
+        encode.main(args)
+    except SystemExit as e:
+        return e.code if isinstance(e.code, int) else 2
+    return 0
+
+
+def _aad_bin():
+    p = os.environ.get("AAD_BIN", _AAD_DEFAULT)
+    if os.path.isfile(p) and os.access(p, os.X_OK):
+        return p
+    return None
+
+
+def cmd_aar_decode(argv):
+    if len(argv) != 2 or argv[0].startswith("-"):
+        return _die("usage: aae-cli aar-decode IN.aar OUTDIR")
+    src, dst = argv
+    if not os.path.exists(src):
+        return _die("missing: %s" % src)
+    exe = _aad_bin()
+    if exe is None:
+        return _die("missing C decode binary: %s (build: make OUTDIR=<nvme>/build/decode-writer)" %
+                    os.environ.get("AAD_BIN", _AAD_DEFAULT))
+    os.makedirs(dst, exist_ok=True)
+    os.execv(exe, [exe, src, dst])
+    return 2  # execv only returns on failure
+
+
+def cmd_aar_list(argv):
+    if len(argv) != 1 or argv[0].startswith("-"):
+        return _die("usage: aae-cli aar-list IN.aar")
+    if not os.path.exists(argv[0]):
+        return _die("missing: %s" % argv[0])
+    sys.path.insert(0, os.path.join(_ROOT, "proto"))
+    import aad
+    try:
+        with open(argv[0], "rb") as f:
+            data = f.read()
+        inner, _, _ = aad.parse_chain(data)
+        items, _, _, _, _, _ = aad.parse_inner(inner)
+        for entries, _blobs in items:
+            for key, _st, val in entries:
+                if key == b"PAT":
+                    sys.stdout.write(val.decode("utf-8", "surrogateescape") + "\n")
+                    break
+    except aad.FmtErr as e:
+        sys.stderr.write("aae-cli: aar-list: %s\n" % e)
+        return 1
+    return 0
+
+
+def _aead_py():
+    p = os.environ.get("AEAD_PY", _AEAD_PY_DEFAULT)
+    if os.path.isfile(p) and os.access(p, os.X_OK):
+        return p
+    if os.path.isfile(_AEAD_PY_DEFAULT) and os.access(_AEAD_PY_DEFAULT, os.X_OK):
+        return _AEAD_PY_DEFAULT
+    return sys.executable
+
+
+def _hexval(v):
+    if v.startswith(("hex:", "base64:")):
+        return v
+    try:
+        bytes.fromhex(v)
+        return "hex:" + v
+    except ValueError:
+        return v
+
+
+def cmd_aea_encrypt(argv):
+    sys.stderr.write("UNSUPPORTED: aea-encrypt not yet implemented (sibling lane; no stub)\n")
+    return 2
+
+
+def cmd_aea_decrypt(argv):
+    opts, pos = _parse_kv(argv, ("--password", "--password-file", "--key",
+                                 "--key-value", "--key-file", "--recipient-priv",
+                                 "--sign-pub", "--range-offset", "--range-size"))
+    if opts is None:
+        return _die("aea-decrypt: %s" % pos)
+    if len(pos) != 2:
+        return _die("usage: aae-cli aea-decrypt [--password PW|--key HEX|...] IN OUT")
+    src, dst = pos
+    if src != "-" and not os.path.exists(src):
+        return _die("missing: %s" % src)
+    ae = os.path.join(_ROOT, "proto", "aead.py")
+    args = [_aead_py(), ae, "decrypt"]
+    if "password" in opts:
+        args += ["--password", opts["password"]]
+    if "password-file" in opts:
+        args += ["--password-file", opts["password-file"]]
+    if "key" in opts:
+        args += ["--key-value", _hexval(opts["key"])]
+    if "key-value" in opts:
+        args += ["--key-value", opts["key-value"]]
+    if "key-file" in opts:
+        args += ["--key", opts["key-file"]]
+    if "recipient-priv" in opts:
+        args += ["--recipient-priv", opts["recipient-priv"]]
+    if "sign-pub" in opts:
+        args += ["--sign-pub", opts["sign-pub"]]
+    if "range-offset" in opts:
+        args += ["--range-offset", opts["range-offset"]]
+    if "range-size" in opts:
+        args += ["--range-size", opts["range-size"]]
+    if src == "-":
+        pass  # absent -i = stdin (contract stdio shape)
+    else:
+        args += ["-i", src]
+    if dst == "-":
+        pass  # absent -o = stdout (contract stdio shape)
+    else:
+        args += ["-o", dst]
+    os.execv(args[0], args)
+    return 2
+
+
+def cmd_aea_id(argv):
+    if len(argv) != 1:
+        return _die("usage: aae-cli aea-id IN")
+    src = argv[0]
+    ae = os.path.join(_ROOT, "proto", "aead.py")
+    py = _aead_py()
+    if src != "-" and not os.path.exists(src):
+        return _die("missing: %s" % src)
+    if src == "-":
+        import tempfile
+        data = sys.stdin.buffer.read()
+        td = os.environ.get("TMPDIR") or os.path.join(_NVME, "tmp")
+        os.makedirs(td, exist_ok=True)
+        fd, tmp = tempfile.mkstemp(suffix=".aea", dir=td)
+        try:
+            with os.fdopen(fd, "wb") as f:
+                f.write(data)
+            rc = subprocess.run([py, ae, "id", "-i", tmp]).returncode
+        finally:
+            try:
+                os.unlink(tmp)
+            except OSError:
+                pass
+        return rc
+    os.execv(py, [py, ae, "id", "-i", src])
+    return 2
+
+
+_CMDS = {
+    "probe": cmd_probe,
+    "aar-encode": cmd_aar_encode,
+    "aar-decode": cmd_aar_decode,
+    "aar-list": cmd_aar_list,
+    "aea-encrypt": cmd_aea_encrypt,
+    "aea-decrypt": cmd_aea_decrypt,
+    "aea-id": cmd_aea_id,
+}
+
+
+def main(argv):
+    if not argv or argv[0] in ("-h", "--help", "help"):
+        sys.stdout.write("usage: aae-cli %s\n" % "|".join(_CMDS))
+        sys.stdout.write("impl-only backends (no oracle): encode=src/encode.py "
+                         "decode=C aad list=proto/aad decrypt/id=proto/aead\n")
+        return 0 if argv else 2
+    fn = _CMDS.get(argv[0])
+    if fn is None:
+        return _die("unknown command: %s (see: aae-cli help)" % argv[0])
+    return fn(argv[1:])
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
