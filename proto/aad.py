@@ -564,7 +564,7 @@ def extract(items, root, fcls=0, fsub=0, shortidx=-1, midchain=False,
                   ord("J"): 3, ord("A"): 5, ord("B"): 5,
                   ord("C"): 5}.get(tst)
             if tn is not None:
-                print("Extraction failed\nextract failedError 0xe509b400\n"
+                print("Extraction failed\nextract failedError 0xe5099400\n"
                       "invalid type %d, expected UINT\n"
                       "Invalid entry: no TYP field\n"
                       "archive stream read error (header)\nstream cancelled"
@@ -875,31 +875,31 @@ def extract(items, root, fcls=0, fsub=0, shortidx=-1, midchain=False,
                   "archive stream read error (header)\nstream cancelled",
                   file=sys.stderr)
         elif fcls == PF_BADMAGIC:
-            print("Extraction failed\nextract failedError 0xe501e800\n"
+            print("Extraction failed\nextract failedError 0xe501d800\n"
                   "invalid header magic\ncorrupted archive header\n"
                   "parsing entry header\n"
                   "archive stream read error (header)\nstream cancelled",
                   file=sys.stderr)
         elif fcls in (PF_HDRCUT, PF_ENDMISMATCH):
-            print("Extraction failed\nextract failedError 0xe5022800\n"
+            print("Extraction failed\nextract failedError 0xe5021800\n"
                   "truncated header\ncorrupted archive header\n"
                   "parsing entry header\n"
                   "archive stream read error (header)\nstream cancelled",
                   file=sys.stderr)
         elif fcls == PF_VALUEOVERRUN:
-            print("Extraction failed\nextract failedError 0xe502a400\n"
+            print("Extraction failed\nextract failedError 0xe5029400\n"
                   "truncated header\ncorrupted archive header\n"
                   "parsing entry header\n"
                   "archive stream read error (header)\nstream cancelled",
                   file=sys.stderr)
         elif fcls == PF_BADSUBTYPE:
-            print("Extraction failed\nextract failedError 0xe5029c00\n"
+            print("Extraction failed\nextract failedError 0xe5028c00\n"
                   "invalid field subtype: %d\ncorrupted archive header\n"
                   "parsing entry header\n"
                   "archive stream read error (header)\nstream cancelled"
                   % fsub, file=sys.stderr)
         elif fcls == PF_HSIZEMISMATCH:
-            print("Extraction failed\nextract failedError 0xe501f000\n"
+            print("Extraction failed\nextract failedError 0xe501e000\n"
                   "header size mismatch: stored %d, got 6\n"
                   "corrupted archive header\n"
                   "parsing entry header\n"
