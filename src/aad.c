@@ -815,7 +815,7 @@ static int extract(const Item *items, size_t nitems, const char *root,
             }
             if (tn >= 0) {
                 fprintf(stderr, "Extraction failed\n"
-                        "extract failedError 0xe509b400\n"
+                        "extract failedError 0xe5099400\n"
                         "invalid type %d, expected UINT\n"
                         "Invalid entry: no TYP field\n"
                         "archive stream read error (header)\n"
@@ -1144,28 +1144,28 @@ static int extract(const Item *items, size_t nitems, const char *root,
             break;
         case PF_BADMAGIC:
             fprintf(stderr, "Extraction failed\n"
-                    "extract failedError 0xe501e800\n"
+                    "extract failedError 0xe501d800\n"
                     "invalid header magic\ncorrupted archive header\n"
                     "parsing entry header\n"
                     "archive stream read error (header)\nstream cancelled\n");
             break;
         case PF_HDRCUT: case PF_ENDMISMATCH:
             fprintf(stderr, "Extraction failed\n"
-                    "extract failedError 0xe5022800\n"
+                    "extract failedError 0xe5021800\n"
                     "truncated header\ncorrupted archive header\n"
                     "parsing entry header\n"
                     "archive stream read error (header)\nstream cancelled\n");
             break;
         case PF_VALUEOVERRUN:
             fprintf(stderr, "Extraction failed\n"
-                    "extract failedError 0xe502a400\n"
+                    "extract failedError 0xe5029400\n"
                     "truncated header\ncorrupted archive header\n"
                     "parsing entry header\n"
                     "archive stream read error (header)\nstream cancelled\n");
             break;
         case PF_BADSUBTYPE:
             fprintf(stderr, "Extraction failed\n"
-                    "extract failedError 0xe5029c00\n"
+                    "extract failedError 0xe5028c00\n"
                     "invalid field subtype: %d\ncorrupted archive header\n"
                     "parsing entry header\n"
                     "archive stream read error (header)\nstream cancelled\n",
@@ -1173,7 +1173,7 @@ static int extract(const Item *items, size_t nitems, const char *root,
             break;
         case PF_HSIZEMISMATCH:
             fprintf(stderr, "Extraction failed\n"
-                    "extract failedError 0xe501f000\n"
+                    "extract failedError 0xe501e000\n"
                     "header size mismatch: stored %d, got 6\n"
                     "corrupted archive header\n"
                     "parsing entry header\n"
