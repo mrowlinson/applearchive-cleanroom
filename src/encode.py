@@ -14,7 +14,7 @@ from pbze import wrap_pbze
 from lzmaenc import wrap_pbzx
 from lz4enc import wrap_pbz4
 from lzraven import wrap_pbzm, LzRavenUnclosed
-from lzbitmap import wrap_pbzb
+from lzbitmap import wrap_pbzb, LzBitmapMatchFound
 
 
 def parse_size(s):
@@ -63,7 +63,10 @@ def main(argv):
         except LzRavenUnclosed as e:
             raise SystemExit("lzraven unclosed input: %s" % e)
     elif alg == "lzbitmap":
-        data = wrap_pbzb(inner, blocksize=block)
+        try:
+            data = wrap_pbzb(inner, blocksize=block)
+        except LzBitmapMatchFound as e:
+            raise SystemExit("lzbitmap match-class input: %s" % e)
     else:
         data = wrap_pbze(inner, magic=magics[alg], blocksize=block)
     with open(out, "wb") as f:
