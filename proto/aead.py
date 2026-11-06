@@ -3,11 +3,11 @@
 
 Clean-room decode + encode of Apple Encrypted Archives from behavior beds
 (APROBE-01) + allow-listed OSS craft (kinnay/AEA row A-006/5). Validates
-against the oracle only. v1 scope: profiles 0-5, checksums none+murmur64+
-sha256, segment codecs none+zlib+lzma+lz4 (+lzfse via LZFSE_BIN tool),
+against the oracle only. v2 scope: profiles 0-5, checksums none+murmur64+
+sha256, segment codecs none+zlib+lzma+lz4+lzfse+lzbitmap+lzraven,
 range-decrypt, id. Encrypt: sealed profiles only (sign-priv required for
 0/2/4); scrypt strength 0; padding none/0/numeric (adaptive unsupported);
-lzbitmap/lzraven have no encoder in v1.
+lzbitmap/lzraven have no encoder in v2.
 """
 
 import argparse
@@ -183,7 +183,7 @@ def decomp(alg, data, size):
         if out is None or len(out) != size:
             raise FmtErr("lzraven failed")
         return out
-    raise FmtErr("codec %r unsupported in v1" % alg)
+    raise FmtErr("codec %r unsupported" % alg)
 
 
 M64 = (1 << 64) - 1
@@ -220,7 +220,7 @@ def cksum(alg, data):
         return murmur64a(data)
     if alg == 2:
         return hashlib.sha256(data).digest()
-    raise FmtErr("checksum %d unsupported in v1" % alg)
+    raise FmtErr("checksum %d unsupported" % alg)
 
 
 def decrypt_aea(blob, symkey=None, recip_priv=None, password=None, sign_pub=None,
