@@ -469,11 +469,14 @@ python3 -c "import sys;p=sys.argv[1];b=bytearray(open(p,'rb').read());b[26845407
 if aea decrypt -password-value "$PW" -i "$WORK/mc2f-end.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
 if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$PW" -i "$WORK/mc2f-end.aea" -o "$WORK/out.bin" 2>/dev/null; then pro=0; else pro=1; fi
 if [ $ora -eq 1 ] && [ $pro -eq 1 ]; then ok "err-mc2-c1end"; else bad "err-mc2-c1end"; fi
-# MT thread-shape: default-threads MT stanza (0x9e05cc00) vs -t1 single-thread (0xde108400); exits agree
+# MT thread-shape: default-threads MT stanza (0x9e05 family) vs -t1 single-thread (0xde108400); exits agree.
+# OS-pinned oracle bytes: macOS 27.0.1 def=0x9e05cc00; macOS 27.2 def=0x9e059000 (low-16 sub-code
+# version-variable, verified identical across default/-t2/-t4/-t8 on 27.2 hw.ncpu=18); -t1=0xde108400
+# stable on both. Match the stable 0x9e05 family prefix so the stanza distinction survives re-pins.
 aea decrypt -password-value "$PW" -i "$WORK/mc2f-hdr.aea" -o "$WORK/out.bin" 2>"$WORK/mt-def.err"; edef=$?
 aea decrypt -t 1 -password-value "$PW" -i "$WORK/mc2f-hdr.aea" -o "$WORK/out.bin" 2>"$WORK/mt-t1.err"; et1=$?
 if [ $edef -eq 1 ] && [ $et1 -eq 1 ] \
-   && grep -q '0x9e05cc00' "$WORK/mt-def.err" && grep -q '0xde108400' "$WORK/mt-t1.err" \
+   && grep -q '0x9e05' "$WORK/mt-def.err" && grep -q '0xde108400' "$WORK/mt-t1.err" \
    && ! cmp -s "$WORK/mt-def.err" "$WORK/mt-t1.err"; then ok "ora-mt-threadshape"; else bad "ora-mt-threadshape"; fi
 head -c 536870913 /dev/zero > "$WORK/z3.bin"
 aea encrypt -profile 5 -password-value "$PW" -a none -padding none -checksum sha256 -i "$WORK/z3.bin" -o "$WORK/mc3.aea" 2>/dev/null
