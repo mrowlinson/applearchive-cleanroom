@@ -114,18 +114,94 @@ if aea encrypt -profile 1 -key "$V/aea/testkey.bin" -a none -padding none -i "$V
   fi
 else fail "stdio-fixture-exit"; fi
 
-echo "== cells honest-UNSUPPORTED (no stub, sibling lanes own them) =="
-if python3 "$IMPL" aea-encrypt --profile 5 --password x "$WORK/src/a.txt" "$WORK/x.aea" 2>"$WORK/u-enc.stderr"; then
-  fail "unsup-aea-encrypt-exit"
-else grep -q "UNSUPPORTED" "$WORK/u-enc.stderr" && pass "unsup-aea-encrypt" || fail "unsup-aea-encrypt"; fi
-for a in lzraven lzbitmap; do
-  if python3 "$IMPL" aar-encode --alg "$a" --threads 1 "$WORK/src" "$WORK/x-$a.aar" 2>"$WORK/u-$a.stderr"; then
-    fail "unsup-encode-exit-$a"
-  else grep -q "UNSUPPORTED" "$WORK/u-$a.stderr" && pass "unsup-encode-$a" || fail "unsup-encode-$a"; fi
-done
+echo "== cells aar-encode lzraven (parity, wired via src/encode.py) =="
+mkdir -p "$WORK/ravdir"
+python3 -c "import random;random.seed(7);open('$WORK/ravdir/p','wb').write(bytes(random.randrange(256) for _ in range(3000)))"
+python3 -c "import random;random.seed(8);open('$WORK/ravdir/q','wb').write(bytes(random.randrange(256) for _ in range(100000)))"
+freeze "$WORK/ravdir"
+if python3 "$IMPL" aar-encode --alg lzraven --threads 1 "$WORK/ravdir" "$WORK/impl-rav.aar" 2>"$WORK/enc-rav.stderr"; then
+  pass "encode-impl-exit-lzraven"
+else fail "encode-impl-exit-lzraven"; fi
+if sh "$ORACLE" aar-encode --alg lzraven --threads 1 "$WORK/ravdir" "$WORK/ora-rav.aar" >/dev/null 2>&1; then
+  pass "encode-oracle-exit-lzraven"
+else fail "encode-oracle-exit-lzraven"; fi
+if cmp -s "$WORK/impl-rav.aar" "$WORK/ora-rav.aar"; then pass "bytes-lzraven"; else fail "bytes-lzraven"; fi
+# non-default block size parity (mirrors sibling E2E e2e1k)
+if python3 "$IMPL" aar-encode --alg lzraven --block 1k --threads 1 "$WORK/ravdir" "$WORK/impl-rav1k.aar" 2>/dev/null \
+   && sh "$ORACLE" aar-encode --alg lzraven --block 1k --threads 1 "$WORK/ravdir" "$WORK/ora-rav1k.aar" >/dev/null 2>&1 \
+   && cmp -s "$WORK/impl-rav1k.aar" "$WORK/ora-rav1k.aar"; then pass "bytes-lzraven-1k"; else fail "bytes-lzraven-1k"; fi
+
+echo "== cells aar-encode lzbitmap (parity on proven-parity input) =="
+# Only parity input at .aar level: the AAR inner TLV structure itself trips
+# the literal-class guards on every non-trivial dir (sibling pins: all .aar
+# cells refuse except empty1). Empty dir is byte-identical vs oracle.
+mkdir -p "$WORK/emptybm"
+freeze "$WORK/emptybm"
+if python3 "$IMPL" aar-encode --alg lzbitmap --threads 1 "$WORK/emptybm" "$WORK/impl-lzbm.aar" 2>"$WORK/enc-lzbm.stderr"; then
+  pass "encode-impl-exit-lzbitmap"
+else fail "encode-impl-exit-lzbitmap"; fi
+if sh "$ORACLE" aar-encode --alg lzbitmap --threads 1 "$WORK/emptybm" "$WORK/ora-lzbm.aar" >/dev/null 2>&1; then
+  pass "encode-oracle-exit-lzbitmap"
+else fail "encode-oracle-exit-lzbitmap"; fi
+if cmp -s "$WORK/impl-lzbm.aar" "$WORK/ora-lzbm.aar"; then pass "bytes-lzbitmap"; else fail "bytes-lzbitmap"; fi
+
+echo "== cells refusal propagation (honest backend errors -> CLI exit 2 + marker) =="
+mkdir -p "$WORK/zerosdir"
+head -c 2000 /dev/zero > "$WORK/zerosdir/z.bin"
+freeze "$WORK/zerosdir"
+# lzraven: zeros run + small block -> an all-zeros block N=1024 > scope 820 -> LzRavenUnclosed
+python3 "$IMPL" aar-encode --alg lzraven --block 1k --threads 1 "$WORK/zerosdir" "$WORK/x-rav.aar" 2>"$WORK/ref-rav.stderr"; rc=$?
+[ "$rc" -eq 2 ] && pass "refuse-rav-exit" || fail "refuse-rav-exit"
+grep -q "lzraven unclosed" "$WORK/ref-rav.stderr" && pass "refuse-rav-marker" || fail "refuse-rav-marker"
+# lzbitmap: zeros file trips the order0-hot1 guard -> LzBitmapMatchFound
+python3 "$IMPL" aar-encode --alg lzbitmap --threads 1 "$WORK/zerosdir" "$WORK/x-lzbm.aar" 2>"$WORK/ref-lzbm.stderr"; rc=$?
+[ "$rc" -eq 2 ] && pass "refuse-lzbm-exit" || fail "refuse-lzbm-exit"
+grep -q "lzbitmap match-class" "$WORK/ref-lzbm.stderr" && pass "refuse-lzbm-marker" || fail "refuse-lzbm-marker"
 # oracle sanity: these ARE supported by vendor (proves gap is impl-subset, not fixture)
 sh "$ORACLE" aar-encode --alg lzraven --threads 1 "$WORK/src" "$WORK/o-rav.aar" >/dev/null 2>&1 && pass "oracle-has-lzraven" || fail "oracle-has-lzraven"
 sh "$ORACLE" aar-encode --alg lzbitmap --threads 1 "$WORK/src" "$WORK/o-lzbm.aar" >/dev/null 2>&1 && pass "oracle-has-lzbitmap" || fail "oracle-has-lzbitmap"
+
+echo "== cells aea-encrypt (all 6 profiles, CLI-encrypt -> oracle-decrypt roundtrip) =="
+# Encrypt output is nondeterministic (random salts/MACs), so parity here is
+# interop roundtrip, not byte-compare: oracle must decrypt CLI output to the
+# input bytes. (Deterministic transplant byte-compare lives in test_aea_enc.sh.)
+printf 'hello aea world\n' > "$WORK/msg-aea.txt"
+openssl ecparam -name prime256v1 -genkey -noout -out "$WORK/ec-priv.pem" 2>/dev/null || die "openssl ec"
+openssl ec -in "$WORK/ec-priv.pem" -pubout -out "$WORK/ec-pub.pem" 2>/dev/null || die "openssl ec pub"
+head -c 32 /dev/urandom > "$WORK/key32.bin"
+EKEYHEX=$(xxd -p "$WORK/key32.bin" | tr -d '\n')
+EPW='test-password-fixture-32................'
+for p in 0 1 2 3 4 5; do
+  case $p in
+    0) EC="--sign-priv $WORK/ec-priv.pem"; EOD="-sign-pub $WORK/ec-pub.pem";;
+    1) EC="--key $EKEYHEX"; EOD="-key $WORK/key32.bin";;
+    2) EC="--key $EKEYHEX --sign-priv $WORK/ec-priv.pem"; EOD="-key $WORK/key32.bin -sign-pub $WORK/ec-pub.pem";;
+    3) EC="--recipient-pub $WORK/ec-pub.pem"; EOD="-recipient-priv $WORK/ec-priv.pem";;
+    4) EC="--recipient-pub $WORK/ec-pub.pem --sign-priv $WORK/ec-priv.pem"; EOD="-recipient-priv $WORK/ec-priv.pem -sign-pub $WORK/ec-pub.pem";;
+    5) EC="--password $EPW"; EOD="-password-value $EPW";;
+  esac
+  # shellcheck disable=SC2086
+  if python3 "$IMPL" aea-encrypt --profile "$p" $EC --threads 1 "$WORK/msg-aea.txt" "$WORK/e-p$p.aea" 2>"$WORK/e-p$p.stderr"; then
+    pass "enc-impl-exit-p$p"
+  else fail "enc-impl-exit-p$p"; continue; fi
+  # shellcheck disable=SC2086
+  if aea decrypt $EOD -i "$WORK/e-p$p.aea" -o "$WORK/e-p$p.out" 2>/dev/null \
+     && cmp -s "$WORK/e-p$p.out" "$WORK/msg-aea.txt"; then pass "enc-roundtrip-p$p"; else fail "enc-roundtrip-p$p"; fi
+done
+# --alg forwarding (real compression path, not stored): repeated text + zlib
+python3 -c "open('$WORK/big-aea.txt','w').write('The quick brown fox jumps over the lazy dog. '*2000)"
+if python3 "$IMPL" aea-encrypt --profile 1 --key "$EKEYHEX" --alg zlib --threads 1 "$WORK/big-aea.txt" "$WORK/e-zlib.aea" 2>/dev/null; then
+  pass "enc-impl-exit-zlib"
+else fail "enc-impl-exit-zlib"; fi
+if aea decrypt -key "$WORK/key32.bin" -i "$WORK/e-zlib.aea" -o "$WORK/e-zlib.out" 2>/dev/null \
+   && cmp -s "$WORK/e-zlib.out" "$WORK/big-aea.txt"; then pass "enc-roundtrip-zlib"; else fail "enc-roundtrip-zlib"; fi
+# stdio shape: IN=- OUT=- pipe roundtrip
+if python3 "$IMPL" aea-encrypt --profile 1 --key "$EKEYHEX" --threads 1 - - <"$WORK/msg-aea.txt" >"$WORK/e-stdio.aea" 2>/dev/null \
+   && aea decrypt -key "$WORK/key32.bin" -i "$WORK/e-stdio.aea" -o "$WORK/e-stdio.out" 2>/dev/null \
+   && cmp -s "$WORK/e-stdio.out" "$WORK/msg-aea.txt"; then pass "enc-stdio-roundtrip"; else fail "enc-stdio-roundtrip"; fi
+# usage: missing --profile is exit 2
+python3 "$IMPL" aea-encrypt "$WORK/msg-aea.txt" "$WORK/x-nousage.aea" 2>/dev/null; rc=$?
+[ "$rc" -eq 2 ] && pass "enc-usage-exit2" || fail "enc-usage-exit2"
 
 echo "== cells exit-code parity on corrupt input =="
 printf 'not-an-archive-at-all' > "$WORK/garbage.aar"
