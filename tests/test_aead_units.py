@@ -119,6 +119,54 @@ class Units(unittest.TestCase):
                              hashlib.scrypt(b"pw", salt=b"salt1234",
                                             n=n, r=8, p=1, dklen=32))
 
+    def test_enc_ver_mirrors_dec_ver(self):
+        key80 = bytes(range(80))
+        data, salt = b"payload-data", b"salty"
+        stored, tagm = aead.enc_ver(key80, data, salt)
+        self.assertEqual(aead.dec_ver(key80, stored, salt, tagm), data)
+        self.assertNotEqual(stored, data)  # CTR applied for 80B keys
+        stored32, tag32 = aead.enc_ver(key80[:32], data, salt)
+        self.assertEqual(stored32, data)  # 32B keys: identity + MAC
+        self.assertEqual(aead.dec_ver(key80[:32], stored32, salt, tag32), data)
+
+    def test_parse_size(self):
+        self.assertEqual(aead.parse_size("1m"), 1 << 20)
+        self.assertEqual(aead.parse_size("64k"), 64 << 10)
+        self.assertEqual(aead.parse_size("16"), 16)
+        self.assertEqual(aead.parse_size("0"), 0)
+        with self.assertRaises(aead.FmtErr):
+            aead.parse_size("bogus")
+
+    def test_encrypt_self_roundtrip(self):
+        # API-level, no oracle: profile 1 + profile 5 + empty, fixed salt
+        key32 = bytes(range(32))
+        salt = bytes(0xAB for _ in range(32))
+        blob = aead.encrypt_aea(b"hello", 1, symkey=key32, alg="none",
+                                checksum="sha256", padding="none", salt=salt)
+        self.assertEqual(aead.decrypt_aea(blob, symkey=key32), b"hello")
+        blob5 = aead.encrypt_aea(b"hello", 5, password="pw", alg="none",
+                                 checksum="none", padding="none", salt=salt)
+        self.assertEqual(aead.decrypt_aea(blob5, password="pw"), b"hello")
+        empty = aead.encrypt_aea(b"", 1, symkey=key32, alg="none",
+                                 checksum="none", padding="none", salt=salt)
+        self.assertEqual(aead.decrypt_aea(empty, symkey=key32), b"")
+        padded = aead.encrypt_aea(b"hello", 1, symkey=key32, alg="none",
+                                  checksum="sha256", padding=16, salt=salt)
+        self.assertEqual(aead.decrypt_aea(padded, symkey=key32), b"hello")
+
+    def test_encrypt_rejects(self):
+        key32 = bytes(range(32))
+        with self.assertRaises(aead.FmtErr):
+            aead.encrypt_aea(b"x", 9, symkey=key32)
+        with self.assertRaises(aead.FmtErr):
+            aead.encrypt_aea(b"x", 1)
+        with self.assertRaises(aead.FmtErr):
+            aead.encrypt_aea(b"x", 1, symkey=key32, alg="bogus")
+        with self.assertRaises(aead.FmtErr):
+            aead.encrypt_aea(b"x", 1, symkey=key32, padding="adaptive")
+        with self.assertRaises(aead.FmtErr):
+            aead.encrypt_aea(b"x", 1, symkey=key32, checksum="bogus")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
-"""aead.py v1 -- AEA-decrypt PROTOTYPE (REFERENCE ONLY, not the deliverable).
+"""aead.py v1 -- AEA-decrypt/encrypt PROTOTYPE (REFERENCE ONLY, not deliverable).
 
-Clean-room decode of Apple Encrypted Archives from behavior beds (APROBE-01)
-+ allow-listed OSS craft (kinnay/AEA row A-006/5). Validates against the
-oracle only. v1 scope: profiles 0-5, checksums none+sha256 (murmur Q-010
-pending), segment codecs none+zlib+lzma+lz4, range-decrypt, id.
+Clean-room decode + encode of Apple Encrypted Archives from behavior beds
+(APROBE-01) + allow-listed OSS craft (kinnay/AEA row A-006/5). Validates
+against the oracle only. v1 scope: profiles 0-5, checksums none+murmur64+
+sha256, segment codecs none+zlib+lzma+lz4 (+lzfse via LZFSE_BIN tool),
+range-decrypt, id. Encrypt: sealed profiles only (sign-priv required for
+0/2/4); scrypt strength 0; padding none/0/numeric (adaptive unsupported);
+lzbitmap/lzraven have no encoder in v1.
 """
 
 import argparse
@@ -346,6 +349,267 @@ def decrypt_aea(blob, symkey=None, recip_priv=None, password=None, sign_pub=None
         ci += 1
 
 
+COMP_ENC = {"none": "-", "zlib": "z", "lzma": "x", "lz4": "4",
+             "lzfse": "e", "lzbitmap": "b", "lzraven": "m"}
+CKSUM_ENC = {"none": 0, "murmur64": 1, "sha256": 2}
+
+
+def comp_enc(alg, data):
+    if alg == "-":
+        return data
+    if alg == "z":
+        return zlib.compress(data)
+    if alg == "x":
+        return lzma.compress(data)
+    if alg == "4":
+        # binding prepends u32LE uncompressed size; oracle stores raw block
+        return lz4.block.compress(data)[4:]
+    if alg == "e":
+        import os
+        import subprocess
+        tool = os.environ.get("LZFSE_BIN", "")
+        if not tool:
+            raise FmtErr("lzfse needs LZFSE_BIN (own-built lzfse CLI)")
+        import tempfile
+        ip = op = None
+        try:
+            with tempfile.NamedTemporaryFile(delete=False) as fi:
+                fi.write(data)
+                ip = fi.name
+            op = ip + ".out"
+            p = subprocess.run([tool, "-encode", "-i", ip, "-o", op],
+                               capture_output=True, timeout=120)
+            if p.returncode != 0:
+                raise FmtErr("lzfse encode failed")
+            with open(op, "rb") as fo:
+                return fo.read()
+        except (OSError, subprocess.TimeoutExpired):
+            raise FmtErr("lzfse tool failed")
+        finally:
+            for q in (ip, op):
+                if q is None:
+                    continue
+                try:
+                    os.unlink(q)
+                except OSError:
+                    pass
+    raise FmtErr("codec %r has no encoder in v1" % alg)
+
+
+def enc_ver(key, data, salt):
+    # mirror of dec_ver: MAC covers stored bytes (ciphertext when ks == 80)
+    if len(key) == 80:
+        e = Cipher(algorithms.AES(key[32:64]), modes.CTR(key[64:])).encryptor()
+        stored = e.update(data) + e.finalize()
+    else:
+        stored = data
+    return stored, mac(key[:32], stored, salt)
+
+
+def encrypt_aea(data, profile, symkey=None, password=None, recip_pub=None,
+                sign_priv=None, alg="none", block_size=1 << 20,
+                checksum="sha256", padding="none", auth=b"", salt=None,
+                nmacs=None, smacs=None, eph_priv=None):
+    import os
+    if profile not in KEY_SIZE:
+        raise FmtErr("bad profile")
+    if alg not in COMP_ENC:
+        raise FmtErr("bad algorithm")
+    if checksum not in CKSUM_ENC:
+        raise FmtErr("bad checksum")
+    comp = COMP_ENC[alg]
+    ckalg = CKSUM_ENC[checksum]
+    if block_size <= 0:
+        raise FmtErr("bad block size")
+    if isinstance(padding, str):
+        if padding not in ("none", "0"):
+            raise FmtErr("bad padding (adaptive unsupported in v1)")
+        padq = 0
+    elif isinstance(padding, int):
+        if padding != 0 and padding < 16:
+            raise FmtErr("bad padding (must be 0/none or >= 16)")
+        padq = padding
+    else:
+        raise FmtErr("bad padding")
+    sstr = 0
+    ks = KEY_SIZE[profile]
+
+    sender = recip = spub = None
+    pub = b""
+    if profile == 0:
+        if sign_priv is None:
+            raise FmtErr("sign_priv required")
+        sp = load_priv(sign_priv, "sign_priv")
+        spub = sp.public_key()
+        symkey = os.urandom(32)
+        pub = symkey
+    elif profile in (1, 2):
+        if symkey is None or len(symkey) != 32:
+            raise FmtErr("symmetric key required (32B)")
+        if profile == 2:
+            if sign_priv is None:
+                raise FmtErr("sign_priv required")
+            spub = load_priv(sign_priv, "sign_priv").public_key()
+    elif profile in (3, 4):
+        if recip_pub is None:
+            raise FmtErr("recipient_pub required")
+        recip = load_pub(recip_pub, "recipient_pub")
+        if eph_priv is not None:
+            eph = load_priv(eph_priv, "eph_priv")
+        else:
+            eph = ec.generate_private_key(ec.SECP256R1())
+        sender = eph.public_key()
+        pub = x962(sender)
+        symkey = eph.exchange(ec.ECDH(), recip)
+        if profile == 4:
+            if sign_priv is None:
+                raise FmtErr("sign_priv required")
+            spub = load_priv(sign_priv, "sign_priv").public_key()
+    elif profile == 5:
+        if password is None:
+            raise FmtErr("password required")
+    else:
+        raise FmtErr("bad profile")  # unreachable (KEY_SIZE gate)
+
+    if salt is None:
+        salt = os.urandom(32)
+    if len(salt) != 32:
+        raise FmtErr("salt must be 32B")
+    kdsalt = salt
+    if profile == 5:
+        ext = hkdf(64, salt, b"AEA_SCRYPT")
+        symkey = scrypt_key(password, ext[:32], SCRYPT_N[sstr])
+        kdsalt = ext[32:]
+
+    info = b"AEA_AMK" + bytes([profile & 0xFF, (profile >> 8) & 0xFF,
+                               (profile >> 16) & 0xFF, sstr])
+    for k in (sender, recip, spub):
+        if k is not None:
+            info += x962(k)
+    main = hkdf(32, symkey, info, kdsalt)
+    kd = KD(main, ks)
+
+    if nmacs is not None and len(nmacs) % 32:
+        raise FmtErr("nmacs must be 32B multiples")
+    if smacs is not None and len(smacs) % 32:
+        raise FmtErr("smacs must be 32B multiples")
+
+    # segment pre-compress (sizes fix padstart before nmac chain)
+    segs = [data[i:i + block_size] for i in range(0, len(data), block_size)] \
+        if data else []
+    nseg = len(segs)
+    ncl = (nseg + 255) // 256 if nseg else 0
+    segper = 256
+    shsz = 8 + CKSUM_SIZE[ckalg]
+    stored_segs = []
+    for plain in segs:
+        compd = comp_enc(comp, plain)
+        stored_segs.append(compd if len(compd) < len(plain) else plain)
+
+    auth_sz = len(auth)
+    siglen = SIG_SIZE[profile]
+    publen = len(pub)
+    prologue_end = 12 + auth_sz + siglen + publen + 32 + 32 + 48 + 32
+    hdrlen = shsz * segper + 32 + 32 * segper
+    padstart = prologue_end + ncl * hdrlen + sum(len(s) for s in stored_segs)
+    if padq:
+        padlen = (-(padstart % padq)) % padq
+    else:
+        padlen = 0
+    arc = padstart + padlen
+    padkey = hkdf(32, main, b"AEA_PAK")
+    pad = os.urandom(padlen) if padlen else b""
+
+    clusters = []
+    cmac = None
+    for ci in range(ncl):
+        ck = kd.clustkey(ci)
+        chk = kd.chek(ck)
+        tab = bytearray(shsz * segper)
+        sms = bytearray(32 * segper)
+        if smacs is not None:
+            if len(smacs) < 32 * segper * (ci + 1):
+                raise FmtErr("smacs too short")
+            sms = bytearray(smacs[32 * segper * ci:32 * segper * (ci + 1)])
+        segblobs = []
+        for i in range(segper):
+            gi = ci * segper + i
+            if gi < nseg:
+                plain = segs[gi]
+                stored = stored_segs[gi]
+                sk = kd.segkey(ck, i)
+                entry = struct.pack("<II", len(plain), len(stored)) + \
+                    cksum(ckalg, plain)
+                tab[shsz * i:shsz * (i + 1)] = entry
+                encd, tagm = enc_ver(sk, stored, b"")
+                if smacs is None:
+                    sms[32 * i:32 * (i + 1)] = tagm
+                segblobs.append(encd)
+            else:
+                tab[shsz * i:shsz * (i + 1)] = struct.pack("<II", 0, 0) + \
+                    bytes(CKSUM_SIZE[ckalg])
+                if smacs is None:
+                    sms[32 * i:32 * (i + 1)] = os.urandom(32)
+        if nmacs is not None:
+            if len(nmacs) < 32 * (ci + 1):
+                raise FmtErr("nmacs too short")
+            nmac = bytes(nmacs[32 * ci:32 * (ci + 1)])
+        elif padlen and ci == ncl - 1:
+            # last nmac authenticates padding (oracle-observed rule)
+            nmac = hmac.digest(padkey, pad, "sha256")
+        else:
+            nmac = os.urandom(32)
+        sh_stored, want = enc_ver(chk, bytes(tab), nmac + bytes(sms))
+        if ci == 0:
+            cmac = want
+        clusters.append((sh_stored, nmac, bytes(sms), segblobs))
+    if cmac is None:
+        cmac = os.urandom(32)
+
+    rh = struct.pack("<QQIIcB", len(data), arc, block_size, segper,
+                     comp.encode("ascii"), ckalg) + bytes(22)
+    rdata_stored, rmac = enc_ver(kd.rootkey(), rh, cmac + auth)
+
+    # signature over prologue with zeroed sig field
+    if profile in (0, 2, 4):
+        if sign_priv is None:
+            raise FmtErr("sign_priv required")
+        sp = load_priv(sign_priv, "sign_priv")
+        pro = b"AEA1" + bytes([profile & 0xFF, (profile >> 8) & 0xFF,
+                               (profile >> 16) & 0xFF, sstr]) + \
+            struct.pack("<I", auth_sz) + auth + bytes(siglen) + pub + \
+            salt + rmac + rdata_stored + cmac
+        der = sp.sign(pro, ec.ECDSA(hashes.SHA256()))
+        if len(der) > siglen - (32 if profile != 0 else 0):
+            raise FmtErr("signature too long")
+        s128 = der + bytes(128 - len(der))
+        if profile == 0:
+            sig = s128
+        else:
+            encs, sm = enc_ver(kd.sigkey(), s128, b"")
+            sig = encs + sm
+    else:
+        sig = b""
+
+    out = io.BytesIO()
+    out.write(b"AEA1" + bytes([profile & 0xFF, (profile >> 8) & 0xFF,
+                               (profile >> 16) & 0xFF, sstr]) +
+              struct.pack("<I", auth_sz) + auth + sig + pub + salt +
+              rmac + rdata_stored + cmac)
+    assert out.tell() == prologue_end
+    for (sh_stored, nmac, sms, segblobs) in clusters:
+        out.write(sh_stored)
+        out.write(nmac)
+        out.write(sms)
+        for s in segblobs:
+            out.write(s)
+    assert out.tell() == padstart
+    if padlen:
+        out.write(pad)
+    assert out.tell() == arc
+    return out.getvalue()
+
+
 def archive_id(blob):
     if len(blob) < 12 or blob[:4] != b"AEA1":
         raise FmtErr("bad magic")
@@ -382,6 +646,23 @@ def parse_key_value(val):
     raise FmtErr("key-value must be hex:... or base64:... (oracle rejects bare)")
 
 
+def parse_size(s):
+    if s is None:
+        raise FmtErr("bad size")
+    s = s.strip()
+    if not s:
+        raise FmtErr("bad size")
+    mult = 1
+    if s[-1] in "bBkKmMgG":
+        mult = {"b": 1, "k": 1 << 10, "m": 1 << 20,
+                "g": 1 << 30}[s[-1].lower()]
+        s = s[:-1]
+    try:
+        return int(s) * mult
+    except ValueError:
+        raise FmtErr("bad size %r" % s)
+
+
 def main(argv):
     ap = argparse.ArgumentParser(prog="aead.py")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -398,15 +679,92 @@ def main(argv):
     d.add_argument("--range-size", type=int, default=None)
     g = sub.add_parser("id")
     g.add_argument("-i", required=True)
+    e = sub.add_parser("encrypt")
+    e.add_argument("-i", default=None)  # absent = stdin (oracle); "-" = literal file
+    e.add_argument("-o", default=None)  # absent = stdout (oracle); "-" = literal file
+    e.add_argument("--profile", type=int, required=True)
+    e.add_argument("--key", default=None)
+    e.add_argument("--key-value", default=None)
+    e.add_argument("--password", default=None)
+    e.add_argument("--password-file", default=None)
+    e.add_argument("--recipient-pub", default=None)
+    e.add_argument("--sign-priv", default=None)
+    e.add_argument("-a", default="none")
+    e.add_argument("-b", default="1m")
+    e.add_argument("--checksum", default="sha256")
+    e.add_argument("--padding", default="none")
+    e.add_argument("--auth-data", action="append", default=[])
+    e.add_argument("--auth-data-value", action="append", default=[])
+    e.add_argument("--auth-data-key", action="append", default=[])
+    e.add_argument("--fixed-salt", default=None)  # hex: (test-only determinism)
+    e.add_argument("--fixed-nmac", default=None)  # hex: (test-only)
+    e.add_argument("--fixed-smacs", default=None)  # hex: (test-only)
     a = ap.parse_args(argv)
     try:
+        if a.cmd == "id":
+            with open(a.i, "rb") as fh:
+                blob = fh.read()
+            sys.stdout.write(archive_id(blob).hex() + "\n")
+            return 0
         if a.i is None and a.cmd == "decrypt":
             blob = sys.stdin.buffer.read()
+        elif a.i is None and a.cmd == "encrypt":
+            data = sys.stdin.buffer.read()
         else:
             with open(a.i, "rb") as fh:
                 blob = fh.read()
-        if a.cmd == "id":
-            sys.stdout.write(archive_id(blob).hex() + "\n")
+            if a.cmd == "encrypt":
+                data = blob
+        if a.cmd == "encrypt":
+            symkey = recip_pub = pw = sign_priv = None
+            if a.key:
+                symkey = read_key_file(a.key)
+            if a.key_value:
+                symkey = parse_key_value(a.key_value)
+            if a.password:
+                pw = a.password
+            if a.password_file:
+                with open(a.password_file, "rb") as fh:
+                    praw = fh.read()
+                try:
+                    pw = praw.decode().rstrip("\r\n")
+                except UnicodeDecodeError:
+                    raise FmtErr("password file not text")
+            if a.recipient_pub:
+                with open(a.recipient_pub, "rb") as fh:
+                    recip_pub = fh.read()
+            if a.sign_priv:
+                with open(a.sign_priv, "rb") as fh:
+                    sign_priv = fh.read()
+            auth = b""
+            for f in a.auth_data:
+                with open(f, "rb") as fh:
+                    auth += fh.read()
+            # kv entries pair positionally: each --auth-data-key applies to
+            # the next --auth-data-value (oracle: key must precede value).
+            vi = 0
+            for k in a.auth_data_key:
+                if vi >= len(a.auth_data_value):
+                    raise FmtErr("auth-data-key without following value")
+                v = parse_key_value(a.auth_data_value[vi])
+                kb = k.encode() + b"\x00"
+                auth += struct.pack("<I", 4 + len(kb) + len(v)) + kb + v
+                vi += 1
+            for v in a.auth_data_value[vi:]:
+                auth += parse_key_value(v)
+            out = encrypt_aea(
+                data, a.profile, symkey, pw, recip_pub, sign_priv, a.a,
+                parse_size(a.b), a.checksum, parse_size(a.padding)
+                if a.padding not in ("none", "adaptive") else a.padding,
+                auth,
+                parse_key_value(a.fixed_salt) if a.fixed_salt else None,
+                parse_key_value(a.fixed_nmac) if a.fixed_nmac else None,
+                parse_key_value(a.fixed_smacs) if a.fixed_smacs else None)
+            if a.o is None:
+                sys.stdout.buffer.write(out)
+            else:
+                with open(a.o, "wb") as fh:
+                    fh.write(out)
             return 0
         symkey = recip = pw = spub = None
         if a.key:
