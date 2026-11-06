@@ -1,0 +1,14 @@
+# lzbitmap pins: name,check,expect,bytes,generator,os,backend
+# eq = impl-vs-oracle cmp verdict; sha = impl output hash (deterministic inputs)
+empty1.bm,sha,bb0aaae102c63151125b651cd7c267753032bf4b56da2bd5ae1750a8d00b9795,133,test_lzbitmap.sh,27.2,oracle
+efile.bm,sha,62c4ad26470eaf74714da47e4882689480c8d3a8f157bec1dc6599793ec4b00f,249,test_lzbitmap.sh,27.2,oracle
+tiny.bm,sha,6fb86ffaff0f4917b0096e340f52d6b1438250eea41c194317c8c1bfc5fcede3,252,test_lzbitmap.sh,27.2,oracle
+r1.bm,sha,af12d64c08006952c0125cb97d4fbb7d45e69b1644dedfd1082ece9e74b45001,3245,test_lzbitmap.sh,27.2,oracle
+r40k.bm,sha,dcd339e96e75c60a7986987505489bc3cb3cca9fc361e8eb5a781f850c0bb434,40245,test_lzbitmap.sh,27.2,oracle
+multi.bm,sha,812d31fcfc1222e8f5fa7190d81944671183b81b12d5042e3f01719e48959a10,14373,test_lzbitmap.sh,27.2,oracle
+stream-empty,sha,cdcca4f9fae2d6d369a1369d2a8c91acf70171a6e27303e09651a82f1e159468,10,test_lzbitmap.sh,27.2,oracle
+stream-one,sha,5e5d7814d32d3dee1a078f1a882806f3d41306522a55baf481ffef604ac5fbcf,17,test_lzbitmap.sh,27.2,oracle
+stream-r100,sha,7f1f31c776b784b4b52b1c4400076de177b7ea553b9b9b0db6a237f808b80673,116,test_lzbitmap.sh,27.2,oracle
+stream-c32k,sha,a1a00b3aca14dc0184aec33fbe9e63b6f2cd0032f08ecaa6820a7f99ed159ac8,32784,test_lzbitmap.sh,27.2,oracle
+stream-c32k1,sha,3f89a7b5b4efb54720d7642f026090cd13cfeaebb1a60d19a30f56cd83e4a44b,32791,test_lzbitmap.sh,27.2,oracle
+stream-probe70k,sha,e530cbe103cc583741f00a9e38b3a338c08115becbd039dffa13a12c970c60aa,70028,test_lzbitmap.sh,27.2,oracle
