@@ -39,8 +39,9 @@ fi
 
 echo "== cell aea-roundtrip =="
 printf 'hello-aea-secret-bytes\n' > "$WORK/plain.bin"
-# NOTE: profile 5 (scrypt) rejects short passwords ("Password is too short",
-# error 0xb9076000). Floor length UNRESOLVED; 32 chars works. Pin: smoke pw fixed below.
+# NOTE: profile 5 (scrypt) rejects passwords < 20 UTF-8 bytes
+# ("Password is too short", error 0xb9076000, encrypt + decrypt).
+# Pin: smoke pw fixed below (>= 20 bytes).
 PW="smoke-test-passphrase-32-chars-ok12"
 cell aea-encrypt sh "$ADAPTER" aea-encrypt --profile 5 --password "$PW" \
   --alg none --threads 1 "$WORK/plain.bin" "$WORK/t.aea"

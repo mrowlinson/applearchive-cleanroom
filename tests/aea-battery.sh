@@ -591,5 +591,19 @@ for shape in happy:p5.aea:good wrongpw:p5.aea:bad trunc8:tr8.aea:good segflip:t1
   if [ $e1 -eq $e2 ] && cmp -s "$WORK/t1-s1" "$WORK/t1-s2" && cmp -s "$WORK/t1-o1.bin" "$WORK/t1-o2.bin" 2>/dev/null; then ok "ora-t1-ident-$nm"; else bad "ora-t1-ident-$nm"; fi
 done
 
+# p5 short-password gate (decrypt): oracle rejects <20 UTF-8 bytes with
+# "Password is too short" before checking correctness; proto must match.
+pwdec() { # tag password
+  tag=$1; pw=$2
+  if aea decrypt -password-value "$pw" -i "$WORK/p5.aea" -o "$WORK/out.bin" 2>/dev/null; then ora=0; else ora=1; fi
+  if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "$pw" -i "$WORK/p5.aea" -o "$WORK/out.bin" 2>"$WORK/err.txt"; then pro=0; else pro=1; fi
+  if [ $ora -eq 1 ] && [ $pro -eq 1 ] && grep -q "Password is too short" "$WORK/err.txt"; then ok "err-pwdec-$tag"; else bad "err-pwdec-$tag"; fi
+}
+# empty CLI arg is falsy -> "password required"; oracle also rejects (rc 1)
+if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --password "" -i "$WORK/p5.aea" -o "$WORK/out.bin" 2>/dev/null; then bad "err-pwdec-empty"; else ok "err-pwdec-empty"; fi
+pwdec "short" "short"
+pwdec "19" "xxxxxxxxxxxxxxxxxxx"
+pwdec "19B" "$(python3 -c "print('é'*9+'x',end='')")"
+
 echo "PASS=$PASS FAIL=$FAIL"
 [ "$FAIL" -eq 0 ]

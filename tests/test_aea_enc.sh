@@ -147,6 +147,30 @@ errcell "adapad" --profile 1 --key "$K" --padding adaptive
 errcell "smallpad" --profile 1 --key "$K" --padding 5
 errcell "nosign" --profile 2 --key "$K"
 
+# 6. p5 short-password gate (oracle: >= 20 UTF-8 bytes, else "Password is too short")
+pwcell() { # tag password -- proto must reject with oracle text
+  tag=$1; pw=$2
+  if "$AEAD_PY" "$REPO/proto/aead.py" encrypt --profile 5 --password "$pw" -a none \
+       --checksum sha256 --padding none -i "$WORK/msg.txt" -o "$WORK/x.aea" 2>"$WORK/e.txt"; then
+    bad "err-pwenc-$tag" "exit 0"
+  elif grep -q "Password is too short" "$WORK/e.txt"; then
+    ok "err-pwenc-$tag"
+  else
+    bad "err-pwenc-$tag" "$(cat "$WORK/e.txt")"
+  fi
+}
+# empty CLI arg is falsy -> "password required"; oracle also rejects (rc 1)
+if "$AEAD_PY" "$REPO/proto/aead.py" encrypt --profile 5 --password "" -a none \
+     --checksum sha256 --padding none -i "$WORK/msg.txt" -o "$WORK/x.aea" 2>/dev/null; then
+  bad "err-pwenc-empty" "exit 0"; else ok "err-pwenc-empty"; fi
+pwcell "short" "short"
+pwcell "19" "xxxxxxxxxxxxxxxxxxx"
+pwcell "19B" "$(python3 -c "print('é'*9+'x',end='')")"
+EXP=$WORK/msg.txt; ODEC="-password-value xxxxxxxxxxxxxxxxxxxx"
+ours_ora "pw20" --profile 5 --password "xxxxxxxxxxxxxxxxxxxx" -a none --checksum sha256 --padding none -i "$WORK/msg.txt"
+EXP=$WORK/msg.txt; ODEC="-password-value $(python3 -c "print('x'*18+'é',end='')")"
+ours_ora "pw20B" --profile 5 --password "$(python3 -c "print('x'*18+'é',end='')")" -a none --checksum sha256 --padding none -i "$WORK/msg.txt"
+
 echo "ENC ours->ora: PASS=$EPASS FAIL=$EFAIL"
 echo "DEC ora->ours: PASS=$OPASS FAIL=$OFAIL"
 echo "TOTAL PASS=$PASS FAIL=$FAIL"
