@@ -2,11 +2,12 @@
  * Derived black-box from /usr/bin/aa I/O only. raw/lzfse/zlib/lzma paths.
  * lzma packets: liblzma preset-6 pinned per quiz A-20 (5.8.4 artifact, see
  * Makefile LZMA_DYLIB + sha256); XZ framing rewritten below (own code).
- * Build: make BUILDDIR=/Volumes/NVME/applearchive-cleanroom-ws/build/aae
+ * Build: make BUILDDIR=<nvme-ws>/build/aae (never in repo)
  */
 #define _DARWIN_C_SOURCE 1
 #include <dirent.h>
 #include <dlfcn.h>
+#include <mach-o/dyld.h>
 #include <errno.h>
 #include <lzma.h>
 #include <stdint.h>
@@ -320,12 +321,41 @@ static void *g_lzhandle;
 
 static void lzfse_init(void) {
     if (g_lzfse) return;
-    const char *p = getenv("LZFSE_DYLIB");
-    if (!p)
-        p = "/Volumes/NVME/applearchive-cleanroom-ws/tools/lzfse/build/bin/liblzfse.dylib";
-    g_lzhandle = dlopen(p, RTLD_NOW);
+    /* Portable resolve: $LZFSE_DYLIB wins; else exe-relative and
+     * CWD-relative defaults (no absolute workspace paths). */
+    const char *env = getenv("LZFSE_DYLIB");
+    char exerel[4352];
+    exerel[0] = 0;
+    {
+        char exe[4096];
+        uint32_t n = sizeof exe;
+        if (_NSGetExecutablePath(exe, &n) == 0) {
+            char *sl = strrchr(exe, '/');
+            if (sl) {
+                *sl = 0;
+                snprintf(exerel, sizeof exerel, "%s/../tools/lzfse/build/bin/liblzfse.dylib", exe);
+            }
+        }
+    }
+    const char *cands[5];
+    int nc = 0;
+    if (env) cands[nc++] = env;
+    if (exerel[0]) cands[nc++] = exerel;
+    cands[nc++] = "tools/lzfse/build/bin/liblzfse.dylib";
+    cands[nc++] = "../tools/lzfse/build/bin/liblzfse.dylib";
+    cands[nc++] = "liblzfse.dylib";
+    const char *err = NULL;
+    for (int i = 0; i < nc; i++) {
+        g_lzhandle = dlopen(cands[i], RTLD_NOW);
+        if (g_lzhandle) break;
+        err = dlerror();
+    }
     if (!g_lzhandle) {
-        fprintf(stderr, "dlopen lzfse: %s\n", dlerror());
+        fprintf(stderr, "dlopen lzfse failed; tried: ");
+        for (int i = 0; i < nc; i++)
+            fprintf(stderr, "%s%s", i ? ", " : "", cands[i]);
+        fprintf(stderr, " (set LZFSE_DYLIB)%s%s\n",
+                err ? ": " : "", err ? err : "");
         exit(1);
     }
     g_lzfse = (lzfse_enc_fn)dlsym(g_lzhandle, "lzfse_encode_buffer");
