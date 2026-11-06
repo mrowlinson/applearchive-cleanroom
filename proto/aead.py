@@ -60,6 +60,20 @@ def scrypt_key(pw, salt, n):
     return Scrypt(salt, 32, n, 8, 1).derive(pw.encode())
 
 
+# Oracle bed APROBE-pw: profile-5 passwords must be >= 20 UTF-8 bytes on
+# BOTH encrypt and decrypt; shorter -> "Password is too short"
+# (oracle error 0xb9076000). Other profiles take keys, not passwords.
+MIN_PASSWORD_BYTES = 20
+
+
+def check_password(password):
+    if password is None:
+        raise FmtErr("password required")
+    if len(password.encode()) < MIN_PASSWORD_BYTES:
+        raise FmtErr("Password is too short")
+    return password
+
+
 def x962(pub):
     return pub.public_bytes(serialization.Encoding.X962,
                             serialization.PublicFormat.UncompressedPoint)
@@ -265,8 +279,7 @@ def decrypt_aea(blob, symkey=None, recip_priv=None, password=None, sign_pub=None
         sender = ec.EllipticCurvePublicKey.from_encoded_point(ec.SECP256R1(), pub)
         symkey = rp.exchange(ec.ECDH(), sender)
     elif prof == 5:
-        if password is None:
-            raise FmtErr("password required")
+        check_password(password)
         ext = hkdf(64, salt, b"AEA_SCRYPT")
         salt = ext[32:]
         symkey = scrypt_key(password, ext[:32], SCRYPT_N[sstr])
@@ -466,8 +479,7 @@ def encrypt_aea(data, profile, symkey=None, password=None, recip_pub=None,
                 raise FmtErr("sign_priv required")
             spub = load_priv(sign_priv, "sign_priv").public_key()
     elif profile == 5:
-        if password is None:
-            raise FmtErr("password required")
+        check_password(password)
     else:
         raise FmtErr("bad profile")  # unreachable (KEY_SIZE gate)
 
