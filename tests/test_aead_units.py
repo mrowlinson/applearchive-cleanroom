@@ -144,9 +144,10 @@ class Units(unittest.TestCase):
         blob = aead.encrypt_aea(b"hello", 1, symkey=key32, alg="none",
                                 checksum="sha256", padding="none", salt=salt)
         self.assertEqual(aead.decrypt_aea(blob, symkey=key32), b"hello")
-        blob5 = aead.encrypt_aea(b"hello", 5, password="pw", alg="none",
-                                 checksum="none", padding="none", salt=salt)
-        self.assertEqual(aead.decrypt_aea(blob5, password="pw"), b"hello")
+        blob5 = aead.encrypt_aea(b"hello", 5, password="pw-20-bytes-long-ok!!",
+                                 alg="none", checksum="none", padding="none",
+                                 salt=salt)
+        self.assertEqual(aead.decrypt_aea(blob5, password="pw-20-bytes-long-ok!!"), b"hello")
         empty = aead.encrypt_aea(b"", 1, symkey=key32, alg="none",
                                  checksum="none", padding="none", salt=salt)
         self.assertEqual(aead.decrypt_aea(empty, symkey=key32), b"")
