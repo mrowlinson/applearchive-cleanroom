@@ -147,6 +147,54 @@ aea encrypt -profile 1 -key "$WORK/key32.bin" -a zlib -padding none -checksum mu
 EXP=$WORK/bigtext2.bin
 cell cksum-murmur-big --key "$WORK/key32.bin" -i "$WORK/k-mur-big.aea"
 
+# 5c. checksum x codec matrix (oracle fixtures, every codec under murmur64+sha256)
+for a in none zlib lzma lz4 lzfse lzbitmap lzraven; do
+  aea encrypt -profile 1 -key "$WORK/key32.bin" -a $a -padding none -checksum murmur64 -i "$WORK/bigtext2.bin" -o "$WORK/k-mur-$a.aea" 2>/dev/null
+  EXP=$WORK/bigtext2.bin
+  cell cksum-mur-$a --key "$WORK/key32.bin" -i "$WORK/k-mur-$a.aea"
+done
+for a in none zlib lzma lz4 lzfse lzbitmap lzraven; do
+  aea encrypt -profile 1 -key "$WORK/key32.bin" -a $a -padding none -checksum sha256 -i "$WORK/bigtext2.bin" -o "$WORK/k-sha-$a.aea" 2>/dev/null
+  EXP=$WORK/bigtext2.bin
+  cell cksum-sha-$a --key "$WORK/key32.bin" -i "$WORK/k-sha-$a.aea"
+done
+# 5d. murmur tail boundaries: len-0 (no tail) + len-1 (1-byte tail)
+: > "$WORK/kempty.bin"
+aea encrypt -profile 5 -password-value "$PW" -a none -padding none -checksum murmur64 -i "$WORK/kempty.bin" -o "$WORK/k-mur-empty.aea" 2>/dev/null
+EXP=$WORK/kempty.bin
+cell cksum-murmur-empty --password "$PW" -i "$WORK/k-mur-empty.aea"
+printf 'A' > "$WORK/one.bin"
+aea encrypt -profile 5 -password-value "$PW" -a none -padding none -checksum murmur64 -i "$WORK/one.bin" -o "$WORK/k-mur-one.aea" 2>/dev/null
+EXP=$WORK/one.bin
+cell cksum-murmur-one --password "$PW" -i "$WORK/k-mur-one.aea"
+# 5e. checksum-enforced probe: sabotaged cksum() must FAIL (proves stored
+# checksums verified, not skipped); intact cksum() must pass
+if "$AEAD_PY" - "$REPO/proto" "$WORK/k-mur-big.aea" "$WORK/k-sha-none.aea" "$WORK/key32.bin" "$WORK/bigtext2.bin" <<'EOF' 2>/dev/null; then ok "cksum-enforced"; else bad "cksum-enforced"; fi
+import sys
+sys.path.insert(0, sys.argv[1])
+import aead
+mur_blob = open(sys.argv[2], "rb").read()
+sha_blob = open(sys.argv[3], "rb").read()
+key = open(sys.argv[4], "rb").read()
+want = open(sys.argv[5], "rb").read()
+real = aead.cksum
+aead.cksum = lambda alg, data: b"\x00" * 8 if alg == 1 else real(alg, data)
+try:
+    aead.decrypt_aea(mur_blob, symkey=key)
+    raise SystemExit("murmur unchecked")
+except aead.FmtErr:
+    pass
+aead.cksum = lambda alg, data: b"\x00" * 32 if alg == 2 else real(alg, data)
+try:
+    aead.decrypt_aea(sha_blob, symkey=key)
+    raise SystemExit("sha256 unchecked")
+except aead.FmtErr:
+    pass
+aead.cksum = real
+assert aead.decrypt_aea(mur_blob, symkey=key) == want
+assert aead.decrypt_aea(sha_blob, symkey=key) == want
+EOF
+
 # 5b. auth-data forms
 aea encrypt -profile 5 -password-value "$PW" -a none -padding none -auth-data-value hex:deadbeef -auth-data-value hex:0102030405060708 -i "$WORK/msg.txt" -o "$WORK/auth2.aea" 2>/dev/null
 EXP=$WORK/msg.txt
