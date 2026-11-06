@@ -4,10 +4,12 @@
 Contract: harness/CLI-CONTRACT.md. Same argv shapes as oracle-adapter.sh,
 but backends are cleanroom impl ONLY — zero oracle passthrough:
   probe       provenance of impl components (never touches /usr/bin/aa|aea)
-  aar-encode  src/encode.py (raw/lzfse/zlib/lzma/lz4; lzraven+lzbitmap = UNSUPPORTED)
+  aar-encode  src/encode.py (all 7 algs; lzraven/lzbitmap honest refusals
+              surface as CLI errors, exit 2, never silent)
   aar-decode  C binary src/aad.c via $AAD_BIN (all 7 algs; built with make OUTDIR=<nvme>)
   aar-list    proto/aad.py parse (pure-stdlib path list, no backend tools)
-  aea-encrypt UNSUPPORTED (sibling lane building it; no stub, honest error)
+  aea-encrypt proto/aead.py via $AEAD_PY (venv python with cryptography+lz4;
+              all 6 profiles; --threads accepted, single-threaded)
   aea-decrypt proto/aead.py via $AEAD_PY (venv python with cryptography+lz4)
   aea-id      proto/aead.py archive_id via $AEAD_PY
 Env:
@@ -30,8 +32,7 @@ _ROOT = os.path.dirname(_HERE)
 _NVME = "/Volumes/NVME/applearchive-cleanroom-ws"
 _AAD_DEFAULT = os.path.join(_NVME, "build", "decode-writer", "aad")
 _AEAD_PY_DEFAULT = os.path.join(_NVME, "writer2", ".venv", "bin", "python")
-_SUPPORTED_ALGS = ("raw", "lzfse", "zlib", "lzma", "lz4")
-_PARKED_ALGS = ("lzraven", "lzbitmap")
+_SUPPORTED_ALGS = ("raw", "lzfse", "zlib", "lzma", "lz4", "lzraven", "lzbitmap")
 
 
 def _die(msg, code=2):
@@ -101,13 +102,9 @@ def cmd_aar_encode(argv):
     if opts is None:
         return _die("aar-encode: %s" % pos)
     alg = opts.get("alg", "raw")
-    if alg in _PARKED_ALGS:
-        sys.stderr.write("UNSUPPORTED: aar-encode --alg %s not yet implemented "
-                         "(sibling lane; no stub)\n" % alg)
-        return 2
     if alg not in _SUPPORTED_ALGS:
-        return _die("aar-encode: unsupported alg %r (supported: %s; parked: %s)"
-                    % (alg, ",".join(_SUPPORTED_ALGS), ",".join(_PARKED_ALGS)))
+        return _die("aar-encode: unsupported alg %r (supported: %s)"
+                    % (alg, ",".join(_SUPPORTED_ALGS)))
     if len(pos) != 2:
         return _die("usage: aae-cli aar-encode --alg ALG [--block S] [--threads N] SRCDIR OUT.aar")
     sys.path.insert(0, _HERE)
@@ -120,7 +117,16 @@ def cmd_aar_encode(argv):
     try:
         encode.main(args)
     except SystemExit as e:
-        return e.code if isinstance(e.code, int) else 2
+        # Honest backend refusals (lzraven unclosed, lzbitmap match-class)
+        # arrive as SystemExit("marker..."): surface the marker on stderr
+        # as a CLI error, exit 2, never silent. (Direct encode.py exits 1
+        # here; the CLI contract reserves 1 for operation failures and 2
+        # for usage/harness-level errors — see CLI-CONTRACT.md.)
+        if isinstance(e.code, int):
+            return e.code
+        if e.code is not None:
+            sys.stderr.write("aae-cli: aar-encode --alg %s: %s\n" % (alg, e.code))
+        return 2
     return 0
 
 
@@ -189,7 +195,63 @@ def _hexval(v):
 
 
 def cmd_aea_encrypt(argv):
-    sys.stderr.write("UNSUPPORTED: aea-encrypt not yet implemented (sibling lane; no stub)\n")
+    opts, pos = _parse_kv(argv, ("--profile", "--alg", "--block", "--threads",
+                                 "--password", "--password-file", "--key",
+                                 "--key-value", "--key-file", "--recipient-pub",
+                                 "--sign-priv", "--checksum", "--padding",
+                                 "--auth-data", "--auth-data-value",
+                                 "--auth-data-key"))
+    if opts is None:
+        return _die("aea-encrypt: %s" % pos)
+    if "profile" not in opts:
+        return _die("usage: aae-cli aea-encrypt --profile P [--alg A] [--block S] "
+                    "[--threads N] [--password PW|--key HEX|...] IN OUT")
+    if len(pos) != 2:
+        return _die("usage: aae-cli aea-encrypt --profile P [--alg A] [--block S] "
+                    "[--threads N] [--password PW|--key HEX|...] IN OUT")
+    src, dst = pos
+    if src != "-" and not os.path.exists(src):
+        return _die("missing: %s" % src)
+    ae = os.path.join(_ROOT, "proto", "aead.py")
+    args = [_aead_py(), ae, "encrypt", "--profile", opts["profile"]]
+    # --threads accepted, ignored (proto is single-threaded)
+    if "alg" in opts:
+        args += ["-a", opts["alg"]]
+    if "block" in opts:
+        args += ["-b", opts["block"]]
+    if "checksum" in opts:
+        args += ["--checksum", opts["checksum"]]
+    if "padding" in opts:
+        args += ["--padding", opts["padding"]]
+    if "password" in opts:
+        args += ["--password", opts["password"]]
+    if "password-file" in opts:
+        args += ["--password-file", opts["password-file"]]
+    if "key" in opts:
+        args += ["--key-value", _hexval(opts["key"])]
+    if "key-value" in opts:
+        args += ["--key-value", opts["key-value"]]
+    if "key-file" in opts:
+        args += ["--key", opts["key-file"]]
+    if "recipient-pub" in opts:
+        args += ["--recipient-pub", opts["recipient-pub"]]
+    if "sign-priv" in opts:
+        args += ["--sign-priv", opts["sign-priv"]]
+    if "auth-data" in opts:
+        args += ["--auth-data", opts["auth-data"]]
+    if "auth-data-value" in opts:
+        args += ["--auth-data-value", opts["auth-data-value"]]
+    if "auth-data-key" in opts:
+        args += ["--auth-data-key", opts["auth-data-key"]]
+    if src == "-":
+        pass  # absent -i = stdin (contract stdio shape)
+    else:
+        args += ["-i", src]
+    if dst == "-":
+        pass  # absent -o = stdout (contract stdio shape)
+    else:
+        args += ["-o", dst]
+    os.execv(args[0], args)
     return 2
 
 

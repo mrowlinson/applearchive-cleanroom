@@ -51,3 +51,24 @@ adapter aea-id IN
 
 - `aa convert/manifest/verify/check-and-fix/append/patch` matrix (JOBS #8/#9). Adapter gains subcommands when batteries need them.
 - Timing protocol. Correctness first; timing gate separate (needs quiet-box rules).
+
+## Impl coverage + intentional differences (cli-wireup lane)
+
+- Impl (`src/aae-cli`) now covers all 7 `aar-encode` algs and all 6
+  `aea-encrypt` profiles. No parked subset remains.
+- Honest refusals (INTENTIONAL difference, with reason): on inputs outside
+  the proven-parity class — lzraven unclosed (`LzRavenUnclosed`, e.g. zeros
+  runs past scope 820) and lzbitmap match-class (`LzBitmapMatchFound`) —
+  the impl EXITS 2 with a marker on stderr (`lzraven unclosed` /
+  `lzbitmap match-class`) instead of emitting bytes. The oracle exits 0
+  there. Reason: emitting literal/stored bytes on those inputs would
+  silently diverge from the oracle's globally-planned grammar; refusal is
+  the contract (batteries assert exit 2 + marker, never byte parity).
+  Exit-code parity therefore does NOT hold on refusal inputs by design.
+- Refusal exit code is 2 at the CLI layer (usage/harness-level error),
+  while direct `src/encode.py` exits 1 on the same inputs. Reason: the CLI
+  reserves 1 for operation failures per this contract's exit-code rule.
+- `aea-encrypt` parity rule is interop roundtrip (oracle decrypts CLI
+  output to input bytes), NOT byte-compare. Reason: encrypt output is
+  nondeterministic by design (random salts/MACs); deterministic
+  transplant byte-compare lives in `tests/test_aea_enc.sh`.
