@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""encode.py SRCDIR OUT.aar [--alg raw|lzfse|zlib|lzma|lz4] [--block SIZE] [--threads N]
+"""encode.py SRCDIR OUT.aar [--alg raw|lzfse|zlib|lzma|lz4|lzraven] [--block SIZE] [--threads N]
 Cleanroom AAR encoder (prototype). --threads accepted, single-threaded.
 SIZE: integer + optional b/k/m/g suffix.
 """
@@ -13,6 +13,7 @@ from rawenc import build_inner
 from pbze import wrap_pbze
 from lzmaenc import wrap_pbzx
 from lz4enc import wrap_pbz4
+from lzraven import wrap_pbzm, LzRavenUnclosed
 
 
 def parse_size(s):
@@ -42,10 +43,10 @@ def main(argv):
         else:
             raise SystemExit("unexpected arg %r" % a)
     if src is None or out is None:
-        raise SystemExit("usage: encode.py SRCDIR OUT.aar [--alg raw|lzfse|zlib] [--block SIZE] [--threads N]")
+        raise SystemExit("usage: encode.py SRCDIR OUT.aar [--alg raw|lzfse|zlib|lzma|lz4|lzraven] [--block SIZE] [--threads N]")
     magics = {"lzfse": b"pbze", "zlib": b"pbzz"}
-    if alg not in ("raw", "lzma", "lz4") + tuple(magics):
-        raise SystemExit("unsupported alg %r (parked: lzraven lzbitmap)" % alg)
+    if alg not in ("raw", "lzma", "lz4", "lzraven") + tuple(magics):
+        raise SystemExit("unsupported alg %r (parked: lzbitmap)" % alg)
     if not 1 <= block <= 134217728:
         raise SystemExit("invalid block size %d (oracle range 1..134217728)" % block)
     inner = build_inner(os.fsencode(src))
@@ -55,6 +56,11 @@ def main(argv):
         data = wrap_pbzx(inner, blocksize=block)
     elif alg == "lz4":
         data = wrap_pbz4(inner, blocksize=block)
+    elif alg == "lzraven":
+        try:
+            data = wrap_pbzm(inner, blocksize=block)
+        except LzRavenUnclosed as e:
+            raise SystemExit("lzraven unclosed input: %s" % e)
     else:
         data = wrap_pbze(inner, magic=magics[alg], blocksize=block)
     with open(out, "wb") as f:
