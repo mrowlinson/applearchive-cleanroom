@@ -264720,7 +264720,7 @@ def main():
             return fail("T10P10230 const")
         print("CLOSED T10P10230 N=%d off=0" % n)
         return 0
-    if n == 372742:  # T10P10231 singleton 96B (PB1 01000000 fat, 21 committed S-hits P53S1/P109S1/P110S1/P111S1/P112S1/P113S1/P114S1/P115S1/P117S1/P308S1/P309S1/P310S1/P311S1/P314S1/P665S1/P666S1/P667S1/P668S1/P669S1/P670S1/P1024S1; SAMESIG-prev P1022 01000000; SAMESIG-next P1024 01000000; 63/96 vs prev-S1 + 52/96 vs next-S1 first-hand, NOT byte-equal)
+    if n == 372742:  # T10P10231 singleton 96B (PB1 01000000 fat, 22 committed S-hits P53S1/P109S1/P110S1/P111S1/P112S1/P113S1/P114S1/P115S1/P117S1/P308S1/P309S1/P310S1/P311S1/P314S1/P665S1/P666S1/P667S1/P668S1/P669S1/P670S1/P1022S1/P1024S1; SAMESIG-prev P1022 01000000; SAMESIG-next P1024 01000000; 63/96 vs prev-S1 + 52/96 vs next-S1 first-hand, NOT byte-equal)
         if len(pay) != 96 or pay.hex() != _T10P1023S1:
             return fail("T10P10231 const")
         print("CLOSED T10P10231 N=%d off=%d" % (n, 1))
@@ -264954,7 +264954,7 @@ def main():
             return fail("T10P10200 const")
         print("CLOSED T10P10200 N=%d off=0" % n)
         return 0
-    if n == 371698:  # T10P10201 singleton 92B (PB1 77cf3c88 NEW-sig 0 committed S-hits; SAMESIG-prev P1019 77cf3c88; NON-SAMESIG-next P1021 87704795; 46/92 vs prev-S1 + 77/92 vs next-S1 first-hand, NOT byte-equal)
+    if n == 371698:  # T10P10201 singleton 92B (PB1 77cf3c88 1 committed S-hit P1019S1; SAMESIG-prev P1019 77cf3c88; NON-SAMESIG-next P1021 87704795; 46/92 vs prev-S1 + 77/92 vs next-S1 first-hand, NOT byte-equal)
         if len(pay) != 92 or pay.hex() != _T10P1020S1:
             return fail("T10P10201 const")
         print("CLOSED T10P10201 N=%d off=%d" % (n, 1))
@@ -265032,7 +265032,7 @@ def main():
             return fail("T10P10190 const")
         print("CLOSED T10P10190 N=%d off=0" % n)
         return 0
-    if n == 371350:  # T10P10191 singleton 92B (PB1 77cf3c88 fat, 1 committed S-hit P1020S1; NON-SAMESIG-prev P1018 53f9ba8e; SAMESIG-next P1020 77cf3c88; 72/92 vs prev-S1 + 46/92 vs next-S1 first-hand, NOT byte-equal)
+    if n == 371350:  # T10P10191 singleton 92B (PB1 77cf3c88 1 committed S-hit P1020S1; NON-SAMESIG-prev P1018 53f9ba8e; SAMESIG-next P1020 77cf3c88; 72/92 vs prev-S1 + 46/92 vs next-S1 first-hand, NOT byte-equal)
         if len(pay) != 92 or pay.hex() != _T10P1019S1:
             return fail("T10P10191 const")
         print("CLOSED T10P10191 N=%d off=%d" % (n, 1))
@@ -265183,7 +265183,7 @@ def main():
                 return fail("T10P1018RC const %d" % b)
         print("CLOSED T10P1018R N=%d off=%d" % (n, off))
         return 0
-    if n == 370653:  # T10P10170 singleton 92B (PB0, sig 630e4500 NEW-sig 0 committed S-hits; SAMESIG-prev P1016 630e4500; NON-SAMESIG-next P1018 635d4700; 33/92 vs prev-S0 + 32/92 vs next-S0 first-hand, NOT byte-equal)
+    if n == 370653:  # T10P10170 singleton 92B (PB0, sig 630e4500 1 committed S-hit P1016S0; SAMESIG-prev P1016 630e4500; NON-SAMESIG-next P1018 635d4700; 33/92 vs prev-S0 + 32/92 vs next-S0 first-hand, NOT byte-equal)
         if len(pay) != 92 or pay.hex() != _T10P1017S0:
             return fail("T10P10170 const")
         print("CLOSED T10P10170 N=%d off=0" % n)
@@ -265583,7 +265583,7 @@ def main():
             return fail("T10P10120 const")
         print("CLOSED T10P10120 N=%d off=0" % n)
         return 0
-    if n == 368914:  # T10P10121 singleton 92B (PB1 f6efedb5 NEW-sig 0 committed S-hits; SAMESIG-prev P1011 f6efedb5; NON-SAMESIG-next P1013 8493f28a; 61/92 vs prev-S1 + 76/92 vs next-S1 first-hand, NOT byte-equal)
+    if n == 368914:  # T10P10121 singleton 92B (PB1 f6efedb5 1 committed S-hit P1011S1; SAMESIG-prev P1011 f6efedb5; NON-SAMESIG-next P1013 8493f28a; 61/92 vs prev-S1 + 76/92 vs next-S1 first-hand, NOT byte-equal)
         if len(pay) != 92 or pay.hex() != _T10P1012S1:
             return fail("T10P10121 const")
         print("CLOSED T10P10121 N=%d off=%d" % (n, 1))
@@ -265815,7 +265815,7 @@ def main():
                 return fail("T10P1010RC const %d" % b)
         print("CLOSED T10P1010R N=%d off=%d" % (n, off))
         return 0
-    if n == 367869:  # T10P10090 singleton 92B (PB0, sig 63f54100 NEW-sig 0 committed S-hits; SAMESIG-prev P1008 63f54100; NON-SAMESIG-next P1010 63ee4300; 33/92 vs prev-S0 + 36/92 vs next-S0 first-hand, NOT byte-equal)
+    if n == 367869:  # T10P10090 singleton 92B (PB0, sig 63f54100 1 committed S-hit P1008S0; SAMESIG-prev P1008 63f54100; NON-SAMESIG-next P1010 63ee4300; 33/92 vs prev-S0 + 36/92 vs next-S0 first-hand, NOT byte-equal)
         if len(pay) != 92 or pay.hex() != _T10P1009S0:
             return fail("T10P10090 const")
         print("CLOSED T10P10090 N=%d off=0" % n)
@@ -265894,7 +265894,7 @@ def main():
                 return fail("T10P1009RC const %d" % b)
         print("CLOSED T10P1009R N=%d off=%d" % (n, off))
         return 0
-    if n == 367521:  # T10P10080 singleton 92B (PB0, sig 63f54100 NEW-sig 0 committed S-hits; NON-SAMESIG-prev P1007 e1fa2000; SAMESIG-next P1009 63f54100; 36/92 vs prev-S0 + 33/92 vs next-S0 first-hand, NOT byte-equal)
+    if n == 367521:  # T10P10080 singleton 92B (PB0, sig 63f54100 1 committed S-hit P1009S0; NON-SAMESIG-prev P1007 e1fa2000; SAMESIG-next P1009 63f54100; 36/92 vs prev-S0 + 33/92 vs next-S0 first-hand, NOT byte-equal)
         if len(pay) != 92 or pay.hex() != _T10P1008S0:
             return fail("T10P10080 const")
         print("CLOSED T10P10080 N=%d off=0" % n)
@@ -266216,7 +266216,7 @@ def main():
             return fail("T10P10040 const")
         print("CLOSED T10P10040 N=%d off=0" % n)
         return 0
-    if n == 366130:  # T10P10041 singleton 92B (PB1 91d7442a NEW-sig 0 committed S-hits; SAMESIG-prev P1003 91d7442a; NON-SAMESIG-next P1005 6134fc41; 46/92 vs prev-S1 + 79/92 vs next-S1 first-hand, NOT byte-equal)
+    if n == 366130:  # T10P10041 singleton 92B (PB1 91d7442a 1 committed S-hit P1003S1; SAMESIG-prev P1003 91d7442a; NON-SAMESIG-next P1005 6134fc41; 46/92 vs prev-S1 + 79/92 vs next-S1 first-hand, NOT byte-equal)
         if len(pay) != 92 or pay.hex() != _T10P1004S1:
             return fail("T10P10041 const")
         print("CLOSED T10P10041 N=%d off=%d" % (n, 1))
@@ -266295,7 +266295,7 @@ def main():
             return fail("T10P10030 const")
         print("CLOSED T10P10030 N=%d off=0" % n)
         return 0
-    if n == 365782:  # T10P10031 singleton 92B (PB1 91d7442a NEW-sig 0 committed S-hits; NON-SAMESIG-prev P1002 569dec3f; SAMESIG-next P1004 91d7442a; 73/92 vs prev-S1 + 46/92 vs next-S1 first-hand, NOT byte-equal)
+    if n == 365782:  # T10P10031 singleton 92B (PB1 91d7442a 1 committed S-hit P1004S1; NON-SAMESIG-prev P1002 569dec3f; SAMESIG-next P1004 91d7442a; 73/92 vs prev-S1 + 46/92 vs next-S1 first-hand, NOT byte-equal)
         if len(pay) != 92 or pay.hex() != _T10P1003S1:
             return fail("T10P10031 const")
         print("CLOSED T10P10031 N=%d off=%d" % (n, 1))
@@ -266448,7 +266448,7 @@ def main():
                 return fail("T10P1002RC const %d" % b)
         print("CLOSED T10P1002R N=%d off=%d" % (n, off))
         return 0
-    if n == 365085:  # T10P10010 singleton 92B (PB0, sig 1b8e1e00 NEW-sig 0 committed S-hits; SAMESIG-prev P1000 1b8e1e00; NON-SAMESIG-next P1002 1bf61f00; 33/92 vs prev-S0 + 51/92 vs next-S0 first-hand, NOT byte-equal)
+    if n == 365085:  # T10P10010 singleton 92B (PB0, sig 1b8e1e00 1 committed S-hit P1000S0; SAMESIG-prev P1000 1b8e1e00; NON-SAMESIG-next P1002 1bf61f00; 33/92 vs prev-S0 + 51/92 vs next-S0 first-hand, NOT byte-equal)
         if len(pay) != 92 or pay.hex() != _T10P1001S0:
             return fail("T10P10010 const")
         print("CLOSED T10P10010 N=%d off=0" % n)
@@ -266527,7 +266527,7 @@ def main():
                 return fail("T10P1001RC const %d" % b)
         print("CLOSED T10P1001R N=%d off=%d" % (n, off))
         return 0
-    if n == 364737:  # T10P10000 singleton 92B (PB0, sig 1b8e1e00 NEW-sig 0 committed S-hits; NON-SAMESIG-prev P999 188e1e00; SAMESIG-next P1001 1b8e1e00; 34/92 vs prev-S0 + 33/92 vs next-S0 first-hand, NOT byte-equal)
+    if n == 364737:  # T10P10000 singleton 92B (PB0, sig 1b8e1e00 1 committed S-hit P1001S0; NON-SAMESIG-prev P999 188e1e00; SAMESIG-next P1001 1b8e1e00; 34/92 vs prev-S0 + 33/92 vs next-S0 first-hand, NOT byte-equal)
         if len(pay) != 92 or pay.hex() != _T10P1000S0:
             return fail("T10P10000 const")
         print("CLOSED T10P10000 N=%d off=0" % n)
