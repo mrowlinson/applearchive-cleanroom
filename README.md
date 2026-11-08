@@ -3,83 +3,121 @@
 Independent cleanroom reimplementation of AppleArchive (AAR archives,
 AEA encrypted blobs): behavior-identical to Apple's `aa(1)`/`aea(1)`
 from black-box observation only. No Apple code, headers, binaries, or
-transcribed spec text in this repo. Private, early, moving fast.
+transcribed spec text in this repo.
 
-Status date: 2026-10-08. Everything below is master HEAD.
+Status date: 2026-11-06. Everything below is master HEAD. **Finished:
+all batteries green, CONTIG-390836 proven.**
 
-## Status
+## What it is
 
-Encode (master): container framing green end to end — PBZE + RAWENC +
-OUTER2 + RB2 + RAVFRAME batteries all GREEN in Python prototype and C
-port (`src/c/aae.c`, `lz4c`, lzma via pinned liblzma + own XZ framing).
-LZFSE/LZBITMAP/LZMA/LZ4 cells green. rgram grammar map at 2822 pins
-(N = 0..23000 continuous, T10P17 merged); mapping continues toward a
-~48000 frontier; dedicated rgram C-port lane open.
-Decode (master): JOINT DONE. C (`src/aad.c`) + proto mirror through
-TIP1..TIP2e + thread-shape (-t-1-only) + -wt-1 TIPs, all merged:
-CBATTERY 1069/1069 + cvp 150/150 + flip 200/200 + asan 13 + raw 130,
-0 open questions, 0 open flags.
-Scope: container only. Stock codecs link when byte-identical
-(pinned hashes); lzmesh comes from the sibling lzmesh-cleanroom
-project (link-only). Nothing here claims 100% until the gates say so.
+- `src/aae-cli` — unified impl-only CLI: `aar-encode`, `aar-decode`,
+  `aar-list`, `aea-encrypt`, `aea-decrypt`, `aea-id`. Zero oracle
+  passthrough (contract: [harness/CLI-CONTRACT.md](harness/CLI-CONTRACT.md)).
+- Decode: C (`src/aad.c`) + Python mirror (`proto/aad.py`), all 7
+  algorithms, thread-shape + writer TIPs.
+- Encode: Python reference (`src/encode.py` + codec modules) + C port
+  (`src/c/aae.c`, `lz4c`), PBZE/RAWENC/OUTER2/RB2/RAVFRAME framing.
+- AEA: all 6 profiles, encrypt + decrypt + archive-id (`proto/aead.py`).
+- lzraven zeros-N grammar (`src/rgram.py`): contiguous CLOSED coverage
+  N 0..390836, proved by exhaustive first-hand sweep.
+
+## Verification (master HEAD, this machine)
+
+| Battery | Result |
+|---|---|
+| rgram CONTIG sweep (every N 0..390836, oracle + impl) | 390837/390837 CLOSED, 0 bad |
+| rgram pins (`test_rgram_fast.py`) | 110544/110544 RGRAM-GREEN |
+| decode C battery (`c-battery.sh`) | 1069/1069 |
+| AEA battery (`aea-battery.sh`) | 187/187 |
+| AEA encrypt (`test_aea_enc.sh`) + aead units | 49/49, 14/14 |
+| CLI (`test_cli.sh`) | 74/74 |
+| lzraven-enc / lzbitmap / lz4 (+full, +C parity) | 64/64, 32/32, 8/8 + 60x3 + 11/11 |
+| smoke / units / pbze / rawenc / rb2 / ravframe / outer2 / lzma | all GREEN |
+| encode proto gates | 9/9 |
+
+GREEN = every cell byte-matched against the Apple oracle; pins held
+(`vectors/rgram-PINS.csv`: 110544 rows, uniform macOS 27.2).
 
 ## Quickstart
 
-Prereqs: macOS with `/usr/bin/aa`, `/usr/bin/aea` (black-box oracles),
-`cc`, `python3`. LZFSE cells use OSS liblzfse via `$LZFSE_DYLIB`.
-Scratch MUST live on NVME (`export TMPDIR=<ws>/tmp`), never /tmp.
+Prereqs: macOS with `/usr/bin/aa`, `/usr/bin/aea`,
+`/usr/bin/compression_tool` (black-box oracles), `cc`, `python3`.
+AEA paths need `cryptography` + `lz4` (`uv run --with lz4
+--with cryptography ...`). LZFSE encode cells use OSS liblzfse via
+`$LZFSE_DYLIB`. Keep scratch on fast local disk
+(`export TMPDIR=<workspace>/tmp`), never in the repo.
 
 ```sh
-sh tests/smoke.sh <workdir>        # T0 oracle round-trip smoke
-sh tests/test_rgram.sh             # rgram grammar battery (pins)
-sh tests/test_pbze.sh <workdir>    # pbze byte-exact battery
-sh tests/test_rawenc.sh <workdir>  # rawenc byte-exact battery
-sh tests/c-battery.sh              # decode C battery (1069 cells)
-make -C src/c                      # C port (see Makefile for out dir)
-```
+# decode battery + AEA battery + CLI battery
+sh tests/c-battery.sh
+sh tests/aea-battery.sh
+sh tests/test_cli.sh
 
-Batteries compare implementation bytes vs oracle bytes; GREEN means
-every cell matched, pins held.
+# rgram grammar battery (fast gate; .sh form is the same cells, slower)
+python3 tests/test_rgram_fast.py <workdir>
+
+# per-codec encode batteries
+sh tests/test_pbze.sh <workdir>
+sh tests/test_rawenc.sh <workdir>
+sh tests/test_lzraven.sh
+
+# C ports (see src/c/Makefile for output dir)
+make -C src/c OUTDIR=<workspace>/build
+
+# unified CLI (impl only, no oracle)
+python3 src/aae-cli probe
+python3 src/aae-cli aar-list <archive.aar>
+```
 
 ## Layout
 
 ```
-README.md            this file
-src/                 our code: rgram.py/pbze.py/rawenc.py/rb2.py/ravframe.py
-                     (encode proto), aad.c (decode C), c/aae.c+lz4c (encode C)
-proto/               decode prototype mirror (aad.py) + adapters
-harness/             oracle adapter (wraps /usr/bin/aa + aea), CLI contract
-tests/               smoke + per-codec batteries + c-battery + sweep gate script
-vectors/             pins + self-generated vectors (<1MB; generator+OS recorded)
+src/aae-cli          unified CLI (python3 entry point)
+src/aad.c            decode C deliverable
+src/c/               encode C port (aae.c, lz4c, rgramc)
+src/*.py             encode reference: rgram/pbze/rawenc/rb2/ravframe/
+                     lzraven/lzbitmap/lz4enc/lzmaenc/encode
+proto/               decode mirror (aad.py) + aead (aead.py) + adapters
+harness/             oracle adapter, impl adapter, CLI contract
+tests/               smoke + per-codec batteries + c/aea/cli batteries
+vectors/             pins + self-generated vectors (generator+OS recorded)
 spec/                derived behavior clauses (CR-nnn) + derivation log
 notes/               DPROBE-nn experiment records (decode)
 docs/                firewall, recon notes, research
-tmp/                 UNTRACKED scratch: worktrees, quiz dirs, claims (never committed,
-                     except 4 legacy tracked files under tmp/{hints,queries,scratch}/)
 ```
 
-Python is the reference prototype; C is the deliverable. Ports must
-prove byte-parity (port == proto == oracle) before they count.
+Python is the reference prototype; C is the deliverable. Ports prove
+byte-parity (port == proto == oracle) before they count.
+
+## Known limits (honest, by design)
+
+- lzraven: zeros-N grammar fully closed; general compressible inputs
+  and zeros N>820 surface honest errors, not silent divergence.
+- lzbitmap: parity class is narrow (empty + pure-random); everything
+  else is an exact, tested refusal.
+- CLI propagates all refusals as errors (exit 2), never silent output.
+- AEA encrypt is nondeterministic (salt): interop round-trip, not
+  byte-compare, except pinned p1/p5 vectors.
+- AEA 0-7B `Invalid password` KDF layer: documented divergence.
 
 ## Cleanroom firewall
 
 Wall = vendor-published docs + black-box execution only. Questions
 behavior-only (what does it output for X). Answers derived (beds +
 numbers + verdicts), never transcribed. Disassembly, teardowns, and
-patents are forbidden to implementers; decompile-side readers confirm
-every static claim against the running binary before it becomes a
-spec clause. Full rules: [docs/FIREWALL.md](docs/FIREWALL.md).
+patents were forbidden to implementers. Full rules:
+[docs/FIREWALL.md](docs/FIREWALL.md).
 
 Posture note: Apple has NOT open-sourced AppleArchive.
 `github.com/apple/apple-archive` returns 404 (verified 2026-09-29).
-Only the LZFSE codec is open (BSD). Wall stays strict. If an Apple
-source drop appears later, posture changes; re-survey first.
+Only the LZFSE codec is open (BSD). If an Apple source drop appears
+later, posture changes; re-survey first.
 
 ## Spec inventory (links fetch-verified 2026-09-29)
 
 1. Apple Archive dev docs — <https://developer.apple.com/documentation/applearchive>
 2. Compression dev docs — <https://developer.apple.com/documentation/compression>
-3. `aa(1)` + `aea(1)` man pages — local, macOS 27.0
+3. `aa(1)` + `aea(1)` man pages — local, macOS 27.x
 4. AEA format doc — <https://github.com/kinnay/AEA/blob/HEAD/FORMAT.md> (MIT)
 5. LZFSE reference impl — <https://github.com/lzfse/lzfse> (BSD-3-Clause, (c) Apple 2015-2016)
 6. Eclectic Light intro — <https://eclecticlight.co/2020/11/24/compress-and-decompress-files-using-applearchive/>
@@ -96,8 +134,8 @@ Negative result: `github.com/apple/apple-archive` = 404. Do not cite.
 
 ## Test vectors
 
-In-repo vectors are self-generated via local `aa`/`aea` (black-box),
-<1MB each, with SHA256SUMS. Larger corpora stay out (link instead).
+In-repo vectors are self-generated via local `aa`/`aea` (black-box)
+with generator + OS recorded. Larger corpora stay out (link instead).
 Never commit vendor binaries from elsewhere.
 
 ## License
