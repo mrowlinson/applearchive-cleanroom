@@ -133,9 +133,10 @@ python3 tests/test_rgram_fast.py <workdir>
 
 ## Cleanroom note
 
-Apple has NOT open-sourced AppleArchive
-(`github.com/apple/apple-archive` = 404, verified 2026-09-29); only
-the LZFSE codec is open (BSD). This repo contains no Apple code,
+Apple has not published AppleArchive source anywhere — no source
+release on opensource.apple.com, no repo under github.com/apple, only
+API documentation, SDK headers, and shipped binaries. Of the codecs
+involved, only LZFSE is open (BSD). This repo contains no Apple code,
 headers, binaries, or transcribed spec text.
 
 Spec sources: [AppleArchive docs](https://developer.apple.com/documentation/applearchive),

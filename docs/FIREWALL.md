@@ -28,8 +28,9 @@ Allowed in:
 
 ## Posture note
 
-Wall posture differs if source is open. Current state (2026-09-29):
-AppleArchive source NOT open (`apple/apple-archive` = 404, verified).
+Wall posture differs if source is open. Current state (2026-11-12):
+Apple has published AppleArchive source nowhere (no opensource.apple.com
+release, no repo under github.com/apple — only docs, SDK headers, binaries).
 Open parts: LZFSE codec (BSD), python-aea (MIT), man pages (local).
 These are reusable per their licenses, but cleanroom lanes still
 derive independently; licenses govern reuse, wall governs provenance.
