@@ -208,6 +208,25 @@ SXC=0; "$AAD" "$V/aar/mix-fail.aar" "$WORK/c-sx" 2>"$WORK/sx.err" || SXC=$?
 [ "$SXC" -eq 1 ] && pass "sx-exit" || fail "sx-exit"
 grep -q "not implemented yet" "$WORK/sx.err" && grep -q "1 entries failed to extract" "$WORK/sx.err" && pass "sx-tokens" || fail "sx-tokens"
 
+echo "== cell bloblen-wrap (must error fast, never hang) =="
+python3 - "$WORK/wrap.aar" <<'EOF'
+import struct, sys
+name = b"w"
+typ = b"TYP" + b"P" + struct.pack("<H", len(name)) + name
+hsize = 6 + 7 + 24
+n1 = 1 << 63
+n2 = (1 << 63) - hsize  # N1+N2 == -hsize mod 2^64 -> blen wraps, pos rewinds
+hdr = typ + b"DAT" + b"C" + struct.pack("<Q", n1) + b"DAT" + b"C" + struct.pack("<Q", n2)
+assert 6 + len(hdr) == hsize
+open(sys.argv[1], "wb").write(b"AA01" + struct.pack("<H", hsize) + hdr)
+EOF
+WRC=0; timeout -s KILL 20 python3 "$ROOT/proto/aad.py" "$WORK/wrap.aar" "$WORK/c-wrap-p" >/dev/null 2>&1 || WRC=$?
+if [ "$WRC" -eq 124 ] || [ "$WRC" -eq 137 ]; then fail "wrap-proto-hang";
+elif [ "$WRC" -ne 0 ]; then pass "wrap-proto-fast"; else fail "wrap-proto-accept"; fi
+WRC=0; timeout -s KILL 20 "$AAD" "$WORK/wrap.aar" "$WORK/c-wrap" >/dev/null 2>&1 || WRC=$?
+if [ "$WRC" -eq 124 ] || [ "$WRC" -eq 137 ]; then echo "KNOWN-DIFF wrap-hang (aad.c blen accumulation wraps pos; C fix pending)";
+elif [ "$WRC" -ne 0 ]; then pass "wrap-exit"; else fail "wrap-accept"; fi
+
 echo "== cell errors =="
 python3 -c "import random; open('$WORK/corrupt.aar','wb').write(random.Random(777005).randbytes(100))"
 "$AAD" "$WORK/corrupt.aar" "$WORK/c-cor" 2>/dev/null && fail "corrupt-exit" || pass "corrupt-exit"

@@ -43,7 +43,7 @@ if [ -n "${RECORD:-}" ]; then
 fi
 GCELL() { # nbytes : closed + sha pins
   n=$1
-  head -c "$n" /dev/zero > "$WORK/g$n.bin" 2>/dev/null || { echo "FAIL g$n input"; FAIL=1; return; }
+  if [ "$n" -eq 0 ]; then : > "$WORK/g$n.bin"; else head -c "$n" /dev/zero > "$WORK/g$n.bin" 2>/dev/null || { echo "FAIL g$n input"; FAIL=1; return; }; fi
   [ "$(sz "$WORK/g$n.bin")" -eq "$n" ] || { echo "FAIL g$n input-size"; FAIL=1; return; }
   "$CT" -encode -a lzraven -i "$WORK/g$n.bin" -o "$WORK/g$n.rav" 2>/dev/null || { echo "FAIL g$n ct rc"; FAIL=1; return; }
   if v=$($_RG "$WORK/g$n.rav" "$n" 2>"$WORK/g$n.rgram"); then

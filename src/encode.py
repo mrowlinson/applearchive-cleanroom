@@ -36,11 +36,29 @@ def _need_val(argv, i):
     return argv[i + 1]
 
 
+def _pre_alg(argv):
+    # the invalid-block message names the alg; argv order is free, so
+    # pre-scan (canonical bytes must not depend on flag order).
+    alg = "lzfse"
+    for j, a in enumerate(argv):
+        if a == "--alg" and j + 1 < len(argv):
+            alg = argv[j + 1]
+    return alg
+
+
+def _bad_block(alg, raw):
+    # cross-language canonical (C emits these exact bytes): full wrapper.
+    sys.stderr.write("aae-cli: aar-encode --alg %s: invalid block size: %s\n"
+                     % (alg, raw))
+    raise SystemExit(2)
+
+
 def main(argv):
     src = out = None
     alg = "lzfse"
     block = 4 * 1024 * 1024
     threads = 1
+    canon_alg = _pre_alg(argv)
     i = 0
     while i < len(argv):
         a = argv[i]
@@ -51,8 +69,7 @@ def main(argv):
             try:
                 block = parse_size(raw)
             except ValueError:
-                sys.stderr.write("invalid block size: %r\n" % raw)
-                raise SystemExit(2)
+                _bad_block(canon_alg, raw)
             i += 2
         elif a == "--threads":
             raw = _need_val(argv, i)
@@ -76,8 +93,8 @@ def main(argv):
     if alg not in ("raw", "lzma", "lz4", "lzraven", "lzbitmap") + tuple(magics):
         raise SystemExit("unsupported alg %r" % alg)
     if not 1 <= block <= 134217728:
-        sys.stderr.write("invalid block size: %r\n" % block)
-        raise SystemExit(2)
+        _bad_block(canon_alg, argv[argv.index("--block") + 1]
+                   if "--block" in argv else str(block))
     try:
         inner = build_inner(os.fsencode(src))
     except OSError as e:

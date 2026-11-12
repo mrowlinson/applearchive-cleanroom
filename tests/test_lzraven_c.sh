@@ -80,7 +80,7 @@ cc -O2 -Wall -Wextra -std=c11 -I"$ROOT/src/c" -o "$WORK/ravstream" \
   "$WORK/ravmain.c" "$ROOT/src/c/lzravenc.c" || { echo "harness build failed" >&2; exit 2; }
 ZCELL() { # n : zeros-N triple compare (oracle vs py vs C) + pins
   n=$1
-  head -c "$n" /dev/zero > "$WORK/z$n.bin" 2>/dev/null || { echo "FAIL z$n input"; FAIL=1; return; }
+  if [ "$n" -eq 0 ]; then : > "$WORK/z$n.bin"; else head -c "$n" /dev/zero > "$WORK/z$n.bin" 2>/dev/null || { echo "FAIL z$n input"; FAIL=1; return; }; fi
   [ "$(sz "$WORK/z$n.bin")" -eq "$n" ] || { echo "FAIL z$n input-size"; FAIL=1; return; }
   "$CT" -encode -a lzraven -i "$WORK/z$n.bin" -o "$WORK/z$n.ora.rav" 2>/dev/null || { echo "FAIL z$n oracle rc"; FAIL=1; return; }
   python3 "$ROOT/src/lzraven.py" --raw "$WORK/z$n.bin" "$WORK/z$n.py.rav" 2>"$WORK/z$n.py.err" || { echo "FAIL z$n py rc"; FAIL=1; return; }

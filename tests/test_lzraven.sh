@@ -54,7 +54,7 @@ if [ -n "${RECORD:-}" ]; then
 fi
 ZCELL() { # n : zeros-N byte-compare
   n=$1
-  head -c "$n" /dev/zero > "$WORK/z$n.bin" 2>/dev/null || { echo "FAIL z$n input"; FAIL=1; return; }
+  if [ "$n" -eq 0 ]; then : > "$WORK/z$n.bin"; else head -c "$n" /dev/zero > "$WORK/z$n.bin" 2>/dev/null || { echo "FAIL z$n input"; FAIL=1; return; }; fi
   [ "$(sz "$WORK/z$n.bin")" -eq "$n" ] || { echo "FAIL z$n input-size"; FAIL=1; return; }
   "$CT" -encode -a lzraven -i "$WORK/z$n.bin" -o "$WORK/z$n.ora.rav" 2>/dev/null || { echo "FAIL z$n oracle rc"; FAIL=1; return; }
   python3 "$LZ" --raw "$WORK/z$n.bin" "$WORK/z$n.got.rav" 2>"$WORK/z$n.err" || { echo "FAIL z$n impl rc: $(head -1 "$WORK/z$n.err")"; FAIL=1; return; }

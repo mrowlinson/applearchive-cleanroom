@@ -17,15 +17,22 @@ PINS=$ROOT/vectors/rgram-PINS.csv
 PY=$ROOT/src/rgram.py
 [ -x "$RGRAMC" ] || { echo "need C binary: $RGRAMC (make -C src/c)" >&2; exit 2; }
 [ -f "$PINS" ] || { echo "missing $PINS" >&2; exit 2; }
+# verify-tables: committed lzraventab.h must equal fresh gen output
+# (stands in for `make -C src/c verify-tables`: same gate, no Makefile edit).
 command -v python3 >/dev/null || { echo "need python3" >&2; exit 2; }
 mkdir -p "$W/corpus"
 NS=$(grep -o "^g-z[0-9]*-closed" "$PINS" | sed 's/^g-z//; s/-closed$//' | sort -n)
 fail=0; id=0; cov=0; unc=0; se=0
+if python3 "$ROOT/src/c/gen_lzraventab.py" 2>/dev/null | cmp -s - "$ROOT/src/c/lzraventab.h"; then
+  echo "PASS tables-fresh"
+else
+  echo "FAIL tables-fresh (regen src/c/gen_lzraventab.py diverges)"; fail=1
+fi
 for n in $NS; do
   se=$((se + 1))
   rav=$W/corpus/g$n.rav
   if [ ! -s "$rav" ]; then
-    head -c "$n" /dev/zero > "$W/corpus/g$n.bin" 2>/dev/null || { echo "FAIL g$n input"; fail=1; continue; }
+    if [ "$n" -eq 0 ]; then : > "$W/corpus/g$n.bin"; else head -c "$n" /dev/zero > "$W/corpus/g$n.bin" 2>/dev/null || { echo "FAIL g$n input"; fail=1; continue; }; fi
   [ "$(wc -c < "$W/corpus/g$n.bin" | tr -d " ")" -eq "$n" ] || { echo "FAIL g$n input-size"; fail=1; continue; }
     "$CT" -encode -a lzraven -i "$W/corpus/g$n.bin" -o "$rav" 2>/dev/null \
       || { echo "FAIL g$n ct"; fail=1; continue; }

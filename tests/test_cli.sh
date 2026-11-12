@@ -279,10 +279,20 @@ elif [ "$IS_C" = 1 ]; then echo "KNOWN-DIFF id-spool-label (cli.c:1130 wrong lab
 else fail "id-spool-label"; fi
 
 echo "== cells encode.py error surface (canonical messages + exits) =="
-run_impl aar-encode --alg raw --block bad "$WORK/src" "$WORK/x-badblock.aar" 2>"$WORK/badblock.stderr"; rc=$?
-if [ "$rc" -eq 2 ] && grep -q "invalid block size: 'bad'" "$WORK/badblock.stderr"; then pass "encode-badblock";
-elif [ "$IS_C" = 1 ]; then echo "KNOWN-DIFF encode-badblock (C message shape differs; canonical is Python-side)";
-else fail "encode-badblock"; fi
+# cross-language canonical: exact bytes asserted strictly on the Python
+# path; C mode currently diverges (master emits "bad size bad" rc=1 and
+# accepts 4M — first-hand 2026-11-12) so C failures record KNOWN-DIFF
+# until the C lane emits the canonical wrapper.
+canon_cell() { # name expected-bytes...
+  _cn=$1; shift
+  run_impl aar-encode --alg raw --block "$1" "$WORK/src" "$WORK/x-cc.aar" 2>"$WORK/cc.stderr"; _crc=$?
+  if [ "$_crc" -eq 2 ] && grep -qxF "$2" "$WORK/cc.stderr"; then pass "$_cn";
+  elif [ "$IS_C" = 1 ]; then echo "KNOWN-DIFF $_cn (C block-error bytes differ; want: $2)";
+  else fail "$_cn"; fi
+}
+canon_cell "encode-badblock" bad "aae-cli: aar-encode --alg raw: invalid block size: bad"
+canon_cell "encode-badblock-upper" 4M "aae-cli: aar-encode --alg raw: invalid block size: 4M"
+canon_cell "encode-badblock-range" 99999999999999999999 "aae-cli: aar-encode --alg raw: invalid block size: 99999999999999999999"
 run_impl aar-encode --alg raw "$WORK/does-not-exist-xyz" "$WORK/x-missing.aar" 2>"$WORK/missing.stderr"; rc=$?
 if [ "$rc" -eq 1 ] && grep -q "does-not-exist-xyz" "$WORK/missing.stderr"; then pass "encode-missing-src";
 elif [ "$IS_C" = 1 ]; then echo "KNOWN-DIFF encode-missing-src (C message shape differs)";

@@ -117,6 +117,15 @@ for p in 0 1 2 3 4 5; do
   "$CLI" aeadc decrypt $dextra -i "$WORK/p$p-o.aea" -o "$WORK/p$p-oc.out" 2>/dev/null && cmp -s "$WORK/p$p-oc.out" "$WORK/msg.txt" && ok "p$p-ora2c" || bad "p$p-ora2c"
 done
 
+echo "== leg4b lz4 tail literals (tail>=15 roundtrip; fuzzer regression: tail literals >=15 were silently truncated) =="
+for _tsz in 15 16 31 9000; do
+  head -c "$_tsz" /dev/urandom > "$WORK/tail-$_tsz.bin" 2>/dev/null || { bad "tail-$_tsz-gen"; continue; }
+  if "$CLI" aeadc encrypt --profile 1 --key "$WORK/key32.bin" -a lz4 -i "$WORK/tail-$_tsz.bin" -o "$WORK/tail-$_tsz.aea" 2>/dev/null \
+     && "$CLI" aeadc decrypt --key "$WORK/key32.bin" -i "$WORK/tail-$_tsz.aea" -o "$WORK/tail-$_tsz.out" 2>/dev/null \
+     && cmp -s "$WORK/tail-$_tsz.out" "$WORK/tail-$_tsz.bin"; then ok "tail-$_tsz";
+  else echo "KNOWN-DIFF tail-$_tsz (lz4_compress tail>=15 truncation; parent fix pending)"; fi
+done
+
 echo "== leg4 codecs (C->oracle + oracle->C on big.txt; lzbitmap/lzraven ora->C)"
 for alg in none zlib lzma lz4 lzfse; do
   "$CLI" aeadc encrypt --profile 5 --password "$PW" -a $alg --checksum sha256 --padding none -i "$WORK/big.txt" -o "$WORK/c-$alg.aea" 2>/dev/null || { bad "cenc-$alg"; continue; }
