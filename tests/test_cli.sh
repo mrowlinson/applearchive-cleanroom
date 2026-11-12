@@ -269,6 +269,48 @@ run_impl aar-decode "$WORK/trunc.aar" "$WORK/t1" 2>/dev/null; ie=$?
 sh "$ORACLE" aar-decode "$WORK/trunc.aar" "$WORK/t2" >/dev/null 2>&1; oe=$?
 if [ "$ie" -ne 0 ] && [ "$oe" -ne 0 ]; then pass "exitparity-trunc"; else fail "exitparity-trunc"; fi
 
+if [ "$IS_C" = 1 ]; then
+echo "== argv parity C vs Python (usage/error cases) =="
+parcase() { # desc mode -- cli-args...
+  desc=$1; mode=$2; shift 2; [ "${1:-}" = "--" ] && shift
+  run_impl "$@" >"$WORK/pc-c.out" 2>"$WORK/pc-c.err"; c=$?
+  python3 "$ROOT/src/aae-cli" "$@" >"$WORK/pc-p.out" 2>"$WORK/pc-p.err"; p=$?
+  if [ "$c" -eq "$p" ] && { [ "$mode" = exit ] || { cmp -s "$WORK/pc-c.out" "$WORK/pc-p.out" && cmp -s "$WORK/pc-c.err" "$WORK/pc-p.err"; }; }; then
+    pass "argv-$desc"
+  else
+    fail "argv-$desc"
+    echo "--- C exit=$c:"; cat "$WORK/pc-c.out" "$WORK/pc-c.err"
+    echo "--- PY exit=$p:"; cat "$WORK/pc-p.out" "$WORK/pc-p.err"
+  fi
+}
+parcase noargs exit
+parcase help exit -- -h
+parcase help-long exit -- --help
+parcase unknown full -- bogus-cmd
+parcase probe-usage full -- probe extra
+parcase enc-unknown full -- aar-encode --bogus x y
+parcase enc-noval full -- aar-encode --alg
+parcase enc-threads-noval full -- aar-encode --alg raw --threads
+parcase enc-badalg full -- aar-encode --alg rot13 x y
+parcase enc-usage full -- aar-encode --alg raw onlyone
+parcase enc-dashdash full -- aar-encode --alg raw -- "$WORK/src" "$WORK/pc-dd.aar"
+parcase dec-usage full -- aar-decode onlyone
+parcase dec-dash full -- aar-decode - x
+parcase dec-missing full -- aar-decode /nonexistent-xyz "$WORK/pc-dec"
+parcase list-usage full -- aar-list
+parcase list-usage2 full -- aar-list a b
+parcase list-missing full -- aar-list /nonexistent-xyz
+parcase enc-noprofile full -- aea-encrypt x y
+parcase enc-unknown full -- aea-encrypt --bogus --profile 1 x y
+parcase enc-usage full -- aea-encrypt --profile 1 onlyone
+parcase enc-missing full -- aea-encrypt --profile 1 /nonexistent-xyz out
+parcase dec-usage full -- aea-decrypt x
+parcase dec-unknown full -- aea-decrypt --bogus x y
+parcase id-usage full -- aea-id
+parcase id-usage2 full -- aea-id a b
+parcase id-missing full -- aea-id /nonexistent-xyz
+fi
+
 echo "== cells=$PASS/$TOTAL fail=$FAIL =="
 [ "$IS_C" = 1 ] && echo "== pend=$PEND (C-mode pending, by design) =="
 [ "$FAIL" -eq 0 ] && echo CLI-BATTERY-GREEN || echo CLI-BATTERY-RED
