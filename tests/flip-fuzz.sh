@@ -8,4 +8,5 @@ ROOT=$(cd "$HERE/.." && pwd)
 WORK=${1:-$(mktemp -d /Volumes/NVME/applearchive-cleanroom-ws/flipfuzz.XXXXXX)}
 die() { echo "HARNESS-ERROR $*" >&2; exit 2; }
 make -C "$ROOT" OUTDIR="$WORK/build" >/dev/null 2>&1 || die "make failed"
-AAD_BIN="$WORK/build/aad" python3 "$HERE/fuzz.py" orac 200 49420 "$WORK/cases"
+{ echo '#!/bin/sh'; echo "exec \"$WORK/build/aae-cli\" aar-decode \"\$@\""; } > "$WORK/aad-bin" && chmod +x "$WORK/aad-bin"
+AAD_BIN="$WORK/aad-bin" python3 "$HERE/fuzz.py" orac 200 49420 "$WORK/cases"

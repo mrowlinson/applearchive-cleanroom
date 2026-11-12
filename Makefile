@@ -1,32 +1,44 @@
-# Top-level build: aad (decode) + aae-cli (dispatcher) + src/c backends
-# (aae encode, aeadc AEA crypto, rgramc grammar verifier).
-# Usage: make [OUTDIR=dir]   (default ./build; all 5 binaries land there)
+# Unified product: `make` builds exactly ONE shipped binary (aae-cli).
+# aad/aae/aeadc mains are linked in-process (cli.c calls aad_main/ae_main/
+# aead_main); no execv of siblings, no backend env (AAD_BIN/AAE_C/AEAD_C gone).
+# `make rgramc` builds the test-only grammar verifier separately (NOT in
+# `all`, NOT shipped). The $(OUTDIR)/aad rule is test scaffolding only
+# (python-mode tests/test_cli.sh $AAD_BIN): never a default target.
 OUTDIR ?= build
 CC ?= cc
 CFLAGS ?= -O2 -Wall
+# Pinned liblzma 5.8.4 per quiz A-20(b): direct link, never unpinned dlopen.
+# sha256 1b2e12cc1b920264f3d5eeba22e85b8afd589595d8945d1d42a52afa694b09
+LZMA_PREFIX ?= /opt/homebrew/opt/xz
+LZMA_DYLIB ?= /opt/homebrew/Cellar/xz/5.8.4/lib/liblzma.5.dylib
 
-all: $(OUTDIR)/aad $(OUTDIR)/aae-cli backends
+CLI_SRCS = src/c/cli.c src/aad.c src/c/aae.c src/c/lz4c.c src/c/lzravenc.c \
+	   src/c/lzbitmapc.c src/c/aeadc.c
+CLI_HDRS = src/c/lz4c.h src/c/lzravenc.h src/c/lzraventab.h \
+	   src/c/lzbitmapc.h src/c/aeadc.h src/c/rgramc.h
 
-backends:
-	$(MAKE) -C src/c BUILDDIR=$(abspath $(OUTDIR))
+all: $(OUTDIR)/aae-cli
 
+aae-cli: $(OUTDIR)/aae-cli
+
+$(OUTDIR)/aae-cli: $(CLI_SRCS) $(CLI_HDRS)
+	mkdir -p $(OUTDIR)
+	$(CC) $(CFLAGS) -std=c11 -Wextra -DAAE_CLI_UNIFIED \
+		-I$(LZMA_PREFIX)/include -o $@ $(CLI_SRCS) \
+		-lz $(LZMA_DYLIB) -lcompression
+
+# Test-only verifier (NOT in all, NOT shipped).
+rgramc: $(OUTDIR)/rgramc
+
+$(OUTDIR)/rgramc:
+	$(MAKE) -C src/c BUILDDIR=$(abspath $(OUTDIR)) rgramc
+
+# Test scaffolding for python-mode tests (NOT in all, NOT shipped).
 $(OUTDIR)/aad: src/aad.c
 	mkdir -p $(OUTDIR)
 	$(CC) $(CFLAGS) -o $@ $< -lz -lcompression
 
-# aae-cli C port (sibling lane C owns src/c/aae.c; this target only builds
-# the CLI dispatcher + list reparse from src/c/cli.c).
-# Pinned liblzma 5.8.4 per quiz A-20(b): direct link, never unpinned dlopen.
-LZMA_PREFIX ?= /opt/homebrew/opt/xz
-LZMA_DYLIB ?= /opt/homebrew/Cellar/xz/5.8.4/lib/liblzma.5.dylib
-
-aae-cli: $(OUTDIR)/aae-cli
-
-$(OUTDIR)/aae-cli: src/c/cli.c
-	mkdir -p $(OUTDIR)
-	$(CC) $(CFLAGS) -std=c11 -Wextra -I$(LZMA_PREFIX)/include -o $@ $< -lz $(LZMA_DYLIB) -lcompression
-
 clean:
-	rm -f $(OUTDIR)/aad $(OUTDIR)/aae-cli $(OUTDIR)/aae $(OUTDIR)/aeadc $(OUTDIR)/rgramc
+	rm -f $(OUTDIR)/aae-cli $(OUTDIR)/aad $(OUTDIR)/aae $(OUTDIR)/aeadc $(OUTDIR)/rgramc
 
-.PHONY: all clean aae-cli backends
+.PHONY: all clean aae-cli rgramc

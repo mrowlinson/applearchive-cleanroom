@@ -1,6 +1,6 @@
 #!/bin/sh
-# tests/test_lzraven_c.sh -- C-parity battery (aae --alg lzraven + C stream
-# harness vs oracle pins + vs py bytes).
+# tests/test_lzraven_c.sh -- C-parity battery (unified aar-encode --alg lzraven
+# + C stream harness vs oracle pins + vs py bytes).
 # Bed-style like test_lz4_c.sh: every cell encodes byte-identical under
 # py (src/lzraven.py + src/encode.py) and C, and C output matches the
 # oracle-bedded pins in vectors/lzraven-PINS.csv (C-vs-oracle) with live
@@ -13,21 +13,26 @@
 # RCELL lz-rN + lz-greet -> stored cells here; lz-uN -> refusal cells here;
 # rep GAP -> gap cell here; lz-e2e-* -> e2e cells here (also runnable with
 # ENC_BIN=$AAE_C in test_lzraven.sh).
+# UNIFIED MAPPING (cport-unify): old `"$AAE_C" <dir> <out> --alg lzraven ...`
+# e2e cells are now `"$CLI" aar-encode --alg lzraven ... <dir> <out>` — same
+# ae_main code path, same bytes, same exits (e2e cells are success paths;
+# refusal cells use the committed stream harness, untouched). Cell count and
+# oracle comparisons unchanged.
 # Usage: TMPDIR=<nvme-scratch> sh tests/test_lzraven_c.sh [workdir]
-# Needs: AAE_C (default NVME build/aae), CT, AA. Exit 0 GREEN/1 RED/2 setup.
+# Needs: CLI (default WS unified build), CT, AA. Exit 0 GREEN/1 RED/2 setup.
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd)
 ROOT=$(cd "$HERE/.." && pwd)
 : "${TMPDIR:?must set TMPDIR to NVME scratch (never /tmp)}"
 WORK=${1:-$(mktemp -d "$TMPDIR/lzravenc.XXXXXX")}
 PINS=$ROOT/vectors/lzraven-PINS.csv
-AAE_C=${AAE_C:-/Volumes/NVME/applearchive-cleanroom-ws/build/aae/aae}
+CLI=${CLI:-/Volumes/NVME/applearchive-cleanroom-ws/build/unified/aae-cli}
 CT=${CT:-/usr/bin/compression_tool}
 AA=${AA:-/usr/bin/aa}
 FAIL=0
 GAP=0
 GEN=test_lzraven_c.sh
-[ -x "$AAE_C" ] || { echo "need C binary: $AAE_C (AAE_C=...)" >&2; exit 2; }
+[ -x "$CLI" ] || { echo "need unified binary: $CLI (CLI=...)" >&2; exit 2; }
 [ -x "$CT" ] || { echo "need $CT" >&2; exit 2; }
 [ -x "$AA" ] || { echo "need $AA" >&2; exit 2; }
 [ -f "$PINS" ] || { echo "missing $PINS" >&2; exit 2; }
@@ -141,7 +146,7 @@ E2E() { # tag [block]
   fix "$WORK/in-$tag"
   "$AA" archive -a lzraven -t 1 ${blk:+-b "$blk"} -d "$WORK/in-$tag" -o "$WORK/$tag.expect.aar" 2>"$WORK/$tag.err" || { echo "FAIL $tag oracle rc"; FAIL=1; return; }
   python3 "$ROOT/src/encode.py" "$WORK/in-$tag" "$WORK/$tag.py.aar" --alg lzraven ${blk:+--block "$blk"} 2>>"$WORK/$tag.err" || { echo "FAIL $tag py rc"; FAIL=1; return; }
-  "$AAE_C" "$WORK/in-$tag" "$WORK/$tag.c.aar" --alg lzraven ${blk:+--block "$blk"} 2>>"$WORK/$tag.err" || { echo "FAIL $tag C rc"; FAIL=1; return; }
+  "$CLI" aar-encode --alg lzraven ${blk:+--block "$blk"} "$WORK/in-$tag" "$WORK/$tag.c.aar" 2>>"$WORK/$tag.err" || { echo "FAIL $tag C rc"; FAIL=1; return; }
   if ! cmp -s "$WORK/$tag.py.aar" "$WORK/$tag.c.aar"; then echo "FAIL $tag py!=C"; FAIL=1; return; fi
   if ! cmp -s "$WORK/$tag.expect.aar" "$WORK/$tag.c.aar"; then echo "FAIL $tag C!=oracle"; FAIL=1; return; fi
   chk "lz-e2e-$tag" sha "$(sha "$WORK/$tag.c.aar")" "$(sz "$WORK/$tag.c.aar")"

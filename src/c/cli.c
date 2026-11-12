@@ -1,15 +1,22 @@
 /* cli.c - C port of src/aae-cli (unified impl-only entry point).
  *
- * Same argv shapes as the Python reference; backends are cleanroom ONLY:
+ * Same argv shapes as the Python reference; ONE static binary, no execv of
+ * sibling backends (aad/aae/aeadc mains are linked in as aad_main/ae_main/
+ * aead_main and called in-process; exit codes + stderr bytes identical —
+ * this is relinking, not rewriting). No backend env (AAD_BIN/AAE_C/AEAD_C
+ * are gone; any reference fails closed at the call site, which no longer
+ * exists):
  *   probe       provenance block (no backend)
- *   aar-encode  C encoder via $AAE_C (all 7 algs; backend refusals
- *               wrapped to CLI exit 2, same markers as Python)
- *   aar-decode  C decoder via $AAD_BIN (execv, all 7 algs)
+ *   aar-encode  in-process C encoder (all 7 algs; refusals wrapped to CLI
+ *               exit 2, same markers as Python)
+ *   aar-decode  in-process C decoder (all 7 algs)
  *   aar-list    pure C reparse of proto/aad.py parse_chain/parse_inner PAT walk
- *   aea-encrypt C AEAD via $AEAD_C (argv validated here; pending if absent)
- *   aea-decrypt C AEAD via $AEAD_C (argv validated here; pending if absent)
- *   aea-id      C AEAD via $AEAD_C (argv validated here; pending if absent)
- * Black-box + own proto only. No Python, no subprocess shims (execv only).
+ *   aea-encrypt in-process C AEAD (argv validated here, translated as before)
+ *   aea-decrypt in-process C AEAD (argv validated here, translated as before)
+ *   aea-id      in-process C AEAD (argv validated here)
+ *   aeadc       native aeadc argv passthrough to aead_main (test battery:
+ *               fixed-salt and stdio plus selftest have no aea-* equivalents)
+ * Black-box + own proto only. No Python, no subprocess, no execv.
  */
 #define _DARWIN_C_SOURCE 1
 #include <compression.h>
@@ -28,36 +35,11 @@
 #include <unistd.h>
 #include <zlib.h>
 
-/* Backend resolution: $ENV wins; else sibling of argv[0] (all 5 binaries
- * ship in one dir from top-level `make`). No machine-specific defaults. */
-static char g_exedir[4096] = ".";
-
-static void exedir_init(const char *argv0) {
-    const char *s = argv0 ? strrchr(argv0, '/') : NULL;
-    if (!s) {
-        strcpy(g_exedir, ".");
-        return;
-    }
-    size_t n = (size_t)(s - argv0);
-    if (n == 0)
-        n = 1; /* argv0 = "/x" -> "/" */
-    if (n >= sizeof g_exedir)
-        n = sizeof g_exedir - 1;
-    memcpy(g_exedir, argv0, n);
-    g_exedir[n] = '\0';
-}
-
-static const char *backend(const char *env, const char *base) {
-    static char bufs[4][4352];
-    static int rot = 0;
-    const char *v = getenv(env);
-    char *b;
-    if (v && *v)
-        return v;
-    b = bufs[rot++ & 3];
-    snprintf(b, sizeof bufs[0], "%s/%s", g_exedir, base);
-    return b;
-}
+/* In-process backend entries (linked into this binary). argv[0] is fixed
+ * per entry so embedded prog-name bytes match the old exec paths. */
+int aad_main(int argc, char **argv);
+int ae_main(int argc, char **argv);
+int aead_main(int argc, char **argv);
 
 static const char *SUPPORTED_ALGS = "raw,lzfse,zlib,lzma,lz4,lzraven,lzbitmap";
 
@@ -126,19 +108,6 @@ static const char *opt_val(Opt *opts, int nopts, const char *name) {
     return NULL;
 }
 
-static int is_reg_exec(const char *p) {
-    struct stat st;
-    if (stat(p, &st) != 0 || !S_ISREG(st.st_mode))
-        return 0;
-    return access(p, X_OK) == 0;
-}
-
-static int do_execv(const char *bin, char **args) {
-    execv(bin, args);
-    fprintf(stderr, "aae-cli: exec %s: %s\n", bin, strerror(errno));
-    return 1;
-}
-
 static int mkdir_p(const char *path) {
     /* mkdir -p (parents, exist_ok). Returns 0 ok, -1 fail. */
     char tmp[8192];
@@ -183,9 +152,6 @@ static int cmd_probe(int argc, char **argv, const char *self) {
     printf("os=%s\n", u.sysname);
     printf("arch=%s\n", u.machine);
     printf("cli=%s\n", self);
-    printf("aad_bin=%s\n", backend("AAD_BIN", "aad"));
-    printf("aae_c=%s\n", backend("AAE_C", "aae"));
-    printf("aead_c=%s\n", backend("AEAD_C", "aeadc"));
     printf("cc=%s\n", __VERSION__);
     return 0;
 }
@@ -238,32 +204,35 @@ static long long parse_size_enc(const char *s) {
     return (long long)v;
 }
 
-/* Run the encoder backend for raven/bitmap with stderr captured: the
- * backend exits 1 with the honest marker on refusal-class inputs, but the
- * CLI contract reserves 1 for operation failures and 2 for
- * usage/harness-level errors — the same wrap proto/encode.py callers get
- * via SystemExit (src/aae-cli:117-130). Success passes through (exit 0,
- * stderr forwarded verbatim). fork+exec of the backend only; no shims. */
-static int run_encode_capture(const char *exe, char **args, const char *alg) {
+/* Run the encoder entry for raven/bitmap with stderr captured: the entry
+ * returns 1 with the honest marker on refusal-class inputs, but the CLI
+ * contract reserves 1 for operation failures and 2 for usage/harness-level
+ * errors — the same wrap proto/encode.py callers get via SystemExit
+ * (src/aae-cli:117-130). Success passes through (exit 0, stderr forwarded
+ * verbatim). fork + in-process ae_main() in the child; no execv, no shims. */
+static int run_encode_capture(int argc, char **argv, const char *alg) {
     int pf[2];
     pid_t pid;
     char *cap = NULL;
     size_t capn = 0, capc = 0;
     int st;
     if (pipe(pf) != 0)
-        return do_execv(exe, args); /* fallback: direct */
+        return ae_main(argc, argv); /* fallback: direct */
     pid = fork();
     if (pid < 0) {
         close(pf[0]);
         close(pf[1]);
-        return do_execv(exe, args);
+        return ae_main(argc, argv);
     }
     if (pid == 0) {
+        int rc;
         dup2(pf[1], STDERR_FILENO);
         close(pf[0]);
         close(pf[1]);
-        execv(exe, args);
-        _exit(127);
+        rc = ae_main(argc, argv);
+        fflush(stdout);
+        fflush(stderr);
+        _exit(rc);
     }
     close(pf[1]);
     for (;;) {
@@ -315,7 +284,7 @@ static int cmd_aar_encode(int argc, char **argv) {
     char err[1024], m[8192];
     char **pos = NULL;
     int npos = 0, r;
-    const char *alg, *blk, *thr, *exe, *src, *dst;
+    const char *alg, *blk, *thr, *src, *dst;
     char *args[10];
     int na = 0;
     (void)flags;
@@ -355,17 +324,8 @@ static int cmd_aar_encode(int argc, char **argv) {
         }
         /* regex failure: pass through; backend reports (exit 1 both). */
     }
-    exe = backend("AAE_C", "aae");
-    if (!is_reg_exec(exe)) {
-        snprintf(m, sizeof m,
-                 "missing C encode binary: %s "
-                 "(build: make -C src/c BUILDDIR=<nvme>/build/aae)",
-                 exe);
-        free(pos);
-        return die_msg(m);
-    }
     thr = opt_val(opts, 3, "threads");
-    args[na++] = (char *)exe;
+    args[na++] = "aae";
     args[na++] = (char *)src;
     args[na++] = (char *)dst;
     args[na++] = "--alg";
@@ -381,16 +341,16 @@ static int cmd_aar_encode(int argc, char **argv) {
     args[na] = NULL;
     free(pos);
     if (!strcmp(alg, "lzraven") || !strcmp(alg, "lzbitmap"))
-        return run_encode_capture(exe, args, alg);
-    return do_execv(exe, args);
+        return run_encode_capture(na, args, alg);
+    return ae_main(na, args);
 }
 
 /* ---------- aar-decode ---------- */
 
 static int cmd_aar_decode(int argc, char **argv) {
-    const char *exe, *src, *dst;
+    const char *src, *dst;
     char m[8192];
-    char *args[8];
+    char *args[4];
     if (argc != 2 || argv[0][0] == '-')
         return die_msg("usage: aae-cli aar-decode IN.aar OUTDIR");
     src = argv[0];
@@ -399,23 +359,15 @@ static int cmd_aar_decode(int argc, char **argv) {
         snprintf(m, sizeof m, "missing: %s", src);
         return die_msg(m);
     }
-    exe = backend("AAD_BIN", "aad");
-    if (!is_reg_exec(exe)) {
-        snprintf(m, sizeof m,
-                 "missing C decode binary: %s "
-                 "(build: make OUTDIR=<nvme>/build/decode-writer)",
-                 exe);
-        return die_msg(m);
-    }
     if (mkdir_p(dst) != 0) {
         snprintf(m, sizeof m, "cannot mkdir: %s", dst);
         return die_msg(m);
     }
-    args[0] = (char *)exe;
+    args[0] = "aad";
     args[1] = (char *)src;
     args[2] = (char *)dst;
     args[3] = NULL;
-    return do_execv(exe, args);
+    return aad_main(3, args);
 }
 
 /* ---------- aar-list: pure C reparse (proto/aad.py PAT walk) ---------- */
@@ -962,7 +914,7 @@ out:
     return rc;
 }
 
-/* ---------- aea (encrypt/decrypt via $AEAD_C) ---------- */
+/* ---------- aea (encrypt/decrypt/id in-process via aead_main) ---------- */
 
 static int hexdig(char c) {
     return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') ||
@@ -988,15 +940,21 @@ static const char *hexval(const char *v, char *buf, size_t n) {
     return buf;
 }
 
-static int aead_bin(const char *sub, const char **bin_out) {
-    const char *bin = backend("AEAD_C", "aeadc");
-    char m[8192];
-    *bin_out = bin;
-    if (is_reg_exec(bin))
-        return 0;
-    snprintf(m, sizeof m, "%s: pending: missing AEAD_C binary: %s", sub, bin);
-    die_msg(m);
-    return 2;
+/* Native aeadc argv passthrough (test battery): forwards verbatim to
+ * aead_main so flags with no aea-* equivalents (fixed-salt forms, stdio
+ * positionals, selftest) keep byte-identical behavior. argv[0] is "aeadc"
+ * so g_prog bytes match the old exec path. */
+static int cmd_aeadc(int argc, char **argv) {
+    char **a = malloc((size_t)(argc + 2) * sizeof *a);
+    int rc, i;
+    if (!a)
+        return die_msg("aeadc: out of memory");
+    a[0] = "aeadc";
+    for (i = 0; i < argc; i++)
+        a[i + 1] = argv[i];
+    rc = aead_main(argc + 1, a);
+    free(a);
+    return rc;
 }
 
 typedef struct {
@@ -1033,7 +991,7 @@ static int cmd_aea_encrypt(int argc, char **argv) {
     char err[1024], hv[8192], m[8192];
     char **pos = NULL;
     int npos = 0, r, i, rc;
-    const char *profile, *src, *dst, *bin, *k;
+    const char *profile, *src, *dst, *k;
     Argv a = {NULL, 0, 0};
     for (i = 0; i < 16; i++) {
         opts[i].flag = flags[i];
@@ -1059,11 +1017,7 @@ static int cmd_aea_encrypt(int argc, char **argv) {
         free(pos);
         return die_msg(m);
     }
-    if (aead_bin("aea-encrypt", &bin) != 0) {
-        free(pos);
-        return 2;
-    }
-    av_push(&a, (char *)bin);
+    av_push(&a, "aeadc");
     av_push(&a, "encrypt");
     av_push(&a, "--profile");
     av_push(&a, (char *)profile);
@@ -1089,7 +1043,7 @@ static int cmd_aea_encrypt(int argc, char **argv) {
         av_opt(&a, "-o", dst);
     av_push(&a, NULL);
     free(pos);
-    rc = do_execv(bin, a.v);
+    rc = aead_main(a.n - 1, a.v);
     free(a.v);
     return rc;
 }
@@ -1103,7 +1057,7 @@ static int cmd_aea_decrypt(int argc, char **argv) {
     char err[1024], hv[8192], m[8192];
     char **pos = NULL;
     int npos = 0, r, i, rc;
-    const char *src, *dst, *bin, *k;
+    const char *src, *dst, *k;
     Argv a = {NULL, 0, 0};
     for (i = 0; i < 9; i++) {
         opts[i].flag = flags[i];
@@ -1127,11 +1081,7 @@ static int cmd_aea_decrypt(int argc, char **argv) {
         free(pos);
         return die_msg(m);
     }
-    if (aead_bin("aea-decrypt", &bin) != 0) {
-        free(pos);
-        return 2;
-    }
-    av_push(&a, (char *)bin);
+    av_push(&a, "aeadc");
     av_push(&a, "decrypt");
     av_opt(&a, "--password", opt_val(opts, 9, "password"));
     av_opt(&a, "--password-file", opt_val(opts, 9, "password-file"));
@@ -1150,13 +1100,13 @@ static int cmd_aea_decrypt(int argc, char **argv) {
         av_opt(&a, "-o", dst);
     av_push(&a, NULL);
     free(pos);
-    rc = do_execv(bin, a.v);
+    rc = aead_main(a.n - 1, a.v);
     free(a.v);
     return rc;
 }
 
 static int cmd_aea_id(int argc, char **argv) {
-    const char *bin, *src;
+    const char *src;
     char m[8192], m2[8192];
     char *args[8];
     if (argc != 1)
@@ -1166,8 +1116,6 @@ static int cmd_aea_id(int argc, char **argv) {
         snprintf(m2, sizeof m2, "missing: %s", src);
         return die_msg(m2);
     }
-    if (aead_bin("aea-id", &bin) != 0)
-        return 2;
     if (!strcmp(src, "-")) {
         /* stdin -> NVME temp file, fork/exec/wait, unlink (no shims). */
         const char *td = getenv("TMPDIR");
@@ -1209,13 +1157,16 @@ static int cmd_aea_id(int argc, char **argv) {
             return die_msg("aea-id: fork failed");
         }
         if (pid == 0) {
-            args[0] = (char *)bin;
+            int crc;
+            args[0] = "aeadc";
             args[1] = "id";
             args[2] = "-i";
             args[3] = path;
             args[4] = NULL;
-            execv(bin, args);
-            _exit(127);
+            crc = aead_main(4, args);
+            fflush(stdout);
+            fflush(stderr);
+            _exit(crc);
         }
         while (waitpid(pid, &st, 0) < 0 && errno == EINTR)
             ;
@@ -1226,12 +1177,12 @@ static int cmd_aea_id(int argc, char **argv) {
             outrc = 1;
         return outrc;
     }
-    args[0] = (char *)bin;
+    args[0] = "aeadc";
     args[1] = "id";
     args[2] = "-i";
     args[3] = (char *)src;
     args[4] = NULL;
-    return do_execv(bin, args);
+    return aead_main(4, args);
 }
 
 /* ---------- top level ---------- */
@@ -1240,13 +1191,12 @@ static void print_usage(void) {
     printf("usage: aae-cli %s\n",
            "probe|aar-encode|aar-decode|aar-list|aea-encrypt|aea-decrypt|"
            "aea-id");
-    printf("impl-only backends (no oracle): encode=C aae decode=C aad "
+    printf("single static binary (no oracle): encode=C aae decode=C aad "
            "list=C reparse encrypt/decrypt/id=C aead\n");
 }
 
 int main(int argc, char **argv) {
     const char *sub;
-    exedir_init(argv[0]);
     char m[8192];
     if (argc < 2 || !strcmp(argv[1], "-h") || !strcmp(argv[1], "--help") ||
         !strcmp(argv[1], "help")) {
@@ -1268,6 +1218,8 @@ int main(int argc, char **argv) {
         return cmd_aea_decrypt(argc - 2, argv + 2);
     if (!strcmp(sub, "aea-id"))
         return cmd_aea_id(argc - 2, argv + 2);
+    if (!strcmp(sub, "aeadc"))
+        return cmd_aeadc(argc - 2, argv + 2);
     snprintf(m, sizeof m, "unknown command: %s (see: aae-cli help)", sub);
     return die_msg(m);
 }

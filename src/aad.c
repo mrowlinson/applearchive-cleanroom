@@ -746,6 +746,8 @@ static int extract(const Item *items, size_t nitems, const char *root,
                      int fcls, int fsub, size_t shortidx, int midchain,
                      int shortpresent, unsigned long long whole,
                      size_t shortend, unsigned long long obs, int mfkind) {
+    (void)obs;
+    (void)mfkind;
     char (*repl)[4096] = malloc(REPLC * sizeof *repl);
     size_t nrepl = 0;
     { /* root gated on scratch repl (a replaced root must not taint all) */
@@ -1330,7 +1332,7 @@ static int extract(const Item *items, size_t nitems, const char *root,
     return fails ? 1 : 0;
 }
 
-int main(int argc, char **argv) {
+int aad_main(int argc, char **argv) {
     if (argc != 3) { fprintf(stderr, "usage: aad IN.aar OUTDIR\n"); return 2; }
     Buf file = { NULL, 0 }, inner = { NULL, 0 };
     Item *items = NULL;
@@ -1380,3 +1382,10 @@ out:
     free(items);
     return fails ? 1 : rc;
 }
+
+/* Standalone test-scaffolding entry (python-mode test_cli.sh $AAD_BIN).
+ * The shipped binary (aae-cli) compiles with -DAAE_CLI_UNIFIED and calls
+ * aad_main() in-process instead. */
+#ifndef AAE_CLI_UNIFIED
+int main(int argc, char **argv) { return aad_main(argc, argv); }
+#endif

@@ -6,24 +6,33 @@
 # oracle-bedded pins in vectors/lzbitmap-PINS.csv (C-vs-oracle) with live
 # /usr/bin/aa + libcompression-probe byte-compare on top.
 # Covers: all 21 .bm .aar corpus cells (1 parity + 20 refusal, refusal
-# reason strings byte-identical py-vs-C), the 6 pinned stream cells, and
+# markers asserted py-vs-C), the 6 pinned stream cells, and
 # 4 adversarial refusal stream cells.
 # Mapping to tests/test_lzbitmap.sh cells: every X.bm cell here replays the
 # identical corpus builder with C backend (also runnable in-place with
 # ENC_BIN=$AAE_C in test_lzbitmap.sh); stream-* cells replay the identical
 # probe inputs through the C harness.
+#
+# UNIFIED MAPPING (cport-unify): old `"$AAE_C" <dir> <out> --alg lzbitmap ...`
+# .aar corpus cells are now
+# `"$CLI" aar-encode --alg lzbitmap ... <dir> <out>` — same ae_main code
+# path. Success cells: identical bytes/exits. Refusal cells: the CLI wraps
+# the backend's exit-1 + raw marker into exit 2 + "aae-cli: aar-encode
+# --alg lzbitmap: <marker>" (same wrap the Python CLI and test_cli.sh
+# assert), so py rc=1/C rc=2 with marker grep on both sides replaces the old
+# raw-stderr cmp. Cell count and oracle comparisons unchanged.
 # Usage: TMPDIR=<nvme-scratch> sh tests/test_lzbitmap_c.sh [workdir]
-# Needs: AAE_C (default NVME build/aae). Exit 0 GREEN/1 RED/2 setup.
+# Needs: CLI (default WS unified build). Exit 0 GREEN/1 RED/2 setup.
 set -u
 HERE=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 ROOT=$(CDPATH= cd -- "$HERE/.." && pwd)
 : "${TMPDIR:?must set TMPDIR to NVME scratch (never /tmp)}"
 W=${1:-$(mktemp -d "$TMPDIR/lzbitmapc.XXXXXX")}
 ORACLE=${ORACLE:-/usr/bin/aa}
-AAE_C=${AAE_C:-/Volumes/NVME/applearchive-cleanroom-ws/build/aae/aae}
+CLI=${CLI:-/Volumes/NVME/applearchive-cleanroom-ws/build/unified/aae-cli}
 PINS=$ROOT/vectors/lzbitmap-PINS.csv
 fail=0
-[ -x "$AAE_C" ] || { echo "need C binary: $AAE_C (AAE_C=...)" >&2; exit 2; }
+[ -x "$CLI" ] || { echo "need unified binary: $CLI (CLI=...)" >&2; exit 2; }
 [ -x "$ORACLE" ] || { echo "need $ORACLE" >&2; exit 2; }
 [ -f "$PINS" ] || { echo "missing $PINS" >&2; exit 2; }
 command -v cc >/dev/null || { echo "need cc" >&2; exit 2; }
@@ -179,20 +188,24 @@ mkdir -p "$W/in/hmedge"; python3 -c "pool=[b for b in range(256) if b not in (65
 cell() { # $1=name $2=block
   "$ORACLE" archive -a lzbitmap -t 1 ${2:+-b "$2"} -d "$W/in/$1" -o "$W/$1.expect.aar" 2>"$W/$1.ora.err" || { echo "FAIL $1 oracle-exit=$?"; fail=1; return; }
   python3 "$ROOT/src/encode.py" "$W/in/$1" "$W/$1.py.aar" --alg lzbitmap ${2:+--block "$2"} 2>"$W/$1.py.err"; prc=$?
-  "$AAE_C" "$W/in/$1" "$W/$1.c.aar" --alg lzbitmap ${2:+--block "$2"} 2>"$W/$1.c.err"; crc=$?
-  if [ "$prc" != "$crc" ]; then echo "FAIL $1 rc py=$prc C=$crc"; fail=1; return; fi
-  if [ "$prc" = 0 ]; then
+  "$CLI" aar-encode --alg lzbitmap ${2:+--block "$2"} "$W/in/$1" "$W/$1.c.aar" 2>"$W/$1.c.err"; crc=$?
+  if [ "$prc" = 0 ] && [ "$crc" = 0 ]; then
     cmp -s "$W/$1.expect.aar" "$W/$1.py.aar" || { echo "FAIL $1 py!=oracle"; fail=1; return; }
     cmp -s "$W/$1.py.aar" "$W/$1.c.aar" || { echo "FAIL $1 C!=py"; fail=1; return; }
     chk "$1.bm" sha "$(sha "$W/$1.c.aar")" "$(sz "$W/$1.c.aar")"
     rm -rf "$W/rt/$1"; mkdir -p "$W/rt/$1"
     "$ORACLE" extract -i "$W/$1.c.aar" -d "$W/rt/$1" 2>>"$W/$1.ora.err" || { echo "FAIL $1 roundtrip-exit=$?"; fail=1; }
-  else
-    if ! grep -q "lzbitmap match-class" "$W/$1.py.err" || ! grep -q "lzbitmap match-class" "$W/$1.c.err"; then
-      echo "FAIL $1 refusal without marker"; fail=1; return
+  elif [ "$prc" = 1 ] && [ "$crc" = 2 ]; then
+    # Unified CLI wrap: exit 2 + "aae-cli: aar-encode --alg lzbitmap: <marker>".
+    if ! grep -q "lzbitmap match-class" "$W/$1.py.err"; then
+      echo "FAIL $1 py refusal without marker"; fail=1; return
     fi
-    cmp -s "$W/$1.py.err" "$W/$1.c.err" || { echo "FAIL $1 reason: [$(cat "$W/$1.py.err")] vs [$(cat "$W/$1.c.err")]"; fail=1; return; }
+    if ! grep -q "^aae-cli: aar-encode --alg lzbitmap: .*lzbitmap match-class" "$W/$1.c.err"; then
+      echo "FAIL $1 C refusal without wrapped marker: [$(cat "$W/$1.c.err")]"; fail=1; return
+    fi
     chk "$1.bm" refuse "refused" "$(sz "$W/$1.expect.aar")"
+  else
+    echo "FAIL $1 rc py=$prc C=$crc"; fail=1; return
   fi
 }
 cell empty1 ""
