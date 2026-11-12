@@ -313,8 +313,11 @@ def cmd_aea_id(argv):
         import tempfile
         data = sys.stdin.buffer.read()
         td = os.environ.get("TMPDIR") or os.path.join(_NVME, "tmp")
-        os.makedirs(td, exist_ok=True)
-        fd, tmp = tempfile.mkstemp(suffix=".aea", dir=td)
+        try:
+            os.makedirs(td, exist_ok=True)
+            fd, tmp = tempfile.mkstemp(suffix=".aea", dir=td)
+        except OSError as e:
+            return _die("aea-id: cannot use TMPDIR %s: %s" % (td, e))
         try:
             with os.fdopen(fd, "wb") as f:
                 f.write(data)
