@@ -9,8 +9,12 @@ CC ?= cc
 CFLAGS ?= -O2 -Wall
 # Pinned liblzma 5.8.4 per quiz A-20(b): direct link, never unpinned dlopen.
 # sha256 1b2e12cc1b920264f3d5eeba22e85b8afd589595d8945d1d42a52afa694b09
+# Overridable (LZMA_DYLIB= / LZMA_PREFIX= / LZMA_VER=); the default
+# resolves the pinned cellar lib, homebrew first, /usr/local fallback.
+# An empty pick fails the link with a message (never silently unpinned).
+LZMA_VER ?= 5.8.4
 LZMA_PREFIX ?= /opt/homebrew/opt/xz
-LZMA_DYLIB ?= /opt/homebrew/Cellar/xz/5.8.4/lib/liblzma.5.dylib
+LZMA_DYLIB ?= $(firstword $(wildcard /opt/homebrew/Cellar/xz/$(LZMA_VER)/lib/liblzma.5.dylib /usr/local/Cellar/xz/$(LZMA_VER)/lib/liblzma.5.dylib))
 
 CLI_SRCS = src/c/cli.c src/aad.c src/c/aae.c src/c/lz4c.c src/c/lzravenc.c \
 	   src/c/lzbitmapc.c src/c/aeadc.c
@@ -23,6 +27,7 @@ aae-cli: $(OUTDIR)/aae-cli
 
 $(OUTDIR)/aae-cli: $(CLI_SRCS) $(CLI_HDRS)
 	mkdir -p $(OUTDIR)
+	@if [ ! -f "$(LZMA_DYLIB)" ]; then echo "aae-cli: pinned liblzma $(LZMA_VER) not found (LZMA_DYLIB='$(LZMA_DYLIB)'); set LZMA_DYLIB=/path/to/liblzma.5.dylib (and LZMA_PREFIX if headers move too)" >&2; exit 1; fi
 	$(CC) $(CFLAGS) -std=c11 -Wextra -DAAE_CLI_UNIFIED \
 		-I$(LZMA_PREFIX)/include -o $@ $(CLI_SRCS) \
 		-lz $(LZMA_DYLIB) -lcompression

@@ -279,7 +279,8 @@ static int run_encode_capture(int argc, char **argv, const char *alg) {
 }
 
 static int cmd_aar_encode(int argc, char **argv) {
-    static const char *flags[] = {"--alg", "--block", "--threads"};
+    /* No flags table: opts are initialized inline above (the old table
+     * was never read; removed rather than wired). */
     Opt opts[3] = {{"--alg", NULL}, {"--block", NULL}, {"--threads", NULL}};
     char err[1024], m[8192];
     char **pos = NULL;
@@ -287,7 +288,6 @@ static int cmd_aar_encode(int argc, char **argv) {
     const char *alg, *blk, *thr, *src, *dst;
     char *args[10];
     int na = 0;
-    (void)flags;
     r = parse_kv(argc, argv, opts, 3, &pos, &npos, err, sizeof err);
     if (r != 0) {
         snprintf(m, sizeof m, "aar-encode: %s", err);
@@ -313,16 +313,18 @@ static int cmd_aar_encode(int argc, char **argv) {
     dst = pos[1];
     blk = opt_val(opts, 3, "block");
     if (blk) {
+        /* Canonical refusal (contract refusal-exit-2): any unparsable
+         * (non-lowercase-set) or out-of-range value exits 2 with the
+         * message "invalid block size: <val>" (raw val), matching the
+         * Python-fixed text exactly. No backend pass-through. */
         long long v = parse_size_enc(blk);
-        if (v >= 0 && (v < 1 || v > 134217728)) {
+        if (v < 1 || v > 134217728) {
             snprintf(m, sizeof m,
-                     "aar-encode --alg %s: invalid block size %lld "
-                     "(oracle range 1..134217728)",
-                     alg, v);
+                     "aar-encode --alg %s: invalid block size: %s",
+                     alg, blk);
             free(pos);
             return die_msg(m);
         }
-        /* regex failure: pass through; backend reports (exit 1 both). */
     }
     thr = opt_val(opts, 3, "threads");
     args[na++] = "aae";
@@ -487,6 +489,12 @@ static uint8_t *dec_block(const char *magic, const uint8_t *pay, size_t comp,
     if (!memcmp(magic, "pbzx", 4)) {
         lzma_stream zs = LZMA_STREAM_INIT;
         size_t cap = unc ? (size_t)unc : 1, have = 0;
+        /* hard cap like aad.c unc+1: a valid stream emits exactly unc
+         * bytes, so reaching unc+1 without STREAM_END proves corrupt.
+         * Bounds growth (no wrap, no OOM spiral) and detects
+         * over-decode. */
+        size_t lim = (unc < (unsigned long long)(size_t)-1) ?
+                     (size_t)unc + 1 : (size_t)-1;
         if (lzma_stream_decoder(&zs, UINT64_MAX, 0) != LZMA_OK) {
             *fail = 1;
             return NULL;
@@ -503,7 +511,13 @@ static uint8_t *dec_block(const char *magic, const uint8_t *pay, size_t comp,
             lzma_ret r;
             if (have == cap) {
                 uint8_t *no;
-                cap *= 2;
+                if (cap >= lim) { /* over-decode: corrupt */
+                    free(out);
+                    lzma_end(&zs);
+                    *fail = 1;
+                    return NULL;
+                }
+                cap = (cap <= lim / 2) ? cap * 2 : lim;
                 no = realloc(out, cap);
                 if (!no) {
                     free(out);
@@ -698,14 +712,14 @@ typedef struct {
     size_t n, cap;
 } Item;
 
-static void item_push_ent(Item *it, const char key[3], uint8_t st,
-                          const uint8_t *val, size_t vlen,
-                          unsigned long long bloblen) {
+static int item_push_ent(Item *it, const char key[3], uint8_t st,
+                           const uint8_t *val, size_t vlen,
+                           unsigned long long bloblen) {
     if (it->n == it->cap) {
         size_t nc = it->cap ? it->cap * 2 : 8;
         Entry *ne = realloc(it->ents, nc * sizeof *ne);
         if (!ne)
-            return;
+            return -1;
         it->ents = ne;
         it->cap = nc;
     }
@@ -715,6 +729,7 @@ static void item_push_ent(Item *it, const char key[3], uint8_t st,
     it->ents[it->n].vlen = vlen;
     it->ents[it->n].bloblen = bloblen;
     it->n++;
+    return 0;
 }
 
 static int uint_w(uint8_t st) {
@@ -762,7 +777,7 @@ static int ts_l(uint8_t st) {
 }
 
 /* parse one header at pos. 0 ok (endpos set); 1 = break; 2 = BLOBOVERRUN
- * short (item kept, then break). */
+ * short (item kept, then break); -1 = OOM (item partial, caller fails). */
 static int parse_one_hdr(const uint8_t *data, size_t len, size_t pos,
                          Item *it, size_t *endpos) {
     uint16_t hsize;
@@ -788,11 +803,13 @@ static int parse_one_hdr(const uint8_t *data, size_t len, size_t pos,
         st = data[p + 3];
         p += 4;
         if (st == '*') {
-            item_push_ent(it, key, st, NULL, 0, 0);
+            if (item_push_ent(it, key, st, NULL, 0, 0))
+                return -1;
         } else if ((uw = uint_w(st)) > 0) {
             if (p + (size_t)uw > end)
                 return 1;
-            item_push_ent(it, key, st, NULL, 0, 0);
+            if (item_push_ent(it, key, st, NULL, 0, 0))
+                return -1;
             p += (size_t)uw;
         } else if ((bw = blob_w(st)) > 0) {
             unsigned long long bl = 0;
@@ -803,21 +820,25 @@ static int parse_one_hdr(const uint8_t *data, size_t len, size_t pos,
                 bl |= (unsigned long long)data[p + b] << (8 * b);
             p += (size_t)bw;
             if (!memcmp(key, "TYP", 3)) {
-                item_push_ent(it, key, st, NULL, 0, 0);
+                if (item_push_ent(it, key, st, NULL, 0, 0))
+                    return -1;
                 continue;
             }
-            item_push_ent(it, key, st, NULL, 0, bl);
+            if (item_push_ent(it, key, st, NULL, 0, bl))
+                return -1;
         } else if ((hl = hash_l(st)) > 0) {
             if (p + (size_t)hl > end)
                 return 1;
-            item_push_ent(it, key, st, data + p, (size_t)hl, 0);
+            if (item_push_ent(it, key, st, data + p, (size_t)hl, 0))
+                return -1;
             p += (size_t)hl;
         } else if ((tl = ts_l(st)) > 0) {
             if (p + (size_t)tl > end)
                 return 1;
-            item_push_ent(it, key, st, data + p, (size_t)tl, 0);
+            if (item_push_ent(it, key, st, data + p, (size_t)tl, 0))
+                return -1;
             p += (size_t)tl;
-        } else if (st == 'P') 
+        } else if (st == 'P')
 {
             uint16_t ln;
             if (p + 2 > end)
@@ -825,7 +846,8 @@ static int parse_one_hdr(const uint8_t *data, size_t len, size_t pos,
             ln = (uint16_t)(data[p] | ((uint16_t)data[p + 1] << 8));
             if (p + 2 + ln > end)
                 return 1;
-            item_push_ent(it, key, st, data + p + 2, ln, 0);
+            if (item_push_ent(it, key, st, data + p + 2, ln, 0))
+                return -1;
             p += 2 + ln;
         } else {
             return 1;
@@ -838,9 +860,13 @@ static int parse_one_hdr(const uint8_t *data, size_t len, size_t pos,
         for (i = 0; i < it->n; i++) {
             if (blob_w(it->ents[i].st) > 0 &&
                 memcmp(it->ents[i].key, "TYP", 3)) {
-                if (bp + it->ents[i].bloblen > len)
+                /* checked: bp <= len invariant, so len - bp cannot
+                 * wrap; a bloblen past it (or wrapping bp) is a
+                 * short item, never a backward endpos (hang). */
+                unsigned long long bl = it->ents[i].bloblen;
+                if (bp > len || bl > (unsigned long long)(len - bp))
                     return 2;
-                bp += (size_t)it->ents[i].bloblen;
+                bp += (size_t)bl;
             }
         }
         *endpos = bp;
@@ -873,6 +899,11 @@ static int cmd_aar_list(int argc, char **argv) {
         Item it = {NULL, 0, 0};
         size_t endpos = 0;
         int r = parse_one_hdr(inner.p, inner.n, pos, &it, &endpos);
+        if (r < 0) {
+            free(it.ents);
+            rc = 1;
+            goto out;
+        }
         if (r == 1) {
             free(it.ents);
             break;
@@ -936,6 +967,9 @@ static const char *hexval(const char *v, char *buf, size_t n) {
     }
     if (nd % 2 != 0)
         return v;
+    if (strlen(v) + 5 > n)
+        return v; /* overlong: never truncate; pass through unprefixed
+                   * so the backend rejects it deterministically. */
     snprintf(buf, n, "hex:%s", v);
     return buf;
 }
@@ -1153,8 +1187,18 @@ static int cmd_aea_id(int argc, char **argv) {
         }
         pid = fork();
         if (pid < 0) {
+            /* deterministic fallback: fork failure must not change the
+             * outcome, so run the wrapped backend in-process and return
+             * its code (same contract as the forked path). */
+            int frc;
+            args[0] = "aeadc";
+            args[1] = "id";
+            args[2] = "-i";
+            args[3] = path;
+            args[4] = NULL;
+            frc = aead_main(4, args);
             unlink(path);
-            return die_msg("aea-id: fork failed");
+            return frc;
         }
         if (pid == 0) {
             int crc;

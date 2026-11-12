@@ -152,13 +152,17 @@ static void hkdf(const uint8_t *ikm, size_t ikm_len,
 }
 
 /* mac(key32, data, salt) = HMAC(key32, salt+data+LE64(len(salt))) */
-static void amac(const uint8_t key[32], const uint8_t *data, size_t dn,
-                 const uint8_t *salt, size_t sn, uint8_t out[32]) {
+static int amac(const uint8_t key[32], const uint8_t *data, size_t dn,
+                const uint8_t *salt, size_t sn, uint8_t out[32]) {
     buf b = {0};
-    bput(&b, salt, sn); bput(&b, data, dn);
-    uint8_t le[8]; put64le(le, sn); bput(&b, le, 8);
+    uint8_t le[8]; put64le(le, sn);
+    if (bput(&b, salt, sn) || bput(&b, data, dn) || bput(&b, le, 8)) {
+        bfree(&b);
+        return -1;
+    }
     hmac_sha256(key, 32, b.p, b.n, out);
     bfree(&b);
+    return 0;
 }
 
 /* ---------- AES-256-CTR (CommonCrypto, BE counter per SP 800-38A 6.5) --- */
@@ -176,12 +180,13 @@ static int aes256ctr(const uint8_t key[32], const uint8_t iv[16],
 }
 
 /* ---------- PBKDF2-HMAC-SHA256 (RFC 2898 section 5.2, own) ---------- */
-static void pbkdf2_hmac_sha256(const uint8_t *pw, size_t pwn,
+static int pbkdf2_hmac_sha256(const uint8_t *pw, size_t pwn,
                                const uint8_t *salt, size_t sn,
                                uint32_t iter, uint8_t *dk, size_t dklen) {
     uint8_t u[32], t[32];
     /* salt + BE32(i) built on malloc'd sb below */
     uint8_t *sb = malloc(sn + 4);
+    if (!sb) return -1;
     memcpy(sb, salt, sn);
     uint32_t i = 1;
     size_t pos = 0;
@@ -196,7 +201,9 @@ static void pbkdf2_hmac_sha256(const uint8_t *pw, size_t pwn,
         size_t take = dklen - pos < 32 ? dklen - pos : 32;
         memcpy(dk + pos, t, take); pos += take; i++;
     }
+    memset(u, 0, sizeof u); memset(t, 0, sizeof t);
     free(sb);
+    return 0;
 }
 
 /* ---------- Salsa20/8 core (Bernstein Salsa20 spec, public domain;
@@ -247,7 +254,7 @@ static int scrypt(const uint8_t *pw, size_t pwn, const uint8_t *salt, size_t sn,
     uint32_t *XY = malloc((2 * 16 * r + 16) * 4);
     if (!B || !V || !XY) { free(B); free(V); free(XY); return fail("out of memory"); }
     uint32_t *Y = XY, *X = XY + 32 * (size_t)r;
-    pbkdf2_hmac_sha256(pw, pwn, salt, sn, 1, B, blen);
+    if (pbkdf2_hmac_sha256(pw, pwn, salt, sn, 1, B, blen)) { memset(B, 0, blen); free(B); free(V); free(XY); return fail("out of memory"); }
     for (uint32_t i = 0; i < N; i++) {
         memcpy(V + (size_t)i * blen, B, blen);
         blockmix(B, Y, X, r);
@@ -260,7 +267,7 @@ static int scrypt(const uint8_t *pw, size_t pwn, const uint8_t *salt, size_t sn,
                 ((uint32_t *)B)[k*16+w] ^= ((uint32_t *)Vj)[k*16+w];
         blockmix(B, Y, X, r);
     }
-    pbkdf2_hmac_sha256(pw, pwn, B, blen, 1, dk, 32);
+    if (pbkdf2_hmac_sha256(pw, pwn, B, blen, 1, dk, 32)) { memset(B, 0, blen); memset(V, 0, (size_t)N * blen); free(B); free(V); free(XY); return fail("out of memory"); }
     memset(B, 0, blen); memset(V, 0, (size_t)N * blen);
     free(B); free(V); free(XY);
     return 0;
@@ -765,8 +772,20 @@ static int lz4_decompress(const uint8_t *in, size_t il,
     }
     *produced = op; return 0;
 }
-/* simple hash-chain compressor; output always valid (may exceed input). */
-static size_t lz4_compress(const uint8_t *in, size_t il, uint8_t *out) {
+/* simple hash-chain compressor; output always valid (may exceed input).
+ * Worst-case bound (proof): a match sequence with L literals and M>=4
+ * match bytes emits 3 + L + eL + eM bytes for L + M input, where eL/eM
+ * are the extra length bytes (each <= len/255 + 1, nonzero only for
+ * len >= 15/19). For M == 4 the constants cancel: excess = eL - 1 =
+ * floor((L-15)/255) <= L/255. For M >= 5: excess = 3 + eL + eM - M <
+ * (L+M)/255 (the -M term dominates the +5 constant). The tail emits
+ * 1 + L + eL for L input: excess <= 2 + L/255. Total: out <= il +
+ * il/255 + 2 <= cap = il + il/255 + 16, always. The cap parameter below
+ * enforces this fail-closed anyway: any write past cap returns
+ * (size_t)-1 instead of overflowing the heap. */
+static size_t lz4_compress(const uint8_t *in, size_t il, uint8_t *out,
+                           size_t cap) {
+#define LZ4_PUT1(b) do { if (op + 1 > cap) return (size_t)-1; out[op++] = (uint8_t)(b); } while (0)
     static int tab[1 << 12];
     for (int i = 0; i < (1 << 12); i++) tab[i] = -1;
     size_t ip = 0, op = 0, anchor = 0;
@@ -785,34 +804,40 @@ static size_t lz4_compress(const uint8_t *in, size_t il, uint8_t *out) {
         }
         if (mlen >= 4) {
             size_t lit = ip - anchor, mt = mlen - 4, off = ip - ref;
-            out[op++] = (uint8_t)((lit >= 15 ? 15 : lit) << 4 |
-                                  (mt >= 15 ? 15 : mt));
+            LZ4_PUT1((lit >= 15 ? 15 : lit) << 4 |
+                     (mt >= 15 ? 15 : mt));
             if (lit >= 15) {
                 lit -= 15;
-                while (lit >= 255) { out[op++] = 255; lit -= 255; }
-                out[op++] = (uint8_t)lit;
+                while (lit >= 255) { LZ4_PUT1(255); lit -= 255; }
+                LZ4_PUT1(lit);
             }
+            if (ip - anchor > cap - op) return (size_t)-1;
             memcpy(out + op, in + anchor, ip - anchor); op += ip - anchor;
-            out[op++] = (uint8_t)off; out[op++] = (uint8_t)(off >> 8);
+            LZ4_PUT1(off); LZ4_PUT1(off >> 8);
             if (mt >= 15) {
                 mt -= 15;
-                while (mt >= 255) { out[op++] = 255; mt -= 255; }
-                out[op++] = (uint8_t)mt;
+                while (mt >= 255) { LZ4_PUT1(255); mt -= 255; }
+                LZ4_PUT1(mt);
             }
             ip += mlen; anchor = ip;
         } else ip++;
     }
     { /* tail literals (also covers il<=12 whole-input path) */
-        size_t lit = il - anchor;
-        out[op++] = (uint8_t)((lit >= 15 ? 15 : lit) << 4);
-        if (lit >= 15) {
-            lit -= 15;
-            while (lit >= 255) { out[op++] = 255; lit -= 255; }
-            out[op++] = (uint8_t)lit;
+        size_t tl = il - anchor, e = tl;
+        LZ4_PUT1((tl >= 15 ? 15 : tl) << 4);
+        if (e >= 15) {
+            e -= 15;
+            while (e >= 255) { LZ4_PUT1(255); e -= 255; }
+            LZ4_PUT1(e);
         }
-        memcpy(out + op, in + anchor, lit); op += lit;
+        /* NOTE: copy the ORIGINAL length tl, not the consumed
+         * extension remainder e (pre-fix bug: tails >= 15 silently
+         * truncated, undecryptable output). */
+        if (tl > cap - op) return (size_t)-1;
+        memcpy(out + op, in + anchor, tl); op += tl;
     }
     return op;
+#undef LZ4_PUT1
 }
 
 /* ================= codecs ================= */
@@ -917,7 +942,8 @@ static int dec_ver(const uint8_t key[/*32|80*/], size_t klen,
                    const uint8_t *data, size_t dn,
                    const uint8_t *salt, size_t sn, const uint8_t want[32],
                    uint8_t **plain, size_t *plen) {
-    uint8_t m[32]; amac(key, data, dn, salt, sn, m);
+    uint8_t m[32];
+    if (amac(key, data, dn, salt, sn, m)) return -1;
     /* constant-time compare (fail-closed like hmac.compare_digest). */
     uint32_t d = 0; for (int i = 0; i < 32; i++) d |= m[i] ^ want[i];
     if (d) { memset(m, 0, 32); return fail("HMAC mismatch"); }
@@ -940,7 +966,7 @@ static int enc_ver(const uint8_t key[/*32|80*/], size_t klen,
     if (klen == 80) {
         if (aes256ctr(key + 32, key + 64, data, st, dn)) { free(st); return -1; }
     } else memcpy(st, data, dn);
-    amac(key, st, dn, salt, sn, tag);
+    if (amac(key, st, dn, salt, sn, tag)) { free(st); return -1; }
     *stored = st; *slen = dn; return 0;
 }
 typedef struct { uint8_t main[32]; size_t ks; } KD;
@@ -1013,8 +1039,11 @@ static int comp_enc(char alg, const uint8_t *data, size_t dn,
     if (alg == '4') {
         size_t cap = dn + dn / 255 + 16;
         uint8_t *p = malloc(cap ? cap : 16);
+        size_t cl;
         if (!p) return fail("out of memory");
-        *ol = lz4_compress(data, dn, p); *out = p; return 0;
+        cl = lz4_compress(data, dn, p, cap);
+        if (cl == (size_t)-1) { free(p); return fail("lz4 failed"); }
+        *ol = cl; *out = p; return 0;
     }
     if (alg == 'e') return cap_encode(COMPRESSION_LZFSE, data, dn, out, ol);
     return fail("codec '%c' has no encoder in v1", alg);
@@ -1334,7 +1363,7 @@ int aead_encrypt(const uint8_t *data, size_t data_len,
     size_t ks = KSZ[profile];
 
     uint8_t symkey[80]; size_t symlen = 0;
-    u256 epriv; int has_epriv = 0;
+    u256 epriv; /* always established below (parsed or generated) */
     jpt sender, recip, spub;
     int has_sender = 0, has_recip = 0, has_spub = 0;
     uint8_t pub[65]; size_t publen = 0;
@@ -1366,13 +1395,12 @@ int aead_encrypt(const uint8_t *data, size_t data_len,
         if (o->eph_priv) {
             if (ec_parse(o->eph_priv, o->eph_priv_len, "eph_priv", 1, &epriv, &sender))
                 return -1;
-            has_epriv = 1;
         } else {
             uint8_t kb[32];
             do { randbytes(kb, 32); u256_frombytes_be(&epriv, kb); }
             while (u256_iszero(&epriv) || u256_cmp(&epriv, &P256_N) >= 0);
             jpt G; pt_set_aff(&G, &P256_GX, &P256_GY);
-            pt_mul(&G, &epriv, &sender); has_epriv = 1;
+            pt_mul(&G, &epriv, &sender);
         }
         has_sender = 1;
         uint8_t sx[65]; ec_x962(&sender, sx);
@@ -1393,7 +1421,6 @@ int aead_encrypt(const uint8_t *data, size_t data_len,
         if (check_password(o->password)) return -1;
         symlen = 32; /* filled below after salt */
     }
-    (void)has_epriv;
     uint8_t salt[32];
     if (o->salt) {
         if (o->salt_len != 32) return fail("salt must be 32B");
@@ -1973,10 +2000,10 @@ int aead_selftest(void) {
     {
         uint8_t k[32]; memset(k, 'K', 32);
         uint8_t m[32], ref[32];
-        amac(k, (uint8_t *)"data", 4, (uint8_t *)"salt", 4, m);
+        int mokr = !amac(k, (uint8_t *)"data", 4, (uint8_t *)"salt", 4, m);
         uint8_t pre[4 + 4 + 8]; memcpy(pre, "saltdata", 8); put64le(pre + 8, 4);
         hmac_sha256(k, 32, pre, 16, ref);
-        ST(!memcmp(m, ref, 32), "mac-shape");
+        ST(mokr && !memcmp(m, ref, 32), "mac-shape");
     }
     /* archive_id shape + trunc boundary */
     {
@@ -2066,7 +2093,11 @@ int aead_selftest(void) {
     /* dec_ver / enc_ver mirror */
     {
         uint8_t key[80]; for (int i = 0; i < 80; i++) key[i] = i;
-        uint8_t tag[32]; amac(key, (uint8_t *)"payload-data", 12, (uint8_t *)"salty", 5, tag);
+        uint8_t tag[32];
+        /* OOM here zeroes the tag so the decver STs below fail
+         * closedly; no new output on the success path (count pinned). */
+        if (amac(key, (uint8_t *)"payload-data", 12, (uint8_t *)"salty", 5, tag))
+            memset(tag, 0, 32);
         uint8_t *dec = NULL; size_t dl = 0;
         /* CTR decrypt of the raw bytes (== encrypt); must succeed + transform */
         ST(!dec_ver(key, 80, (uint8_t *)"payload-data", 12, (uint8_t *)"salty", 5,
@@ -2174,25 +2205,39 @@ int aead_selftest(void) {
         for (int i = 0; i < 4; i++) {
             size_t il = i == 3 ? 3000 : strlen(pats[i]);
             uint8_t *in = malloc(il ? il : 1);
-            if (i == 3) { for (int k = 0; k < 3000; k++) in[k] = pats[3][k % pl3]; }
-            else if (il) memcpy(in, pats[i], il);
             size_t cap = il + il / 255 + 16;
             uint8_t *cb = malloc(cap ? cap : 16);
-            size_t cl = lz4_compress(in, il, cb);
             uint8_t *rt = NULL; size_t rl = 0;
-            int ok = !decomp('4', cb, cl, il, &rt, &rl) && rl == il &&
-                     (il == 0 || !memcmp(rt, in, il));
+            size_t cl;
+            int ok = 0;
             char nm[32]; snprintf(nm, sizeof nm, "lz4-rt%d", i);
-            ST(ok, nm);
+            if (!in || !cb) {
+                ST(0, nm);
+            } else {
+                if (i == 3) { for (int k = 0; k < 3000; k++) in[k] = pats[3][k % pl3]; }
+                else if (il) memcpy(in, pats[i], il);
+                cl = lz4_compress(in, il, cb, cap);
+                ok = cl != (size_t)-1 &&
+                     !decomp('4', cb, cl, il, &rt, &rl) && rl == il &&
+                     (il == 0 || !memcmp(rt, in, il));
+                ST(ok, nm);
+            }
             free(in); free(cb); free(rt);
         }
         /* incompressible */
         {
             uint8_t in[1024]; for (int k = 0; k < 1024; k++) in[k] = (k * 7919) & 0xFF;
-            uint8_t *cb = malloc(2048); size_t cl = lz4_compress(in, 1024, cb);
+            uint8_t *cb = malloc(2048);
             uint8_t *rt = NULL; size_t rl = 0;
-            ST(!decomp('4', cb, cl, 1024, &rt, &rl) && rl == 1024 &&
-               !memcmp(rt, in, 1024), "lz4-rt-inc");
+            size_t cl = 0;
+            if (!cb) {
+                ST(0, "lz4-rt-inc");
+            } else {
+                cl = lz4_compress(in, 1024, cb, 2048);
+                ST(cl != (size_t)-1 &&
+                   !decomp('4', cb, cl, 1024, &rt, &rl) && rl == 1024 &&
+                   !memcmp(rt, in, 1024), "lz4-rt-inc");
+            }
             free(cb); free(rt);
         }
     }
@@ -2252,10 +2297,12 @@ int aead_selftest(void) {
         /* multi-cluster: force small blocks */
         e.padq = 0; e.block_size = 64; e.ckalg = 2;
         uint8_t *big = malloc(70000);
-        for (int k = 0; k < 70000; k++) big[k] = (k * 31) & 0xFF;
-        ST(!aead_encrypt(big, 70000, &e, &b, &bl), "enc-multi");
-        ST(!aead_decrypt(b, bl, &d, &p, &pl) && pl == 70000 &&
-           !memcmp(p, big, 70000), "enc-multi-rt");
+        if (big) {
+            for (int k = 0; k < 70000; k++) big[k] = (k * 31) & 0xFF;
+            ST(!aead_encrypt(big, 70000, &e, &b, &bl), "enc-multi");
+            ST(!aead_decrypt(b, bl, &d, &p, &pl) && pl == 70000 &&
+               !memcmp(p, big, 70000), "enc-multi-rt");
+        }
         free(big); free(b); free(p); b = p = NULL;
         /* signed profile roundtrip (p2) */
         e.profile = 2; e.symkey = key; e.symkey_len = 32;
@@ -2477,9 +2524,9 @@ static int do_encrypt(int argc, char **argv) {
         else if ((v = opt_val(&i, argc, argv, "--sign-priv"))) { if (v == (void *)-1) return usage_err("argument --sign-priv: expected one argument"); signpriv = v; }
         else if ((v = opt_val(&i, argc, argv, "--checksum"))) { if (v == (void *)-1) return usage_err("argument --checksum: expected one argument"); ck = v; }
         else if ((v = opt_val(&i, argc, argv, "--padding"))) { if (v == (void *)-1) return usage_err("argument --padding: expected one argument"); pad = v; }
-        else if ((v = opt_val(&i, argc, argv, "--auth-data"))) { if (v == (void *)-1) return usage_err("argument --auth-data: expected one argument"); adF = realloc((void *)adF, (nF + 1) * sizeof *adF); adF[nF++] = (char *)v; }
-        else if ((v = opt_val(&i, argc, argv, "--auth-data-value"))) { if (v == (void *)-1) return usage_err("argument --auth-data-value: expected one argument"); adV = realloc((void *)adV, (nV + 1) * sizeof *adV); adV[nV++] = (char *)v; }
-        else if ((v = opt_val(&i, argc, argv, "--auth-data-key"))) { if (v == (void *)-1) return usage_err("argument --auth-data-key: expected one argument"); adK = realloc((void *)adK, (nK + 1) * sizeof *adK); adK[nK++] = (char *)v; }
+        else if ((v = opt_val(&i, argc, argv, "--auth-data"))) { if (v == (void *)-1) return usage_err("argument --auth-data: expected one argument"); { char **tF = realloc((void *)adF, (nF + 1) * sizeof *adF); if (!tF) { free(adF); free(adV); free(adK); return usage_err("out of memory"); } adF = tF; } adF[nF++] = (char *)v; }
+        else if ((v = opt_val(&i, argc, argv, "--auth-data-value"))) { if (v == (void *)-1) return usage_err("argument --auth-data-value: expected one argument"); { char **tV = realloc((void *)adV, (nV + 1) * sizeof *adV); if (!tV) { free(adF); free(adV); free(adK); return usage_err("out of memory"); } adV = tV; } adV[nV++] = (char *)v; }
+        else if ((v = opt_val(&i, argc, argv, "--auth-data-key"))) { if (v == (void *)-1) return usage_err("argument --auth-data-key: expected one argument"); { char **tK = realloc((void *)adK, (nK + 1) * sizeof *adK); if (!tK) { free(adF); free(adV); free(adK); return usage_err("out of memory"); } adK = tK; } adK[nK++] = (char *)v; }
         else if ((v = opt_val(&i, argc, argv, "--fixed-salt"))) { if (v == (void *)-1) return usage_err("argument --fixed-salt: expected one argument"); fsalt = v; }
         else if ((v = opt_val(&i, argc, argv, "--fixed-nmac"))) { if (v == (void *)-1) return usage_err("argument --fixed-nmac: expected one argument"); fnmac = v; }
         else if ((v = opt_val(&i, argc, argv, "--fixed-smacs"))) { if (v == (void *)-1) return usage_err("argument --fixed-smacs: expected one argument"); fsmacs = v; }
