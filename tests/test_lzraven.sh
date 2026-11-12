@@ -22,7 +22,13 @@ OS=$(sw_vers -productVersion 2>/dev/null || echo unknown)
 CT=${CT:-/usr/bin/compression_tool}
 AA=${AA:-/usr/bin/aa}
 LZ=$ROOT/src/lzraven.py
-ENC=$ROOT/src/encode.py
+ENC=${ENC_BIN:-$ROOT/src/encode.py}
+# backend=C: ENC_BIN points at the aae binary; E2E cells run it directly
+# (same argv shape). Stream cells (ZCELL/RCELL) stay on python: aae has
+# no --raw mode; their C mapping lives in tests/test_lzraven_c.sh.
+AAE_RUN() {
+  if [ -n "${ENC_BIN:-}" ]; then "$@"; else python3 "$@"; fi
+}
 command -v python3 >/dev/null || { echo "need python3" >&2; exit 2; }
 mkdir -p "$WORK" "$ROOT/vectors"
 pin_get() { grep "^$1," "$PINS" | head -1 | cut -d, -f3; }
@@ -109,7 +115,7 @@ E2E() { # tag [block]
   python3 -c "import random;random.seed(8);open('$WORK/in-$tag/q','wb').write(bytes(random.randrange(256) for _ in range(100000)))"
   fix "$WORK/in-$tag"
   "$AA" archive -a lzraven -t 1 ${blk:+-b "$blk"} -d "$WORK/in-$tag" -o "$WORK/$tag.expect.aar" 2>"$WORK/$tag.err" || { echo "FAIL $tag oracle rc"; FAIL=1; return; }
-  python3 "$ENC" "$WORK/in-$tag" "$WORK/$tag.got.aar" --alg lzraven ${blk:+--block "$blk"} 2>>"$WORK/$tag.err" || { echo "FAIL $tag impl rc"; FAIL=1; return; }
+  AAE_RUN "$ENC" "$WORK/in-$tag" "$WORK/$tag.got.aar" --alg lzraven ${blk:+--block "$blk"} 2>>"$WORK/$tag.err" || { echo "FAIL $tag impl rc"; FAIL=1; return; }
   if cmp -s "$WORK/$tag.expect.aar" "$WORK/$tag.got.aar"; then
     chk "lz-e2e-$tag" sha "$(sha "$WORK/$tag.got.aar")" "$(sz "$WORK/$tag.got.aar")"
   else echo "FAIL $tag aar bytes differ"; FAIL=1; return; fi
