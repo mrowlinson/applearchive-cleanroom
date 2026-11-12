@@ -2,7 +2,8 @@
  *
  * Same argv shapes as the Python reference; backends are cleanroom ONLY:
  *   probe       provenance block (no backend)
- *   aar-encode  C encoder via $AAE_C (5 algs; raven/bitmap refused exit 2)
+ *   aar-encode  C encoder via $AAE_C (all 7 algs; backend refusals
+ *               wrapped to CLI exit 2, same markers as Python)
  *   aar-decode  C decoder via $AAD_BIN (execv, all 7 algs)
  *   aar-list    pure C reparse of proto/aad.py parse_chain/parse_inner PAT walk
  *   aea-encrypt C AEAD via $AEAD_C (argv validated here; pending if absent)
@@ -216,6 +217,77 @@ static long long parse_size_enc(const char *s) {
     return (long long)v;
 }
 
+/* Run the encoder backend for raven/bitmap with stderr captured: the
+ * backend exits 1 with the honest marker on refusal-class inputs, but the
+ * CLI contract reserves 1 for operation failures and 2 for
+ * usage/harness-level errors — the same wrap proto/encode.py callers get
+ * via SystemExit (src/aae-cli:117-130). Success passes through (exit 0,
+ * stderr forwarded verbatim). fork+exec of the backend only; no shims. */
+static int run_encode_capture(const char *exe, char **args, const char *alg) {
+    int pf[2];
+    pid_t pid;
+    char *cap = NULL;
+    size_t capn = 0, capc = 0;
+    int st;
+    if (pipe(pf) != 0)
+        return do_execv(exe, args); /* fallback: direct */
+    pid = fork();
+    if (pid < 0) {
+        close(pf[0]);
+        close(pf[1]);
+        return do_execv(exe, args);
+    }
+    if (pid == 0) {
+        dup2(pf[1], STDERR_FILENO);
+        close(pf[0]);
+        close(pf[1]);
+        execv(exe, args);
+        _exit(127);
+    }
+    close(pf[1]);
+    for (;;) {
+        char tmp[4096];
+        ssize_t n = read(pf[0], tmp, sizeof tmp);
+        if (n <= 0)
+            break;
+        if (capn + (size_t)n + 1 > capc) {
+            size_t nc = capc ? capc * 2 : 8192;
+            char *nn;
+            while (nc < capn + (size_t)n + 1)
+                nc *= 2;
+            if (nc > (1 << 20))
+                break; /* stop buffering huge stderr */
+            nn = realloc(cap, nc);
+            if (!nn)
+                break;
+            cap = nn;
+            capc = nc;
+        }
+        if (capn + (size_t)n + 1 <= capc) {
+            memcpy(cap + capn, tmp, (size_t)n);
+            capn += (size_t)n;
+        }
+    }
+    close(pf[0]);
+    while (waitpid(pid, &st, 0) < 0 && errno == EINTR)
+        ;
+    if (WIFEXITED(st) && WEXITSTATUS(st) == 0) {
+        if (capn)
+            fwrite(cap, 1, capn, stderr);
+        free(cap);
+        return 0;
+    }
+    {
+        /* wrapped refusal, byte-identical in form to the Python CLI */
+        char *nl = cap ? memchr(cap, '\n', capn) : NULL;
+        size_t ln = nl ? (size_t)(nl - cap) : capn;
+        fprintf(stderr, "aae-cli: aar-encode --alg %s: %.*s\n", alg, (int)ln,
+                cap ? cap : "");
+        free(cap);
+        return 2;
+    }
+}
+
 static int cmd_aar_encode(int argc, char **argv) {
     static const char *flags[] = {"--alg", "--block", "--threads"};
     Opt opts[3] = {{"--alg", NULL}, {"--block", NULL}, {"--threads", NULL}};
@@ -249,20 +321,6 @@ static int cmd_aar_encode(int argc, char **argv) {
     }
     src = pos[0];
     dst = pos[1];
-    if (!strcmp(alg, "lzraven")) {
-        snprintf(m, sizeof m,
-                 "aar-encode --alg lzraven: lzraven unclosed input: "
-                 "C encoder covers raw/lzfse/zlib/lzma/lz4 only");
-        free(pos);
-        return die_msg(m);
-    }
-    if (!strcmp(alg, "lzbitmap")) {
-        snprintf(m, sizeof m,
-                 "aar-encode --alg lzbitmap: lzbitmap match-class input: "
-                 "C encoder covers raw/lzfse/zlib/lzma/lz4 only");
-        free(pos);
-        return die_msg(m);
-    }
     blk = opt_val(opts, 3, "block");
     if (blk) {
         long long v = parse_size_enc(blk);
@@ -301,6 +359,8 @@ static int cmd_aar_encode(int argc, char **argv) {
     }
     args[na] = NULL;
     free(pos);
+    if (!strcmp(alg, "lzraven") || !strcmp(alg, "lzbitmap"))
+        return run_encode_capture(exe, args, alg);
     return do_execv(exe, args);
 }
 

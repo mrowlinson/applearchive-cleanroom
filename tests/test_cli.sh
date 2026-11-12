@@ -141,35 +141,17 @@ mkdir -p "$WORK/ravdir"
 python3 -c "import random;random.seed(7);open('$WORK/ravdir/p','wb').write(bytes(random.randrange(256) for _ in range(3000)))"
 python3 -c "import random;random.seed(8);open('$WORK/ravdir/q','wb').write(bytes(random.randrange(256) for _ in range(100000)))"
 freeze "$WORK/ravdir"
-if [ "$IS_C" = 1 ]; then
-  # C CLI refuses raven by design (sibling-C encoder covers 5 algs so far)
-  run_impl aar-encode --alg lzraven --threads 1 "$WORK/ravdir" "$WORK/impl-rav.aar" 2>"$WORK/enc-rav.stderr"; rc=$?
-  [ "$rc" -eq 2 ] && grep -q "lzraven unclosed" "$WORK/enc-rav.stderr" \
-    && pass "encode-impl-exit-lzraven" || fail "encode-impl-exit-lzraven"
-else
 if run_impl aar-encode --alg lzraven --threads 1 "$WORK/ravdir" "$WORK/impl-rav.aar" 2>"$WORK/enc-rav.stderr"; then
   pass "encode-impl-exit-lzraven"
 else fail "encode-impl-exit-lzraven"; fi
-fi
 if sh "$ORACLE" aar-encode --alg lzraven --threads 1 "$WORK/ravdir" "$WORK/ora-rav.aar" >/dev/null 2>&1; then
   pass "encode-oracle-exit-lzraven"
 else fail "encode-oracle-exit-lzraven"; fi
-if [ "$IS_C" = 1 ]; then
-  pend "bytes-lzraven (C refuses raven by design)"
-else
 if cmp -s "$WORK/impl-rav.aar" "$WORK/ora-rav.aar"; then pass "bytes-lzraven"; else fail "bytes-lzraven"; fi
-fi
 # non-default block size parity (mirrors sibling E2E e2e1k)
-if [ "$IS_C" = 1 ]; then
-  run_impl aar-encode --alg lzraven --block 1k --threads 1 "$WORK/ravdir" "$WORK/impl-rav1k.aar" 2>"$WORK/enc-rav1k.stderr"; rc=$?
-  [ "$rc" -eq 2 ] && grep -q "lzraven unclosed" "$WORK/enc-rav1k.stderr" \
-    && pass "refuse-rav-1k-exit" || fail "refuse-rav-1k-exit"
-  pend "bytes-lzraven-1k (C refuses raven by design)"
-else
 if run_impl aar-encode --alg lzraven --block 1k --threads 1 "$WORK/ravdir" "$WORK/impl-rav1k.aar" 2>/dev/null \
    && sh "$ORACLE" aar-encode --alg lzraven --block 1k --threads 1 "$WORK/ravdir" "$WORK/ora-rav1k.aar" >/dev/null 2>&1 \
    && cmp -s "$WORK/impl-rav1k.aar" "$WORK/ora-rav1k.aar"; then pass "bytes-lzraven-1k"; else fail "bytes-lzraven-1k"; fi
-fi
 
 echo "== cells aar-encode lzbitmap (parity on proven-parity input) =="
 # Only parity input at .aar level: the AAR inner TLV structure itself trips
@@ -177,24 +159,13 @@ echo "== cells aar-encode lzbitmap (parity on proven-parity input) =="
 # cells refuse except empty1). Empty dir is byte-identical vs oracle.
 mkdir -p "$WORK/emptybm"
 freeze "$WORK/emptybm"
-if [ "$IS_C" = 1 ]; then
-  # C CLI refuses bitmap by design (sibling-C encoder covers 5 algs so far)
-  run_impl aar-encode --alg lzbitmap --threads 1 "$WORK/emptybm" "$WORK/impl-lzbm.aar" 2>"$WORK/enc-lzbm.stderr"; rc=$?
-  [ "$rc" -eq 2 ] && grep -q "lzbitmap match-class" "$WORK/enc-lzbm.stderr" \
-    && pass "encode-impl-exit-lzbitmap" || fail "encode-impl-exit-lzbitmap"
-else
 if run_impl aar-encode --alg lzbitmap --threads 1 "$WORK/emptybm" "$WORK/impl-lzbm.aar" 2>"$WORK/enc-lzbm.stderr"; then
   pass "encode-impl-exit-lzbitmap"
 else fail "encode-impl-exit-lzbitmap"; fi
-fi
 if sh "$ORACLE" aar-encode --alg lzbitmap --threads 1 "$WORK/emptybm" "$WORK/ora-lzbm.aar" >/dev/null 2>&1; then
   pass "encode-oracle-exit-lzbitmap"
 else fail "encode-oracle-exit-lzbitmap"; fi
-if [ "$IS_C" = 1 ]; then
-  pend "bytes-lzbitmap (C refuses bitmap by design)"
-else
 if cmp -s "$WORK/impl-lzbm.aar" "$WORK/ora-lzbm.aar"; then pass "bytes-lzbitmap"; else fail "bytes-lzbitmap"; fi
-fi
 
 echo "== cells refusal propagation (honest backend errors -> CLI exit 2 + marker) =="
 mkdir -p "$WORK/zerosdir"
