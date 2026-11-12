@@ -28,11 +28,8 @@ static uint32_t rd32le(const unsigned char *p) {
     return (uint32_t)p[0] | ((uint32_t)p[1] << 8) |
            ((uint32_t)p[2] << 16) | ((uint32_t)p[3] << 24);
 }
-static uint32_t rd32be(const unsigned char *p) __attribute__((unused));
-static uint32_t rd32be(const unsigned char *p) {
-    return ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16) |
-           ((uint32_t)p[2] << 8) | (uint32_t)p[3];
-}
+/* rd32be removed (fix-sweep-C): zero callers; all big-endian reads go
+ * through rd64be/rd16le. */
 static uint64_t rd64le(const unsigned char *p) __attribute__((unused));
 static uint64_t rd64le(const unsigned char *p) {
     uint64_t v = 0;
@@ -55,6 +52,7 @@ static int read_file(const char *path, Buf *out) {
     fseek(f, 0, SEEK_SET);
     if (n < 0) { fclose(f); FAIL("size %s\n", path); return -1; }
     unsigned char *d = malloc((size_t)n ? (size_t)n : 1);
+    if (!d) { fclose(f); FAIL("out of memory\n"); return -1; }
     if (n > 0 && fread(d, 1, (size_t)n, f) != (size_t)n) {
         fclose(f); free(d); FAIL("read %s\n", path); return -1;
     }
@@ -72,6 +70,7 @@ static int decode_block(const unsigned char magic[4],
     *got = 0;
     if (comp == unc) { /* stored */
         unsigned char *d = malloc(comp ? comp : 1);
+        if (!d) return -1;
         memcpy(d, pay, comp);
         out->data = d; out->len = comp;
         *got = comp;
@@ -79,6 +78,7 @@ static int decode_block(const unsigned char magic[4],
     }
     if (!memcmp(magic, "pbzz", 4)) {
         unsigned char *d = malloc(unc ? unc : 1);
+        if (!d) return -1;
         uLongf dl = unc;
         if (uncompress(d, &dl, pay, comp) == Z_OK) {
             *got = dl;
@@ -121,6 +121,7 @@ static int decode_block(const unsigned char magic[4],
      * no extraction); silent truncation was default-t-only. */
     unsigned char *d = malloc((size_t)unc + 1);
     void *scr = malloc(compression_decode_scratch_buffer_size(alg));
+    if (!d || !scr) { free(d); free(scr); return -1; }
     size_t g = compression_decode_buffer(d, (size_t)unc + 1, pay, comp,
                                          scr, alg);
     free(scr);
@@ -232,6 +233,7 @@ static int parse_chain(const Buf *file, Buf *inner, MidFail *mf,
     if (n < 6) { emit_stream_tail(); fails = 1; return -1; }
     if (!memcmp(d, "AA01", 4) || !memcmp(d, "YAA1", 4)) {
         unsigned char *c = malloc(n);
+        if (!c) return -1;
         memcpy(c, d, n);
         inner->data = c; inner->len = n;
         *nblocks = 1;
@@ -451,11 +453,25 @@ static int parse_inner(const Buf *inner, Item **items, size_t *nitems,
         }
         if (p != end) { cls = PF_ENDMISMATCH; goto itfail; }
         size_t blen = 0;
+        int wrap = 0;
         for (size_t i = 0; i < it.nents; i++)
             if ((it.ents[i].st == 'A' || it.ents[i].st == 'B' ||
                  it.ents[i].st == 'C') &&
-                memcmp(it.ents[i].key, "TYP", 3))
+                memcmp(it.ents[i].key, "TYP", 3)) {
+                /* checked accumulation: a wrapped sum must never
+                 * become a small blen (OOB read + pos wrap). */
+                if (it.ents[i].num > (uint64_t)((size_t)-1 - blen)) {
+                    wrap = 1;
+                    break;
+                }
                 blen += (size_t)it.ents[i].num;
+            }
+        if (wrap || blen > (size_t)-1 - end) {
+            /* fail closed: corrupt blob table, never a short item
+             * and never a wrapped pos (hang). */
+            cls = PF_BLOBOVERRUN;
+            goto itfail;
+        }
         if (end + blen > n) {
             /* Short-blob item: append flagged (midchain makes an empty
              * node; normal path skips it and the wrapper reports). */
@@ -753,6 +769,7 @@ static int extract(const Item *items, size_t nitems, const char *root,
     { /* root gated on scratch repl (a replaced root must not taint all) */
         char (*rr)[4096] = malloc(REPLC * sizeof *rr);
         size_t nr = 0;
+        if (!rr) { FAIL("out of memory\n"); free(repl); return -1; }
         int ror = mkdirs(root, rr, &nr);
         free(rr);
         if (ror) { FAIL("mkdir %s\n", root); free(repl); return -1; }
@@ -782,6 +799,13 @@ static int extract(const Item *items, size_t nitems, const char *root,
     /* H-target PATs pre-scanned (A-027#2 silence rule) */
     Hp *hts = malloc(cfcap * sizeof *hts);
     size_t nhts = 0;
+    if (!files || !dirs || !scols || !fsts || !eis || !hlcs || !hlns ||
+        !cfs || !hts || !repl) {
+        free(files); free(dirs); free(scols); free(fsts); free(eis);
+        free(hlcs); free(hlns); free(cfs); free(hts); free(repl);
+        FAIL("out of memory\n");
+        return -1;
+    }
     for (size_t k = 0; k < nitems; k++) {
         const Entry *tt = find_ent(&items[k], "TYP");
         const Entry *ll = find_ent(&items[k], "LNK");
