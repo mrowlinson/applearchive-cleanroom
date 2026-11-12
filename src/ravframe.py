@@ -58,10 +58,17 @@ def f2_expected(rawlen):
 def parse(buf):
     """Split stream -> (f2, [(f3, store, payload_off, payload_len)]).
     Raises ValueError on any structural violation."""
-    if len(buf) < 16:
+    if len(buf) < 12:
         raise ValueError("too short (%d)" % len(buf))
     if buf[:4] != MAGIC:
         raise ValueError("bad magic %s" % buf[:4].hex())
+    if len(buf) == 12:
+        # empty lzraven form: magic + F2=0 + trailer (oracle 12B emit)
+        if buf[4:] == bytes(8):
+            return 0, []
+        raise ValueError("bad 12B trailer %s" % buf[4:].hex())
+    if len(buf) < 16:
+        raise ValueError("too short (%d)" % len(buf))
     if buf[-4:] != TRAILER:
         raise ValueError("bad trailer %s" % buf[-4:].hex())
     f2 = struct.unpack("<I", buf[4:8])[0]

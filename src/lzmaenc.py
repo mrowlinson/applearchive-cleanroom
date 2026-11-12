@@ -18,6 +18,38 @@ import zlib
 
 _PIN_VERSION = "5.8.4"
 _PIN_PRESET = 6
+_PIN_CHECKED = False
+
+
+def _check_pin():
+    """Fail closed unless the encoding liblzma is the pinned 5.8.4.
+
+    Version is read from `xz --version` (brew xz bottle; the same
+    liblzma the stdlib links here). Any drift — or an unreadable
+    version — refuses to emit, since packet bytes are version-pinned.
+    """
+    global _PIN_CHECKED
+    if _PIN_CHECKED:
+        return
+    import re
+    import shutil
+    import subprocess
+    xz = shutil.which("xz")
+    if xz is None:
+        raise ValueError("liblzma version unreadable (no xz in PATH); "
+                         "refusing lzma encode (pin %s)" % _PIN_VERSION)
+    try:
+        out = subprocess.run([xz, "--version"], capture_output=True,
+                             text=True, timeout=30).stdout
+    except (OSError, subprocess.TimeoutExpired):
+        raise ValueError("liblzma version unreadable; refusing lzma "
+                         "encode (pin %s)" % _PIN_VERSION)
+    m = re.search(r"(\d+\.\d+\.\d+)", out or "")
+    if not m or m.group(1) != _PIN_VERSION:
+        raise ValueError("liblzma version drift: got %r, pin %s; "
+                         "refusing lzma encode" % (m.group(1) if m else None,
+                                                   _PIN_VERSION))
+    _PIN_CHECKED = True
 
 
 def _vint(n):
@@ -36,6 +68,8 @@ def _read_vint(d, pos):
     n = 0
     sh = 0
     while True:
+        if pos >= len(d):
+            raise ValueError("truncated vint")
         b = d[pos]
         pos += 1
         n |= (b & 0x7F) << sh
@@ -49,19 +83,27 @@ def _lzma2_data_end(xz, data_start):
     q = data_start
     start = q
     while True:
+        if q >= len(xz):
+            raise ValueError("truncated lzma2 data")
         ctrl = xz[q]
         q += 1
         if ctrl == 0:
             eos_end = q
             while (q - start) % 4:
+                if q >= len(xz):
+                    raise ValueError("truncated lzma2 pad")
                 if xz[q] != 0:
                     raise ValueError("bad lzma2 pad")
                 q += 1
             return eos_end, q
         elif ctrl in (1, 2):
+            if q + 2 > len(xz):
+                raise ValueError("truncated lzma2 data")
             us = struct.unpack(">H", xz[q:q + 2])[0] + 1
             q += 2 + us
         elif ctrl >= 0x80:
+            if q + 4 > len(xz):
+                raise ValueError("truncated lzma2 data")
             rs = (ctrl >> 5) & 3
             uhi = ctrl & 0x1F
             us = (uhi << 16) + struct.unpack(">H", xz[q:q + 2])[0] + 1
@@ -80,6 +122,8 @@ def oracle_xz(stock_xz, unc):
     if xz[:6] != bytes.fromhex("fd377a585a00") or xz[6:8] != b"\x00\x00":
         raise ValueError("not a check-none XZ stream")
     pos = 12
+    if len(xz) < pos + 2:
+        raise ValueError("truncated block header")
     b0 = xz[pos]
     hlen = (b0 + 1) * 4
     flags = xz[pos + 1]
@@ -90,10 +134,18 @@ def oracle_xz(stock_xz, unc):
         _, p = _read_vint(xz, p)
     if flags & 0x80:
         _, p = _read_vint(xz, p)
+    if p + 2 > len(xz):
+        raise ValueError("truncated filter flags")
     if xz[p] != 0x21:
         raise ValueError("not an LZMA2 block")
     fsize = xz[p + 1]
+    if fsize > 127:
+        raise ValueError("multi-byte filter size (unparseable)")
+    if p + 2 + fsize > len(xz):
+        raise ValueError("truncated filter props")
     dc = xz[p + 2:p + 2 + fsize]
+    if len(dc) != fsize:
+        raise ValueError("truncated filter props")
     data_start = pos + hlen
     eos_end, data_end = _lzma2_data_end(xz, data_start)
     if data_end % 4:
@@ -109,7 +161,7 @@ def oracle_xz(stock_xz, unc):
     hdr.append(0xC0)
     hdr += _vint(eos_end - data_start)
     hdr += _vint(unc)
-    hdr += b"\x21\x01" + dc
+    hdr += bytes([0x21, fsize]) + dc  # filter id + size from actual dc
     while len(hdr) < ohlen - 4:
         hdr.append(0)
     if len(hdr) != ohlen - 4:
@@ -128,6 +180,7 @@ def oracle_xz(stock_xz, unc):
 
 
 def xz_encode(chunk):
+    _check_pin()
     std = lzma.compress(bytes(chunk), format=lzma.FORMAT_XZ,
                         check=lzma.CHECK_NONE, preset=_PIN_PRESET)
     return oracle_xz(std, len(chunk))

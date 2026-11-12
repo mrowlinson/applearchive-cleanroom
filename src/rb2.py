@@ -31,7 +31,8 @@ MAX_BLOCK = 128 * 1024 * 1024    # NOTE-008 range 1..128m
 
 
 def parse_block(s):
-    s = s.strip().lower()
+    # lowercase-only suffixes (canonical with encode.py: (\d+)([bkmg])?)
+    s = s.strip()
     mult = 1
     if s[-1:] in ("b", "k", "m", "g"):
         mult = {"b": 1, "k": 1024, "m": 1024**2, "g": 1024**3}[s[-1]]
@@ -82,15 +83,21 @@ def main(argv):
     i = 0
     while i < len(argv):
         a = argv[i]
-        if a == "--alg" and i + 1 < len(argv):
+        if a == "--alg":
+            if i + 1 >= len(argv):
+                return die("missing value: %s" % a)
             alg = argv[i + 1]
             i += 2
-        elif a == "--block" and i + 1 < len(argv):
+        elif a == "--block":
+            if i + 1 >= len(argv):
+                return die("missing value: %s" % a)
             block = parse_block(argv[i + 1])
             if block is None:
                 return die("invalid block size: %r" % argv[i + 1])
             i += 2
-        elif a == "--payload-dir" and i + 1 < len(argv):
+        elif a == "--payload-dir":
+            if i + 1 >= len(argv):
+                return die("missing value: %s" % a)
             paydir = argv[i + 1]
             i += 2
         elif a.startswith("--"):

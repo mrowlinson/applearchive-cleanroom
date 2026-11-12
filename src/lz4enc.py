@@ -104,7 +104,10 @@ def lz4_encode(inner, buckets=2048, slots=5, hashmode="shift",
         nchb = (blen + CHUNK - 1) // CHUNK or 1
         for bci in range(nchb):
             base = bbase + bci * CHUNK
-            n = min(CHUNK, len(inner) - base)
+            # block-capped: the last chunk of a non-final block must end
+            # at the block end (blocksize need not be a 64K multiple).
+            # len(inner)-base alone overruns into the next block.
+            n = min(CHUNK, bbase + blen - base)
             final = bci == nchb - 1
             ilim = None if final else base + CHUNK - NEVER_K
             # finding bounds (two gates, both required):

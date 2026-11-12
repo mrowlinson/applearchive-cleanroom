@@ -185,13 +185,10 @@ def _aead_py():
 
 
 def _hexval(v):
-    if v.startswith(("hex:", "base64:")):
-        return v
-    try:
-        bytes.fromhex(v)
-        return "hex:" + v
-    except ValueError:
-        return v
+    # strict passthrough: key material must already be hex:... or
+    # base64:... (oracle rejects bare values in -key-value; silently
+    # prefixing bare hex diverges from the oracle — parity bug).
+    return v
 
 
 def cmd_aea_encrypt(argv):
@@ -206,6 +203,12 @@ def cmd_aea_encrypt(argv):
     if "profile" not in opts:
         return _die("usage: aae-cli aea-encrypt --profile P [--alg A] [--block S] "
                     "[--threads N] [--password PW|--key HEX|...] IN OUT")
+    if "threads" in opts:
+        try:
+            if int(opts["threads"]) <= 0:
+                raise ValueError
+        except ValueError:
+            return _die("aea-encrypt: invalid threads: %r (want int > 0)" % opts["threads"])
     if len(pos) != 2:
         return _die("usage: aae-cli aea-encrypt --profile P [--alg A] [--block S] "
                     "[--threads N] [--password PW|--key HEX|...] IN OUT")
