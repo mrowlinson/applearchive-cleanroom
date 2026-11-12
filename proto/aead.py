@@ -534,6 +534,9 @@ def encrypt_aea(data, profile, symkey=None, password=None, recip_pub=None,
 
     clusters = []
     cmac = None
+    # Forward pass: per-cluster tables/segments. Header tags + nmac chain
+    # resolve in the reverse pass below (oracle rule: nmac[i] = tag[i+1]).
+    fwd = []
     for ci in range(ncl):
         ck = kd.clustkey(ci)
         chk = kd.chek(ck)
@@ -566,15 +569,31 @@ def encrypt_aea(data, profile, symkey=None, password=None, recip_pub=None,
             if len(nmacs) < 32 * (ci + 1):
                 raise FmtErr("nmacs too short")
             nmac = bytes(nmacs[32 * ci:32 * (ci + 1)])
-        elif padlen and ci == ncl - 1:
-            # last nmac authenticates padding (oracle-observed rule)
-            nmac = hmac.digest(padkey, pad, "sha256")
         else:
-            nmac = os.urandom(32)
-        sh_stored, want = enc_ver(chk, bytes(tab), nmac + bytes(sms))
+            nmac = None  # placeholder; reverse pass fills
+        fwd.append((chk, bytes(tab), bytes(sms), segblobs, nmac))
+    # Reverse pass: header tags + nmac chaining. Fixed nmacs stay verbatim
+    # (transplant parity); last nmac = pad-auth or random; else tag[i+1].
+    # Forward-random nmacs (pre-fix behavior) are rejected by the oracle
+    # AND by our own decrypt for ncl > 1 — see aeadc.c.
+    next_tag = None
+    for ci in range(ncl - 1, -1, -1):
+        chk, tab_b, sms_b, segblobs, nmac = fwd[ci]
+        if nmac is None:
+            if ci == ncl - 1:
+                if padlen:
+                    nmac = hmac.digest(padkey, pad, "sha256")
+                else:
+                    nmac = os.urandom(32)
+            else:
+                nmac = next_tag
+        sh_stored, want = enc_ver(chk, tab_b, nmac + sms_b)
         if ci == 0:
             cmac = want
-        clusters.append((sh_stored, nmac, bytes(sms), segblobs))
+        else:
+            next_tag = want
+        clusters.append((sh_stored, nmac, sms_b, segblobs))
+    clusters.reverse()
     if cmac is None:
         cmac = os.urandom(32)
 
