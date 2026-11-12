@@ -194,12 +194,30 @@ static uint8_t *read_all(const char *path, size_t *len_out) {
 
 static const char *g_root;
 
-/* join root + rel (rel "" for root) */
+/* join root + rel (rel "" for root). Never truncates: overlong paths
+ * error out naming the path (exit 1) instead of corrupting it. */
 static void fullpath(const char *rel, char *out, size_t cap) {
+    int n;
     if (!rel[0])
-        snprintf(out, cap, "%s", g_root);
+        n = snprintf(out, cap, "%s", g_root);
     else
-        snprintf(out, cap, "%s/%s", g_root, rel);
+        n = snprintf(out, cap, "%s/%s", g_root, rel);
+    if (n < 0 || (size_t)n >= cap) {
+        fprintf(stderr, "path too long: %s%s%s\n", g_root,
+                rel[0] ? "/" : "", rel);
+        exit(1);
+    }
+}
+
+/* checked u16 emit: lengths that do not fit error out naming the path
+ * (exit 1) instead of wrapping into a corrupt entry. */
+static void bu16ck(buf *b, unsigned long v, const char *what,
+                   const char *path) {
+    if (v > 0xFFFF) {
+        fprintf(stderr, "%s too long: %s\n", what, path);
+        exit(1);
+    }
+    bu16le(b, (uint16_t)v);
 }
 
 static void encode_entry(buf *out, const char *rel, struct stat *st, char typ) {
@@ -214,12 +232,19 @@ static void encode_entry(buf *out, const char *rel, struct stat *st, char typ) {
     bput(&h, "TYP1", 4);
     bput(&h, &typ, 1);
     bput(&h, "PATP", 4);
-    bu16le(&h, (uint16_t)strlen(rel));
+    bu16ck(&h, (unsigned long)strlen(rel), "path", full);
     bput(&h, rel, strlen(rel));
     if (typ == 'L') {
         char tgt[4096];
         ssize_t n = readlink(full, tgt, sizeof tgt);
         if (n < 0) die("readlink");
+        /* readlink never NUL-terminates: n == sizeof means the target
+         * was cut off. Error naming the link instead of storing a
+         * truncated target. */
+        if ((size_t)n >= sizeof tgt) {
+            fprintf(stderr, "link target too long: %s\n", full);
+            exit(1);
+        }
         bput(&h, "LNKP", 4);
         bu16le(&h, (uint16_t)n);
         bput(&h, tgt, (size_t)n);
@@ -255,13 +280,13 @@ static void encode_entry(buf *out, const char *rel, struct stat *st, char typ) {
     if (typ == 'D' || typ == 'F' || typ == 'L') {
         xat_value(&xat, full, typ == 'L');
         bput(&h, "XATA", 4);
-        bu16le(&h, (uint16_t)xat.n);
+        bu16ck(&h, (unsigned long)xat.n, "xattr", full);
         has_xat = 1;
     }
     if (typ == 'F' && st->st_nlink > 1) bput(&h, "HLC1\x00", 5);
 
     bput(out, "AA01", 4);
-    bu16le(out, (uint16_t)(6 + h.n));
+    bu16ck(out, (unsigned long)(6 + h.n), "entry", full);
     bput(out, h.p, h.n);
     if (dat) bput(out, dat, datlen);
     if (has_xat) bput(out, xat.p, xat.n);
@@ -289,11 +314,15 @@ static void walk(buf *out, const char *dir, const char *rel) {
     qsort(names, nn, sizeof *names, cmpbytes);
     for (size_t i = 0; i < nn; i++) {
         char child[4096], crel[4096];
-        snprintf(child, sizeof child, "%s/%s", dir, names[i]);
-        if (rel[0])
-            snprintf(crel, sizeof crel, "%s/%s", rel, names[i]);
-        else
-            snprintf(crel, sizeof crel, "%s", names[i]);
+        /* never truncate: deep trees error out naming the path. */
+        int c1 = snprintf(child, sizeof child, "%s/%s", dir, names[i]);
+        int c2 = rel[0] ? snprintf(crel, sizeof crel, "%s/%s", rel, names[i])
+                        : snprintf(crel, sizeof crel, "%s", names[i]);
+        if (c1 < 0 || (size_t)c1 >= sizeof child ||
+            c2 < 0 || (size_t)c2 >= sizeof crel) {
+            fprintf(stderr, "path too long: %s/%s\n", dir, names[i]);
+            exit(1);
+        }
         struct stat st;
         if (lstat(child, &st) != 0) die(child);
         mode_t m = st.st_mode;
@@ -418,11 +447,9 @@ static size_t xz_lzma2_end(const uint8_t *xz, size_t start, size_t *eos) {
             q += 2 + us;
         } else if (ctrl >= 0x80) {
             int rs = (ctrl >> 5) & 3;
-            size_t uhi = (size_t)(ctrl & 0x1F);
-            (void)uhi; /* usize recomputed below */
-            size_t us = (uhi << 16) + ((size_t)xz[q] << 8 | xz[q + 1]) + 1;
+            /* uncompressed size parsed but never consumed (skip needs
+             * only the compressed size); removed rather than kept. */
             size_t cs = ((size_t)xz[q + 2] << 8 | xz[q + 3]) + 1;
-            (void)us;
             q += 4;
             if (rs >= 2) q += 1;
             q += cs;
@@ -581,6 +608,7 @@ static void wrap_pbze(buf *out, const uint8_t *inner, size_t ilen,
             cl[i] = cn;
         } else {
             pay[i] = malloc(n ? n : 1);
+            if (!pay[i]) die("malloc");
             if (n) memcpy(pay[i], inner + off, n);
             cl[i] = n;
         }
@@ -607,23 +635,39 @@ static void wrap_pbze(buf *out, const uint8_t *inner, size_t ilen,
     free(cl);
 }
 
+/* encode.py ^([0-9]+)([bkmg]?)$ lowercase-only; checked math (no ULL
+ * wrap); exit 2 with the canonical message on anything else. */
 static size_t parse_size(const char *s) {
-    char *e;
-    unsigned long long v = strtoull(s, &e, 10);
-    if (e == s) goto bad;
-    if (*e == 'k' || *e == 'K')
-        v *= 1024, e++;
-    else if (*e == 'm' || *e == 'M')
-        v *= 1024 * 1024, e++;
-    else if (*e == 'g' || *e == 'G')
-        v *= 1024 * 1024 * 1024, e++;
-    else if (*e == 'b' || *e == 'B')
-        e++;
-    if (*e) goto bad;
+    unsigned long long v = 0;
+    const char *p = s;
+    if (!*p) goto bad;
+    while (*p >= '0' && *p <= '9') {
+        unsigned d = (unsigned)(*p - '0');
+        if (v > (0xFFFFFFFFFFFFFFFFULL - d) / 10) goto bad;
+        v = v * 10 + d;
+        p++;
+    }
+    if (p == s) goto bad;
+    {
+        unsigned long long m = 1;
+        if (*p) {
+            if (p[1]) goto bad;
+            switch (*p) {
+            case 'b': m = 1; break;
+            case 'k': m = 1024; break;
+            case 'm': m = 1024ULL * 1024; break;
+            case 'g': m = 1024ULL * 1024 * 1024; break;
+            default: goto bad;
+            }
+            p++;
+        }
+        if (m != 1 && v > 0xFFFFFFFFFFFFFFFFULL / m) goto bad;
+        v *= m;
+    }
     return (size_t)v;
 bad:
-    fprintf(stderr, "bad size %s\n", s);
-    exit(1);
+    fprintf(stderr, "invalid block size: %s\n", s);
+    exit(2);
 }
 
 int ae_main(int argc, char **argv) {
