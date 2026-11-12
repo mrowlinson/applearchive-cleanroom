@@ -823,15 +823,18 @@ static size_t lz4_compress(const uint8_t *in, size_t il, uint8_t *out,
         } else ip++;
     }
     { /* tail literals (also covers il<=12 whole-input path) */
-        size_t lit = il - anchor;
-        LZ4_PUT1((lit >= 15 ? 15 : lit) << 4);
-        if (lit >= 15) {
-            lit -= 15;
-            while (lit >= 255) { LZ4_PUT1(255); lit -= 255; }
-            LZ4_PUT1(lit);
+        size_t tl = il - anchor, e = tl;
+        LZ4_PUT1((tl >= 15 ? 15 : tl) << 4);
+        if (e >= 15) {
+            e -= 15;
+            while (e >= 255) { LZ4_PUT1(255); e -= 255; }
+            LZ4_PUT1(e);
         }
-        if (lit > cap - op) return (size_t)-1;
-        memcpy(out + op, in + anchor, lit); op += lit;
+        /* NOTE: copy the ORIGINAL length tl, not the consumed
+         * extension remainder e (pre-fix bug: tails >= 15 silently
+         * truncated, undecryptable output). */
+        if (tl > cap - op) return (size_t)-1;
+        memcpy(out + op, in + anchor, tl); op += tl;
     }
     return op;
 #undef LZ4_PUT1
