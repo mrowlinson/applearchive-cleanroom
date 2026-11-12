@@ -5,6 +5,10 @@ CFLAGS ?= -O2 -Wall
 
 all: $(OUTDIR)/aad
 
+$(OUTDIR)/aad: src/aad.c
+	mkdir -p $(OUTDIR)
+	$(CC) $(CFLAGS) -o $@ $< -lz -lcompression
+
 # aae-cli C port (sibling lane C owns src/c/aae.c; this target only builds
 # the CLI dispatcher + list reparse from src/c/cli.c).
 # Pinned liblzma 5.8.4 per quiz A-20(b): direct link, never unpinned dlopen.
