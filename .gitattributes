@@ -1,0 +1,9 @@
+# Language stats: the grammar map exists in both languages as
+# machine-assisted mapping tables. rgramc.c is already auto-excluded
+# as generated (header marker); rgram.py holds the equivalent content
+# on the Python side, so it is marked the same. Hand-written code is
+# ~4k lines per language; compare that, not the tables.
+src/rgram.py linguist-generated
+src/c/rgramc.c linguist-generated
+src/c/lzraventab.h linguist-generated
+vectors/*.csv linguist-generated
