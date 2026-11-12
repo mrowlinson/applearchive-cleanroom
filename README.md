@@ -22,59 +22,58 @@ from observing what the tools do.
 
 ## Install
 
-Prereqs: macOS with `cc` and `python3`. (Apple's `/usr/bin/aa` and
-`/usr/bin/aea` are only needed to run the verification batteries, not
-to use the tools.)
+Prereqs: macOS with Xcode command-line tools (`cc`), Homebrew `xz`
+(pinned liblzma for lzma encode), and `python3` (batteries only).
+Apple's `/usr/bin/aa` and `/usr/bin/aea` are only needed to run the
+verification batteries, not to use the tools.
 
 ```sh
 git clone https://github.com/mrowlinson/applearchive-cleanroom.git
 cd applearchive-cleanroom
-make -C src/c OUTDIR=$HOME/aa-build   # C decode/encode binaries
+make                        # builds ./build: aad aae aae-cli aeadc rgramc
+make OUTDIR=$HOME/aa-build  # or pick your own dir; all 5 land together
 ```
 
-AEA encrypt/decrypt additionally need Python `cryptography` + `lz4`:
-
-```sh
-uv run --with lz4 --with cryptography python3 src/aae-cli aea-encrypt ...
-```
+No runtime dependencies beyond macOS system libraries: no Python, no
+pip packages, no environment variables. The CLI finds its backends
+beside itself (`AAD_BIN`/`AAE_C`/`AEAD_C` override when set).
 
 ## Usage
 
-One entry point, `src/aae-cli`:
+One entry point, `build/aae-cli`:
 
 ```sh
+CLI=build/aae-cli
 # archive a directory (pick any of the 7 algorithms)
-python3 src/aae-cli aar-encode --alg lzfse [--block 4m] [--threads 4] SRCDIR OUT.aar
+$CLI aar-encode --alg lzfse [--block 4m] [--threads 4] SRCDIR OUT.aar
 
 # extract an archive
-python3 src/aae-cli aar-decode IN.aar OUTDIR
+$CLI aar-decode IN.aar OUTDIR
 
 # list contents
-python3 src/aae-cli aar-list IN.aar
+$CLI aar-list IN.aar
 
 # encrypt (all 6 profiles)
-python3 src/aae-cli aea-encrypt --profile 5 [--alg A] [--block S] IN OUT
+$CLI aea-encrypt --profile 5 [--alg A] [--block S] IN OUT
 
 # decrypt (password, hex key, or profile-appropriate key material)
-python3 src/aae-cli aea-decrypt --password PW IN OUT
+$CLI aea-decrypt --password PW IN OUT
 
 # identify a blob
-python3 src/aae-cli aea-id IN
+$CLI aea-id IN
 ```
 
 Exit codes: 0 ok, 1 operation failure, 2 usage error or unsupported
 operation. Full contract: [harness/CLI-CONTRACT.md](harness/CLI-CONTRACT.md).
-Environment: `AAD_BIN` (decode binary), `AEAD_PY` (Python with AEA
-deps), `LZFSE_DYLIB` (OSS lzfse for lzfse encode), `TMPDIR` (scratch
-root, outside the repo).
 
 ## How it works
 
-Two layers: a Python reference implementation (every codec and
-container path) and C deliverables for decode (`src/aad.c`) and encode
-(`src/c/`). Each C port had to prove byte-parity — port == prototype ==
-Apple oracle — before it counted. The lzraven codec grammar alone is
-110,000+ pinned behavior cells covering every input length 0..390836.
+Pure C top to bottom: the CLI dispatcher, all 7 encode paths, all 7
+decode paths, and all 6 AEA profiles. Beside it sits the Python
+reference implementation it was ported from — every C port had to
+prove byte-parity (port == prototype == Apple oracle) before it
+counted. The lzraven codec grammar alone is 110,000+ pinned behavior
+cells covering every input length 0..390836.
 
 Everything was derived black-box: feed Apple's tools inputs, record
 outputs, implement to the observations. See
@@ -95,7 +94,7 @@ outputs, implement to the observations. See
 ## Layout
 
 ```
-src/aae-cli          unified CLI
+src/c/cli.c          unified CLI (C; `src/aae-cli` = Python reference)
 src/aad.c            decode (C)
 src/c/               encode + codec ports (C)
 src/*.py             encode reference (Python)
@@ -118,7 +117,10 @@ Apple's tools on this machine (macOS 27.2). Current master HEAD:
 | decode (`c-battery.sh`) | 1069/1069 |
 | AEA (`aea-battery.sh`) | 187/187 |
 | AEA encrypt + units | 49/49, 14/14 |
-| CLI (`test_cli.sh`) | 74/74 |
+| CLI, C (`test_cli.sh` + `CLI_BIN`) | 104/104 |
+| CLI, Python reference (`test_cli.sh`) | 78/78 |
+| AEA C (`test_aead_c.sh`) | 102/102 |
+| lzraven / lzbitmap C (`test_lzraven_c.sh`, `test_lzbitmap_c.sh`) | 64/64, 32/32 |
 | lzraven / lzbitmap / lz4 (+full, +C parity) | 64/64, 32/32, 8/8 + 60x3 + 11/11 |
 | smoke / units / pbze / rawenc / rb2 / ravframe / outer2 / lzma | all green |
 
