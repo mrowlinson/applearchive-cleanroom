@@ -44,5 +44,5 @@
   `PASS <name> bytes=… sha=…` attestation with FULL-sha compare),
   PINSET (battery PASS set == csv row set), CONTAM (no vendor/disasm
   markers, no Mach-O), OSS (new-dep scan; liblzma 5.8.4 + lzfse
-  nominated-only), LIBCOMPRESSION (deny), ADOPT (harness-oracle parity).
+  nominated-only), system-Compression deny (A-12), ADOPT (harness-oracle parity).
 - Impl-vs-oracle: same battery, both backends, setdiff must be empty on bytes cells.

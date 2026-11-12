@@ -51,11 +51,13 @@ Build the C binary first (all C legs):
 - PENDING (by design): SMOKE-IMPL2 (no impl2 backend — documented, not resurrected).
 - FAIL pre-existing (not this lane; C-lane/quiz-owned):
   CONTAM (spec/ viewer docs trip the marker grep),
-  LIBCOMPRESSION (src C `compression_*` use vs A-12 REFUSE — needs quiz grant),
-  RAWENC-C/PBZE-C `no-c-binary` (downstream of C-BUILD env),
-  ADOPT WARN (lane diff).
-- FAIL fixed this lane: PINS-RB2/PINS-RAVFRAME set-eq (new cells now pinned),
-  C-BUILD TMPDIR wipe race (export moved after `rm -rf $OUT`).
+  LIBCOMPRESSION (src C + lzbitmap `compression_*` use vs A-12 REFUSE —
+  needs quiz grant; none of the hits are this lane's files),
+  ADOPT WARN (lane diff), AEA-BIN WARN (committed .aea fixtures by design).
+- FAIL fixed this lane, verified on final gate run: PINS-RB2/PINS-RAVFRAME
+  set-eq (new cells now pinned: 50/50, 183/183), C-BUILD TMPDIR wipe race
+  (export moved after `rm -rf $OUT`), RAWENC-C/PBZE-C (gate now exports
+  LZFSE_DYLIB; PBZE-C 10/10, PINS-PBZE-C 10/10).
 
 ## Canonical strings (cross-language, byte-compared in test_cli.sh)
 
