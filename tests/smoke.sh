@@ -4,10 +4,11 @@
 # Usage: tests/smoke.sh [workdir]; workdir defaults to mktemp under $TMPDIR.
 # Backend override: BACKEND=/path/to/impl-adapter (same CLI contract). Default: harness oracle adapter.
 set -eu
+: "${TMPDIR:?must set TMPDIR to NVME scratch (never /tmp)}"
 
 HERE=$(cd "$(dirname "$0")" && pwd)
 ADAPTER=${BACKEND:-$HERE/../harness/oracle-adapter.sh}
-WORK=${1:-$(mktemp -d "${TMPDIR:-/tmp}/aax-smoke.XXXXXX")}
+WORK=${1:-$(mktemp -d "$TMPDIR/aax-smoke.XXXXXX")}
 FAIL=0
 
 cell() { # name -- cmd...

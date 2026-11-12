@@ -19,7 +19,7 @@ run_impl() {
   if [ -n "${CLI_BIN:-}" ]; then "$IMPL" "$@"; else python3 "$IMPL" "$@"; fi
 }
 IS_C=0; [ -n "${CLI_BIN:-}" ] && IS_C=1
-NVME_WS=/Volumes/NVME/applearchive-cleanroom-ws
+NVME_WS=${NVME_WS:-/Volumes/NVME/applearchive-cleanroom-ws}
 WORK=${1:-$(mktemp -d "${TMPDIR:-$NVME_WS/tmp}/cli-battery.XXXXXX")}
 FAIL=0; PASS=0; TOTAL=0
 pass() { PASS=$((PASS+1)); TOTAL=$((TOTAL+1)); echo "PASS $1"; }
@@ -118,7 +118,7 @@ done
 
 echo "== cells aea-decrypt (byte parity impl vs oracle) =="
 KEYHEX=$(xxd -p "$V/aea/testkey.bin" | tr -d '\n')
-if run_impl aea-decrypt --key "$KEYHEX" "$V/aea/hello-p1-nopad.aea" "$WORK/d-p1.bin" 2>/dev/null; then pass "dec-impl-exit-p1"; else fail "dec-impl-exit-p1"; fi
+if run_impl aea-decrypt --key "hex:$KEYHEX" "$V/aea/hello-p1-nopad.aea" "$WORK/d-p1.bin" 2>/dev/null; then pass "dec-impl-exit-p1"; else fail "dec-impl-exit-p1"; fi
 if aea decrypt -key "$V/aea/testkey.bin" -i "$V/aea/hello-p1-nopad.aea" -o "$WORK/do-p1.bin" 2>/dev/null; then pass "dec-oracle-exit-p1"; else fail "dec-oracle-exit-p1"; fi
 if cmp -s "$WORK/d-p1.bin" "$WORK/do-p1.bin"; then pass "dec-bytes-p1"; else fail "dec-bytes-p1"; fi
 PW='test-password-fixture'
@@ -129,7 +129,7 @@ if cmp -s "$WORK/d-p5.bin" "$WORK/do-p5.bin"; then pass "dec-bytes-p5"; else fai
 if aea encrypt -profile 1 -key "$V/aea/testkey.bin" -a none -padding none -i "$V/aar/hello-raw.aar" -o "$WORK/p1-none.aea" 2>/dev/null; then
   pass "stdio-fixture-exit"
   if "$AEAD_PY" -c "import sys" </dev/null 2>/dev/null; then
-    if run_impl aea-decrypt --key "$KEYHEX" - - <"$WORK/p1-none.aea" >"$WORK/d-stdio.bin" 2>/dev/null \
+    if run_impl aea-decrypt --key "hex:$KEYHEX" - - <"$WORK/p1-none.aea" >"$WORK/d-stdio.bin" 2>/dev/null \
        && aea decrypt -key "$V/aea/testkey.bin" -i "$WORK/p1-none.aea" -o "$WORK/do-stdio.bin" 2>/dev/null \
        && cmp -s "$WORK/d-stdio.bin" "$WORK/do-stdio.bin"; then pass "dec-stdio-bytes"; else fail "dec-stdio-bytes"; fi
   fi
@@ -195,8 +195,8 @@ EPW='test-password-fixture-32................'
 for p in 0 1 2 3 4 5; do
   case $p in
     0) EC="--sign-priv $WORK/ec-priv.pem"; EOD="-sign-pub $WORK/ec-pub.pem";;
-    1) EC="--key $EKEYHEX"; EOD="-key $WORK/key32.bin";;
-    2) EC="--key $EKEYHEX --sign-priv $WORK/ec-priv.pem"; EOD="-key $WORK/key32.bin -sign-pub $WORK/ec-pub.pem";;
+    1) EC="--key hex:$EKEYHEX"; EOD="-key $WORK/key32.bin";;
+    2) EC="--key hex:$EKEYHEX --sign-priv $WORK/ec-priv.pem"; EOD="-key $WORK/key32.bin -sign-pub $WORK/ec-pub.pem";;
     3) EC="--recipient-pub $WORK/ec-pub.pem"; EOD="-recipient-priv $WORK/ec-priv.pem";;
     4) EC="--recipient-pub $WORK/ec-pub.pem --sign-priv $WORK/ec-priv.pem"; EOD="-recipient-priv $WORK/ec-priv.pem -sign-pub $WORK/ec-pub.pem";;
     5) EC="--password $EPW"; EOD="-password-value $EPW";;
@@ -211,18 +211,84 @@ for p in 0 1 2 3 4 5; do
 done
 # --alg forwarding (real compression path, not stored): repeated text + zlib
 python3 -c "open('$WORK/big-aea.txt','w').write('The quick brown fox jumps over the lazy dog. '*2000)"
-if run_impl aea-encrypt --profile 1 --key "$EKEYHEX" --alg zlib --threads 1 "$WORK/big-aea.txt" "$WORK/e-zlib.aea" 2>/dev/null; then
+if run_impl aea-encrypt --profile 1 --key "hex:$EKEYHEX" --alg zlib --threads 1 "$WORK/big-aea.txt" "$WORK/e-zlib.aea" 2>/dev/null; then
   pass "enc-impl-exit-zlib"
 else fail "enc-impl-exit-zlib"; fi
 if aea decrypt -key "$WORK/key32.bin" -i "$WORK/e-zlib.aea" -o "$WORK/e-zlib.out" 2>/dev/null \
    && cmp -s "$WORK/e-zlib.out" "$WORK/big-aea.txt"; then pass "enc-roundtrip-zlib"; else fail "enc-roundtrip-zlib"; fi
 # stdio shape: IN=- OUT=- pipe roundtrip
-if run_impl aea-encrypt --profile 1 --key "$EKEYHEX" --threads 1 - - <"$WORK/msg-aea.txt" >"$WORK/e-stdio.aea" 2>/dev/null \
+if run_impl aea-encrypt --profile 1 --key "hex:$EKEYHEX" --threads 1 - - <"$WORK/msg-aea.txt" >"$WORK/e-stdio.aea" 2>/dev/null \
    && aea decrypt -key "$WORK/key32.bin" -i "$WORK/e-stdio.aea" -o "$WORK/e-stdio.out" 2>/dev/null \
    && cmp -s "$WORK/e-stdio.out" "$WORK/msg-aea.txt"; then pass "enc-stdio-roundtrip"; else fail "enc-stdio-roundtrip"; fi
 # usage: missing --profile is exit 2
 run_impl aea-encrypt "$WORK/msg-aea.txt" "$WORK/x-nousage.aea" 2>/dev/null; rc=$?
 [ "$rc" -eq 2 ] && pass "enc-usage-exit2" || fail "enc-usage-exit2"
+# --threads validation (int > 0, else exit 2)
+run_impl aea-encrypt --profile 1 --key "hex:$EKEYHEX" --threads 0 "$WORK/msg-aea.txt" "$WORK/x-t0.aea" 2>/dev/null; rc=$?
+[ "$rc" -eq 2 ] && pass "enc-threads0-exit2" || fail "enc-threads0-exit2"
+run_impl aea-encrypt --profile 1 --key "hex:$EKEYHEX" --threads abc "$WORK/msg-aea.txt" "$WORK/x-tabc.aea" 2>/dev/null; rc=$?
+[ "$rc" -eq 2 ] && pass "enc-threadsabc-exit2" || fail "enc-threadsabc-exit2"
+run_impl aar-encode --alg raw --threads nope "$WORK/src" "$WORK/x-tnope.aar" 2>/dev/null; rc=$?
+[ "$rc" -eq 2 ] && pass "encode-threadsabc-exit2" || fail "encode-threadsabc-exit2"
+# bare --key rejected like the oracle (no silent hex: prefixing)
+run_impl aea-encrypt --profile 1 --key "$EKEYHEX" "$WORK/msg-aea.txt" "$WORK/x-bare.aea" 2>"$WORK/bare.stderr"; rc=$?
+if [ "$rc" -ne 0 ] && grep -q "key-value must be hex:" "$WORK/bare.stderr"; then pass "enc-barekey-reject";
+elif [ "$IS_C" = 1 ] && [ "$rc" -eq 0 ]; then echo "KNOWN-DIFF enc-barekey (C hexval auto-prefix mirrors old _hexval; patch text with parent)";
+else fail "enc-barekey-reject"; fi
+
+echo "== cells aea-encrypt flag forwarding (cli.c:1024-1048 wiring) =="
+# every forwarded flag takes effect: oracle must decrypt the CLI output.
+# --checksum/--padding/--alg/--block/--key-file/--auth-data(+value/key)
+printf 'hello-aea-secret-bytes\n' > "$WORK/plain-fwd.bin"
+cp "$WORK/key32.bin" "$WORK/kf.bin"
+printf 'auth-bytes' > "$WORK/auth-fwd.bin"
+if run_impl aea-encrypt --profile 1 --key-file "$WORK/kf.bin" --checksum none --padding 16 \
+     --alg zlib --block 64k --auth-data "$WORK/auth-fwd.bin" \
+     --auth-data-key mykey --auth-data-value hex:010203 \
+     "$WORK/plain-fwd.bin" "$WORK/fwd.aea" 2>"$WORK/fwd.stderr"; then
+  pass "enc-fwd-exit"
+else fail "enc-fwd-exit"; fi
+if aea decrypt -key "$WORK/key32.bin" -i "$WORK/fwd.aea" -o "$WORK/fwd.out" 2>/dev/null \
+   && cmp -s "$WORK/fwd.out" "$WORK/plain-fwd.bin"; then pass "enc-fwd-roundtrip"; else fail "enc-fwd-roundtrip"; fi
+# --password-file equals --password (oracle decrypts)
+printf '%s' "$EPW" > "$WORK/pwfile.txt"
+if run_impl aea-encrypt --profile 5 --password-file "$WORK/pwfile.txt" --threads 1 \
+     "$WORK/plain-fwd.bin" "$WORK/fwd5.aea" 2>/dev/null; then pass "enc-pwfile-exit"; else fail "enc-pwfile-exit"; fi
+if aea decrypt -password-value "$EPW" -i "$WORK/fwd5.aea" -o "$WORK/fwd5.out" 2>/dev/null \
+   && cmp -s "$WORK/fwd5.out" "$WORK/plain-fwd.bin"; then pass "enc-pwfile-roundtrip"; else fail "enc-pwfile-roundtrip"; fi
+
+echo "== cells aea-decrypt key-file/range (flag coverage) =="
+if run_impl aea-decrypt --key-file "$WORK/kf.bin" "$WORK/fwd.aea" "$WORK/d-kf.bin" 2>/dev/null \
+   && cmp -s "$WORK/d-kf.bin" "$WORK/plain-fwd.bin"; then pass "dec-keyfile-bytes"; else fail "dec-keyfile-bytes"; fi
+if run_impl aea-decrypt --password-file "$WORK/pwfile.txt" "$WORK/fwd5.aea" "$WORK/d-pwf.bin" 2>/dev/null \
+   && cmp -s "$WORK/d-pwf.bin" "$WORK/plain-fwd.bin"; then pass "dec-pwfile-bytes"; else fail "dec-pwfile-bytes"; fi
+if run_impl aea-decrypt --key "hex:$EKEYHEX" --range-offset 0 --range-size 5 "$WORK/e-p1.aea" "$WORK/d-rg.bin" 2>/dev/null \
+   && aea decrypt -key "$WORK/key32.bin" -range-offset 0 -range-size 5 -i "$WORK/e-p1.aea" -o "$WORK/d-rg-ora.bin" 2>/dev/null \
+   && cmp -s "$WORK/d-rg.bin" "$WORK/d-rg-ora.bin"; then pass "dec-range-bytes"; else fail "dec-range-bytes"; fi
+
+echo "== cells aea-id stdin spool =="
+if run_impl aea-id "$WORK/e-p1.aea" >"$WORK/id-file.txt" 2>/dev/null \
+   && run_impl aea-id - <"$WORK/e-p1.aea" >"$WORK/id-stdin.txt" 2>/dev/null \
+   && cmp -s "$WORK/id-file.txt" "$WORK/id-stdin.txt" \
+   && grep -qE '^[0-9a-f]{64}$' "$WORK/id-stdin.txt"; then pass "id-stdin-spool"; else fail "id-stdin-spool"; fi
+# spool failure must name aea-id (cli.c:1130 says "aar-list:" — C bug, patch text with parent)
+touch "$WORK/spool-blocker"
+TMPDIR="$WORK/spool-blocker/sub" run_impl aea-id - <"$WORK/e-p1.aea" >"$WORK/id-bad.out" 2>"$WORK/id-bad.err"; rc=$?
+if [ "$rc" -ne 0 ] && grep -q "aea-id" "$WORK/id-bad.err"; then pass "id-spool-label";
+elif [ "$IS_C" = 1 ]; then echo "KNOWN-DIFF id-spool-label (cli.c:1130 wrong label; patch text with parent)";
+else fail "id-spool-label"; fi
+
+echo "== cells encode.py error surface (canonical messages + exits) =="
+run_impl aar-encode --alg raw --block bad "$WORK/src" "$WORK/x-badblock.aar" 2>"$WORK/badblock.stderr"; rc=$?
+if [ "$rc" -eq 2 ] && grep -q "invalid block size: 'bad'" "$WORK/badblock.stderr"; then pass "encode-badblock";
+elif [ "$IS_C" = 1 ]; then echo "KNOWN-DIFF encode-badblock (C message shape differs; canonical is Python-side)";
+else fail "encode-badblock"; fi
+run_impl aar-encode --alg raw "$WORK/does-not-exist-xyz" "$WORK/x-missing.aar" 2>"$WORK/missing.stderr"; rc=$?
+if [ "$rc" -eq 1 ] && grep -q "does-not-exist-xyz" "$WORK/missing.stderr"; then pass "encode-missing-src";
+elif [ "$IS_C" = 1 ]; then echo "KNOWN-DIFF encode-missing-src (C message shape differs)";
+else fail "encode-missing-src"; fi
+run_impl aar-encode --alg raw --threads 0 "$WORK/src" "$WORK/x-t0b.aar" 2>/dev/null; rc=$?
+[ "$rc" -eq 2 ] && pass "encode-threads0-exit2" || fail "encode-threads0-exit2"
 
 echo "== cells exit-code parity on corrupt input =="
 printf 'not-an-archive-at-all' > "$WORK/garbage.aar"

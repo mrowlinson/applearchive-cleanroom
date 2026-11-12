@@ -8,9 +8,10 @@
 # Usage: sh tests/test_ravframe.sh [workdir]
 # RECORD=1 sh tests/test_ravframe.sh [workdir]  (rewrite PINS; REVIEW diff!)
 set -eu
+: "${TMPDIR:?must set TMPDIR to NVME scratch (never /tmp)}"
 HERE=$(cd "$(dirname "$0")" && pwd)
 ROOT=$(cd "$HERE/.." && pwd)
-WORK=${1:-$(mktemp -d "${TMPDIR:-/tmp}/ravframe.XXXXXX")}
+WORK=${1:-$(mktemp -d "$TMPDIR/ravframe.XXXXXX")}
 PINS=$ROOT/vectors/ravframe-PINS.csv
 FAIL=0
 GEN=test_ravframe.sh
@@ -61,6 +62,13 @@ CELL() { # tag nbytes kind : closed + f2 + sha pins (+ store pin)
     chk "f-$tag" sha "$(sha "$WORK/$tag.rav")" "$(sz "$WORK/$tag.rav")"
   else echo "FAIL $tag ravframe: $(head -1 "$WORK/$tag.ravf")"; FAIL=1; fi
 }
+echo "== ravframe empty (oracle 12B form, no rawlen) =="
+if v=$(python3 "$RAV" "$WORK/probe.bin" 2>"$WORK/empty12.err"); then
+  case "$v" in *CLOSED*) echo "PASS e12-closed";; *) echo "FAIL e12-closed: $v"; FAIL=1;; esac
+else echo "FAIL e12 rc: $(head -1 "$WORK/empty12.err")"; FAIL=1; fi
+python3 -c "open('$WORK/bad12.rav','wb').write(bytes.fromhex('2b00caec00000000ffffffff'))"
+if python3 "$RAV" "$WORK/bad12.rav" 2>/dev/null; then echo "FAIL e12bad: accepted bad 12B"; FAIL=1;
+else echo "PASS e12bad"; fi
 echo "== ravframe random (F2 steps + frames) =="
 for s in 0 1 8 63 64 65 1000 65536 65537 81920 81921 98304 98305 114688 114689 131072 131073 196608 196609 229376 229377 262144 262145 327680 327681 393216 393217 458752 458753 524287 524288 524289 532480 532481 600000 655360 655361 786432 786433 917504 917505 1000000 1048576 1048577 1100000; do
   CELL "r$s" "$s" "seed$s"

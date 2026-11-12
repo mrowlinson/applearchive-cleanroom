@@ -2,9 +2,10 @@
 # tests/test_lzma.sh [workdir] — oracle-vs-impl byte compare, lzma path.
 # exit 0 all green / 1 any FAIL.
 set -u
+: "${TMPDIR:?must set TMPDIR to NVME scratch (never /tmp)}"
 HERE=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 ROOT=$(CDPATH= cd -- "$HERE/.." && pwd)
-W=${1:-$(mktemp -d "${TMPDIR:-/tmp}/lzma.XXXXXX")}
+W=${1:-$(mktemp -d "$TMPDIR/lzma.XXXXXX")}
 ORACLE=${ORACLE:-/usr/bin/aa}
 _IMP=${ENC_BIN:-python3 "$ROOT/src/encode.py"}
 fail=0

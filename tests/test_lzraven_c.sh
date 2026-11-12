@@ -80,7 +80,8 @@ cc -O2 -Wall -Wextra -std=c11 -I"$ROOT/src/c" -o "$WORK/ravstream" \
   "$WORK/ravmain.c" "$ROOT/src/c/lzravenc.c" || { echo "harness build failed" >&2; exit 2; }
 ZCELL() { # n : zeros-N triple compare (oracle vs py vs C) + pins
   n=$1
-  head -c "$n" /dev/zero > "$WORK/z$n.bin" 2>/dev/null || : > "$WORK/z$n.bin"
+  head -c "$n" /dev/zero > "$WORK/z$n.bin" 2>/dev/null || { echo "FAIL z$n input"; FAIL=1; return; }
+  [ "$(sz "$WORK/z$n.bin")" -eq "$n" ] || { echo "FAIL z$n input-size"; FAIL=1; return; }
   "$CT" -encode -a lzraven -i "$WORK/z$n.bin" -o "$WORK/z$n.ora.rav" 2>/dev/null || { echo "FAIL z$n oracle rc"; FAIL=1; return; }
   python3 "$ROOT/src/lzraven.py" --raw "$WORK/z$n.bin" "$WORK/z$n.py.rav" 2>"$WORK/z$n.py.err" || { echo "FAIL z$n py rc"; FAIL=1; return; }
   "$WORK/ravstream" --raw "$WORK/z$n.bin" "$WORK/z$n.c.rav" 2>"$WORK/z$n.c.err" || { echo "FAIL z$n C rc"; FAIL=1; return; }
@@ -94,7 +95,8 @@ for s in 0 1 2 16 62 63 64 65 100 124 125 126 127 128 129 200 255 256 257 300 38
 done
 echo "== unclosed-N (both must refuse, stderr byte-identical) =="
 for s in 821 1077 1500 524288; do
-  head -c "$s" /dev/zero > "$WORK/u$s.bin" 2>/dev/null || : > "$WORK/u$s.bin"
+  head -c "$s" /dev/zero > "$WORK/u$s.bin" 2>/dev/null || { echo "FAIL u$s input"; FAIL=1; continue; }
+  [ "$(sz "$WORK/u$s.bin")" -eq "$s" ] || { echo "FAIL u$s input-size"; FAIL=1; continue; }
   python3 "$ROOT/src/lzraven.py" --raw "$WORK/u$s.bin" "$WORK/u$s.py.rav" 2>"$WORK/u$s.py.err"; prc=$?
   "$WORK/ravstream" --raw "$WORK/u$s.bin" "$WORK/u$s.c.rav" 2>"$WORK/u$s.c.err"; crc=$?
   if [ "$prc" = "$crc" ] && [ "$crc" != 0 ] && cmp -s "$WORK/u$s.py.err" "$WORK/u$s.c.err"; then

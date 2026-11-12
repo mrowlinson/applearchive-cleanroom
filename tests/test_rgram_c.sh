@@ -7,9 +7,10 @@
 # stdout + stderr all equal). N the C binary reports "N out of scope"
 # (exit 2) is UNCOVERED: counted, never compared. Exit 0/1/2.
 set -u
+: "${TMPDIR:?must set TMPDIR to NVME scratch (never /tmp)}"
 HERE=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 ROOT=$(CDPATH= cd -- "$HERE/.." && pwd)
-W=${1:-$(mktemp -d "${TMPDIR:-/tmp}/rgramc.XXXXXX")}
+W=${1:-$(mktemp -d "$TMPDIR/rgramc.XXXXXX")}
 RGRAMC=${RGRAMC:-/Volumes/NVME/applearchive-cleanroom-ws/build/aae/rgramc}
 CT=${CT:-/usr/bin/compression_tool}
 PINS=$ROOT/vectors/rgram-PINS.csv
@@ -24,7 +25,8 @@ for n in $NS; do
   se=$((se + 1))
   rav=$W/corpus/g$n.rav
   if [ ! -s "$rav" ]; then
-    head -c "$n" /dev/zero > "$W/corpus/g$n.bin" 2>/dev/null || : > "$W/corpus/g$n.bin"
+    head -c "$n" /dev/zero > "$W/corpus/g$n.bin" 2>/dev/null || { echo "FAIL g$n input"; fail=1; continue; }
+  [ "$(wc -c < "$W/corpus/g$n.bin" | tr -d " ")" -eq "$n" ] || { echo "FAIL g$n input-size"; fail=1; continue; }
     "$CT" -encode -a lzraven -i "$W/corpus/g$n.bin" -o "$rav" 2>/dev/null \
       || { echo "FAIL g$n ct"; fail=1; continue; }
   fi

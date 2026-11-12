@@ -3,9 +3,10 @@
 # CENSUS, not gate: exit 0 always; prints OK/BAD counts + BAD list.
 # seedoff 0=FULL, 1000=holdout, 2000=fresh (disjoint random streams).
 set -u
+: "${TMPDIR:?must set TMPDIR to NVME scratch (never /tmp)}"
 HERE=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 ROOT=$(CDPATH= cd -- "$HERE/.." && pwd)
-W=${1:-$(mktemp -d "${TMPDIR:-/tmp}/lz4full.XXXXXX")}
+W=${1:-$(mktemp -d "$TMPDIR/lz4full.XXXXXX")}
 SO=${2:-0}
 ORACLE=${ORACLE:-/usr/bin/aa}
 _IMP=${ENC_BIN:-python3 "$ROOT/src/encode.py"}

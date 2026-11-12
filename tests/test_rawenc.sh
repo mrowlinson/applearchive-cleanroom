@@ -2,9 +2,10 @@
 # tests/test_rawenc.sh [workdir] — oracle-vs-impl byte compare, raw AAR.
 # exit 0 all green / 1 any FAIL. Fixed mtimes (S-times) => deterministic.
 set -u
+: "${TMPDIR:?must set TMPDIR to NVME scratch (never /tmp)}"
 HERE=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 ROOT=$(CDPATH= cd -- "$HERE/.." && pwd)
-W=${1:-$(mktemp -d "${TMPDIR:-/tmp}/rawenc.XXXXXX")}
+W=${1:-$(mktemp -d "$TMPDIR/rawenc.XXXXXX")}
 ORACLE=${ORACLE:-/usr/bin/aa}
 _IMP=${ENC_BIN:-python3 "$ROOT/src/rawenc.py"}
 fail=0
@@ -20,7 +21,7 @@ cell() { # $1=name
   "$ORACLE" archive -a raw -t 1 -d "$W/in/$1" -o "$W/$1.expect.aar" 2>"$W/$1.err" || { echo "FAIL $1 oracle-exit=$?"; fail=1; return; }
   $_IMP "$W/in/$1" "$W/$1.got.aar" --alg raw 2>>"$W/$1.err" || { echo "FAIL $1 impl-exit=$?"; fail=1; return; }
   if cmp -s "$W/$1.expect.aar" "$W/$1.got.aar"; then
-    echo "PASS $1 bytes=$(stat -f %z "$W/$1.got.aar") sha=$(shasum -a 256 "$W/$1.got.aar" | cut -c1-16)"
+    echo "PASS $1 bytes=$(stat -f %z "$W/$1.got.aar") sha=$(shasum -a 256 "$W/$1.got.aar" | cut -d' ' -f1)"
   else
     echo "FAIL $1 expect=$(stat -f %z "$W/$1.expect.aar") got=$(stat -f %z "$W/$1.got.aar")"
     cmp "$W/$1.expect.aar" "$W/$1.got.aar" | head -n 3
@@ -68,11 +69,11 @@ mk c12; printf 'LINKME' > "$W/in/c12/orig"; ln "$W/in/c12/orig" "$W/in/c12/hard"
 for c in c12; do cell $c; done
 # c13 4.5GB sparse (DAT'C', RUN_BIG-gated: ~10GB transient on NVME, ~15s)
 if [ "${RUN_BIG:-0}" = "1" ]; then
-  BW=/Volumes/NVME/applearchive-cleanroom-ws/tmp/bigcell.$$; rm -rf "$BW"; mkdir -p "$BW/in"
+  BW=${BIGCELL_WS:-/Volumes/NVME/applearchive-cleanroom-ws/tmp/bigcell.$$}; rm -rf "$BW"; mkdir -p "$BW/in"
   truncate -s 4831838208 "$BW/in/big"; touch -d '2001-02-03 04:05:06' "$BW/in/big" "$BW/in"
   "$ORACLE" archive -a raw -t 1 -d "$BW/in" -o "$BW/c13.expect.aar" 2>"$W/c13.err" || { echo "FAIL c13 oracle-exit=$?"; fail=1; }
   $_IMP "$BW/in" "$BW/c13.got.aar" --alg raw 2>>"$W/c13.err" || { echo "FAIL c13 impl-exit=$?"; fail=1; }
-  if cmp -s "$BW/c13.expect.aar" "$BW/c13.got.aar"; then echo "PASS c13 bytes=$(stat -f %z "$BW/c13.got.aar") sha=$(shasum -a 256 "$BW/c13.got.aar" | cut -c1-16)"; else echo "FAIL c13"; fail=1; fi
+  if cmp -s "$BW/c13.expect.aar" "$BW/c13.got.aar"; then echo "PASS c13 bytes=$(stat -f %z "$BW/c13.got.aar") sha=$(shasum -a 256 "$BW/c13.got.aar" | cut -d' ' -f1)"; else echo "FAIL c13"; fail=1; fi
   rm -rf "$BW"
 else
   echo "SKIP c13 (RUN_BIG=1 to run)"
@@ -81,7 +82,7 @@ fi
 C11_IMP="$_IMP" python3 - "$W" "$ROOT" "$ORACLE" <<'EOF'
 import os, shlex, socket, subprocess, sys
 W, ROOT, ORACLE = sys.argv[1], sys.argv[2], sys.argv[3]
-d = os.path.join(os.environ.get("TMPDIR", "/tmp"), "sockcell.%d" % os.getpid())
+d = os.path.join(W, "sockcell.%d" % os.getpid())
 os.makedirs(d, exist_ok=True)
 p = os.path.join(d, "sk")
 try: os.unlink(p)
