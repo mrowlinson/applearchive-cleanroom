@@ -328,7 +328,7 @@ uint8_t *lzraven_wrap_pbzm(const uint8_t *inner, size_t ilen,
         fprintf(stderr, "lzraven: out of memory\n");
         exit(1);
     }
-    size_t total = 12;
+    size_t total = 12 + 16 * nch; /* prefix + one 16B header per block */
     for (size_t i = 0; i < nch; i++) {
         size_t off = i * blocksize;
         size_t m = (ilen > off) ? ilen - off : 0;
@@ -356,7 +356,7 @@ uint8_t *lzraven_wrap_pbzm(const uint8_t *inner, size_t ilen,
         }
         pay[i] = cf;
         cl[i] = cn;
-        total += cn + (i + 1 < nch ? 16 : 0);
+        total += cn;
     }
     uint8_t *o = malloc(total ? total : 1);
     if (!o) {
