@@ -1,6 +1,9 @@
 #!/bin/sh
-# c-adapter.sh — C deliverable backend for the harness CLI contract.
-# aar-decode via $AAD_BIN (default: WS build output); rest via oracle.
+# c-adapter.sh — LEGACY C-decode shim (decode-writer era).
+# SCOPE: aar-decode only via $AAD_BIN (default: WS build output); every
+# other subcommand passes through to the ORACLE adapter (oracle bytes
+# execute here — never mistake this shim for impl coverage). The shipped
+# impl path is the unified CLI ./build/aae-cli (all commands, no oracle).
 set -eu
 HERE=$(cd "$(dirname "$0")" && pwd)
 ORACLE=$HERE/../harness/oracle-adapter.sh

@@ -1,8 +1,11 @@
 #!/bin/sh
-# harness/impl-adapter.sh — encode-side impl backend (RACE entry, writer1).
-# Same CLI contract as oracle-adapter.sh. aar-encode via cleanroom impl
-# (src/encode.py: raw/lzfse/zlib); all other subcommands pass through to
-# the oracle adapter (decode/AEA are other turfs; passthrough is honest).
+# harness/impl-adapter.sh — LEGACY encode-side shim (writer1 race era).
+# SCOPE: aar-encode only for raw/lzfse/zlib via src/encode.py; every other
+# subcommand passes through to the ORACLE adapter (oracle bytes execute
+# here — never mistake this shim for impl coverage). The shipped impl
+# path is the unified CLI: src/aae-cli (Python reference) and
+# ./build/aae-cli (C binary), exercised directly by tests/test_cli.sh.
+# Same CLI contract as oracle-adapter.sh.
 set -u
 HERE=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 ORACLE=$HERE/oracle-adapter.sh

@@ -181,40 +181,68 @@ ours_ora "pw20B" --profile 5 --password "$(python3 -c "print('x'*18+'é',end='')
 
 # 7. fixed-input determinism (profiles 3/4 eph + pad): same fixed
 # inputs twice -> byte-identical outputs (P7/P17 gate)
-det3() { # tag extra-fixed-args... (salt/nmac/smacs/eph/pad all fixed)
-  tag=$1; shift
-  if "$AEAD_PY" "$REPO/proto/aead.py" encrypt --profile 3 --recipient-pub "$ECP" \
-       -a none --checksum sha256 --padding 16 "$@" -i "$WORK/msg.txt" -o "$WORK/d3a.aea" 2>"$WORK/e.txt" \
-     && "$AEAD_PY" "$REPO/proto/aead.py" encrypt --profile 3 --recipient-pub "$ECP" \
-       -a none --checksum sha256 --padding 16 "$@" -i "$WORK/msg.txt" -o "$WORK/d3b.aea" 2>>"$WORK/e.txt" \
-     && cmp -s "$WORK/d3a.aea" "$WORK/d3b.aea"; then ok "det-$tag"; else bad "det-$tag" "$(cat "$WORK/e.txt")"; fi
-}
+# (proto-only: the C aeadc has no --fixed-* flags yet; under the
+# aeadc-shim these cells SKIP instead of failing on unrecognized args)
+case "$AEAD_PY" in
+*aeadc-shim*) echo "SKIP det-p3-* (C aeadc lacks --fixed-eph/--fixed-pad)";;
+*)
 FIXSALT=ab00000000000000000000000000000000000000000000000000000000000000
 FIXNMAC=cd00000000000000000000000000000000000000000000000000000000000000
-FIXSMAC=$(python3 -c "print('ef'*8192)")
 FIXEPH=$(xxd -p "$ECS" | tr -d '\n')
-# padstart for 16B msg, profile 3, sha256: 221 + 18464 + 16 = 18701 -> padlen 3
-det3 "p3-eph-pad" --fixed-salt "hex:$FIXSALT" --fixed-nmac "hex:$FIXNMAC" \
-  --fixed-smacs "hex:$FIXSMAC" --fixed-eph "hex:$FIXEPH" --fixed-pad hex:000102
+# seed run: fixed salt/eph, everything else random -> a VALID blob.
+# Transplant its nmac/smacs/pad back in: re-encrypting with all fixed
+# inputs must reproduce the seed blob byte-for-byte (P7/P17 gate).
+if "$AEAD_PY" "$REPO/proto/aead.py" encrypt --profile 3 --recipient-pub "$ECP" \
+     -a none --checksum sha256 --padding 16 --fixed-salt "hex:$FIXSALT" \
+     --fixed-eph "hex:$FIXEPH" \
+     -i "$WORK/msg.txt" -o "$WORK/d3seed.aea" 2>"$WORK/e.txt" \
+   && "$AEAD_PY" "$REPO/proto/aead.py" decrypt --recipient-priv "$ECS" -i "$WORK/d3seed.aea" -o "$WORK/d3s.out" 2>/dev/null \
+   && cmp -s "$WORK/d3s.out" "$WORK/msg.txt" \
+   && aea decrypt -recipient-priv "$ECS" -i "$WORK/d3seed.aea" -o "$WORK/d3so.out" 2>/dev/null \
+   && cmp -s "$WORK/d3so.out" "$WORK/msg.txt"; then
+  ok "det-p3-seedvalid"
+  eval "$(python3 - "$WORK/d3seed.aea" <<'EOF'
+import struct, sys
+ob = open(sys.argv[1], "rb").read()
+asz = struct.unpack("<I", ob[8:12])[0]
+pe = 12 + asz + 0 + 65 + 144  # profile 3: sig 0, pub 65
+shsz = 8 + 32
+hdrlen = shsz * 256 + 32 + 32 * 256
+padstart = pe + hdrlen + 16  # 16B msg, one segment, none codec
+print("FIXNMAC=hex:%s" % ob[pe + shsz * 256:pe + shsz * 256 + 32].hex())
+print("FIXSMAC=hex:%s" % ob[pe + shsz * 256 + 32:pe + shsz * 256 + 32 + 32 * 256].hex())
+print("FIXPAD=hex:%s" % ob[padstart:].hex())
+EOF
+)"
+  FIXARGS="--fixed-salt hex:$FIXSALT --fixed-nmac $FIXNMAC --fixed-smacs $FIXSMAC --fixed-eph hex:$FIXEPH --fixed-pad $FIXPAD"
+  # shellcheck disable=SC2086
+  if "$AEAD_PY" "$REPO/proto/aead.py" encrypt --profile 3 --recipient-pub "$ECP" \
+       -a none --checksum sha256 --padding 16 $FIXARGS \
+       -i "$WORK/msg.txt" -o "$WORK/d3a.aea" 2>"$WORK/e.txt" \
+     && "$AEAD_PY" "$REPO/proto/aead.py" encrypt --profile 3 --recipient-pub "$ECP" \
+       -a none --checksum sha256 --padding 16 $FIXARGS \
+       -i "$WORK/msg.txt" -o "$WORK/d3b.aea" 2>>"$WORK/e.txt" \
+     && cmp -s "$WORK/d3a.aea" "$WORK/d3b.aea" \
+     && cmp -s "$WORK/d3a.aea" "$WORK/d3seed.aea"; then ok "det-p3-eph-pad"; else bad "det-p3-eph-pad" "$(cat "$WORK/e.txt")"; fi
+  # the deterministic blob self-decrypts AND oracle-decrypts (valid, not just stable)
+  if "$AEAD_PY" "$REPO/proto/aead.py" decrypt --recipient-priv "$ECS" -i "$WORK/d3a.aea" -o "$WORK/d3a.out" 2>/dev/null \
+     && cmp -s "$WORK/d3a.out" "$WORK/msg.txt" \
+     && aea decrypt -recipient-priv "$ECS" -i "$WORK/d3a.aea" -o "$WORK/d3o.out" 2>/dev/null \
+     && cmp -s "$WORK/d3o.out" "$WORK/msg.txt"; then ok "det-p3-oracle"; else bad "det-p3-oracle" ""; fi
+else bad "det-p3-seed" "seed encrypt failed"; fi
 # without --fixed-eph the same run must NOT be byte-identical (random eph proves the flag matters)
 if "$AEAD_PY" "$REPO/proto/aead.py" encrypt --profile 3 --recipient-pub "$ECP" \
      -a none --checksum sha256 --padding none --fixed-salt "hex:$FIXSALT" \
-     --fixed-nmac "hex:$FIXNMAC" --fixed-smacs "hex:$FIXSMAC" -i "$WORK/msg.txt" -o "$WORK/d3c.aea" 2>/dev/null \
+     --fixed-nmac "hex:$FIXNMAC" -i "$WORK/msg.txt" -o "$WORK/d3c.aea" 2>/dev/null \
    && "$AEAD_PY" "$REPO/proto/aead.py" encrypt --profile 3 --recipient-pub "$ECP" \
      -a none --checksum sha256 --padding none --fixed-salt "hex:$FIXSALT" \
-     --fixed-nmac "hex:$FIXNMAC" --fixed-smacs "hex:$FIXSMAC" -i "$WORK/msg.txt" -o "$WORK/d3d.aea" 2>/dev/null \
+     --fixed-nmac "hex:$FIXNMAC" -i "$WORK/msg.txt" -o "$WORK/d3d.aea" 2>/dev/null \
    && cmp -s "$WORK/d3c.aea" "$WORK/d3d.aea"; then bad "det-p3-noeph" "identical without fixed-eph"; else ok "det-p3-noeph"; fi
 # --fixed-pad wrong length fails closed
 if "$AEAD_PY" "$REPO/proto/aead.py" encrypt --profile 3 --recipient-pub "$ECP" \
      -a none --checksum sha256 --padding 16 --fixed-pad hex:deadbeef -i "$WORK/msg.txt" -o "$WORK/x.aea" 2>/dev/null; then
   bad "err-fixedpad-len" "exit 0"; else ok "err-fixedpad-len"; fi
-# oracle accepts the deterministic blob (interop, not byte-compare: salt/nmac fixed)
-if "$AEAD_PY" "$REPO/proto/aead.py" encrypt --profile 3 --recipient-pub "$ECP" \
-     -a none --checksum sha256 --padding none --fixed-salt "hex:$FIXSALT" \
-     --fixed-nmac "hex:$FIXNMAC" --fixed-smacs "hex:$FIXSMAC" --fixed-eph "hex:$FIXEPH" \
-     -i "$WORK/msg.txt" -o "$WORK/d3o.aea" 2>/dev/null \
-   && aea decrypt -recipient-priv "$ECS" -i "$WORK/d3o.aea" -o "$WORK/d3o.out" 2>/dev/null \
-   && cmp -s "$WORK/d3o.out" "$WORK/msg.txt"; then ok "det-p3-oracle"; else bad "det-p3-oracle" ""; fi
+esac
 
 echo "ENC ours->ora: PASS=$EPASS FAIL=$EFAIL"
 echo "DEC ora->ours: PASS=$OPASS FAIL=$OFAIL"

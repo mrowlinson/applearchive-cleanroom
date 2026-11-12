@@ -337,7 +337,7 @@ def decrypt_aea(blob, symkey=None, recip_priv=None, password=None, sign_pub=None
     if ckalg not in CKSUM_SIZE:
         raise FmtErr("bad checksum alg")
     shsz = 8 + CKSUM_SIZE[ckalg]
-    if len(blob) < prologue_end + shsz * segper + 32 + 32 * segper:
+    if orig != 0 and len(blob) < prologue_end + shsz * segper + 32 + 32 * segper:
         raise FmtErr("truncated cluster header")
     if len(blob) < arc:
         raise FmtErr("truncated archive")

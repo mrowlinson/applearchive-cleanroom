@@ -5,7 +5,8 @@
 set -eu
 HERE=$(cd "$(dirname "$0")" && pwd)
 ROOT=$(cd "$HERE/.." && pwd)
-WORK=${1:-$(mktemp -d /Volumes/NVME/applearchive-cleanroom-ws/rawtrunc.XXXXXX)}
+: "${TMPDIR:?must set TMPDIR to NVME scratch (never /tmp)}"
+WORK=${1:-$(mktemp -d "$TMPDIR/rawtrunc.XXXXXX")}
 die() { echo "HARNESS-ERROR $*" >&2; exit 2; }
 make -C "$ROOT" OUTDIR="$WORK/build" >/dev/null 2>&1 || die "make failed"
 AAD=$WORK/build/aad

@@ -1,11 +1,12 @@
 #!/bin/sh
 # c-battery.sh — C deliverable battery vs oracle (AAR decode).
-# Usage: tests/c-battery.sh [workdir]; default WS cbattery.XXXXXX.
+# Usage: TMPDIR=<nvme-scratch> tests/c-battery.sh [workdir]; default TMPDIR cbattery.XXXXXX.
 # Exit 0 all green / 1 any FAIL / 2 harness error. Needs: make, ZBM n/a.
 set -eu
+: "${TMPDIR:?must set TMPDIR to NVME scratch (never /tmp)}"
 HERE=$(cd "$(dirname "$0")" && pwd)
 ROOT=$(cd "$HERE/.." && pwd)
-WORK=${1:-$(mktemp -d /Volumes/NVME/applearchive-cleanroom-ws/cbattery.XXXXXX)}
+WORK=${1:-$(mktemp -d "$TMPDIR/cbattery.XXXXXX")}
 AAD=$WORK/aad-bin
 FAIL=0
 pass() { echo "PASS $1"; }

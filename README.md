@@ -23,21 +23,29 @@ from observing what the tools do.
 ## Install
 
 Prereqs: macOS with Xcode command-line tools (`cc`), Homebrew `xz`
-(pinned liblzma for lzma encode), and `python3` (batteries only).
+(pinned liblzma 5.8.4 for lzma encode), and `python3` (batteries only).
+Python-battery deps live in a venv (e.g.
+`/Volumes/NVME/applearchive-cleanroom-ws/writer2/.venv` with
+`cryptography` + `lz4`); system `python3` alone is not enough for the
+AEA proto legs. Set `AEAD_PY` to that venv's python.
 Apple's `/usr/bin/aa` and `/usr/bin/aea` are only needed to run the
 verification batteries, not to use the tools.
 
 ```sh
 git clone https://github.com/mrowlinson/applearchive-cleanroom.git
 cd applearchive-cleanroom
-make                        # builds ./build/aae-cli: one static binary
+make                        # builds ./build/aae-cli: one binary
 make OUTDIR=$HOME/aa-build  # or pick your own dir
 ```
 
 One file, no install layout: everything (all 7 codecs both
-directions, all 6 AEA profiles) is linked in. No runtime dependencies
-beyond macOS system libraries: no Python, no pip packages, no
-environment variables.
+directions, all 6 AEA profiles) is linked in. It is NOT static and NOT
+dependency-free: at runtime it dynamically links macOS system libraries
+(`Compression`/`libz` for decode) plus a Homebrew `liblzma` pin (lzma
+encode), and `dlopen`s the OSS `liblzfse` dylib at lzfse-encode time
+(`$LZFSE_DYLIB`). Off-box the binary breaks without them — install the
+prereqs above (see `docs/THIRD-PARTY-NOTICES.md`). No Python, no pip
+packages required to run the binary itself.
 
 ## Usage
 
