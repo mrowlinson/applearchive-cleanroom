@@ -116,6 +116,9 @@ spec/ notes/ docs/   derived behavior clauses, experiment records, research
 
 ## Verification
 
+Headline numbers, exact rerun commands, and the 27.2 re-gate record:
+[`docs/VERIFICATION.md`](docs/VERIFICATION.md).
+
 Every claim above is gated by a battery that diffs our bytes against
 Apple's tools on this machine (macOS 27.2). Current master HEAD:
 
@@ -123,11 +126,11 @@ Apple's tools on this machine (macOS 27.2). Current master HEAD:
 |---|---|
 | every input length 0..390836, oracle + impl | 390837/390837 CLOSED, 0 bad |
 | behavior pins (`test_rgram_fast.py`) | 110544/110544 |
-| decode (`c-battery.sh`) | 1069/1069 |
+| decode (`c-battery.sh`) | 1073/1073 |
 | AEA (`aea-battery.sh`) | 187/187 |
 | AEA encrypt + units | 49/49, 14/14 |
-| CLI, C (`test_cli.sh` + `CLI_BIN`) | 105/105 |
-| CLI, Python reference (`test_cli.sh`) | 78/78 |
+| CLI, C (`test_cli.sh` + `CLI_BIN`) | 117/117 |
+| CLI, Python reference (`test_cli.sh`) | 96/96 |
 | AEA C (`test_aead_c.sh`) | 102/102 |
 | lzraven / lzbitmap C (`test_lzraven_c.sh`, `test_lzbitmap_c.sh`) | 64/64, 32/32 |
 | lzraven / lzbitmap / lz4 (+full, +C parity) | 64/64, 32/32, 8/8 + 60x3 + 11/11 |
