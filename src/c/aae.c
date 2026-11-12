@@ -626,7 +626,7 @@ bad:
     exit(1);
 }
 
-int main(int argc, char **argv) {
+int ae_main(int argc, char **argv) {
     const char *src = NULL, *dst = NULL, *alg = "lzfse";
     size_t block = 4 * 1024 * 1024;
     for (int i = 1; i < argc; i++) {
@@ -724,3 +724,10 @@ int main(int argc, char **argv) {
     fclose(f);
     return 0;
 }
+
+/* Standalone entry (dropped from shipped build; kept for source parity).
+ * The shipped binary (aae-cli) compiles with -DAAE_CLI_UNIFIED and calls
+ * ae_main() in-process instead. */
+#ifndef AAE_CLI_UNIFIED
+int main(int argc, char **argv) { return ae_main(argc, argv); }
+#endif

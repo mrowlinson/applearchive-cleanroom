@@ -2618,7 +2618,7 @@ static int do_id(int argc, char **argv) {
     return 0;
 }
 
-int main(int argc, char **argv) {
+int aead_main(int argc, char **argv) {
     if (argc > 0 && argv[0]) {
         const char *b = strrchr(argv[0], '/');
         g_prog = b ? b + 1 : argv[0];
@@ -2634,3 +2634,10 @@ int main(int argc, char **argv) {
     char m[160]; snprintf(m, sizeof m, "unrecognized arguments: %s", argv[1]);
     return usage_err(m);
 }
+
+/* Standalone entry (dropped from shipped build; kept for source parity).
+ * The shipped binary (aae-cli) compiles with -DAAE_CLI_UNIFIED and calls
+ * aead_main() in-process instead. */
+#ifndef AAE_CLI_UNIFIED
+int main(int argc, char **argv) { return aead_main(argc, argv); }
+#endif
