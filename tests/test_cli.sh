@@ -4,6 +4,10 @@
 # everywhere, honest-UNSUPPORTED where the subset is parked).
 # Usage: tests/test_cli.sh [workdir]; default mktemp under NVME TMPDIR.
 # Backend under test: src/aae-cli (impl only). Oracle: harness/oracle-adapter.sh.
+# C mode (CLI_BIN set): the SINGLE unified binary, run directly (no python3),
+# taking NO backend env (AAD_BIN/AAE_C/AEAD_C unread — proven by the
+# backend-env-ignored cell). Default (CLI_BIN unset) keeps the Python
+# reference path byte-for-byte.
 # Needs: cc, make, AEAD_PY (venv python w/ cryptography+lz4), LZFSE_DYLIB for
 # lzfse-encode cells (OSS dylib). Exit 0 all green / 1 any FAIL / 2 harness error.
 set -u
@@ -11,21 +15,15 @@ HERE=$(cd "$(dirname "$0")" && pwd)
 ROOT=$(cd "$HERE/.." && pwd)
 IMPL=${CLI_BIN:-$ROOT/src/aae-cli}
 ORACLE=$ROOT/harness/oracle-adapter.sh
-# C-port mode: CLI_BIN points at the C binary (run directly, no python3).
-# Default (unset) keeps the Python reference path byte-for-byte.
 run_impl() {
   if [ -n "${CLI_BIN:-}" ]; then "$IMPL" "$@"; else python3 "$IMPL" "$@"; fi
 }
 IS_C=0; [ -n "${CLI_BIN:-}" ] && IS_C=1
 NVME_WS=/Volumes/NVME/applearchive-cleanroom-ws
 WORK=${1:-$(mktemp -d "${TMPDIR:-$NVME_WS/tmp}/cli-battery.XXXXXX")}
-FAIL=0; PASS=0; TOTAL=0; PEND=0
+FAIL=0; PASS=0; TOTAL=0
 pass() { PASS=$((PASS+1)); TOTAL=$((TOTAL+1)); echo "PASS $1"; }
 fail() { TOTAL=$((TOTAL+1)); FAIL=1; echo "FAIL $1"; }
-pend() { PEND=$((PEND+1)); echo "PEND $1"; }
-# C mode without the sibling-B AEAD binary: aea byte cells are pending by
-# design (backend exec attempted, usage/argv validation still asserted).
-skip_aea() { [ "$IS_C" = 1 ] && [ "$AEAD_OK" = 0 ]; }
 die() { echo "HARNESS-ERROR $*" >&2; exit 2; }
 freeze() { find "$1" -exec touch -h -t 202001020304.05 {} + 2>/dev/null || true; }
 
@@ -41,15 +39,15 @@ fi
 
 mkdir -p "$WORK"
 echo "== workdir $WORK =="
-echo "== build backends (make OUTDIR/BUILDDIR under workdir; NVME only) =="
-make -C "$ROOT" OUTDIR="$WORK/build-aad" >/dev/null 2>&1 || die "aad build failed"
-make -C "$ROOT/src/c" BUILDDIR="$WORK/build-aae" >/dev/null 2>&1 || die "aae build failed"
+if [ "$IS_C" = 1 ]; then
+echo "== C mode: single unified binary $IMPL (no backends, no backend env) =="
+unset AAD_BIN AAE_C AEAD_C
+else
+echo "== build aad scaffolding (python decode leg only; NVME only) =="
+make -C "$ROOT" OUTDIR="$WORK/build-aad" "$WORK/build-aad/aad" >/dev/null 2>&1 || die "aad build failed"
 AAD_BIN=$WORK/build-aad/aad; export AAD_BIN
 [ -x "$AAD_BIN" ] || die "missing aad binary"
-AAE_C=$WORK/build-aae/aae; export AAE_C
-AEAD_C=${AEAD_C:-$NVME_WS/build/cport-aead/aead}; export AEAD_C
-AEAD_OK=0; [ -x "$AEAD_C" ] && AEAD_OK=1
-[ "$IS_C" = 1 ] && echo "== C mode: IMPL=$IMPL AAE_C=$AAE_C AEAD_C=$AEAD_C backend=$AEAD_OK =="
+fi
 (cd "$ROOT/vectors/selfgen" && shasum -c SHA256SUMS >/dev/null 2>&1) || die "pins drifted"
 V=$ROOT/vectors/selfgen
 
@@ -77,6 +75,15 @@ for a in raw lzfse zlib lzma lz4; do
   if cmp -s "$WORK/impl-$a.aar" "$WORK/ora-$a.aar"; then pass "bytes-$a"; else fail "bytes-$a"; fi
 done
 
+if [ "$IS_C" = 1 ]; then
+echo "== cells backend env ignored (fail-closed removal proof) =="
+( AAD_BIN=/nonexistent-xyz AAE_C=/nonexistent-xyz AEAD_C=/nonexistent-xyz
+  export AAD_BIN AAE_C AEAD_C
+  run_impl aar-encode --alg raw "$WORK/src" "$WORK/impl-env.aar" 2>/dev/null ) \
+  && cmp -s "$WORK/impl-env.aar" "$WORK/impl-raw.aar" \
+  && pass "backend-env-ignored" || fail "backend-env-ignored"
+fi
+
 echo "== cells roundtrip (impl-dec impl.aar vs oracle-dec oracle.aar) =="
 for a in raw lzfse zlib lzma lz4; do
   [ -f "$WORK/impl-$a.aar" ] || { fail "skip-rt-$a"; continue; }
@@ -103,7 +110,6 @@ done
 
 echo "== cells aea-id (byte parity) =="
 for f in hello-p1-nopad hello-p5; do
-  if skip_aea; then pend "id-impl-exit-$f (no AEAD_C)"; pend "id-bytes-$f (no AEAD_C)"; continue; fi
   run_impl aea-id "$V/aea/$f.aea" >"$WORK/ii-$f.txt" 2>/dev/null || { fail "id-impl-exit-$f"; continue; }
   /usr/bin/aea id -i "$V/aea/$f.aea" >"$WORK/oi-$f.txt" 2>/dev/null || { fail "id-oracle-exit-$f"; continue; }
   pass "id-impl-exit-$f"
@@ -112,24 +118,17 @@ done
 
 echo "== cells aea-decrypt (byte parity impl vs oracle) =="
 KEYHEX=$(xxd -p "$V/aea/testkey.bin" | tr -d '\n')
-if skip_aea; then pend "dec-impl-exit-p1 (no AEAD_C)"; pend "dec-bytes-p1 (no AEAD_C)";
-else
 if run_impl aea-decrypt --key "$KEYHEX" "$V/aea/hello-p1-nopad.aea" "$WORK/d-p1.bin" 2>/dev/null; then pass "dec-impl-exit-p1"; else fail "dec-impl-exit-p1"; fi
 if aea decrypt -key "$V/aea/testkey.bin" -i "$V/aea/hello-p1-nopad.aea" -o "$WORK/do-p1.bin" 2>/dev/null; then pass "dec-oracle-exit-p1"; else fail "dec-oracle-exit-p1"; fi
 if cmp -s "$WORK/d-p1.bin" "$WORK/do-p1.bin"; then pass "dec-bytes-p1"; else fail "dec-bytes-p1"; fi
-fi
 PW='test-password-fixture'
-if skip_aea; then pend "dec-impl-exit-p5 (no AEAD_C)"; pend "dec-bytes-p5 (no AEAD_C)";
-else
 if run_impl aea-decrypt --password "$PW" "$V/aea/hello-p5.aea" "$WORK/d-p5.bin" 2>/dev/null; then pass "dec-impl-exit-p5"; else fail "dec-impl-exit-p5"; fi
 if aea decrypt -password-value "$PW" -i "$V/aea/hello-p5.aea" -o "$WORK/do-p5.bin" 2>/dev/null; then pass "dec-oracle-exit-p5"; else fail "dec-oracle-exit-p5"; fi
 if cmp -s "$WORK/d-p5.bin" "$WORK/do-p5.bin"; then pass "dec-bytes-p5"; else fail "dec-bytes-p5"; fi
-fi
 # stdio shape: IN=- OUT=- pipe parity
 if aea encrypt -profile 1 -key "$V/aea/testkey.bin" -a none -padding none -i "$V/aar/hello-raw.aar" -o "$WORK/p1-none.aea" 2>/dev/null; then
   pass "stdio-fixture-exit"
-  if skip_aea; then pend "dec-stdio-bytes (no AEAD_C)";
-  elif "$AEAD_PY" -c "import sys" </dev/null 2>/dev/null; then
+  if "$AEAD_PY" -c "import sys" </dev/null 2>/dev/null; then
     if run_impl aea-decrypt --key "$KEYHEX" - - <"$WORK/p1-none.aea" >"$WORK/d-stdio.bin" 2>/dev/null \
        && aea decrypt -key "$V/aea/testkey.bin" -i "$WORK/p1-none.aea" -o "$WORK/do-stdio.bin" 2>/dev/null \
        && cmp -s "$WORK/d-stdio.bin" "$WORK/do-stdio.bin"; then pass "dec-stdio-bytes"; else fail "dec-stdio-bytes"; fi
@@ -202,7 +201,6 @@ for p in 0 1 2 3 4 5; do
     4) EC="--recipient-pub $WORK/ec-pub.pem --sign-priv $WORK/ec-priv.pem"; EOD="-recipient-priv $WORK/ec-priv.pem -sign-pub $WORK/ec-pub.pem";;
     5) EC="--password $EPW"; EOD="-password-value $EPW";;
   esac
-  if skip_aea; then pend "enc-impl-exit-p$p (no AEAD_C)"; pend "enc-roundtrip-p$p (no AEAD_C)"; continue; fi
   # shellcheck disable=SC2086
   if run_impl aea-encrypt --profile "$p" $EC --threads 1 "$WORK/msg-aea.txt" "$WORK/e-p$p.aea" 2>"$WORK/e-p$p.stderr"; then
     pass "enc-impl-exit-p$p"
@@ -213,17 +211,13 @@ for p in 0 1 2 3 4 5; do
 done
 # --alg forwarding (real compression path, not stored): repeated text + zlib
 python3 -c "open('$WORK/big-aea.txt','w').write('The quick brown fox jumps over the lazy dog. '*2000)"
-if skip_aea; then pend "enc-impl-exit-zlib (no AEAD_C)"; pend "enc-roundtrip-zlib (no AEAD_C)";
-else
 if run_impl aea-encrypt --profile 1 --key "$EKEYHEX" --alg zlib --threads 1 "$WORK/big-aea.txt" "$WORK/e-zlib.aea" 2>/dev/null; then
   pass "enc-impl-exit-zlib"
 else fail "enc-impl-exit-zlib"; fi
 if aea decrypt -key "$WORK/key32.bin" -i "$WORK/e-zlib.aea" -o "$WORK/e-zlib.out" 2>/dev/null \
    && cmp -s "$WORK/e-zlib.out" "$WORK/big-aea.txt"; then pass "enc-roundtrip-zlib"; else fail "enc-roundtrip-zlib"; fi
-fi
 # stdio shape: IN=- OUT=- pipe roundtrip
-if skip_aea; then pend "enc-stdio-roundtrip (no AEAD_C)";
-elif run_impl aea-encrypt --profile 1 --key "$EKEYHEX" --threads 1 - - <"$WORK/msg-aea.txt" >"$WORK/e-stdio.aea" 2>/dev/null \
+if run_impl aea-encrypt --profile 1 --key "$EKEYHEX" --threads 1 - - <"$WORK/msg-aea.txt" >"$WORK/e-stdio.aea" 2>/dev/null \
    && aea decrypt -key "$WORK/key32.bin" -i "$WORK/e-stdio.aea" -o "$WORK/e-stdio.out" 2>/dev/null \
    && cmp -s "$WORK/e-stdio.out" "$WORK/msg-aea.txt"; then pass "enc-stdio-roundtrip"; else fail "enc-stdio-roundtrip"; fi
 # usage: missing --profile is exit 2
@@ -235,12 +229,9 @@ printf 'not-an-archive-at-all' > "$WORK/garbage.aar"
 run_impl aar-decode "$WORK/garbage.aar" "$WORK/g1" 2>/dev/null; ie=$?
 sh "$ORACLE" aar-decode "$WORK/garbage.aar" "$WORK/g2" >/dev/null 2>&1; oe=$?
 if [ "$ie" -ne 0 ] && [ "$oe" -ne 0 ]; then pass "exitparity-garbage"; else fail "exitparity-garbage"; fi
-if skip_aea; then pend "exitparity-badid (no AEAD_C)";
-else
 run_impl aea-id "$WORK/garbage.aar" >/dev/null 2>&1; ie=$?
 /usr/bin/aea id -i "$WORK/garbage.aar" >/dev/null 2>&1; oe=$?
 if [ "$ie" -ne 0 ] && [ "$oe" -ne 0 ]; then pass "exitparity-badid"; else fail "exitparity-badid"; fi
-fi
 head -c 100 "$V/aar/hello-lzfse.aar" > "$WORK/trunc.aar"
 run_impl aar-decode "$WORK/trunc.aar" "$WORK/t1" 2>/dev/null; ie=$?
 sh "$ORACLE" aar-decode "$WORK/trunc.aar" "$WORK/t2" >/dev/null 2>&1; oe=$?
@@ -289,6 +280,5 @@ parcase id-missing full -- aea-id /nonexistent-xyz
 fi
 
 echo "== cells=$PASS/$TOTAL fail=$FAIL =="
-[ "$IS_C" = 1 ] && echo "== pend=$PEND (C-mode pending, by design) =="
 [ "$FAIL" -eq 0 ] && echo CLI-BATTERY-GREEN || echo CLI-BATTERY-RED
 exit "$FAIL"
