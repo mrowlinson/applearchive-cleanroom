@@ -28,10 +28,36 @@
 #include <unistd.h>
 #include <zlib.h>
 
-#define NVME_WS "/Volumes/NVME/applearchive-cleanroom-ws"
-#define AAD_DEFAULT NVME_WS "/build/decode-writer/aad"
-#define AAE_DEFAULT NVME_WS "/build/aae/aae"
-#define AEAD_DEFAULT NVME_WS "/build/cport-aead/aead"
+/* Backend resolution: $ENV wins; else sibling of argv[0] (all 5 binaries
+ * ship in one dir from top-level `make`). No machine-specific defaults. */
+static char g_exedir[4096] = ".";
+
+static void exedir_init(const char *argv0) {
+    const char *s = argv0 ? strrchr(argv0, '/') : NULL;
+    if (!s) {
+        strcpy(g_exedir, ".");
+        return;
+    }
+    size_t n = (size_t)(s - argv0);
+    if (n == 0)
+        n = 1; /* argv0 = "/x" -> "/" */
+    if (n >= sizeof g_exedir)
+        n = sizeof g_exedir - 1;
+    memcpy(g_exedir, argv0, n);
+    g_exedir[n] = '\0';
+}
+
+static const char *backend(const char *env, const char *base) {
+    static char bufs[4][4352];
+    static int rot = 0;
+    const char *v = getenv(env);
+    char *b;
+    if (v && *v)
+        return v;
+    b = bufs[rot++ & 3];
+    snprintf(b, sizeof bufs[0], "%s/%s", g_exedir, base);
+    return b;
+}
 
 static const char *SUPPORTED_ALGS = "raw,lzfse,zlib,lzma,lz4,lzraven,lzbitmap";
 
@@ -107,11 +133,6 @@ static int is_reg_exec(const char *p) {
     return access(p, X_OK) == 0;
 }
 
-static const char *env_or(const char *name, const char *dflt) {
-    const char *v = getenv(name);
-    return (v && *v) ? v : dflt;
-}
-
 static int do_execv(const char *bin, char **args) {
     execv(bin, args);
     fprintf(stderr, "aae-cli: exec %s: %s\n", bin, strerror(errno));
@@ -162,9 +183,9 @@ static int cmd_probe(int argc, char **argv, const char *self) {
     printf("os=%s\n", u.sysname);
     printf("arch=%s\n", u.machine);
     printf("cli=%s\n", self);
-    printf("aad_bin=%s\n", env_or("AAD_BIN", AAD_DEFAULT));
-    printf("aae_c=%s\n", env_or("AAE_C", AAE_DEFAULT));
-    printf("aead_c=%s\n", env_or("AEAD_C", AEAD_DEFAULT));
+    printf("aad_bin=%s\n", backend("AAD_BIN", "aad"));
+    printf("aae_c=%s\n", backend("AAE_C", "aae"));
+    printf("aead_c=%s\n", backend("AEAD_C", "aeadc"));
     printf("cc=%s\n", __VERSION__);
     return 0;
 }
@@ -334,7 +355,7 @@ static int cmd_aar_encode(int argc, char **argv) {
         }
         /* regex failure: pass through; backend reports (exit 1 both). */
     }
-    exe = env_or("AAE_C", AAE_DEFAULT);
+    exe = backend("AAE_C", "aae");
     if (!is_reg_exec(exe)) {
         snprintf(m, sizeof m,
                  "missing C encode binary: %s "
@@ -378,7 +399,7 @@ static int cmd_aar_decode(int argc, char **argv) {
         snprintf(m, sizeof m, "missing: %s", src);
         return die_msg(m);
     }
-    exe = env_or("AAD_BIN", AAD_DEFAULT);
+    exe = backend("AAD_BIN", "aad");
     if (!is_reg_exec(exe)) {
         snprintf(m, sizeof m,
                  "missing C decode binary: %s "
@@ -968,7 +989,7 @@ static const char *hexval(const char *v, char *buf, size_t n) {
 }
 
 static int aead_bin(const char *sub, const char **bin_out) {
-    const char *bin = env_or("AEAD_C", AEAD_DEFAULT);
+    const char *bin = backend("AEAD_C", "aeadc");
     char m[8192];
     *bin_out = bin;
     if (is_reg_exec(bin))
@@ -1156,7 +1177,7 @@ static int cmd_aea_id(int argc, char **argv) {
         int fd, st, outrc;
         pid_t pid;
         if (!td || !*td)
-            td = NVME_WS "/tmp";
+            td = "/tmp";
         if (mkdir_p(td) != 0)
             return die_msg("aar-list: cannot use TMPDIR");
         snprintf(path, sizeof path, "%s/aae-cli-id-XXXXXX", td);
@@ -1225,6 +1246,7 @@ static void print_usage(void) {
 
 int main(int argc, char **argv) {
     const char *sub;
+    exedir_init(argv[0]);
     char m[8192];
     if (argc < 2 || !strcmp(argv[1], "-h") || !strcmp(argv[1], "--help") ||
         !strcmp(argv[1], "help")) {

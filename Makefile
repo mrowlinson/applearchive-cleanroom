@@ -1,9 +1,14 @@
-# aad decode — build outputs to NVME WS, never in repo.
-OUTDIR ?= /Volumes/NVME/applearchive-cleanroom-ws/build/decode-writer
+# Top-level build: aad (decode) + aae-cli (dispatcher) + src/c backends
+# (aae encode, aeadc AEA crypto, rgramc grammar verifier).
+# Usage: make [OUTDIR=dir]   (default ./build; all 5 binaries land there)
+OUTDIR ?= build
 CC ?= cc
 CFLAGS ?= -O2 -Wall
 
-all: $(OUTDIR)/aad
+all: $(OUTDIR)/aad $(OUTDIR)/aae-cli backends
+
+backends:
+	$(MAKE) -C src/c BUILDDIR=$(abspath $(OUTDIR))
 
 $(OUTDIR)/aad: src/aad.c
 	mkdir -p $(OUTDIR)
@@ -22,6 +27,6 @@ $(OUTDIR)/aae-cli: src/c/cli.c
 	$(CC) $(CFLAGS) -std=c11 -Wextra -I$(LZMA_PREFIX)/include -o $@ $< -lz $(LZMA_DYLIB) -lcompression
 
 clean:
-	rm -f $(OUTDIR)/aad $(OUTDIR)/aae-cli
+	rm -f $(OUTDIR)/aad $(OUTDIR)/aae-cli $(OUTDIR)/aae $(OUTDIR)/aeadc $(OUTDIR)/rgramc
 
-.PHONY: all clean aae-cli
+.PHONY: all clean aae-cli backends

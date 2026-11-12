@@ -1,9 +1,8 @@
-# aae C port. Build outputs NEVER in repo: BUILDDIR defaults to NVME.
-BUILDDIR ?= /Volumes/NVME/applearchive-cleanroom-ws/build/aae
-# aeadc C port (proto/aead.py). OUTDIR selects its own build dir; defaults to
-# the cport-aead NVME workspace. Respects OUTDIR env (task) or BUILDDIR.
-OUTDIR ?= /Volumes/NVME/applearchive-cleanroom-ws/build/cport-aead
-AEADC_OUT ?= $(OUTDIR)
+# aae C port + backends (aae encode, rgramc verifier, aeadc AEA crypto).
+# One build dir: BUILDDIR (default ./build, relative to repo root when
+# invoked via top-level `make`). AEADC_OUT may override aeadc placement.
+BUILDDIR ?= build
+AEADC_OUT ?= $(BUILDDIR)
 CC ?= cc
 CFLAGS ?= -O2 -Wall -Wextra -std=c11
 # Pinned liblzma 5.8.4 per quiz A-20(b): direct link, never unpinned dlopen.
