@@ -342,6 +342,7 @@ uint8_t *lz4_wrap_pbz4(const uint8_t *inner, size_t ilen,
                 } else {
                     free(pay);
                     uint8_t *rw = malloc(u ? u : 1);
+                    if (!rw) exit(1);
                     if (u) memcpy(rw, inner + base, u);
                     bl[bi].u = u;
                     bl[bi].pay = rw;
@@ -357,11 +358,13 @@ uint8_t *lz4_wrap_pbz4(const uint8_t *inner, size_t ilen,
         if (bi == 0) { /* empty inner */
             bl[0].u = 0;
             bl[0].pay = malloc(4);
+            if (!bl[0].pay) exit(1);
             memcpy(bl[0].pay, "bv4$", 4);
             bl[0].payn = 4;
             bl[0].framed = 0; /* 4*16 > 0: store empty */
             free(bl[0].pay);
             bl[0].pay = malloc(1);
+            if (!bl[0].pay) exit(1);
             bl[0].payn = 0;
             bi = 1;
         }
