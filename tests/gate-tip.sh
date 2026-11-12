@@ -27,6 +27,9 @@ rm -rf "$OUT"; mkdir -p "$OUT/tree" "$OUT/work"
 # (AFTER the rm -rf: the wipe above would delete an earlier mkdir.)
 export TMPDIR="$OUT/work/gate-tmp"
 mkdir -p "$TMPDIR"
+# the gate-built C binary dlopens lzfse at encode time; point it at the
+# pinned OSS dylib (same default as src/pbze.py; override via env).
+export LZFSE_DYLIB="${LZFSE_DYLIB:-/Volumes/NVME/applearchive-cleanroom-ws/tools/lzfse/build/bin/liblzfse.dylib}"
 git -C "$REPO" archive "$REV" >"$OUT/tree.tar" || { echo "GATE-FAIL $REV archive"; exit 1; }
 tar -x -C "$OUT/tree" -f "$OUT/tree.tar" || { echo "GATE-FAIL $REV extract"; exit 1; }
 [ -n "$(ls -A "$OUT/tree")" ] || { echo "GATE-FAIL $REV empty-tree"; exit 1; }
