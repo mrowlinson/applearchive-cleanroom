@@ -1,0 +1,1 @@
+aae-cli: aar-encode --alg lzbitmap: lzbitmap match-class input: order0-hot1 chunk@0 mass=1999.9
