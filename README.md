@@ -30,13 +30,14 @@ verification batteries, not to use the tools.
 ```sh
 git clone https://github.com/mrowlinson/applearchive-cleanroom.git
 cd applearchive-cleanroom
-make                        # builds ./build: aad aae aae-cli aeadc rgramc
-make OUTDIR=$HOME/aa-build  # or pick your own dir; all 5 land together
+make                        # builds ./build/aae-cli: one static binary
+make OUTDIR=$HOME/aa-build  # or pick your own dir
 ```
 
-No runtime dependencies beyond macOS system libraries: no Python, no
-pip packages, no environment variables. The CLI finds its backends
-beside itself (`AAD_BIN`/`AAE_C`/`AEAD_C` override when set).
+One file, no install layout: everything (all 7 codecs both
+directions, all 6 AEA profiles) is linked in. No runtime dependencies
+beyond macOS system libraries: no Python, no pip packages, no
+environment variables.
 
 ## Usage
 
@@ -117,7 +118,7 @@ Apple's tools on this machine (macOS 27.2). Current master HEAD:
 | decode (`c-battery.sh`) | 1069/1069 |
 | AEA (`aea-battery.sh`) | 187/187 |
 | AEA encrypt + units | 49/49, 14/14 |
-| CLI, C (`test_cli.sh` + `CLI_BIN`) | 104/104 |
+| CLI, C (`test_cli.sh` + `CLI_BIN`) | 105/105 |
 | CLI, Python reference (`test_cli.sh`) | 78/78 |
 | AEA C (`test_aead_c.sh`) | 102/102 |
 | lzraven / lzbitmap C (`test_lzraven_c.sh`, `test_lzbitmap_c.sh`) | 64/64, 32/32 |
