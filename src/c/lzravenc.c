@@ -1,0 +1,391 @@
+/* lzravenc.c -- lzraven encoder. C port of ../lzraven.py.
+ * Derived black-box from compression_tool I/O only. Tables via
+ * lzraventab.h (generated from src/rgram.py). */
+#include "lzravenc.h"
+#include "lzraventab.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+static const uint8_t kMagic[4] = {0x2b, 0x00, 0xca, 0xec};
+static const uint8_t kTrailer[4] = {0, 0, 0, 0};
+
+/* payload templates (from lzraven.py _t0.._t3 hex literals) */
+static const uint8_t T0a[] = {0x40,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x07,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x08,0x00,0x00,0x00,0x01,0x00,0x0f,0x00,0x06,0x00,0x00,0x00,0x00,0x28,0x00,0x00,0x04,0x00,0x18,0x00,0x04,0x00,0x00,0x00,0xe0,0x00,0x00,0x00};
+static const uint8_t T0b[] = {0x00,0x04,0x00,0x00,0x7b,0x00,0x00,0x00,0x07,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x08,0x00,0x00,0x00,0x01,0x00,0x0f,0x00,0x06,0x00,0xc0,0x01,0x04,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x04,0x00,0x00,0x00,0x04,0x0e,0x00,0x00};
+static const uint8_t T1[] = {0x00,0x08,0x00,0x00,0x01,0x00,0x00,0x00,0x08,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x08,0x00,0x00,0x00,0x01,0x00,0x0f,0x00,0x06,0x00,0xc0,0x01,0x04,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x04,0x00,0x18,0x00,0x04,0x10,0x00,0x00};
+static const uint8_t T2a[] = {0x00,0x10,0x00,0x00,0x01,0x00,0x00,0x00,0x09,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x08,0x00,0x00,0x00,0x01,0x00,0x0f,0x00,0x06,0x00,0xc0,0x01,0x04,0x00,0x00,0x00,0x00,0x00,0x02,0x00,0x04,0x00,0x18,0x00,0x04,0x12,0x00,0x00};
+static const uint8_t T2b[] = {0x10,0x00,0x00,0x00,0xfb,0x00,0x00,0x00,0x09,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x08,0x00,0x00,0x00,0x01,0x00,0x0f,0x00,0x06,0x00,0x00,0x00,0x00,0x00,0x0f,0x00,0x04,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x20,0x01,0x00,0x00};
+static const uint8_t T2c[] = {0x00,0x08,0x00,0x00,0xfd,0x00,0x00,0x00,0x09,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x08,0x00,0x00,0x00,0x01,0x00,0x0f,0x00,0x06,0x00,0x00,0x00,0x00,0x3c,0x00,0x00,0x04,0x00,0x00,0x00,0x01,0xc0,0x0d,0x00,0x06,0x48,0x00,0x00};
+static const uint8_t T2d[] = {0x00,0x80,0x00,0x00,0xff,0x00,0x00,0x00,0x09,0x00,0x00,0x00,0x08,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x0f,0x00,0x06,0x00,0xe0,0x01,0x04,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x0e,0x00,0x06,0x48,0x00,0x00};
+static const uint8_t T2e[] = {0x00,0x80,0x00,0x00,0x1f,0x01,0x00,0x00,0x09,0x00,0x00,0x00,0x08,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x0f,0x00,0x06,0x00,0xe0,0x01,0x04,0x00,0x82,0x20,0x00,0x00,0x00,0x00,0x01,0x00,0x0f,0x00,0x06,0x48,0x00,0x01};
+static const uint8_t T2f[] = {0x00,0x80,0x00,0x00,0x21,0x01,0x00,0x00,0x09,0x00,0x00,0x00,0x08,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x0f,0x00,0x06,0x00,0xe0,0x01,0x04,0x00,0x72,0x1e,0x00,0x00,0x00,0x00,0x01,0x00,0x0f,0x00,0x06,0x48,0x6f,0x45};
+static const uint8_t T2g[] = {0x00,0x00,0x08,0x00,0x33,0x01,0x00,0x00,0x0d,0x00,0x00,0x00,0x08,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x0f,0x00,0x06,0x00,0xe0,0x01,0x04,0x00,0x82,0x20,0x00,0x00,0x00,0x00,0x01,0x00,0x0f,0x00,0x06,0x48,0x65,0x28};
+static const uint8_t T2h[] = {0x10,0x00,0x80,0x00,0xb5,0x01,0x00,0x00,0x0d,0x00,0x00,0x00,0x0c,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x0f,0x00,0x06,0x00,0xe0,0x01,0x04,0x00,0x82,0x20,0x00,0x00,0x00,0x00,0x01,0x00,0x0f,0x00,0x06,0x48,0x27,0x38};
+static const uint8_t T3a[] = {0xe0,0x00,0x00,0x01,0x01,0x00,0x20,0x00,0x0e,0x00,0x00,0x00,0x0c,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x0f,0x00,0x06,0x00,0xe0,0x01,0x04,0x00,0x82,0x20,0x00,0x00,0x00,0x00,0x01,0x00,0x0f,0x00,0x06,0x50,0x27,0x38};
+static const uint8_t T3b[] = {0x00,0x80,0x00,0x00,0xb3,0x01,0x00,0x00,0x0a,0x00,0x00,0x00,0x08,0x00,0x00,0x80,0x00,0x00,0x00,0x00,0x01,0x00,0x0f,0x00,0x06,0x00,0xe0,0x01,0x04,0x80,0x60,0x84,0x00,0x00,0x00,0x00,0x01,0x00,0x0f,0x00,0x06,0x50,0xb8,0xfd};
+static const uint8_t T3c[] = {0x37,0x00,0x60,0x00,0xb5,0x01,0x00,0x00,0x0b,0x00,0x00,0x00,0x0e,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x0f,0x00,0x06,0x00,0xe0,0x01,0x04,0x80,0x60,0x84,0x00,0x00,0x00,0x00,0x01,0x00,0x0f,0x00,0x06,0x50,0xb8,0xfd};
+static const uint8_t T3d[] = {0x38,0x00,0x00,0x06,0xb7,0x01,0x00,0x00,0x0b,0x00,0x00,0x00,0x0e,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x05,0x00,0xf0,0x00,0x06,0x00,0xe0,0x01,0x04,0x80,0x60,0x84,0x00,0x00,0x00,0x00,0x01,0x00,0x0f,0x00,0x06,0x50,0xb8,0xfd};
+static const uint8_t T3e[] = {0x3c,0x00,0x00,0x06,0xd7,0x01,0x00,0x00,0x0b,0x00,0x00,0x00,0x0e,0x00,0x00,0x00,0x80,0x00,0x42,0x08,0x25,0x00,0xf0,0x00,0x06,0x00,0xe0,0x01,0x04,0x80,0x60,0x84,0x00,0x00,0x00,0x00,0x01,0x00,0x0f,0x00,0x06,0x50,0xb8,0xfd};
+static const uint8_t T3f[] = {0x3c,0x00,0x00,0x60,0xeb,0x01,0x00,0x00,0x0b,0x00,0x00,0x00,0x0e,0x00,0x00,0x00,0xd0,0x46,0xbe,0xff,0x05,0x00,0xf0,0x00,0x0a,0x00,0x00,0x1e,0x04,0x80,0x60,0x84,0x00,0x00,0x00,0x00,0x01,0x00,0x0f,0x00,0x06,0x50,0xb8,0xfd};
+
+/* clear then set listed bit positions (LSB-first) to value */
+static void bits_set(uint8_t *p, const int *pos, int npos, unsigned v) {
+    for (int j = 0; j < npos; j++) {
+        if ((v >> j) & 1)
+            p[pos[j] >> 3] |= (uint8_t)(1u << (pos[j] & 7));
+        else
+            p[pos[j] >> 3] &= (uint8_t)~(1u << (pos[j] & 7));
+    }
+}
+
+static const int P234[] = {234, 235, 236, 237};
+static const int P275[] = {275, 276, 277, 278};
+static const int P307B[] = {307, 308};
+static const int P307[] = {307, 308, 309, 310};
+static const int P270[] = {270, 271, 272, 273};
+static const int P5154[] = {51, 52, 53, 54};
+static const int P249[] = {249, 250, 251, 252, 253};
+static const int PW332[] = {332, 334, 336, 337, 338, 339, 340, 341, 342, 343,
+                             344, 346, 347, 348, 349, 350};
+
+static uint8_t *dup44(const uint8_t *t) {
+    uint8_t *p = malloc(44);
+    if (!p) {
+        fprintf(stderr, "lzraven: out of memory\n");
+        exit(1);
+    }
+    memcpy(p, t, 44);
+    return p;
+}
+
+static uint8_t *t0(long off) {
+    if (off <= 60) {
+        uint8_t *p = dup44(T0a);
+        long op3 = off + 3;
+        p[4] = (uint8_t)(((off << 1) | 1) & 0xFF);
+        bits_set(p, P234, 4, (unsigned)(((op3 >> 4) & 1) |
+                                       ((1 - ((op3 >> 5) & 1)) << 1) |
+                                       (((op3 >> 5) & 1) << 2) | (1 << 3)));
+        bits_set(p, P275, 4, (unsigned)(op3 & 15));
+        return p;
+    }
+    uint8_t *p = dup44(T0b);
+    long n = off + 64;
+    p[4] = (uint8_t)(((off << 1) | 1) & 0xFF);
+    bits_set(p, P307B, 2, (unsigned)(n - 125));
+    return p;
+}
+
+static uint8_t *t1(long off) {
+    uint8_t *p = dup44(T1);
+    long op3 = off + 3;
+    p[4] = (uint8_t)(((off << 1) | 1) & 0xFF);
+    bits_set(p, P307, 4, (unsigned)(op3 & 15));
+    bits_set(p, P270, 4, (unsigned)((op3 >> 4) & 15));
+    return p;
+}
+
+static void t2_set_window(uint8_t *p, long off) {
+    uint8_t e0, e1;
+    if (off >= 143 && off <= 152) {
+        if (off & 1) {
+            e0 = 0x82;
+            e1 = 0x10;
+        } else {
+            e0 = 0x72;
+            e1 = 0x0f;
+        }
+    } else {
+        long kw = (off - 153) >> 4;
+        if (kw < 0) kw = 0;
+        if (kw > 4) kw = 4;
+        e0 = LZRAV_T2W240[kw][0];
+        e1 = LZRAV_T2W240[kw][1];
+    }
+    p[30] = e0;
+    bits_set(p, P249, 5, e1);
+}
+
+static uint8_t *t2(long off) {
+    if (off <= 124) {
+        uint8_t *p = dup44(T2a);
+        long op3 = off + 3;
+        p[4] = (uint8_t)(((off << 1) | 1) & 0xFF);
+        bits_set(p, P307, 4, (unsigned)(op3 & 15));
+        bits_set(p, P270, 4, (unsigned)(((op3 >> 4) | 8) & 15));
+        return p;
+    }
+    if (off == 125) return dup44(T2b);
+    if (off == 126) return dup44(T2c);
+    if (off <= 142) {
+        uint8_t *p = dup44(T2d);
+        p[4] = (uint8_t)(((off << 1) | 1) & 0xFF);
+        if (off >= 128)
+            p[5] |= 0x01;
+        else
+            p[5] &= 0xFE;
+        bits_set(p, PW332, 16, (unsigned)((((off - 127) & 15) << 11) | 2));
+        return p;
+    }
+    if (off == 143) return dup44(T2e);
+    if (off <= 152) {
+        uint8_t *p = dup44(T2f);
+        p[4] = (uint8_t)(((off << 1) | 1) & 0xFF);
+        p[5] |= 0x01;
+        t2_set_window(p, off);
+        bits_set(p, PW332, 16, LZRAV_T2SCRAM[off - 144]);
+        return p;
+    }
+    if (off <= 216) {
+        uint8_t *p = dup44(T2g);
+        long kw = (off - 153) >> 4;
+        if (kw > 4) kw = 4;
+        p[4] = (uint8_t)(((off << 1) | 1) & 0xFF);
+        p[5] |= 0x01;
+        bits_set(p, P5154, 4, (unsigned)((off - 153) & 15));
+        t2_set_window(p, off);
+        bits_set(p, PW332, 16, LZRAV_T2W32[kw]);
+        return p;
+    }
+    if (off == 217) {
+        uint8_t *p = dup44(T2g);
+        p[0] = 0x00;
+        p[1] = 0x00;
+        p[2] = 0x80;
+        p[4] = (uint8_t)(((off << 1) | 1) & 0xFF);
+        p[5] |= 0x01;
+        p[12] = 0x0c;
+        bits_set(p, P5154, 4, 0);
+        t2_set_window(p, off);
+        bits_set(p, PW332, 16, LZRAV_T2W32[(off - 153) >> 4 > 4 ? 4 : (off - 153) >> 4]);
+        return p;
+    }
+    uint8_t *p = dup44(T2h);
+    p[0] = (uint8_t)((((off - 217) & 15) << 4) & 0xFF);
+    p[4] = (uint8_t)(((off << 1) | 1) & 0xFF);
+    p[6] = (uint8_t)(off < 233 ? 0x00 : (off < 249 ? 0x08 : 0x10));
+    t2_set_window(p, off);
+    {
+        long kw = (off - 153) >> 4;
+        if (kw > 4) kw = 4;
+        bits_set(p, PW332, 16, LZRAV_T2W32[kw]);
+    }
+    return p;
+}
+
+static uint8_t *t3(long off) {
+    if (off <= 216) {
+        long c = off + 7;
+        uint8_t *p = dup44(T3a);
+        p[0] = (uint8_t)((((c & 7) << 5) | 0x00) & 0xFF);
+        p[1] = (uint8_t)((((c >> 3) & 1) | ((c == 224 ? 1 : 0) << 7)) & 0xFF);
+        p[4] = (uint8_t)(((off << 1) | 1) & 0xFF);
+        p[5] = (uint8_t)((off >> 7) & 0xFF);
+        p[6] = (uint8_t)(((((c >> 4) + 2) & 15) << 4) & 0xFF);
+        return p;
+    }
+    if (off == 217) return dup44(T3b);
+    if (off == 218) return dup44(T3c);
+    if (off <= 234) {
+        long cc = off - 219;
+        uint8_t *p = dup44(T3d);
+        p[4] = (uint8_t)(((off << 1) | 1) & 0xFF);
+        p[17] = (uint8_t)(((cc & 7) << 2) | ((cc & 8) << 3));
+        return p;
+    }
+    if (off <= 244) {
+        uint8_t *p = dup44(T3e);
+        p[4] = (uint8_t)(((off << 1) | 1) & 0xFF);
+        memcpy(p + 16, LZRAV_T3CASC[off - 235], 4);
+        p[20] = (uint8_t)(off == 235 ? 0x25 : 0x05);
+        return p;
+    }
+    {
+        uint8_t *p = dup44(T3f);
+        long kw = (off - 245) >> 4;
+        if (kw > 3) kw = 3;
+        p[4] = (uint8_t)(((off << 1) | 1) & 0xFF);
+        p[5] = (uint8_t)((off >> 7) & 0xFF);
+        memcpy(p + 16, LZRAV_T3P245[kw], 4);
+        p[23] = (uint8_t)(((off - 245) & 15) << 2);
+        return p;
+    }
+}
+
+/* f2_expected (NOTE-w2s4-9): U*2^26, thresholds (4+U%4)*2^(14+U//4) */
+static uint32_t f2_expected(uint64_t rawlen) {
+    uint64_t limit = rawlen + 1;
+    uint64_t u = 0;
+    for (uint64_t uu = 0;; uu++) {
+        uint64_t t = (uint64_t)(4 + (uu % 4)) * (1ULL << (14 + (uu / 4)));
+        if (t >= limit) break;
+        if (t < rawlen) u = uu + 1;
+    }
+    return (uint32_t)((u << 26) & 0xFFFFFFFFu);
+}
+
+uint8_t *lzraven_encode_stream(const uint8_t *d, size_t n, size_t *on,
+                               char *err, size_t errcap) {
+    const uint8_t *pay = NULL;
+    size_t payn = 0;
+    int store = 0;
+    uint8_t *tmp = NULL;
+    if (n == 0) {
+        uint8_t *o = malloc(12);
+        if (!o) {
+            fprintf(stderr, "lzraven: out of memory\n");
+            exit(1);
+        }
+        memcpy(o, kMagic, 4);
+        memset(o + 4, 0, 8);
+        *on = 12;
+        return o;
+    }
+    int allzero = 1;
+    for (size_t i = 0; i < n; i++) {
+        if (d[i]) {
+            allzero = 0;
+            break;
+        }
+    }
+    if (allzero) {
+        if (n <= 63) {
+            pay = d;
+            payn = n;
+            store = 1;
+        } else if (n <= (size_t)LZRAVEN_SCOPE_MAX) {
+            long nn = (long)n;
+            if (nn <= 127)
+                tmp = t0(nn - 64);
+            else if (nn <= 255)
+                tmp = t1(nn - 128);
+            else if (nn <= 511)
+                tmp = t2(nn - 256);
+            else
+                tmp = t3(nn - 512);
+            pay = tmp;
+            payn = 44;
+            store = 0;
+        } else {
+            snprintf(err, errcap, "zeros N=%zu beyond proto scope %d",
+                     n, LZRAVEN_SCOPE_MAX);
+            return NULL;
+        }
+    } else if (n < 64) {
+        pay = d;
+        payn = n;
+        store = 1;
+    } else {
+        /* STORED-GUESS (proto gap, kept loud): byte-identical iff the
+         * oracle stores this input; divergent inputs stay RED. */
+        pay = d;
+        payn = n;
+        store = 1;
+    }
+    uint32_t f3 = (uint32_t)(payn * 4096 + (size_t)store);
+    uint32_t f2 = f2_expected((uint64_t)n);
+    uint8_t *o = malloc(12 + payn + 4);
+    if (!o) {
+        fprintf(stderr, "lzraven: out of memory\n");
+        exit(1);
+    }
+    memcpy(o, kMagic, 4);
+    o[4] = (uint8_t)f2;
+    o[5] = (uint8_t)(f2 >> 8);
+    o[6] = (uint8_t)(f2 >> 16);
+    o[7] = (uint8_t)(f2 >> 24);
+    o[8] = (uint8_t)f3;
+    o[9] = (uint8_t)(f3 >> 8);
+    o[10] = (uint8_t)(f3 >> 16);
+    o[11] = (uint8_t)(f3 >> 24);
+    if (payn) memcpy(o + 12, pay, payn);
+    memcpy(o + 12 + payn, kTrailer, 4);
+    free(tmp);
+    *on = 12 + payn + 4;
+    return o;
+}
+
+static void be32(uint8_t **pp, uint32_t v) {
+    uint8_t *p = *pp;
+    p[0] = (uint8_t)(v >> 24);
+    p[1] = (uint8_t)(v >> 16);
+    p[2] = (uint8_t)(v >> 8);
+    p[3] = (uint8_t)v;
+    *pp = p + 4;
+}
+
+uint8_t *lzraven_wrap_pbzm(const uint8_t *inner, size_t ilen,
+                           size_t blocksize, size_t *on,
+                           char *err, size_t errcap) {
+    size_t nch = (ilen + blocksize - 1) / blocksize;
+    if (nch == 0) nch = 1; /* unreachable via encode path (inner never
+                            * empty: always holds the root entry) */
+    uint8_t **pay = calloc(nch, sizeof *pay);
+    size_t *ul = calloc(nch, sizeof *ul);
+    size_t *cl = calloc(nch, sizeof *cl);
+    if (!pay || !ul || !cl) {
+        fprintf(stderr, "lzraven: out of memory\n");
+        exit(1);
+    }
+    size_t total = 12;
+    for (size_t i = 0; i < nch; i++) {
+        size_t off = i * blocksize;
+        size_t m = (ilen > off) ? ilen - off : 0;
+        if (m > blocksize) m = blocksize;
+        ul[i] = m;
+        size_t cn = 0;
+        uint8_t *cf = lzraven_encode_stream(inner + off, m, &cn, err, errcap);
+        if (!cf) {
+            for (size_t k = 0; k < i; k++) free(pay[k]);
+            free(pay);
+            free(ul);
+            free(cl);
+            return NULL;
+        }
+        if ((uint64_t)cn * 16 > (uint64_t)m * 15) {
+            /* 15/16 store rule (NOTE-008): keep raw slice */
+            free(cf);
+            cf = malloc(m ? m : 1);
+            if (!cf) {
+                fprintf(stderr, "lzraven: out of memory\n");
+                exit(1);
+            }
+            if (m) memcpy(cf, inner + off, m);
+            cn = m;
+        }
+        pay[i] = cf;
+        cl[i] = cn;
+        total += cn + (i + 1 < nch ? 16 : 0);
+    }
+    uint8_t *o = malloc(total ? total : 1);
+    if (!o) {
+        fprintf(stderr, "lzraven: out of memory\n");
+        exit(1);
+    }
+    uint8_t *p = o;
+    memcpy(p, "pbzm", 4);
+    p += 4;
+    be32(&p, 0);
+    be32(&p, (uint32_t)blocksize);
+    be32(&p, 0);
+    be32(&p, (uint32_t)ul[0]);
+    be32(&p, 0);
+    be32(&p, (uint32_t)cl[0]);
+    for (size_t i = 0; i < nch; i++) {
+        memcpy(p, pay[i], cl[i]);
+        p += cl[i];
+        if (i + 1 < nch) {
+            be32(&p, 0);
+            be32(&p, (uint32_t)ul[i + 1]);
+            be32(&p, 0);
+            be32(&p, (uint32_t)cl[i + 1]);
+        }
+        free(pay[i]);
+    }
+    free(pay);
+    free(ul);
+    free(cl);
+    *on = total;
+    return o;
+}

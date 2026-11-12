@@ -20,6 +20,8 @@
 #include <unistd.h>
 #include <zlib.h>
 #include "lz4c.h"
+#include "lzravenc.h"
+#include "lzbitmapc.h"
 
 static const uint8_t kProvVal[] = {0x01, 0x02, 0x00, 0x66, 0x97, 0xd0,
                                    0x7a, 0xbb, 0x10, 0x2c, 0x73};
@@ -644,7 +646,7 @@ int main(int argc, char **argv) {
         }
     }
     if (!src || !dst) {
-        fprintf(stderr, "usage: aae SRCDIR OUT.aar [--alg raw|lzfse|zlib|lzma|lz4] "
+        fprintf(stderr, "usage: aae SRCDIR OUT.aar [--alg raw|lzfse|zlib|lzma|lz4|lzraven|lzbitmap] "
                         "[--block SIZE] [--threads N]\n");
         return 1;
     }
@@ -657,6 +659,10 @@ int main(int argc, char **argv) {
         magic = "pbzx";
     else if (!strcmp(alg, "lz4"))
         magic = "pbz4";
+    else if (!strcmp(alg, "lzraven"))
+        magic = "pbzm";
+    else if (!strcmp(alg, "lzbitmap"))
+        magic = "pbzb";
     else if (strcmp(alg, "raw")) {
         fprintf(stderr, "unsupported alg %s\n", alg);
         return 1;
@@ -681,6 +687,32 @@ int main(int argc, char **argv) {
         uint8_t *o = lz4_wrap_pbz4(inner.p, inner.n, chs, nch, block,
                                    &olen);
         lz4_free_chunks(chs, nch);
+        bput(&out, o, olen);
+        free(o);
+    } else if (!strcmp(alg, "lzraven")) {
+        char err[256];
+        size_t olen = 0;
+        uint8_t *o =
+            lzraven_wrap_pbzm(inner.p, inner.n, block, &olen, err,
+                              sizeof err);
+        if (!o) {
+            fprintf(stderr, "lzraven unclosed input: %s\n", err);
+            free(inner.p);
+            return 1;
+        }
+        bput(&out, o, olen);
+        free(o);
+    } else if (!strcmp(alg, "lzbitmap")) {
+        char err[256];
+        size_t olen = 0;
+        uint8_t *o =
+            lzbitmap_wrap_pbzb(inner.p, inner.n, block, &olen, err,
+                               sizeof err);
+        if (!o) {
+            fprintf(stderr, "lzbitmap match-class input: %s\n", err);
+            free(inner.p);
+            return 1;
+        }
         bput(&out, o, olen);
         free(o);
     } else {

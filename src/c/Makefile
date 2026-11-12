@@ -17,9 +17,9 @@ all: $(BUILDDIR)/aae $(BUILDDIR)/rgramc
 aae: $(BUILDDIR)/aae
 rgramc: $(BUILDDIR)/rgramc
 
-$(BUILDDIR)/aae: aae.c lz4c.c lz4c.h
+$(BUILDDIR)/aae: aae.c lz4c.c lz4c.h lzravenc.c lzravenc.h lzraventab.h lzbitmapc.c lzbitmapc.h
 	mkdir -p $(BUILDDIR)
-	$(CC) $(CFLAGS) -o $@ aae.c lz4c.c $(LDLIBS)
+	$(CC) $(CFLAGS) -o $@ aae.c lz4c.c lzravenc.c lzbitmapc.c $(LDLIBS)
 
 $(BUILDDIR)/rgramc: rgramc.c rgramc.h
 	mkdir -p $(BUILDDIR)
