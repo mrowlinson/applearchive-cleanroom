@@ -1,13 +1,21 @@
 #!/bin/sh
 # test_aead_c.sh — committed C-parity gate for aeadc (the C port of proto/aead.py).
 # Bed-style like test_lz4_c.sh. ZERO Python on legs 1-6 (sh + `aea` oracle +
-# aeadc + openssl + dd/xxd/od/awk/cmp only; no uv, no python-lz4, no venv).
+# unified-binary `aeadc` passthrough + openssl + dd/xxd/od/awk/cmp only;
+# no uv, no python-lz4, no venv).
 # Leg 7 runs the full tests/test_aea_enc.sh suite via tests/aeadc-shim.sh; its
 # only python usage is struct/sys/base64 byte-slicing of oracle blobs by the
 # suite itself (system python3 suffices; no lz4/cryptography modules needed).
 #
+# UNIFIED MAPPING (cport-unify): every old `"$AEADC" <args>` cell is now
+# `"$CLI" aeadc <args>` — same argv into the same aead_main, same bytes,
+# same exits, same stderr. The native `aeadc` passthrough is used (NOT
+# aea-encrypt/aea-decrypt) because transplant --fixed-* flags, stdio
+# positionals, and selftest have no aea-* equivalents; translation would
+# change bytes/exits. Cell count and oracle comparisons unchanged.
+#
 # usage: sh tests/test_aead_c.sh [workdir]
-# Env: AEADC (default WS build), AEA (default /usr/bin/aea).
+# Env: CLI (default WS unified build), AEA (default /usr/bin/aea).
 # Exit 0 ALL-GREEN, 1 RED. Counts 1 battery run.
 #
 # aea-battery.sh backend mapping (acceptance d): every cell where the battery
@@ -25,7 +33,7 @@
 # in the full aea-battery flip, not repeated here).
 set -u
 AEA=${AEA:-/usr/bin/aea}
-AEADC=${AEADC:-/Volumes/NVME/applearchive-cleanroom-ws/build/cport-aead/aeadc}
+CLI=${CLI:-/Volumes/NVME/applearchive-cleanroom-ws/build/unified/aae-cli}
 HERE=$(dirname "$0")
 WORK=${1:-${TMPDIR:-/tmp}/aeadc-bed-$$}
 mkdir -p "$WORK"
@@ -33,7 +41,7 @@ fail=0
 npass=0
 ok() { npass=$((npass+1)); echo "PASS $1"; }
 bad() { fail=1; echo "FAIL $1"; }
-[ -x "$AEADC" ] || { echo "FAIL missing aeadc: $AEADC"; exit 1; }
+[ -x "$CLI" ] || { echo "FAIL missing unified binary: $CLI (CLI=...)"; exit 1; }
 [ -x "$AEA" ] || { echo "FAIL missing oracle aea: $AEA"; exit 1; }
 command -v openssl >/dev/null || { echo "FAIL missing openssl"; exit 1; }
 
@@ -59,16 +67,16 @@ flipbyte() { # $1=file $2=offset: byte = (byte+1)%256 via dd
 }
 
 echo "== leg1 selftest (test_aead_units.py logic as C asserts)"
-if "$AEADC" selftest > "$WORK/selftest.log" 2>&1; then ok selftest; else bad selftest; fi
+if "$CLI" aeadc selftest > "$WORK/selftest.log" 2>&1; then ok selftest; else bad selftest; fi
 grep -q "SELFTEST 97/97 PASS" "$WORK/selftest.log" 2>/dev/null || bad selftest-count
 
 echo "== leg2 pins (vectors/selfgen/aea decrypt == vectors/selfgen/aar/hello-raw.aar)"
 REPO=$(cd "$HERE/.." && pwd)
 for v in hello-p1-nopad hello-p5; do
   if [ "$v" = "hello-p1-nopad" ]; then
-    "$AEADC" decrypt --key "$REPO/vectors/selfgen/aea/testkey.bin" -i "$REPO/vectors/selfgen/aea/$v.aea" -o "$WORK/$v.out" 2>"$WORK/$v.err"
+    "$CLI" aeadc decrypt --key "$REPO/vectors/selfgen/aea/testkey.bin" -i "$REPO/vectors/selfgen/aea/$v.aea" -o "$WORK/$v.out" 2>"$WORK/$v.err"
   else
-    "$AEADC" decrypt --password 'test-password-fixture' -i "$REPO/vectors/selfgen/aea/$v.aea" -o "$WORK/$v.out" 2>"$WORK/$v.err"
+    "$CLI" aeadc decrypt --password 'test-password-fixture' -i "$REPO/vectors/selfgen/aea/$v.aea" -o "$WORK/$v.out" 2>"$WORK/$v.err"
   fi
   if [ $? -eq 0 ] && cmp -s "$WORK/$v.out" "$REPO/vectors/selfgen/aar/hello-raw.aar"; then ok "pin-$v"; else bad "pin-$v"; fi
 done
@@ -84,8 +92,8 @@ for p in 0 1 2 3 4 5; do
     4) extra="--recipient-pub $WORK/ec-pub.pem --sign-priv $WORK/ec-priv.pem"; dextra="--recipient-priv $WORK/ec-priv.pem --sign-pub $WORK/ec-pub.pem" ;;
     5) extra="--password $PW"; dextra="--password $PW" ;;
   esac
-  "$AEADC" encrypt --profile $p $extra -a none --checksum sha256 --padding none -i "$WORK/msg.txt" -o "$WORK/p$p-c.aea" 2>/dev/null || { bad "enc-p$p"; continue; }
-  "$AEADC" decrypt $dextra -i "$WORK/p$p-c.aea" -o "$WORK/p$p-cc.out" 2>/dev/null && cmp -s "$WORK/p$p-cc.out" "$WORK/msg.txt" && ok "p$p-rt" || bad "p$p-rt"
+  "$CLI" aeadc encrypt --profile $p $extra -a none --checksum sha256 --padding none -i "$WORK/msg.txt" -o "$WORK/p$p-c.aea" 2>/dev/null || { bad "enc-p$p"; continue; }
+  "$CLI" aeadc decrypt $dextra -i "$WORK/p$p-c.aea" -o "$WORK/p$p-cc.out" 2>/dev/null && cmp -s "$WORK/p$p-cc.out" "$WORK/msg.txt" && ok "p$p-rt" || bad "p$p-rt"
   # oracle cross: profile flags are oracle-style (-profile/-password-value/-key)
   oextra=""
   case $p in
@@ -105,26 +113,26 @@ for p in 0 1 2 3 4 5; do
     4) "$AEA" encrypt -profile $p -recipient-pub "$WORK/ec-pub.pem" -sign-priv "$WORK/ec-priv.pem" -a none -i "$WORK/msg.txt" -o "$WORK/p$p-o.aea" 2>/dev/null ;;
     5) "$AEA" encrypt -profile $p -password-value "$PW" -a none -i "$WORK/msg.txt" -o "$WORK/p$p-o.aea" 2>/dev/null ;;
   esac
-  "$AEADC" decrypt $dextra -i "$WORK/p$p-o.aea" -o "$WORK/p$p-oc.out" 2>/dev/null && cmp -s "$WORK/p$p-oc.out" "$WORK/msg.txt" && ok "p$p-ora2c" || bad "p$p-ora2c"
+  "$CLI" aeadc decrypt $dextra -i "$WORK/p$p-o.aea" -o "$WORK/p$p-oc.out" 2>/dev/null && cmp -s "$WORK/p$p-oc.out" "$WORK/msg.txt" && ok "p$p-ora2c" || bad "p$p-ora2c"
 done
 
 echo "== leg4 codecs (C->oracle + oracle->C on big.txt; lzbitmap/lzraven ora->C)"
 for alg in none zlib lzma lz4 lzfse; do
-  "$AEADC" encrypt --profile 5 --password "$PW" -a $alg --checksum sha256 --padding none -i "$WORK/big.txt" -o "$WORK/c-$alg.aea" 2>/dev/null || { bad "cenc-$alg"; continue; }
+  "$CLI" aeadc encrypt --profile 5 --password "$PW" -a $alg --checksum sha256 --padding none -i "$WORK/big.txt" -o "$WORK/c-$alg.aea" 2>/dev/null || { bad "cenc-$alg"; continue; }
   "$AEA" decrypt -password-value "$PW" -i "$WORK/c-$alg.aea" -o "$WORK/c-$alg-co.out" 2>/dev/null && cmp -s "$WORK/c-$alg-co.out" "$WORK/big.txt" && ok "c2ora-$alg" || bad "c2ora-$alg"
   "$AEA" encrypt -profile 5 -password-value "$PW" -a $alg -i "$WORK/big.txt" -o "$WORK/o-$alg.aea" 2>/dev/null || { bad "oenc-$alg"; continue; }
-  "$AEADC" decrypt --password "$PW" -i "$WORK/o-$alg.aea" -o "$WORK/o-$alg-oc.out" 2>/dev/null && cmp -s "$WORK/o-$alg-oc.out" "$WORK/big.txt" && ok "ora2c-$alg" || bad "ora2c-$alg"
+  "$CLI" aeadc decrypt --password "$PW" -i "$WORK/o-$alg.aea" -o "$WORK/o-$alg-oc.out" 2>/dev/null && cmp -s "$WORK/o-$alg-oc.out" "$WORK/big.txt" && ok "ora2c-$alg" || bad "ora2c-$alg"
 done
 for alg in lzbitmap lzraven; do
   "$AEA" encrypt -profile 5 -password-value "$PW" -a $alg -i "$WORK/big.txt" -o "$WORK/o-$alg.aea" 2>/dev/null || { bad "oenc-$alg"; continue; }
-  "$AEADC" decrypt --password "$PW" -i "$WORK/o-$alg.aea" -o "$WORK/o-$alg-oc.out" 2>/dev/null && cmp -s "$WORK/o-$alg-oc.out" "$WORK/big.txt" && ok "ora2c-$alg" || bad "ora2c-$alg"
-  out=$("$AEADC" encrypt --profile 5 --password "$PW" -a $alg -i "$WORK/msg.txt" -o "$WORK/x.aea" 2>&1); rc=$?
+  "$CLI" aeadc decrypt --password "$PW" -i "$WORK/o-$alg.aea" -o "$WORK/o-$alg-oc.out" 2>/dev/null && cmp -s "$WORK/o-$alg-oc.out" "$WORK/big.txt" && ok "ora2c-$alg" || bad "ora2c-$alg"
+  out=$("$CLI" aeadc encrypt --profile 5 --password "$PW" -a $alg -i "$WORK/msg.txt" -o "$WORK/x.aea" 2>&1); rc=$?
   if [ $rc -ne 0 ]; then ok "noenc-$alg"; else bad "noenc-$alg"; fi
 done
 # all codecs on empty + tiny (decoder edge shapes)
 for alg in none zlib lzma lz4 lzfse; do
-  "$AEADC" encrypt --profile 1 --key "$WORK/key32.bin" -a $alg -i "$WORK/empty.bin" -o "$WORK/e-$alg.aea" 2>/dev/null &&
-  "$AEADC" decrypt --key "$WORK/key32.bin" -i "$WORK/e-$alg.aea" -o "$WORK/e-$alg.out" 2>/dev/null &&
+  "$CLI" aeadc encrypt --profile 1 --key "$WORK/key32.bin" -a $alg -i "$WORK/empty.bin" -o "$WORK/e-$alg.aea" 2>/dev/null &&
+  "$CLI" aeadc decrypt --key "$WORK/key32.bin" -i "$WORK/e-$alg.aea" -o "$WORK/e-$alg.out" 2>/dev/null &&
   cmp -s "$WORK/e-$alg.out" "$WORK/empty.bin" && ok "empty-$alg" || bad "empty-$alg"
 done
 
@@ -143,7 +151,7 @@ transplant() { # $1=profile $2=key-or-pw-flag $3=ckname $4=cksize $5=in $6=tag
   _smac=$(dd bs=1 skip=$_mo count=$((32 * 256)) if="$WORK/t-$_tag-o.aea" 2>/dev/null | xxd -p -c 8192)
   _ccred=$_cred
   case "$_cred" in -key\ *) _ccred="--key ${_cred#-key }";; -password-value\ *) _ccred="--password ${_cred#-password-value }";; esac
-  "$AEADC" encrypt --profile $_p $_ccred -a none -b 64k --checksum "$_ckn" --padding none --fixed-salt "hex:$_salt" --fixed-nmac "hex:$_nmac" --fixed-smacs "hex:$_smac" -i "$_in" -o "$WORK/t-$_tag-c.aea" 2>/dev/null || { bad "tcenc-$_tag"; return; }
+  "$CLI" aeadc encrypt --profile $_p $_ccred -a none -b 64k --checksum "$_ckn" --padding none --fixed-salt "hex:$_salt" --fixed-nmac "hex:$_nmac" --fixed-smacs "hex:$_smac" -i "$_in" -o "$WORK/t-$_tag-c.aea" 2>/dev/null || { bad "tcenc-$_tag"; return; }
   cmp -s "$WORK/t-$_tag-o.aea" "$WORK/t-$_tag-c.aea" && ok "transplant-$_tag" || bad "transplant-$_tag"
 }
 transplant 1 "-key $WORK/key32.bin" murmur64 8 "$WORK/msg.txt" p1-msg
@@ -151,9 +159,9 @@ transplant 5 "-password-value $PW" sha256 32 "$WORK/msg.txt" p5-msg
 transplant 1 "-key $WORK/key32.bin" sha256 32 "$WORK/big.txt" p1-big
 
 echo "== leg6 errors/messages/id/range/stdio/pwfile/keyval/multi/padcorr/strength/auth"
-ex() { # $1=tag $2=want-exit $3=want-msg-or-empty rest=args($AEADC ...)
+ex() { # $1=tag $2=want-exit $3=want-msg-or-empty rest=args($CLI aeadc ...)
   _tag=$1; _want=$2; _msg=$3; shift 3
-  _out=$("$AEADC" "$@" 2>&1); _rc=$?
+  _out=$("$CLI" aeadc "$@" 2>&1); _rc=$?
   if [ $_rc -eq "$_want" ] && { [ -z "$_msg" ] || echo "$_out" | grep -qF "$_msg"; }; then ok "$_tag"; else bad "$_tag(rc=$_rc out=$_out)"; fi
 }
 ex err-bad-profile 1 "bad profile" encrypt --profile 9 --key "$WORK/key32.bin" -i "$WORK/msg.txt" -o "$WORK/x.aea"
@@ -172,7 +180,7 @@ ex err-kv-bare 1 "key-value must be hex:... or base64:... (oracle rejects bare)"
 ex err-rec384 1 "recipient_pub invalid" encrypt --profile 3 --recipient-pub "$WORK/ec384-pub.pem" -i "$WORK/msg.txt" -o "$WORK/x.aea"
 ex err-sign384 1 "sign_priv invalid" encrypt --profile 2 --key "$WORK/key32.bin" --sign-priv "$WORK/ec384-priv.pem" -i "$WORK/msg.txt" -o "$WORK/x.aea"
 # decrypt-side rejects on C blobs
-"$AEADC" encrypt --profile 5 --password "$PW" -a none -i "$WORK/msg.txt" -o "$WORK/e5.aea" 2>/dev/null
+"$CLI" aeadc encrypt --profile 5 --password "$PW" -a none -i "$WORK/msg.txt" -o "$WORK/e5.aea" 2>/dev/null
 ex err-wrongpw 1 "HMAC mismatch" decrypt --password 'wrong-password-000000' -i "$WORK/e5.aea" -o "$WORK/x.out"
 head -c 8 "$WORK/e5.aea" > "$WORK/trunc8.aea"
 ex err-trunc8 1 "bad magic" decrypt --password "$PW" -i "$WORK/trunc8.aea" -o "$WORK/x.out"
@@ -187,19 +195,19 @@ cp "$WORK/e5.aea" "$WORK/sstr4.aea"; flipbyte "$WORK/sstr4.aea" 7; flipbyte "$WO
 ex err-sstr4 1 "bad scrypt strength" decrypt --password "$PW" -i "$WORK/sstr4.aea" -o "$WORK/x.out"
 # strength-ok: no-op copy decrypts fine
 cp "$WORK/e5.aea" "$WORK/sstrok.aea"
-"$AEADC" decrypt --password "$PW" -i "$WORK/sstrok.aea" -o "$WORK/sstrok.out" 2>/dev/null && cmp -s "$WORK/sstrok.out" "$WORK/msg.txt" && ok str-ok || bad str-ok
+"$CLI" aeadc decrypt --password "$PW" -i "$WORK/sstrok.aea" -o "$WORK/sstrok.out" 2>/dev/null && cmp -s "$WORK/sstrok.out" "$WORK/msg.txt" && ok str-ok || bad str-ok
 # unsigned p0 (oracle makes it with -sign-pub encrypt): both must reject
 "$AEA" encrypt -profile 0 -sign-pub "$WORK/ec-pub.pem" -a none -i "$WORK/msg.txt" -o "$WORK/p0u.aea" 2>/dev/null || bad unsigned-setup
 "$AEA" decrypt -sign-pub "$WORK/ec-pub.pem" -i "$WORK/p0u.aea" -o "$WORK/x.out" 2>/dev/null && bad unsigned-ora || ok unsigned-ora
 ex err-unsigned 1 "" decrypt --sign-pub "$WORK/ec-pub.pem" -i "$WORK/p0u.aea" -o "$WORK/x.out"
 # id + id-auth
-"$AEADC" id -i "$WORK/p1-c.aea" > "$WORK/id1.out" 2>/dev/null && grep -qE '^[0-9a-f]{64}$' "$WORK/id1.out" && ok id || bad id
+"$CLI" aeadc id -i "$WORK/p1-c.aea" > "$WORK/id1.out" 2>/dev/null && grep -qE '^[0-9a-f]{64}$' "$WORK/id1.out" && ok id || bad id
 "$AEA" id -i "$WORK/p1-c.aea" > "$WORK/id1o.out" 2>/dev/null && cmp -s "$WORK/id1.out" "$WORK/id1o.out" && ok id-ora || bad id-ora
 head -c 100 "$WORK/p1-c.aea" > "$WORK/idt.aea"
 ex err-id-trunc 1 "truncated prologue" id -i "$WORK/idt.aea"
 printf 'auth-bytes' > "$WORK/auth.bin"
-"$AEADC" encrypt --profile 1 --key "$WORK/key32.bin" --auth-data "$WORK/auth.bin" --auth-data-key mykey --auth-data-value hex:010203 --auth-data-value hex:0405 -i "$WORK/msg.txt" -o "$WORK/auth.aea" 2>/dev/null || bad auth-enc
-"$AEADC" id -i "$WORK/auth.aea" > "$WORK/idauth.out" 2>/dev/null && grep -qE '^[0-9a-f]{64}$' "$WORK/idauth.out" && ok id-auth || bad id-auth
+"$CLI" aeadc encrypt --profile 1 --key "$WORK/key32.bin" --auth-data "$WORK/auth.bin" --auth-data-key mykey --auth-data-value hex:010203 --auth-data-value hex:0405 -i "$WORK/msg.txt" -o "$WORK/auth.aea" 2>/dev/null || bad auth-enc
+"$CLI" aeadc id -i "$WORK/auth.aea" > "$WORK/idauth.out" 2>/dev/null && grep -qE '^[0-9a-f]{64}$' "$WORK/idauth.out" && ok id-auth || bad id-auth
 "$AEA" decrypt -key "$WORK/key32.bin" -i "$WORK/auth.aea" -o "$WORK/auth-ora.out" 2>/dev/null && cmp -s "$WORK/auth-ora.out" "$WORK/msg.txt" && ok auth-c2ora || bad auth-c2ora
 ex err-authkey-noval 1 "auth-data-key without following value" encrypt --profile 1 --key "$WORK/key32.bin" --auth-data-key k1 -i "$WORK/msg.txt" -o "$WORK/x.aea"
 # range (expected from oracle range decrypt)
@@ -207,67 +215,67 @@ ex err-authkey-noval 1 "auth-data-key without following value" encrypt --profile
 for rs in "10 20" "0 100" "100000 5000"; do
   set -- $rs
   "$AEA" decrypt -key "$WORK/key32.bin" -range-offset "$1" -range-size "$2" -i "$WORK/rng.aea" -o "$WORK/rng-exp.out" 2>/dev/null
-  "$AEADC" decrypt --key "$WORK/key32.bin" --range-offset "$1" --range-size "$2" -i "$WORK/rng.aea" -o "$WORK/rng-c.out" 2>/dev/null &&
+  "$CLI" aeadc decrypt --key "$WORK/key32.bin" --range-offset "$1" --range-size "$2" -i "$WORK/rng.aea" -o "$WORK/rng-c.out" 2>/dev/null &&
   cmp -s "$WORK/rng-c.out" "$WORK/rng-exp.out" && ok "range-$1-$2" || bad "range-$1-$2"
 done
 # stdio: stdin->stdout roundtrip, literal '-' file
-"$AEADC" encrypt --profile 1 --key "$WORK/key32.bin" -a none -i "$WORK/msg.txt" -o "$WORK/std.aea" 2>/dev/null
-"$AEADC" decrypt --key "$WORK/key32.bin" -i "$WORK/std.aea" > "$WORK/std.out" 2>/dev/null && cmp -s "$WORK/std.out" "$WORK/msg.txt" && ok stdio-out || bad stdio-out
-cat "$WORK/msg.txt" | "$AEADC" encrypt --profile 1 --key "$WORK/key32.bin" -a none -o "$WORK/std2.aea" 2>/dev/null &&
-"$AEADC" decrypt --key "$WORK/key32.bin" -i "$WORK/std2.aea" -o "$WORK/std2.out" 2>/dev/null &&
+"$CLI" aeadc encrypt --profile 1 --key "$WORK/key32.bin" -a none -i "$WORK/msg.txt" -o "$WORK/std.aea" 2>/dev/null
+"$CLI" aeadc decrypt --key "$WORK/key32.bin" -i "$WORK/std.aea" > "$WORK/std.out" 2>/dev/null && cmp -s "$WORK/std.out" "$WORK/msg.txt" && ok stdio-out || bad stdio-out
+cat "$WORK/msg.txt" | "$CLI" aeadc encrypt --profile 1 --key "$WORK/key32.bin" -a none -o "$WORK/std2.aea" 2>/dev/null &&
+"$CLI" aeadc decrypt --key "$WORK/key32.bin" -i "$WORK/std2.aea" -o "$WORK/std2.out" 2>/dev/null &&
 cmp -s "$WORK/std2.out" "$WORK/msg.txt" && ok stdio-in || bad stdio-in
 mkdir -p "$WORK/dash" && printf 'dash-data' > "$WORK/dash/-"
-(cd "$WORK/dash" && "$AEADC" encrypt --profile 1 --key "$WORK/key32.bin" -a none -i - -o dash.aea) 2>/dev/null &&
-(cd "$WORK/dash" && "$AEADC" decrypt --key "$WORK/key32.bin" -i dash.aea -o dash.out) 2>/dev/null &&
+(cd "$WORK/dash" && "$CLI" aeadc encrypt --profile 1 --key "$WORK/key32.bin" -a none -i - -o dash.aea) 2>/dev/null &&
+(cd "$WORK/dash" && "$CLI" aeadc decrypt --key "$WORK/key32.bin" -i dash.aea -o dash.out) 2>/dev/null &&
 cmp -s "$WORK/dash/dash.out" "$WORK/dash/-" && ok dash-in || bad dash-in
 # pwfile forms + keyval forms
 printf '%s' "$PW" > "$WORK/pwfile.txt"
 printf '%s\n' "$PW" > "$WORK/pwfile-nl.txt"
-"$AEADC" encrypt --profile 5 --password-file "$WORK/pwfile-nl.txt" -a none -i "$WORK/msg.txt" -o "$WORK/pwf.aea" 2>/dev/null &&
-"$AEADC" decrypt --password-file "$WORK/pwfile.txt" -i "$WORK/pwf.aea" -o "$WORK/pwf.out" 2>/dev/null &&
+"$CLI" aeadc encrypt --profile 5 --password-file "$WORK/pwfile-nl.txt" -a none -i "$WORK/msg.txt" -o "$WORK/pwf.aea" 2>/dev/null &&
+"$CLI" aeadc decrypt --password-file "$WORK/pwfile.txt" -i "$WORK/pwf.aea" -o "$WORK/pwf.out" 2>/dev/null &&
 cmp -s "$WORK/pwf.out" "$WORK/msg.txt" && ok pwfile || bad pwfile
 printf '\377\376' > "$WORK/pwfile-bad.bin"
 ex err-pwfile-text 1 "password file not text" encrypt --profile 5 --password-file "$WORK/pwfile-bad.bin" -i "$WORK/msg.txt" -o "$WORK/x.aea"
 K64=$(od -A n -t x1 "$WORK/key32.bin" | tr -d ' \n')
 B64=$(openssl base64 -A -in "$WORK/key32.bin")
-"$AEADC" encrypt --profile 1 --key-value "hex:$K64" -i "$WORK/msg.txt" -o "$WORK/kvh.aea" 2>/dev/null &&
-"$AEADC" decrypt --key-value "base64:$B64" -i "$WORK/kvh.aea" -o "$WORK/kvh.out" 2>/dev/null &&
+"$CLI" aeadc encrypt --profile 1 --key-value "hex:$K64" -i "$WORK/msg.txt" -o "$WORK/kvh.aea" 2>/dev/null &&
+"$CLI" aeadc decrypt --key-value "base64:$B64" -i "$WORK/kvh.aea" -o "$WORK/kvh.out" 2>/dev/null &&
 cmp -s "$WORK/kvh.out" "$WORK/msg.txt" && ok keyval || bad keyval
 # multi-cluster chaining (C->C, C->oracle, oracle->C)
-"$AEADC" encrypt --profile 1 --key "$WORK/key32.bin" -a none --checksum sha256 --padding none -b 64k -i "$WORK/multi.bin" -o "$WORK/mc-c.aea" 2>/dev/null || bad mc-enc
-"$AEADC" decrypt --key "$WORK/key32.bin" -i "$WORK/mc-c.aea" -o "$WORK/mc-cc.out" 2>/dev/null && cmp -s "$WORK/mc-cc.out" "$WORK/multi.bin" && ok mc-rt || bad mc-rt
+"$CLI" aeadc encrypt --profile 1 --key "$WORK/key32.bin" -a none --checksum sha256 --padding none -b 64k -i "$WORK/multi.bin" -o "$WORK/mc-c.aea" 2>/dev/null || bad mc-enc
+"$CLI" aeadc decrypt --key "$WORK/key32.bin" -i "$WORK/mc-c.aea" -o "$WORK/mc-cc.out" 2>/dev/null && cmp -s "$WORK/mc-cc.out" "$WORK/multi.bin" && ok mc-rt || bad mc-rt
 "$AEA" decrypt -key "$WORK/key32.bin" -i "$WORK/mc-c.aea" -o "$WORK/mc-co.out" 2>/dev/null && cmp -s "$WORK/mc-co.out" "$WORK/multi.bin" && ok mc-c2ora || bad mc-c2ora
 head -c 263000000 /dev/zero > "$WORK/mcz.bin"
 "$AEA" encrypt -profile 5 -password-value "$PW" -a none -padding none -i "$WORK/mcz.bin" -o "$WORK/mcz-o.aea" 2>/dev/null || bad mc-oenc
-"$AEADC" decrypt --password "$PW" -i "$WORK/mcz-o.aea" -o "$WORK/mcz-oc.out" 2>/dev/null && cmp -s "$WORK/mcz-oc.out" "$WORK/mcz.bin" && ok mc-ora2c || bad mc-ora2c
+"$CLI" aeadc decrypt --password "$PW" -i "$WORK/mcz-o.aea" -o "$WORK/mcz-oc.out" 2>/dev/null && cmp -s "$WORK/mcz-oc.out" "$WORK/mcz.bin" && ok mc-ora2c || bad mc-ora2c
 # padcorr flips (single-cluster p1 + padding 16): every flip must fail
-"$AEADC" encrypt --profile 1 --key "$WORK/key32.bin" -a none --checksum sha256 --padding 16 -i "$WORK/msg.txt" -o "$WORK/pad.aea" 2>/dev/null || bad pad-enc
-"$AEADC" decrypt --key "$WORK/key32.bin" -i "$WORK/pad.aea" -o "$WORK/pad.out" 2>/dev/null && cmp -s "$WORK/pad.out" "$WORK/msg.txt" && ok pad-rt || bad pad-rt
+"$CLI" aeadc encrypt --profile 1 --key "$WORK/key32.bin" -a none --checksum sha256 --padding 16 -i "$WORK/msg.txt" -o "$WORK/pad.aea" 2>/dev/null || bad pad-enc
+"$CLI" aeadc decrypt --key "$WORK/key32.bin" -i "$WORK/pad.aea" -o "$WORK/pad.out" 2>/dev/null && cmp -s "$WORK/pad.out" "$WORK/msg.txt" && ok pad-rt || bad pad-rt
 LAST=$(( $(wc -c < "$WORK/pad.aea" | tr -d ' ') - 1 ))
 for off in 50 200 1000 5000 10000 $LAST; do
   cp "$WORK/pad.aea" "$WORK/padf.aea"; flipbyte "$WORK/padf.aea" $off
-  if "$AEADC" decrypt --key "$WORK/key32.bin" -i "$WORK/padf.aea" -o "$WORK/x.out" 2>/dev/null; then bad "padcorr-$off"; else ok "padcorr-$off"; fi
+  if "$CLI" aeadc decrypt --key "$WORK/key32.bin" -i "$WORK/padf.aea" -o "$WORK/x.out" 2>/dev/null; then bad "padcorr-$off"; else ok "padcorr-$off"; fi
 done
 # murmur + empty + block-size indifference (decrypt side)
-"$AEADC" encrypt --profile 2 --key "$WORK/key32.bin" --sign-priv "$WORK/ec-priv.pem" -a none --checksum murmur64 -i "$WORK/msg.txt" -o "$WORK/mur.aea" 2>/dev/null &&
-"$AEADC" decrypt --key "$WORK/key32.bin" --sign-pub "$WORK/ec-pub.pem" -i "$WORK/mur.aea" -o "$WORK/mur.out" 2>/dev/null &&
+"$CLI" aeadc encrypt --profile 2 --key "$WORK/key32.bin" --sign-priv "$WORK/ec-priv.pem" -a none --checksum murmur64 -i "$WORK/msg.txt" -o "$WORK/mur.aea" 2>/dev/null &&
+"$CLI" aeadc decrypt --key "$WORK/key32.bin" --sign-pub "$WORK/ec-pub.pem" -i "$WORK/mur.aea" -o "$WORK/mur.out" 2>/dev/null &&
 cmp -s "$WORK/mur.out" "$WORK/msg.txt" && ok murmur || bad murmur
-"$AEADC" encrypt --profile 5 --password "$PW" -a none -i "$WORK/empty.bin" -o "$WORK/mt.aea" 2>/dev/null &&
-"$AEADC" decrypt --password "$PW" -i "$WORK/mt.aea" -o "$WORK/mt.out" 2>/dev/null &&
+"$CLI" aeadc encrypt --profile 5 --password "$PW" -a none -i "$WORK/empty.bin" -o "$WORK/mt.aea" 2>/dev/null &&
+"$CLI" aeadc decrypt --password "$PW" -i "$WORK/mt.aea" -o "$WORK/mt.out" 2>/dev/null &&
 cmp -s "$WORK/mt.out" "$WORK/empty.bin" && ok empty || bad empty
 for bs in 64k 16k 4k 1k; do
-  "$AEADC" encrypt --profile 1 --key "$WORK/key32.bin" -a none -b $bs -i "$WORK/msg.txt" -o "$WORK/bs.aea" 2>/dev/null &&
-  "$AEADC" decrypt --key "$WORK/key32.bin" -i "$WORK/bs.aea" -o "$WORK/bs.out" 2>/dev/null &&
+  "$CLI" aeadc encrypt --profile 1 --key "$WORK/key32.bin" -a none -b $bs -i "$WORK/msg.txt" -o "$WORK/bs.aea" 2>/dev/null &&
+  "$CLI" aeadc decrypt --key "$WORK/key32.bin" -i "$WORK/bs.aea" -o "$WORK/bs.out" 2>/dev/null &&
   cmp -s "$WORK/bs.out" "$WORK/msg.txt" && ok "bs-$bs" || bad "bs-$bs"
 done
 # concat: decrypt uses first blob only
 cat "$WORK/p1-c.aea" "$WORK/e5.aea" > "$WORK/concat.aea"
-"$AEADC" decrypt --key "$WORK/key32.bin" -i "$WORK/concat.aea" -o "$WORK/concat.out" 2>/dev/null &&
+"$CLI" aeadc decrypt --key "$WORK/key32.bin" -i "$WORK/concat.aea" -o "$WORK/concat.out" 2>/dev/null &&
 cmp -s "$WORK/concat.out" "$WORK/msg.txt" && ok concat || bad concat
 
 echo "== leg7 full tests/test_aea_enc.sh via aeadc-shim (system python3 only)"
 SHIM=$(cd "$HERE" && pwd)/aeadc-shim.sh
-if AEAD_PY="$SHIM" AEADC="$AEADC" sh "$HERE/test_aea_enc.sh" > "$WORK/aea-enc.log" 2>&1; then ok aea-enc-suite; else bad aea-enc-suite; fi
+if AEAD_PY="$SHIM" CLI="$CLI" sh "$HERE/test_aea_enc.sh" > "$WORK/aea-enc.log" 2>&1; then ok aea-enc-suite; else bad aea-enc-suite; fi
 tail -3 "$WORK/aea-enc.log"
 
 echo "== $npass passed, fail=$fail"
