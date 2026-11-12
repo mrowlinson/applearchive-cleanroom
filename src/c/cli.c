@@ -1151,7 +1151,7 @@ static int cmd_aea_id(int argc, char **argv) {
         return die_msg(m2);
     }
     if (!strcmp(src, "-")) {
-        /* stdin -> NVME temp file, fork/exec/wait, unlink (no shims). */
+        /* stdin -> temp file, fork/exec/wait, unlink (no shims). */
         const char *td = getenv("TMPDIR");
         char path[8192];
         uint8_t buf[65536];
@@ -1161,7 +1161,7 @@ static int cmd_aea_id(int argc, char **argv) {
         if (!td || !*td)
             td = "/tmp";
         if (mkdir_p(td) != 0)
-            return die_msg("aar-list: cannot use TMPDIR");
+            return die_msg("aea-id: cannot use TMPDIR");
         snprintf(path, sizeof path, "%s/aae-cli-id-XXXXXX", td);
         fd = mkstemp(path);
         if (fd < 0) {

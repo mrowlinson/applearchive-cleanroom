@@ -282,7 +282,6 @@ if run_impl aea-id "$WORK/e-p1.aea" >"$WORK/id-file.txt" 2>/dev/null \
 touch "$WORK/spool-blocker"
 TMPDIR="$WORK/spool-blocker/sub" run_impl aea-id - <"$WORK/e-p1.aea" >"$WORK/id-bad.out" 2>"$WORK/id-bad.err"; rc=$?
 if [ "$rc" -ne 0 ] && grep -q "aea-id" "$WORK/id-bad.err"; then pass "id-spool-label";
-elif [ "$IS_C" = 1 ]; then echo "KNOWN-DIFF id-spool-label (cli.c:1130 wrong label; patch text with parent)";
 else fail "id-spool-label"; fi
 
 echo "== cells encode.py error surface (canonical messages + exits) =="
