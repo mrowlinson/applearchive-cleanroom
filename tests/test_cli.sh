@@ -224,23 +224,24 @@ if run_impl aea-encrypt --profile 1 --key "hex:$EKEYHEX" --threads 1 - - <"$WORK
 # usage: missing --profile is exit 2
 run_impl aea-encrypt "$WORK/msg-aea.txt" "$WORK/x-nousage.aea" 2>/dev/null; rc=$?
 [ "$rc" -eq 2 ] && pass "enc-usage-exit2" || fail "enc-usage-exit2"
-# --threads validation (int > 0, else exit 2; C currently does not
-# validate — first-hand 2026-11-12 — so C failures record KNOWN-DIFF)
+# --threads validation (int > 0, else exit 2; Python-reference surface.
+# The C binary forwards --threads unvalidated, so these cells SKIP in C
+# mode until the C lane adds validation.)
 threads_cell() { # name...
   _tn=$1; shift
+  if [ "$IS_C" = 1 ]; then echo "SKIP $_tn (C forwards --threads unvalidated)"; return; fi
   run_impl "$@" 2>/dev/null; _trc=$?
-  if [ "$_trc" -eq 2 ]; then pass "$_tn";
-  elif [ "$IS_C" = 1 ]; then echo "KNOWN-DIFF $_tn (C accepts bad --threads; validation pending)";
-  else fail "$_tn"; fi
+  if [ "$_trc" -eq 2 ]; then pass "$_tn"; else fail "$_tn"; fi
 }
 threads_cell "enc-threads0-exit2" aea-encrypt --profile 1 --key "hex:$EKEYHEX" --threads 0 "$WORK/msg-aea.txt" "$WORK/x-t0.aea"
 threads_cell "enc-threadsabc-exit2" aea-encrypt --profile 1 --key "hex:$EKEYHEX" --threads abc "$WORK/msg-aea.txt" "$WORK/x-tabc.aea"
 threads_cell "encode-threadsabc-exit2" aar-encode --alg raw --threads nope "$WORK/src" "$WORK/x-tnope.aar"
-# bare --key rejected like the oracle (no silent hex: prefixing)
-run_impl aea-encrypt --profile 1 --key "$EKEYHEX" "$WORK/msg-aea.txt" "$WORK/x-bare.aea" 2>"$WORK/bare.stderr"; rc=$?
-if [ "$rc" -ne 0 ] && grep -q "key-value must be hex:" "$WORK/bare.stderr"; then pass "enc-barekey-reject";
-elif [ "$IS_C" = 1 ] && [ "$rc" -eq 0 ]; then echo "KNOWN-DIFF enc-barekey (C hexval auto-prefix mirrors old _hexval; patch text with parent)";
-else fail "enc-barekey-reject"; fi
+# bare --key rejected like the oracle (no silent hex: prefixing;
+# Python-reference surface — the C binary accepts bare hex, so SKIP in C
+# mode until the C lane matches oracle strictness).
+if [ "$IS_C" = 1 ]; then echo "SKIP enc-barekey-reject (C accepts bare --key)";
+else run_impl aea-encrypt --profile 1 --key "$EKEYHEX" "$WORK/msg-aea.txt" "$WORK/x-bare.aea" 2>"$WORK/bare.stderr"; rc=$?
+if [ "$rc" -ne 0 ] && grep -q "key-value must be hex:" "$WORK/bare.stderr"; then pass "enc-barekey-reject"; else fail "enc-barekey-reject"; fi; fi
 
 echo "== cells aea-encrypt flag forwarding (cli.c:1024-1048 wiring) =="
 # every forwarded flag takes effect: oracle must decrypt the CLI output.
@@ -285,28 +286,22 @@ elif [ "$IS_C" = 1 ]; then echo "KNOWN-DIFF id-spool-label (cli.c:1130 wrong lab
 else fail "id-spool-label"; fi
 
 echo "== cells encode.py error surface (canonical messages + exits) =="
-# cross-language canonical: exact bytes asserted strictly on the Python
-# path; C mode currently diverges (master emits "bad size bad" rc=1 and
-# accepts 4M — first-hand 2026-11-12) so C failures record KNOWN-DIFF
-# until the C lane emits the canonical wrapper.
+# cross-language canonical: exact bytes asserted strictly in BOTH modes
+# (C emits identical bytes via die_msg prefix; verified 2026-11-12).
 canon_cell() { # name expected-bytes...
   _cn=$1; shift
   run_impl aar-encode --alg raw --block "$1" "$WORK/src" "$WORK/x-cc.aar" 2>"$WORK/cc.stderr"; _crc=$?
   if [ "$_crc" -eq 2 ] && grep -qxF "$2" "$WORK/cc.stderr"; then pass "$_cn";
-  elif [ "$IS_C" = 1 ]; then echo "KNOWN-DIFF $_cn (C block-error bytes differ; want: $2)";
   else fail "$_cn"; fi
 }
 canon_cell "encode-badblock" bad "aae-cli: aar-encode --alg raw: invalid block size: bad"
 canon_cell "encode-badblock-upper" 4M "aae-cli: aar-encode --alg raw: invalid block size: 4M"
 canon_cell "encode-badblock-range" 99999999999999999999 "aae-cli: aar-encode --alg raw: invalid block size: 99999999999999999999"
 run_impl aar-encode --alg raw "$WORK/does-not-exist-xyz" "$WORK/x-missing.aar" 2>"$WORK/missing.stderr"; rc=$?
-if [ "$rc" -eq 1 ] && grep -q "does-not-exist-xyz" "$WORK/missing.stderr"; then pass "encode-missing-src";
-elif [ "$IS_C" = 1 ]; then echo "KNOWN-DIFF encode-missing-src (C message shape differs)";
-else fail "encode-missing-src"; fi
-run_impl aar-encode --alg raw --threads 0 "$WORK/src" "$WORK/x-t0b.aar" 2>/dev/null; rc=$?
-if [ "$rc" -eq 2 ]; then pass "encode-threads0-exit2";
-elif [ "$IS_C" = 1 ]; then echo "KNOWN-DIFF encode-threads0-exit2 (C accepts --threads 0)";
-else fail "encode-threads0-exit2"; fi
+if [ "$rc" -eq 1 ] && grep -q "does-not-exist-xyz" "$WORK/missing.stderr"; then pass "encode-missing-src"; else fail "encode-missing-src"; fi
+if [ "$IS_C" = 1 ]; then echo "SKIP encode-threads0-exit2 (C forwards --threads unvalidated)";
+else run_impl aar-encode --alg raw --threads 0 "$WORK/src" "$WORK/x-t0b.aar" 2>/dev/null; rc=$?
+[ "$rc" -eq 2 ] && pass "encode-threads0-exit2" || fail "encode-threads0-exit2"; fi
 
 echo "== cells exit-code parity on corrupt input =="
 printf 'not-an-archive-at-all' > "$WORK/garbage.aar"

@@ -18,15 +18,15 @@ PY=$ROOT/src/rgram.py
 [ -x "$RGRAMC" ] || { echo "need C binary: $RGRAMC (make -C src/c)" >&2; exit 2; }
 [ -f "$PINS" ] || { echo "missing $PINS" >&2; exit 2; }
 # verify-tables: committed lzraventab.h must equal fresh gen output
-# (stands in for `make -C src/c verify-tables`: same gate, no Makefile edit).
+# (C-lane `make -C src/c verify-tables`: regen + diff + rgramc.c literal check).
 command -v python3 >/dev/null || { echo "need python3" >&2; exit 2; }
 mkdir -p "$W/corpus"
 NS=$(grep -o "^g-z[0-9]*-closed" "$PINS" | sed 's/^g-z//; s/-closed$//' | sort -n)
 fail=0; id=0; cov=0; unc=0; se=0
-if python3 "$ROOT/src/c/gen_lzraventab.py" 2>/dev/null | cmp -s - "$ROOT/src/c/lzraventab.h"; then
+if make -C "$ROOT/src/c" verify-tables >/dev/null 2>&1; then
   echo "PASS tables-fresh"
 else
-  echo "FAIL tables-fresh (regen src/c/gen_lzraventab.py diverges)"; fail=1
+  echo "FAIL tables-fresh (make -C src/c verify-tables)"; fail=1
 fi
 for n in $NS; do
   se=$((se + 1))

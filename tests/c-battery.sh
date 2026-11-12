@@ -224,7 +224,7 @@ WRC=0; timeout -s KILL 20 python3 "$ROOT/proto/aad.py" "$WORK/wrap.aar" "$WORK/c
 if [ "$WRC" -eq 124 ] || [ "$WRC" -eq 137 ]; then fail "wrap-proto-hang";
 elif [ "$WRC" -ne 0 ]; then pass "wrap-proto-fast"; else fail "wrap-proto-accept"; fi
 WRC=0; timeout -s KILL 20 "$AAD" "$WORK/wrap.aar" "$WORK/c-wrap" >/dev/null 2>&1 || WRC=$?
-if [ "$WRC" -eq 124 ] || [ "$WRC" -eq 137 ]; then echo "KNOWN-DIFF wrap-hang (aad.c blen accumulation wraps pos; C fix pending)";
+if [ "$WRC" -eq 124 ] || [ "$WRC" -eq 137 ]; then fail "wrap-hang";
 elif [ "$WRC" -ne 0 ]; then pass "wrap-exit"; else fail "wrap-accept"; fi
 
 echo "== cell errors =="

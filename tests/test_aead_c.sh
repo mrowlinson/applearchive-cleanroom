@@ -123,7 +123,7 @@ for _tsz in 15 16 31 9000; do
   if "$CLI" aeadc encrypt --profile 1 --key "$WORK/key32.bin" -a lz4 -i "$WORK/tail-$_tsz.bin" -o "$WORK/tail-$_tsz.aea" 2>/dev/null \
      && "$CLI" aeadc decrypt --key "$WORK/key32.bin" -i "$WORK/tail-$_tsz.aea" -o "$WORK/tail-$_tsz.out" 2>/dev/null \
      && cmp -s "$WORK/tail-$_tsz.out" "$WORK/tail-$_tsz.bin"; then ok "tail-$_tsz";
-  else echo "KNOWN-DIFF tail-$_tsz (lz4_compress tail>=15 truncation; parent fix pending)"; fi
+  else bad "tail-$_tsz"; fi
 done
 
 echo "== leg4 codecs (C->oracle + oracle->C on big.txt; lzbitmap/lzraven ora->C)"
