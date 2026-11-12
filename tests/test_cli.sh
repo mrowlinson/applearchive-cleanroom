@@ -146,16 +146,19 @@ if [ "$IS_C" = 1 ]; then
   run_impl aar-encode --alg lzraven --threads 1 "$WORK/ravdir" "$WORK/impl-rav.aar" 2>"$WORK/enc-rav.stderr"; rc=$?
   [ "$rc" -eq 2 ] && grep -q "lzraven unclosed" "$WORK/enc-rav.stderr" \
     && pass "encode-impl-exit-lzraven" || fail "encode-impl-exit-lzraven"
-  pend "bytes-lzraven (C refuses raven by design)"
 else
 if run_impl aar-encode --alg lzraven --threads 1 "$WORK/ravdir" "$WORK/impl-rav.aar" 2>"$WORK/enc-rav.stderr"; then
   pass "encode-impl-exit-lzraven"
 else fail "encode-impl-exit-lzraven"; fi
-if cmp -s "$WORK/impl-rav.aar" "$WORK/ora-rav.aar" 2>/dev/null; then pass "bytes-lzraven"; else fail "bytes-lzraven"; fi
 fi
 if sh "$ORACLE" aar-encode --alg lzraven --threads 1 "$WORK/ravdir" "$WORK/ora-rav.aar" >/dev/null 2>&1; then
   pass "encode-oracle-exit-lzraven"
 else fail "encode-oracle-exit-lzraven"; fi
+if [ "$IS_C" = 1 ]; then
+  pend "bytes-lzraven (C refuses raven by design)"
+else
+if cmp -s "$WORK/impl-rav.aar" "$WORK/ora-rav.aar"; then pass "bytes-lzraven"; else fail "bytes-lzraven"; fi
+fi
 # non-default block size parity (mirrors sibling E2E e2e1k)
 if [ "$IS_C" = 1 ]; then
   run_impl aar-encode --alg lzraven --block 1k --threads 1 "$WORK/ravdir" "$WORK/impl-rav1k.aar" 2>"$WORK/enc-rav1k.stderr"; rc=$?
@@ -179,16 +182,19 @@ if [ "$IS_C" = 1 ]; then
   run_impl aar-encode --alg lzbitmap --threads 1 "$WORK/emptybm" "$WORK/impl-lzbm.aar" 2>"$WORK/enc-lzbm.stderr"; rc=$?
   [ "$rc" -eq 2 ] && grep -q "lzbitmap match-class" "$WORK/enc-lzbm.stderr" \
     && pass "encode-impl-exit-lzbitmap" || fail "encode-impl-exit-lzbitmap"
-  pend "bytes-lzbitmap (C refuses bitmap by design)"
 else
 if run_impl aar-encode --alg lzbitmap --threads 1 "$WORK/emptybm" "$WORK/impl-lzbm.aar" 2>"$WORK/enc-lzbm.stderr"; then
   pass "encode-impl-exit-lzbitmap"
 else fail "encode-impl-exit-lzbitmap"; fi
-if cmp -s "$WORK/impl-lzbm.aar" "$WORK/ora-lzbm.aar"; then pass "bytes-lzbitmap"; else fail "bytes-lzbitmap"; fi
 fi
 if sh "$ORACLE" aar-encode --alg lzbitmap --threads 1 "$WORK/emptybm" "$WORK/ora-lzbm.aar" >/dev/null 2>&1; then
   pass "encode-oracle-exit-lzbitmap"
 else fail "encode-oracle-exit-lzbitmap"; fi
+if [ "$IS_C" = 1 ]; then
+  pend "bytes-lzbitmap (C refuses bitmap by design)"
+else
+if cmp -s "$WORK/impl-lzbm.aar" "$WORK/ora-lzbm.aar"; then pass "bytes-lzbitmap"; else fail "bytes-lzbitmap"; fi
+fi
 
 echo "== cells refusal propagation (honest backend errors -> CLI exit 2 + marker) =="
 mkdir -p "$WORK/zerosdir"
