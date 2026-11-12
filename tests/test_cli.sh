@@ -114,15 +114,15 @@ echo "== cells aea-decrypt (byte parity impl vs oracle) =="
 KEYHEX=$(xxd -p "$V/aea/testkey.bin" | tr -d '\n')
 if skip_aea; then pend "dec-impl-exit-p1 (no AEAD_C)"; pend "dec-bytes-p1 (no AEAD_C)";
 else
-run_impl aea-decrypt --key "$KEYHEX" "$V/aea/hello-p1-nopad.aea" "$WORK/d-p1.bin" 2>/dev/null || fail "dec-impl-exit-p1"
-aea decrypt -key "$V/aea/testkey.bin" -i "$V/aea/hello-p1-nopad.aea" -o "$WORK/do-p1.bin" 2>/dev/null || fail "dec-oracle-exit-p1"
+if run_impl aea-decrypt --key "$KEYHEX" "$V/aea/hello-p1-nopad.aea" "$WORK/d-p1.bin" 2>/dev/null; then pass "dec-impl-exit-p1"; else fail "dec-impl-exit-p1"; fi
+if aea decrypt -key "$V/aea/testkey.bin" -i "$V/aea/hello-p1-nopad.aea" -o "$WORK/do-p1.bin" 2>/dev/null; then pass "dec-oracle-exit-p1"; else fail "dec-oracle-exit-p1"; fi
 if cmp -s "$WORK/d-p1.bin" "$WORK/do-p1.bin"; then pass "dec-bytes-p1"; else fail "dec-bytes-p1"; fi
 fi
 PW='test-password-fixture'
 if skip_aea; then pend "dec-impl-exit-p5 (no AEAD_C)"; pend "dec-bytes-p5 (no AEAD_C)";
 else
-run_impl aea-decrypt --password "$PW" "$V/aea/hello-p5.aea" "$WORK/d-p5.bin" 2>/dev/null || fail "dec-impl-exit-p5"
-aea decrypt -password-value "$PW" -i "$V/aea/hello-p5.aea" -o "$WORK/do-p5.bin" 2>/dev/null || fail "dec-oracle-exit-p5"
+if run_impl aea-decrypt --password "$PW" "$V/aea/hello-p5.aea" "$WORK/d-p5.bin" 2>/dev/null; then pass "dec-impl-exit-p5"; else fail "dec-impl-exit-p5"; fi
+if aea decrypt -password-value "$PW" -i "$V/aea/hello-p5.aea" -o "$WORK/do-p5.bin" 2>/dev/null; then pass "dec-oracle-exit-p5"; else fail "dec-oracle-exit-p5"; fi
 if cmp -s "$WORK/d-p5.bin" "$WORK/do-p5.bin"; then pass "dec-bytes-p5"; else fail "dec-bytes-p5"; fi
 fi
 # stdio shape: IN=- OUT=- pipe parity
