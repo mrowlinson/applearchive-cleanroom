@@ -1190,9 +1190,9 @@ static int cmd_aea_id(int argc, char **argv) {
 static void print_usage(void) {
     printf("usage: aae-cli %s\n",
            "probe|aar-encode|aar-decode|aar-list|aea-encrypt|aea-decrypt|"
-           "aea-id|aeadc");
+           "aea-id");
     printf("single static binary (no oracle): encode=C aae decode=C aad "
-           "list=C reparse encrypt/decrypt/id=C aead aeadc=native-passthrough\n");
+           "list=C reparse encrypt/decrypt/id=C aead\n");
 }
 
 int main(int argc, char **argv) {

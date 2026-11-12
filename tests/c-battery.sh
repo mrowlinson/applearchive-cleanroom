@@ -21,7 +21,7 @@ freeze() { # $1=srcdir: fixed mtimes (DPROBE-17) so self-generated
 
 command -v cc >/dev/null || die "no cc"
 make -C "$ROOT" OUTDIR="$WORK/build" >/dev/null 2>&1 || die "make failed"
-cp "$WORK/build/aad" "$AAD"
+{ echo '#!/bin/sh'; echo "exec \"$WORK/build/aae-cli\" aar-decode \"\$@\""; } > "$AAD" && chmod +x "$AAD"
 ADAPTER=$ROOT/harness/oracle-adapter.sh
 V=$ROOT/vectors/selfgen
 (cd "$V" && shasum -c SHA256SUMS >/dev/null 2>&1) || die "pins drifted"

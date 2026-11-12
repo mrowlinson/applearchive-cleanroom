@@ -746,6 +746,8 @@ static int extract(const Item *items, size_t nitems, const char *root,
                      int fcls, int fsub, size_t shortidx, int midchain,
                      int shortpresent, unsigned long long whole,
                      size_t shortend, unsigned long long obs, int mfkind) {
+    (void)obs;
+    (void)mfkind;
     char (*repl)[4096] = malloc(REPLC * sizeof *repl);
     size_t nrepl = 0;
     { /* root gated on scratch repl (a replaced root must not taint all) */

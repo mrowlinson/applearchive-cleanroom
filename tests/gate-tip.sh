@@ -74,11 +74,14 @@ runb() { # $1=leg $2=script-path-in-tree $3=invoke...
     npass=$(grep -c '^PASS' "$log"); say "$leg" "PASS n=$npass"
   else fail=1; say "$leg" "FAIL (see work-$leg.log)"; grep -E '^(FAIL|.*RED)' "$log" | head -20 | sed 's/^/  /'; fi
 }
-# 3a. C-BUILD (C port parity; build outputs to per-gate NVME dir only)
-if [ -e "$OUT/tree/src/c/Makefile" ]; then
-  if make -C "$OUT/tree/src/c" BUILDDIR="$OUT/build" >"$OUT/work-C-BUILD.log" 2>&1 && [ -x "$OUT/build/aae" ]; then
+# 3a. C-BUILD (unified binary; build outputs to per-gate NVME dir only)
+if [ -e "$OUT/tree/Makefile" ]; then
+  if make -C "$OUT/tree" OUTDIR="$OUT/build" >"$OUT/work-C-BUILD.log" 2>&1 && [ -x "$OUT/build/aae-cli" ]; then
     nw=$(grep -ci 'warning' "$OUT/work-C-BUILD.log" || true)
     say C-BUILD "PASS warnings=$nw"
+    # backend-argv compat for ENC_BIN legs: SRCDIR OUT --flags ->
+    # aae-cli aar-encode --flags SRCDIR OUT (same ae_main path)
+    { echo '#!/bin/sh'; echo "src=\$1; dst=\$2; shift 2"; echo "exec \"$OUT/build/aae-cli\" aar-encode \"\$@\" \"\$src\" \"\$dst\""; } > "$OUT/build/aae" && chmod +x "$OUT/build/aae"
   else fail=1; say C-BUILD "FAIL (see work-C-BUILD.log)"; tail -20 "$OUT/work-C-BUILD.log" | sed 's/^/  /'; fi
 else say C-BUILD "SKIP no-c-port"; fi
 runb RAWENC tests/test_rawenc.sh env RUN_BIG=1 sh "$OUT/tree/tests/test_rawenc.sh" "$OUT/work/rawenc"

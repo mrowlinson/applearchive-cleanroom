@@ -16,8 +16,8 @@ for f in "$V"/*.aar; do
   base=$(basename "$f")
   rm -rf "$WORK/p" "$WORK/a"; mkdir -p "$WORK/p" "$WORK/a"
   set +e
-  "$WORK/plain/aad" "$f" "$WORK/p" >/dev/null 2>&1; rc0=$?
-  "$WORK/asan/aad" "$f" "$WORK/a" >"$WORK/asan.log" 2>&1; rc1=$?
+  "$WORK/plain/aae-cli" aar-decode "$f" "$WORK/p" >/dev/null 2>&1; rc0=$?
+  "$WORK/asan/aae-cli" aar-decode "$f" "$WORK/a" >"$WORK/asan.log" 2>&1; rc1=$?
   set -e
   rep=$(grep -cE "Sanitizer|runtime error|SUMMARY" "$WORK/asan.log" 2>/dev/null || true)
   if [ "$rc0" != "$rc1" ]; then echo "FAIL asan-$base exit $rc0 vs $rc1"; FAILN=$((FAILN+1));
