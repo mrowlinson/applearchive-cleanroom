@@ -1,2 +1,0 @@
-Hello, AppleArchive fixture.
-Second line for compression.

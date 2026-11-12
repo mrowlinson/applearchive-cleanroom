@@ -17,15 +17,16 @@ set -u
 REV=${1:?usage: gate-tip.sh <rev> <ws-outdir>}
 OUT=${2:?usage: gate-tip.sh <rev> <ws-outdir>}
 case "$OUT" in /Volumes/NVME/*) ;; *) echo "GATE-FAIL $REV outdir-not-nvme"; exit 1;; esac
-# child batteries require TMPDIR (never /tmp, never repo tmp/); point it
-# at this gate's own NVME workdir so `: "${TMPDIR:?...}"` legs pass.
-export TMPDIR="$OUT/work/gate-tmp"
-mkdir -p "$TMPDIR"
 SELFDIR=$(cd "$(dirname "$0")" && pwd)
 REPO=$(git -C "$SELFDIR" rev-parse --show-toplevel 2>/dev/null || git rev-parse --show-toplevel 2>/dev/null || true)
 [ -n "$REPO" ] || { echo "GATE-FAIL $REV no-repo-resolved"; exit 1; }
 git -C "$REPO" cat-file -e "$REV^{commit}" 2>/dev/null || { echo "GATE-FAIL $REV no-such-rev"; exit 1; }
 rm -rf "$OUT"; mkdir -p "$OUT/tree" "$OUT/work"
+# child batteries require TMPDIR (never /tmp, never repo tmp/); point it
+# at this gate's own NVME workdir so `: "${TMPDIR:?...}"` legs pass.
+# (AFTER the rm -rf: the wipe above would delete an earlier mkdir.)
+export TMPDIR="$OUT/work/gate-tmp"
+mkdir -p "$TMPDIR"
 git -C "$REPO" archive "$REV" >"$OUT/tree.tar" || { echo "GATE-FAIL $REV archive"; exit 1; }
 tar -x -C "$OUT/tree" -f "$OUT/tree.tar" || { echo "GATE-FAIL $REV extract"; exit 1; }
 [ -n "$(ls -A "$OUT/tree")" ] || { echo "GATE-FAIL $REV empty-tree"; exit 1; }

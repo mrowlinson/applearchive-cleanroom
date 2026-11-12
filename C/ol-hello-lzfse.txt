@@ -1,3 +1,0 @@
-hello
-hello/greet.txt
-hello/repeat.txt

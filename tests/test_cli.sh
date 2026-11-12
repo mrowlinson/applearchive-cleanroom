@@ -19,8 +19,8 @@ run_impl() {
   if [ -n "${CLI_BIN:-}" ]; then "$IMPL" "$@"; else python3 "$IMPL" "$@"; fi
 }
 IS_C=0; [ -n "${CLI_BIN:-}" ] && IS_C=1
-NVME_WS=${NVME_WS:-/Volumes/NVME/applearchive-cleanroom-ws}
-WORK=${1:-$(mktemp -d "${TMPDIR:-$NVME_WS/tmp}/cli-battery.XXXXXX")}
+: "${TMPDIR:?must set TMPDIR to NVME scratch (never /tmp)}"
+WORK=${1:-$(mktemp -d "$TMPDIR/cli-battery.XXXXXX")}
 FAIL=0; PASS=0; TOTAL=0
 pass() { PASS=$((PASS+1)); TOTAL=$((TOTAL+1)); echo "PASS $1"; }
 fail() { TOTAL=$((TOTAL+1)); FAIL=1; echo "FAIL $1"; }
