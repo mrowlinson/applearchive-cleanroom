@@ -44,3 +44,19 @@ of AAR implementations); parent unions both files at land (different content, sa
 - No new OSS deps (dylib, submodule, vendored code) without viewer nomination in quiz FIRST.
 - No Apple-proprietary "OSS": libcompression/dlopen(Apple encoders) REFUSED (A-12, PARENT-007).
 - Pins re-gate on ANY version/OS bump (oracle-gate rule). License files stay readable at sources above.
+
+## RULING superseding A-12 (fix-sweep-PTD; wall restated, not moved)
+- A-12's REFUSE covered copying/reading Apple CODE into the repo. It does
+  NOT cover dynamic linking: linking the system Compression framework
+  (decode path) and the nominated lzfse dylib (encode path) is ALLOWED.
+  Link != copy: no Apple bytes are vendored, read, or disassembled; the
+  loader resolves system libraries at runtime.
+- Encode-via-Apple-ABI is allowed ONLY where emitted bytes are
+  oracle-pinned: every such byte must survive a byte-compare battery
+  against `/usr/bin/aa` output (pbze/lzma/lz4 cells), or the path must
+  honestly refuse (lzraven-unclosed, lzbitmap match-class). A byte the
+  oracle would not emit is never emitted.
+- The wall stands: zero Apple CODE in the repo (no vendored binaries,
+  no disassembly listings, no decompiled sources). CONTAM + LIBCOMPRESSION
+  gate legs enforce it. Direct `dlopen` of Apple encoders outside the two
+  nominated links above remains REFUSED.

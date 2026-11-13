@@ -1,11 +1,12 @@
 #!/bin/sh
 # c-battery.sh — C deliverable battery vs oracle (AAR decode).
-# Usage: tests/c-battery.sh [workdir]; default WS cbattery.XXXXXX.
+# Usage: TMPDIR=<nvme-scratch> tests/c-battery.sh [workdir]; default TMPDIR cbattery.XXXXXX.
 # Exit 0 all green / 1 any FAIL / 2 harness error. Needs: make, ZBM n/a.
 set -eu
+: "${TMPDIR:?must set TMPDIR to NVME scratch (never /tmp)}"
 HERE=$(cd "$(dirname "$0")" && pwd)
 ROOT=$(cd "$HERE/.." && pwd)
-WORK=${1:-$(mktemp -d /Volumes/NVME/applearchive-cleanroom-ws/cbattery.XXXXXX)}
+WORK=${1:-$(mktemp -d "$TMPDIR/cbattery.XXXXXX")}
 AAD=$WORK/aad-bin
 FAIL=0
 pass() { echo "PASS $1"; }
@@ -124,13 +125,19 @@ ORC=0; sh "$ADAPTER" aar-decode "$WORK/sk.aar" "$WORK/o-sk" >/dev/null 2>&1 || O
 CRC=0; "$AAD" "$WORK/sk.aar" "$WORK/c-sk" 2>/dev/null || CRC=$?
 [ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "sk-exit" || fail "sk-exit"
 diff -r "$WORK/o-sk" "$WORK/c-sk" >/dev/null 2>&1 && pass "sk-tree" || fail "sk-tree"
-python3 - "$ADAPTER" "$V/aar/fifo-mixed.aar" "$WORK/o-ff" <<'EOF' >/dev/null 2>&1 || true
+rm -rf "$WORK/o-ff"
+FFRC=0
+python3 - "$ADAPTER" "$V/aar/fifo-mixed.aar" "$WORK/o-ff" <<'EOF' >/dev/null 2>&1 || FFRC=$?
 import subprocess, sys
 try:
-    subprocess.run(["sh", sys.argv[1], "aar-decode", sys.argv[2], sys.argv[3]], capture_output=True, timeout=30)
+    r = subprocess.run(["sh", sys.argv[1], "aar-decode", sys.argv[2], sys.argv[3]], capture_output=True, timeout=30)
+    sys.exit(0 if r.returncode == 0 else 1)
 except subprocess.TimeoutExpired:
-    pass
+    sys.exit(2)  # documented oracle fifo hang (rawenc.py: oracle HANGS reading it)
 EOF
+if [ "$FFRC" -eq 2 ]; then pass "ff-oracle-hang";
+elif [ "$FFRC" -eq 0 ]; then pass "ff-oracle-exit";
+else fail "ff-oracle-exit"; fi
 if "$AAD" "$V/aar/fifo-mixed.aar" "$WORK/c-ff" 2>/dev/null; then pass "ff-exit"; else fail "ff-exit"; fi
 python3 - "$WORK/o-ff" "$WORK/c-ff" <<'EOF' >/dev/null 2>&1 && pass "ff-tree" || fail "ff-tree"
 import os, stat, sys
@@ -197,8 +204,28 @@ ORC=0; sh "$ADAPTER" aar-decode "$V/aar/bdev-basic.aar" "$WORK/o-bd" >/dev/null 
 CRC=0; "$AAD" "$V/aar/bdev-basic.aar" "$WORK/c-bd" 2>/dev/null || CRC=$?
 [ "$ORC" -eq 1 ] && [ "$CRC" -eq 1 ] && pass "bd-exit" || fail "bd-exit"
 diff -r "$WORK/o-bd" "$WORK/c-bd" >/dev/null 2>&1 && pass "bd-tree" || fail "bd-tree"
-"$AAD" "$V/aar/mix-fail.aar" "$WORK/c-sx" 2>"$WORK/sx.err" || true
+SXC=0; "$AAD" "$V/aar/mix-fail.aar" "$WORK/c-sx" 2>"$WORK/sx.err" || SXC=$?
+[ "$SXC" -eq 1 ] && pass "sx-exit" || fail "sx-exit"
 grep -q "not implemented yet" "$WORK/sx.err" && grep -q "1 entries failed to extract" "$WORK/sx.err" && pass "sx-tokens" || fail "sx-tokens"
+
+echo "== cell bloblen-wrap (must error fast, never hang) =="
+python3 - "$WORK/wrap.aar" <<'EOF'
+import struct, sys
+name = b"w"
+typ = b"TYP" + b"P" + struct.pack("<H", len(name)) + name
+hsize = 6 + 7 + 24
+n1 = 1 << 63
+n2 = (1 << 63) - hsize  # N1+N2 == -hsize mod 2^64 -> blen wraps, pos rewinds
+hdr = typ + b"DAT" + b"C" + struct.pack("<Q", n1) + b"DAT" + b"C" + struct.pack("<Q", n2)
+assert 6 + len(hdr) == hsize
+open(sys.argv[1], "wb").write(b"AA01" + struct.pack("<H", hsize) + hdr)
+EOF
+WRC=0; timeout -s KILL 20 python3 "$ROOT/proto/aad.py" "$WORK/wrap.aar" "$WORK/c-wrap-p" >/dev/null 2>&1 || WRC=$?
+if [ "$WRC" -eq 124 ] || [ "$WRC" -eq 137 ]; then fail "wrap-proto-hang";
+elif [ "$WRC" -ne 0 ]; then pass "wrap-proto-fast"; else fail "wrap-proto-accept"; fi
+WRC=0; timeout -s KILL 20 "$AAD" "$WORK/wrap.aar" "$WORK/c-wrap" >/dev/null 2>&1 || WRC=$?
+if [ "$WRC" -eq 124 ] || [ "$WRC" -eq 137 ]; then fail "wrap-hang";
+elif [ "$WRC" -ne 0 ]; then pass "wrap-exit"; else fail "wrap-accept"; fi
 
 echo "== cell errors =="
 python3 -c "import random; open('$WORK/corrupt.aar','wb').write(random.Random(777005).randbytes(100))"

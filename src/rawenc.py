@@ -115,7 +115,7 @@ def encode_entry(rel, st, typ):
     h = put_int(h, b"UID", st.st_uid)
     h = put_int(h, b"GID", st.st_gid)
     h = put_int(h, b"MOD", st.st_mode & 0x0FFF)
-    h = put_int(h, b"FLG", st.st_flags)
+    h = put_int(h, b"FLG", getattr(st, "st_flags", 0))  # st_flags macOS-only; 0 elsewhere
     full = os.path.join(ROOTB, rel)
     cns = crtime_ns(full, typ == b"L")
     if cns is None:  # no crtime (non-Apple FS): fall back to mtime

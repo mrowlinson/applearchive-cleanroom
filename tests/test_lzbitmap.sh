@@ -18,9 +18,10 @@
 # exit 0 all green / 1 any FAIL / 2 harness error.
 # RECORD=1 sh tests/test_lzbitmap.sh [workdir]  (rewrite PINS; REVIEW diff!)
 set -u
+: "${TMPDIR:?must set TMPDIR to NVME scratch (never /tmp)}"
 HERE=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 ROOT=$(CDPATH= cd -- "$HERE/.." && pwd)
-W=${1:-$(mktemp -d "${TMPDIR:-/Volumes/NVME/applearchive-cleanroom-ws/tmp}/lzbitmap.XXXXXX")}
+W=${1:-$(mktemp -d "$TMPDIR/lzbitmap.XXXXXX")}
 ORACLE=${ORACLE:-/usr/bin/aa}
 _IMP=${ENC_BIN:-python3 "$ROOT/src/encode.py"}
 PINS=$ROOT/vectors/lzbitmap-PINS.csv

@@ -4,13 +4,14 @@
 #   + lzraven-text loop (compressible data) + lzraven/murmur spots.
 # Deterministic data (seeded). Exits 0 WIDE-GREEN / 1 any FAIL.
 set -u
+: "${TMPDIR:?must set TMPDIR to NVME scratch (never /tmp)}"
 REPO=$(cd "$(dirname "$0")/.." && pwd)
 AEAD_PY=${AEAD_PY:-/Volumes/NVME/applearchive-cleanroom-ws/writer2/.venv/bin/python}
 LZFSE_BIN=${LZFSE_BIN:-/Volumes/NVME/applearchive-cleanroom-ws/writer2/oss/lzfse/build/bin/lzfse}
 ZBM_BIN=${ZBM_BIN:-/Volumes/NVME/applearchive-cleanroom-ws/writer2/oss/zbm/zbmcat}
 LZR_BIN=${LZR_BIN:-/Volumes/NVME/applearchive-cleanroom-ws/writer2/oss/lzraven/build/lzraven_dec}
 export LZFSE_BIN ZBM_BIN LZR_BIN
-WORK=$(mktemp -d "${TMPDIR:-/tmp}/aea-wide.XXXXXX")
+WORK=$(mktemp -d "$TMPDIR/aea-wide.XXXXXX")
 trap 'rm -rf "$WORK"' EXIT
 PASS=0; FAIL=0
 PW='testpw32....................................'

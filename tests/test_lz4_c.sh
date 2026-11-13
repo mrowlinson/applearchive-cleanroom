@@ -7,10 +7,11 @@
 # `"$CLI" aar-encode --alg lz4 <dir> <out>` — same ae_main code path, same
 # bytes, same exits. Cell count and oracle comparisons unchanged.
 set -u
+: "${TMPDIR:?must set TMPDIR to NVME scratch (never /tmp)}"
 BED=${1:?beddir}
 HERE=$(dirname "$0")/..
 CLI=${CLI:-/Volumes/NVME/applearchive-cleanroom-ws/build/unified/aae-cli}
-TMPD=${TMPDIR:-/tmp}/lz4c-$$
+TMPD=$TMPDIR/lz4c-$$
 mkdir -p "$TMPD"
 fail=0
 [ -x "$CLI" ] || { echo "FAIL missing unified binary: $CLI (CLI=...)"; exit 1; }

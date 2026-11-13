@@ -4,14 +4,16 @@
 # Pins: vectors/selfgen (13/13 shasum required first). Exits 0 ALL-PASS / 1 any FAIL.
 # Needs: AEAD_PY (venv python w/ cryptography+lz4), LZFSE_BIN (own-built lzfse CLI).
 set -u
+: "${TMPDIR:?must set TMPDIR to NVME scratch (never /tmp)}"
 REPO=$(cd "$(dirname "$0")/.." && pwd)
 AEAD_PY=${AEAD_PY:-/Volumes/NVME/applearchive-cleanroom-ws/writer2/.venv/bin/python}
 LZFSE_BIN=${LZFSE_BIN:-/Volumes/NVME/applearchive-cleanroom-ws/writer2/oss/lzfse/build/bin/lzfse}
 ZBM_BIN=${ZBM_BIN:-/Volumes/NVME/applearchive-cleanroom-ws/writer2/oss/zbm/zbmcat}
 LZR_BIN=${LZR_BIN:-/Volumes/NVME/applearchive-cleanroom-ws/writer2/oss/lzraven/build/lzraven_dec}
 export LZFSE_BIN ZBM_BIN LZR_BIN
-WORK=$(mktemp -d "${TMPDIR:-/tmp}/aea-bat.XXXXXX")
+WORK=$(mktemp -d "$TMPDIR/aea-bat.XXXXXX")
 trap 'rm -rf "$WORK"' EXIT
+command -v aea >/dev/null 2>&1 || { echo "HARD FAIL no oracle aea (vacuous pass refused)"; exit 2; }
 PASS=0; FAIL=0
 ok() { PASS=$((PASS+1)); echo "PASS $1"; }
 bad() { FAIL=$((FAIL+1)); echo "FAIL $1"; }

@@ -5,10 +5,11 @@
 # Usage: sh tests/test_outer2.sh [workdir]  (ADAPTER=... default oracle adapter)
 # RECORD=1 sh tests/test_outer2.sh [workdir]  (rewrite PINS; REVIEW diff vs beds!)
 set -eu
+: "${TMPDIR:?must set TMPDIR to NVME scratch (never /tmp)}"
 HERE=$(cd "$(dirname "$0")" && pwd)
 ROOT=$(cd "$HERE/.." && pwd)
 ADAPTER=${ADAPTER:-$HERE/../harness/oracle-adapter.sh}
-WORK=${1:-$(mktemp -d "${TMPDIR:-/tmp}/outer2.XXXXXX")}
+WORK=${1:-$(mktemp -d "$TMPDIR/outer2.XXXXXX")}
 PINS=$ROOT/vectors/outer2-PINS.csv
 FAIL=0
 GEN=test_outer2.sh

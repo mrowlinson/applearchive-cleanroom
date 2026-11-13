@@ -47,3 +47,6 @@ r-r1k-bm-b16,sha,e5a1c9f5e7b273a49ff8355aec4d721614b4a87aa54fb0d111309e47270c9a2
 r-err-alg,rc,1,0,test_rb2.sh,27.0.1,oracle-adapter.sh
 r-err-block,rc,1,0,test_rb2.sh,27.0.1,oracle-adapter.sh
 r-err-pay,rc,1,0,test_rb2.sh,27.0.1,oracle-adapter.sh
+r-err-missing-value,rc,1,0,test_rb2.sh,27.2,oracle-adapter.sh
+r-err-block-noval,rc,1,0,test_rb2.sh,27.2,oracle-adapter.sh
+r-err-upper,rc,1,0,test_rb2.sh,27.2,oracle-adapter.sh

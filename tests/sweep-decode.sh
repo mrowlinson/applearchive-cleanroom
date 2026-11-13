@@ -1,13 +1,14 @@
 #!/bin/bash
 # sweep-decode.sh — independent full-gate battery for the DECODE side.
-# Usage: CORPUS=<vectors/selfgen> [WRITER_BIN=<decode-binary>] tests/sweep-decode.sh [tier...]
+# Usage: TMPDIR=<nvme-scratch> [CORPUS=<vectors/selfgen>] [WRITER_BIN=<decode-binary>] tests/sweep-decode.sh [tier...]
 # Tiers: pins oracle-health decode-compare full holdout fresh units (default: all)
 # Verdicts: SWEEP-GREEN (exit 0) / SWEEP-RED (exit 1) / SWEEP-BASELINE (exit 3, no writer code yet)
-# Scratch: <worktree>/tmp/sweep-scratch (repo tmp only; bulky stays out).
+# Scratch: mktemp under $TMPDIR (unique per run; never repo tmp/, never /tmp).
 set -u
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CORPUS="${CORPUS:-$ROOT/vectors/selfgen}"
-SCRATCH="${SCRATCH:-$ROOT/tmp/sweep-scratch}"
+: "${TMPDIR:?must set TMPDIR to NVME scratch (never /tmp)}"
+SCRATCH="${SCRATCH:-$(mktemp -d "$TMPDIR/sweep-scratch.XXXXXX")}"
 ORACLE_AA="${ORACLE_AA:-/usr/bin/aa}"
 ORACLE_AEA="${ORACLE_AEA:-/usr/bin/aea}"
 WRITER_BIN="${WRITER_BIN:-}"

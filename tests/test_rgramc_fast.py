@@ -15,8 +15,12 @@ from contextlib import redirect_stderr, redirect_stdout
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 sys.path.insert(0, os.path.join(ROOT, "src"))
-WORK = sys.argv[1] if len(sys.argv) > 1 else os.path.join(
-    os.environ.get("TMPDIR", "/tmp"), "rgramc-fast")
+try:
+    _td = os.environ["TMPDIR"]
+except KeyError:
+    sys.stderr.write("need TMPDIR set to NVME scratch (never /tmp)\n")
+    sys.exit(2)
+WORK = sys.argv[1] if len(sys.argv) > 1 else os.path.join(_td, "rgramc-fast")
 RGRAMC = os.environ.get(
     "RGRAMC", "/Volumes/NVME/applearchive-cleanroom-ws/build/aae/rgramc")
 CACHE = os.environ.get(
@@ -25,7 +29,9 @@ REAL = os.environ.get("CT_REAL", "/usr/bin/compression_tool")
 PINS = os.path.join(ROOT, "vectors", "rgram-PINS.csv")
 # FLOOR: proven covered-cell count from full regen (rgramc-regen2:
 # 903 n-bands + 4571 range tiers + 2172 single-N tiers, max N 390836).
-# Was 11496 at T10P387R/N<=151760 before regen.
+# Was 11496 at T10P387R/N<=151760 before regen. A run covering fewer
+# cells than this (shrunken corpus, mass skips, early exit) is RED —
+# cov>0 alone is a false-green hole. Update only with a reviewed full run.
 FLOOR = 55272
 
 if not (os.path.isfile(RGRAMC) and os.access(RGRAMC, os.X_OK)):
@@ -103,9 +109,14 @@ for n in NS:
               % (n, prc, pout.getvalue()[:120], crc, cout[:120]))
         fail = 1
 
-print("RGRAMC-PYID %d/%d covered=%d/%d" % (lid, cov, cov, se))
-if lid == cov and cov >= FLOOR and fail == 0:
+print("RGRAMC-PYID %d/%d covered=%d/%d skipped=%d floor=%d"
+      % (lid, cov, cov, se, unc, FLOOR))
+if unc:
+    print("RGRAMC-SKIPPED %d (C out-of-scope; py leg unchecked on these)" % unc)
+if lid == cov and cov >= FLOOR and cov > 0 and fail == 0:
     print("RGRAMC-GREEN")
     sys.exit(0)
+if cov < FLOOR:
+    print("RGRAMC-FLOOR-FAIL covered=%d floor=%d" % (cov, FLOOR))
 print("RGRAMC-RED")
 sys.exit(1)

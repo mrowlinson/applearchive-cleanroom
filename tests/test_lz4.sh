@@ -2,9 +2,10 @@
 # tests/test_lz4.sh [workdir] — oracle-vs-impl byte compare, lz4 path.
 # exit 0 all green / 1 any FAIL.
 set -u
+: "${TMPDIR:?must set TMPDIR to NVME scratch (never /tmp)}"
 HERE=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 ROOT=$(CDPATH= cd -- "$HERE/.." && pwd)
-W=${1:-$(mktemp -d "${TMPDIR:-/tmp}/lz4.XXXXXX")}
+W=${1:-$(mktemp -d "$TMPDIR/lz4.XXXXXX")}
 ORACLE=${ORACLE:-/usr/bin/aa}
 _IMP=${ENC_BIN:-python3 "$ROOT/src/encode.py"}
 fail=0
@@ -47,6 +48,9 @@ mkdir -p "$W/in/mb"; python3 -c "open('$W/in/mb/n','wb').write(b'\\x00'*(5*1024*
 cell mb "1m"
 mkdir -p "$W/in/mix"; python3 -c "import random;random.seed(7);open('$W/in/mix/n','wb').write(bytes(random.randrange(256) for _ in range(1024*1024))+b'\\x00'*600000)"; fix "$W/in/mix"
 cell mix "1m"
+# non-64K-multiple block (block-cap rule: last chunk of a block ends at the
+# block end; used to overrun into the next block — byte-compare pins it)
+cell mix "100k"
 mkdir -p "$W/in/m1a"; python3 -c "import random;random.seed(11);open('$W/in/m1a/n','wb').write(bytes(random.randrange(256) for _ in range(50*1024))+b'\\x00'*(100*1024)+(b'abcdefgh'*12500)[:100000])"; fix "$W/in/m1a"
 cell m1a ""
 mkdir -p "$W/in/r361"; python3 -c "import random;random.seed(21);open('$W/in/r361/n','wb').write(bytes(random.randrange(256) for _ in range(4000))+b'\\x00'*361)"; fix "$W/in/r361"

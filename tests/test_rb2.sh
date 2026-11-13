@@ -9,10 +9,11 @@
 # Usage: sh tests/test_rb2.sh [workdir]
 # RECORD=1 sh tests/test_rb2.sh [workdir]  (rewrite PINS; REVIEW diff!)
 set -eu
+: "${TMPDIR:?must set TMPDIR to NVME scratch (never /tmp)}"
 HERE=$(cd "$(dirname "$0")" && pwd)
 ROOT=$(cd "$HERE/.." && pwd)
 ADAPTER=${ADAPTER:-$HERE/../harness/oracle-adapter.sh}
-WORK=${1:-$(mktemp -d "${TMPDIR:-/tmp}/rb2.XXXXXX")}
+WORK=${1:-$(mktemp -d "$TMPDIR/rb2.XXXXXX")}
 PINS=$ROOT/vectors/rb2-PINS.csv
 FAIL=0
 GEN=test_rb2.sh
@@ -142,6 +143,15 @@ chk "r-err-block" rc "$rc" 0
 rm -rf "$WORK/mpay"; mkdir -p "$WORK/mpay"
 if python3 "$RB2" --alg lzraven --payload-dir "$WORK/mpay" "$WORK/r1k-lzraven-d/raw.aar" "$WORK/mpay.out" 2>/dev/null; then rc=0; else rc=$?; fi
 chk "r-err-pay" rc "$rc" 0
+# missing-value flags fail closed with "missing value" (not "unknown flag")
+if python3 "$RB2" --alg lzraven --payload-dir 2>"$WORK/mv.err"; then rc=0; else rc=$?; fi
+if [ "$rc" -ne 0 ] && grep -q "missing value" "$WORK/mv.err"; then echo "PASS r-err-missing-value"; else echo "FAIL r-err-missing-value rc=$rc"; FAIL=1; fi
+if python3 "$RB2" --alg lzraven --block 2>"$WORK/mv2.err"; then rc=0; else rc=$?; fi
+if [ "$rc" -ne 0 ] && grep -q "missing value" "$WORK/mv2.err"; then echo "PASS r-err-block-noval"; else echo "FAIL r-err-block-noval rc=$rc"; FAIL=1; fi
+# uppercase suffixes rejected (canonical: encode.py lowercase-only regex)
+if python3 "$RB2" --alg lzraven --block 4M --payload-dir "$WORK/mpay" "$WORK/r1k-lzraven-d/raw.aar" "$WORK/mpay-u.out" 2>"$WORK/upper.err"; then
+  echo "FAIL r-err-upper: accepted 4M"; FAIL=1
+elif grep -q "invalid block size" "$WORK/upper.err"; then echo "PASS r-err-upper"; else echo "FAIL r-err-upper msg"; FAIL=1; fi
 [ -n "${RECORD:-}" ] && mv "$PINS.new" "$PINS" && echo "RECORDED $PINS"
 echo "== $WORK =="
 [ "$FAIL" -eq 0 ] && echo RB2-GREEN || echo RB2-RED

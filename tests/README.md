@@ -3,7 +3,7 @@
 Harness notes live here. Black-box oracles: local `aa` / `aea`.
 
 Batteries (all: exit 0 green / 1 FAIL / 2 harness error; work in WS):
-- c-battery.sh — C deliverable vs oracle, 83 cells (fixtures,
+- c-battery.sh — C deliverable vs oracle, 1073 cells (fixtures,
   attrtree, wide, multiblock, hardlink, specials, hlink-path,
   device-fail, errors, trunc-sweep, no-typ, xattr-order, adler,
   xat-file-order, socket-flush, xat-plus-socket, xat-dir,

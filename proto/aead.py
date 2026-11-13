@@ -32,6 +32,29 @@ class FmtErr(Exception):
     pass
 
 
+def _scratch_dir(workdir=None):
+    """TMPDIR-respecting scratch dir for tool temp files (never /tmp).
+
+    Precedence: explicit workdir arg, $TMPDIR, else a cwd-adjacent
+    workdir (created on demand).
+    """
+    import os
+    td = workdir or os.environ.get("TMPDIR")
+    if td:
+        return td
+    td = os.path.join(os.getcwd(), ".aead-tmp")
+    os.makedirs(td, exist_ok=True)
+    return td
+
+
+def _mkstemp(prefix):
+    import os
+    import tempfile
+    fd, path = tempfile.mkstemp(prefix=prefix, dir=_scratch_dir())
+    os.close(fd)
+    return path
+
+
 SCRYPT_N = {0: 0x4000, 1: 0x10000, 2: 0x40000, 3: 0x100000}
 KEY_SIZE = {0: 32, 1: 80, 2: 80, 3: 80, 4: 80, 5: 80}
 SIG_SIZE = {0: 128, 1: 0, 2: 160, 3: 0, 4: 160, 5: 0}
@@ -168,15 +191,14 @@ def decomp(alg, data, size):
     if alg == "m":
         import os
         import subprocess
-        import tempfile
         tool = os.environ.get("LZR_BIN", "")
         if not tool:
             raise FmtErr("lzraven needs LZR_BIN (own-built lzraven_dec)")
         ip = op = None
         try:
-            with tempfile.NamedTemporaryFile(delete=False) as fi:
+            ip = _mkstemp("lzr-in-")
+            with open(ip, "wb") as fi:
                 fi.write(data)
-                ip = fi.name
             op = ip + ".out"
             p = subprocess.run([tool, ip, op], capture_output=True,
                                timeout=120)
@@ -308,9 +330,15 @@ def decrypt_aea(blob, symkey=None, recip_priv=None, password=None, sign_pub=None
 
     rh = dec_ver(kd.rootkey(), rdata, cmac + auth, rmac)
     orig, arc, segsz, segper, comp, ckalg = struct.unpack("<QQIIcB", rh[:26])
-    comp = comp.decode("ascii")
+    try:
+        comp = comp.decode("ascii")
+    except UnicodeDecodeError:
+        raise FmtErr("bad codec")
     if ckalg not in CKSUM_SIZE:
         raise FmtErr("bad checksum alg")
+    shsz = 8 + CKSUM_SIZE[ckalg]
+    if orig != 0 and len(blob) < prologue_end + shsz * segper + 32 + 32 * segper:
+        raise FmtErr("truncated cluster header")
     if len(blob) < arc:
         raise FmtErr("truncated archive")
     padkey = hkdf(32, kd.main, b"AEA_PAK")  # A-016B: interop const, NOTE-25 sanctioned
@@ -319,8 +347,6 @@ def decrypt_aea(blob, symkey=None, recip_priv=None, password=None, sign_pub=None
                 hmac.digest(padkey, blob[prologue_end:arc], "sha256"), cmac):
             raise FmtErr("padding auth failed")
         return b""
-    shsz = 8 + CKSUM_SIZE[ckalg]
-
     out = io.BytesIO()
     ci = 0
     while True:
@@ -383,12 +409,11 @@ def comp_enc(alg, data):
         tool = os.environ.get("LZFSE_BIN", "")
         if not tool:
             raise FmtErr("lzfse needs LZFSE_BIN (own-built lzfse CLI)")
-        import tempfile
         ip = op = None
         try:
-            with tempfile.NamedTemporaryFile(delete=False) as fi:
+            ip = _mkstemp("lzfse-in-")
+            with open(ip, "wb") as fi:
                 fi.write(data)
-                ip = fi.name
             op = ip + ".out"
             p = subprocess.run([tool, "-encode", "-i", ip, "-o", op],
                                capture_output=True, timeout=120)
@@ -422,7 +447,7 @@ def enc_ver(key, data, salt):
 def encrypt_aea(data, profile, symkey=None, password=None, recip_pub=None,
                 sign_priv=None, alg="none", block_size=1 << 20,
                 checksum="sha256", padding="none", auth=b"", salt=None,
-                nmacs=None, smacs=None, eph_priv=None):
+                nmacs=None, smacs=None, eph_priv=None, fixed_pad=None):
     import os
     if profile not in KEY_SIZE:
         raise FmtErr("bad profile")
@@ -530,7 +555,15 @@ def encrypt_aea(data, profile, symkey=None, password=None, recip_pub=None,
         padlen = 0
     arc = padstart + padlen
     padkey = hkdf(32, main, b"AEA_PAK")
-    pad = os.urandom(padlen) if padlen else b""
+    if padlen:
+        if fixed_pad is not None:
+            if len(fixed_pad) != padlen:
+                raise FmtErr("fixed-pad length wrong")
+            pad = fixed_pad
+        else:
+            pad = os.urandom(padlen)
+    else:
+        pad = b""
 
     clusters = []
     cmac = None
@@ -645,6 +678,8 @@ def archive_id(blob):
     if len(blob) < 12 or blob[:4] != b"AEA1":
         raise FmtErr("bad magic")
     prof = blob[4] | (blob[5] << 8) | (blob[6] << 16)
+    if prof not in KEY_SIZE:
+        raise FmtErr("bad profile")
     (auth_sz,) = struct.unpack("<I", blob[8:12])
     n = 12 + auth_sz + SIG_SIZE[prof] + PUB_SIZE[prof] + 32 + 32 + 48 + 32
     if len(blob) < n:  # oracle id requires FULL prologue (156+authsize; trunc FAILs)
@@ -730,6 +765,8 @@ def main(argv):
     e.add_argument("--fixed-salt", default=None)  # hex: (test-only determinism)
     e.add_argument("--fixed-nmac", default=None)  # hex: (test-only)
     e.add_argument("--fixed-smacs", default=None)  # hex: (test-only)
+    e.add_argument("--fixed-eph", default=None)  # PEM hex: (test-only, profile 3/4)
+    e.add_argument("--fixed-pad", default=None)  # hex: (test-only determinism)
     a = ap.parse_args(argv)
     try:
         if a.cmd == "id":
@@ -790,7 +827,9 @@ def main(argv):
                 auth,
                 parse_key_value(a.fixed_salt) if a.fixed_salt else None,
                 parse_key_value(a.fixed_nmac) if a.fixed_nmac else None,
-                parse_key_value(a.fixed_smacs) if a.fixed_smacs else None)
+                parse_key_value(a.fixed_smacs) if a.fixed_smacs else None,
+                parse_key_value(a.fixed_eph) if a.fixed_eph else None,
+                parse_key_value(a.fixed_pad) if a.fixed_pad else None)
             if a.o is None:
                 sys.stdout.buffer.write(out)
             else:
@@ -826,6 +865,9 @@ def main(argv):
                 fh.write(out)
         return 0
     except FmtErr as e:
+        sys.stderr.write("aead: %s\n" % e)
+        return 1
+    except OSError as e:
         sys.stderr.write("aead: %s\n" % e)
         return 1
 

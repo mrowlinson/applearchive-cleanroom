@@ -3,9 +3,10 @@
 # v1 cells: exit!=0 + no hang on sampled truncs/corrupts (proto only).
 # v2 cells: exit-agreement + byte-agreement (when both accept) vs oracle.
 set -u
+: "${TMPDIR:?must set TMPDIR to NVME scratch (never /tmp)}"
 REPO=$(cd "$(dirname "$0")/.." && pwd)
 AEAD_PY=${AEAD_PY:-/Volumes/NVME/applearchive-cleanroom-ws/writer2/.venv/bin/python}
-WORK=$(mktemp -d "${TMPDIR:-/tmp}/aea-sweep.XXXXXX")
+WORK=$(mktemp -d "$TMPDIR/aea-sweep.XXXXXX")
 trap 'rm -rf "$WORK"' EXIT
 PW='testpw32....................................'
 printf 'sweep-input-bytes\n' > "$WORK/in.bin"
@@ -80,6 +81,7 @@ for base, cpat, pfx in bases:
         files.append((pfx + "corrupt-%d" % j, (base, None, j)))
 cpat_of = {b: c for b, c, _ in bases}
 n = bad = acc = 0
+hang = 0
 for tag, (base, tr, cj) in files:
     if tr is not None:
         data = blobs[base][:tr]
@@ -108,10 +110,15 @@ for tag, (base, tr, cj) in files:
     n += 1
     if oexit == 0 and pexit == 0:
         acc += 1
-    if (oexit == 0) != (pexit == 0) or (oexit == 0 and ohash != phash):
+    # hang = FAIL, never agreement (a mutual hang is not parity)
+    if oexit == "HANG" or pexit == "HANG":
+        bad += 1
+        hang += 1
+        print("FAIL par-hang-%s ora=%s pro=%s" % (tag, oexit, pexit))
+    elif (oexit == 0) != (pexit == 0) or (oexit == 0 and ohash != phash):
         bad += 1
         print("FAIL par-%s ora=%s pro=%s" % (tag, oexit, pexit))
-print("PARITY n=%d bad=%d bothaccept=%d" % (n, bad, acc))
+print("PARITY n=%d bad=%d bothaccept=%d hang=%d" % (n, bad, acc, hang))
 EOF
 )
 echo "$PAR_OUT" | grep -E '^FAIL' || true

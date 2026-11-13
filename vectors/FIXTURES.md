@@ -1,6 +1,6 @@
 # Fixtures / vectors / corpora (L5, wave 1)
 
-Status: SEEDED. 13 files, 96KB, all black-box self-generated. Zero vendor bytes committed (own outputs only).
+Status: SEEDED. 19 files, 116KB, all black-box self-generated. Zero vendor bytes committed (own outputs only).
 
 ## 1. Local oracle provenance (generators)
 
@@ -13,9 +13,15 @@ Status: SEEDED. 13 files, 96KB, all black-box self-generated. Zero vendor bytes 
 Inputs (regeneration source of truth):
 - `input/hello/greet.txt` (58B, text) + `input/hello/repeat.txt` (2000B, `A` x2000).
 
-AAR (8 files):
+AAR (13 files):
 - `aar/hello-{lzfse,lzma,lzraven,zlib,lz4,lzbitmap,raw}.aar` — same input dir, one per `-a` codec.
 - `aar/empty-lzfse.aar` (141B) — empty dir edge case.
+- `aar/bdev-basic.aar` (2453B) — block/char device entries.
+- `aar/fifo-mixed.aar` (246B) — fifo entry mixed with a regular file
+  (oracle HANGS extracting this; decode batteries drain-guard it).
+- `aar/hlink-basic.aar` (2467B) + `aar/hlink-missing.aar` (2465B) —
+  hardlink pairs, present vs missing target.
+- `aar/mix-fail.aar` (2501B) — mixed failure classes for error-shape pins.
 - Generator: `aa archive -d <input-parent> -subdir hello -a <codec> -o <out>` (defaults: `-b 4m`, threads default).
 - Empty: `aa archive -d <empty-dir> -a lzfse -o empty-lzfse.aar`.
 

@@ -99,8 +99,11 @@ def _lib_dec(payload, unc):
 
 def _ctool_dec(payload, alg, unc):
     """-> (bytes|None, got)."""
-    p = subprocess.run([CTOOL, "-decode", "-a", alg], input=payload,
-                       capture_output=True)
+    try:
+        p = subprocess.run([CTOOL, "-decode", "-a", alg], input=payload,
+                           capture_output=True, timeout=120)
+    except subprocess.TimeoutExpired:
+        return None, 0
     if p.returncode != 0:
         return None, 0
     if len(p.stdout) != unc:
@@ -1037,10 +1040,10 @@ def extract(items, root, fcls=0, fsub=0, shortidx=-1, midchain=False,
 
 
 def main(argv):
-    if len(argv) != 3:
+    if len(argv) != 2:
         print("usage: aad.py IN.aar OUTDIR", file=sys.stderr)
         return 2
-    with open(argv[1], "rb") as f:
+    with open(argv[0], "rb") as f:
         data = f.read()
     try:
         inner, metas, mid = parse_chain(data)
@@ -1051,7 +1054,7 @@ def main(argv):
         if mid is not None:
             present = (shortidx != -1 and mid["whole"] >= 524288 and
                        shortavail >= max(mid["kcut"] - 1, 0) * 65536)
-            extract(items, argv[2], fcls, fsub, shortidx, True, present,
+            extract(items, argv[1], fcls, fsub, shortidx, True, present,
                     mid["whole"], shortend, inner,
                     metas[0].get("bsize", 0) if metas else 0,
                     mid["kind"])
@@ -1067,7 +1070,7 @@ def main(argv):
         # clean path: presence gate on (innerlen, nblocks) (PRE-007).
         present = (shortidx != -1 and len(inner) >= 524288 and
                    shortavail >= max(len(metas) - 1, 0) * 65536)
-        return extract(items, argv[2], fcls, fsub, shortidx, False, present,
+        return extract(items, argv[1], fcls, fsub, shortidx, False, present,
                        len(inner), shortend, inner,
                        metas[0].get("bsize", 0) if metas else 0, None)
     except FmtErr as e:
@@ -1076,4 +1079,4 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv))
+    sys.exit(main(sys.argv[1:]))

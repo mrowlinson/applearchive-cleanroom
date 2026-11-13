@@ -54,7 +54,8 @@ if [ -n "${RECORD:-}" ]; then
 fi
 ZCELL() { # n : zeros-N byte-compare
   n=$1
-  head -c "$n" /dev/zero > "$WORK/z$n.bin" 2>/dev/null || : > "$WORK/z$n.bin"
+  if [ "$n" -eq 0 ]; then : > "$WORK/z$n.bin"; else head -c "$n" /dev/zero > "$WORK/z$n.bin" 2>/dev/null || { echo "FAIL z$n input"; FAIL=1; return; }; fi
+  [ "$(sz "$WORK/z$n.bin")" -eq "$n" ] || { echo "FAIL z$n input-size"; FAIL=1; return; }
   "$CT" -encode -a lzraven -i "$WORK/z$n.bin" -o "$WORK/z$n.ora.rav" 2>/dev/null || { echo "FAIL z$n oracle rc"; FAIL=1; return; }
   python3 "$LZ" --raw "$WORK/z$n.bin" "$WORK/z$n.got.rav" 2>"$WORK/z$n.err" || { echo "FAIL z$n impl rc: $(head -1 "$WORK/z$n.err")"; FAIL=1; return; }
   if cmp -s "$WORK/z$n.got.rav" "$WORK/z$n.ora.rav"; then
@@ -69,7 +70,8 @@ for s in 0 1 2 16 62 63 64 65 100 124 125 126 127 128 129 200 255 256 257 300 38
 done
 echo "== unclosed-N (impl must refuse) =="
 for s in 821 1077 1500 524288; do
-  head -c "$s" /dev/zero > "$WORK/u$s.bin" 2>/dev/null || : > "$WORK/u$s.bin"
+  head -c "$s" /dev/zero > "$WORK/u$s.bin" 2>/dev/null || { echo "FAIL u$s input"; FAIL=1; continue; }
+  [ "$(sz "$WORK/u$s.bin")" -eq "$s" ] || { echo "FAIL u$s input-size"; FAIL=1; continue; }
   if python3 "$LZ" --raw "$WORK/u$s.bin" "$WORK/u$s.got.rav" 2>/dev/null; then
     echo "FAIL u$s: impl emitted, want honest error"; FAIL=1
   else

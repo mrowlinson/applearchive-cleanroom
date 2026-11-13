@@ -32,10 +32,11 @@
 # chaining (C->oracle proven; oracle 1M-block 2-cluster blobs decrypt under C
 # in the full aea-battery flip, not repeated here).
 set -u
+: "${TMPDIR:?must set TMPDIR to NVME scratch (never /tmp)}"
 AEA=${AEA:-/usr/bin/aea}
 CLI=${CLI:-/Volumes/NVME/applearchive-cleanroom-ws/build/unified/aae-cli}
 HERE=$(dirname "$0")
-WORK=${1:-${TMPDIR:-/tmp}/aeadc-bed-$$}
+WORK=${1:-$TMPDIR/aeadc-bed-$$}
 mkdir -p "$WORK"
 fail=0
 npass=0
@@ -116,6 +117,15 @@ for p in 0 1 2 3 4 5; do
   "$CLI" aeadc decrypt $dextra -i "$WORK/p$p-o.aea" -o "$WORK/p$p-oc.out" 2>/dev/null && cmp -s "$WORK/p$p-oc.out" "$WORK/msg.txt" && ok "p$p-ora2c" || bad "p$p-ora2c"
 done
 
+echo "== leg4b lz4 tail literals (tail>=15 roundtrip; fuzzer regression: tail literals >=15 were silently truncated) =="
+for _tsz in 15 16 31 9000; do
+  head -c "$_tsz" /dev/urandom > "$WORK/tail-$_tsz.bin" 2>/dev/null || { bad "tail-$_tsz-gen"; continue; }
+  if "$CLI" aeadc encrypt --profile 1 --key "$WORK/key32.bin" -a lz4 -i "$WORK/tail-$_tsz.bin" -o "$WORK/tail-$_tsz.aea" 2>/dev/null \
+     && "$CLI" aeadc decrypt --key "$WORK/key32.bin" -i "$WORK/tail-$_tsz.aea" -o "$WORK/tail-$_tsz.out" 2>/dev/null \
+     && cmp -s "$WORK/tail-$_tsz.out" "$WORK/tail-$_tsz.bin"; then ok "tail-$_tsz";
+  else bad "tail-$_tsz"; fi
+done
+
 echo "== leg4 codecs (C->oracle + oracle->C on big.txt; lzbitmap/lzraven ora->C)"
 for alg in none zlib lzma lz4 lzfse; do
   "$CLI" aeadc encrypt --profile 5 --password "$PW" -a $alg --checksum sha256 --padding none -i "$WORK/big.txt" -o "$WORK/c-$alg.aea" 2>/dev/null || { bad "cenc-$alg"; continue; }
@@ -160,9 +170,10 @@ transplant 1 "-key $WORK/key32.bin" sha256 32 "$WORK/big.txt" p1-big
 
 echo "== leg6 errors/messages/id/range/stdio/pwfile/keyval/multi/padcorr/strength/auth"
 ex() { # $1=tag $2=want-exit $3=want-msg-or-empty rest=args($CLI aeadc ...)
+  # refusal cells assert rc AND stderr-nonempty (byte-identity only where pinned)
   _tag=$1; _want=$2; _msg=$3; shift 3
   _out=$("$CLI" aeadc "$@" 2>&1); _rc=$?
-  if [ $_rc -eq "$_want" ] && { [ -z "$_msg" ] || echo "$_out" | grep -qF "$_msg"; }; then ok "$_tag"; else bad "$_tag(rc=$_rc out=$_out)"; fi
+  if [ $_rc -eq "$_want" ] && [ -n "$_out" ] && { [ -z "$_msg" ] || echo "$_out" | grep -qF "$_msg"; }; then ok "$_tag"; else bad "$_tag(rc=$_rc out=$_out)"; fi
 }
 ex err-bad-profile 1 "bad profile" encrypt --profile 9 --key "$WORK/key32.bin" -i "$WORK/msg.txt" -o "$WORK/x.aea"
 ex err-nokey 1 "symmetric key required (32B)" encrypt --profile 1 -i "$WORK/msg.txt" -o "$WORK/x.aea"

@@ -7,24 +7,33 @@
 # stdout + stderr all equal). N the C binary reports "N out of scope"
 # (exit 2) is UNCOVERED: counted, never compared. Exit 0/1/2.
 set -u
+: "${TMPDIR:?must set TMPDIR to NVME scratch (never /tmp)}"
 HERE=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 ROOT=$(CDPATH= cd -- "$HERE/.." && pwd)
-W=${1:-$(mktemp -d "${TMPDIR:-/tmp}/rgramc.XXXXXX")}
+W=${1:-$(mktemp -d "$TMPDIR/rgramc.XXXXXX")}
 RGRAMC=${RGRAMC:-/Volumes/NVME/applearchive-cleanroom-ws/build/aae/rgramc}
 CT=${CT:-/usr/bin/compression_tool}
 PINS=$ROOT/vectors/rgram-PINS.csv
 PY=$ROOT/src/rgram.py
 [ -x "$RGRAMC" ] || { echo "need C binary: $RGRAMC (make -C src/c)" >&2; exit 2; }
 [ -f "$PINS" ] || { echo "missing $PINS" >&2; exit 2; }
+# verify-tables: committed lzraventab.h must equal fresh gen output
+# (C-lane `make -C src/c verify-tables`: regen + diff + rgramc.c literal check).
 command -v python3 >/dev/null || { echo "need python3" >&2; exit 2; }
 mkdir -p "$W/corpus"
 NS=$(grep -o "^g-z[0-9]*-closed" "$PINS" | sed 's/^g-z//; s/-closed$//' | sort -n)
 fail=0; id=0; cov=0; unc=0; se=0
+if make -C "$ROOT/src/c" verify-tables >/dev/null 2>&1; then
+  echo "PASS tables-fresh"
+else
+  echo "FAIL tables-fresh (make -C src/c verify-tables)"; fail=1
+fi
 for n in $NS; do
   se=$((se + 1))
   rav=$W/corpus/g$n.rav
   if [ ! -s "$rav" ]; then
-    head -c "$n" /dev/zero > "$W/corpus/g$n.bin" 2>/dev/null || : > "$W/corpus/g$n.bin"
+    if [ "$n" -eq 0 ]; then : > "$W/corpus/g$n.bin"; else head -c "$n" /dev/zero > "$W/corpus/g$n.bin" 2>/dev/null || { echo "FAIL g$n input"; fail=1; continue; }; fi
+  [ "$(wc -c < "$W/corpus/g$n.bin" | tr -d " ")" -eq "$n" ] || { echo "FAIL g$n input-size"; fail=1; continue; }
     "$CT" -encode -a lzraven -i "$W/corpus/g$n.bin" -o "$rav" 2>/dev/null \
       || { echo "FAIL g$n ct"; fail=1; continue; }
   fi

@@ -6,9 +6,10 @@
 # Usage: sh tests/test_rgram.sh [workdir]
 # RECORD=1 sh tests/test_rgram.sh [workdir]  (rewrite PINS; REVIEW diff!)
 set -eu
+: "${TMPDIR:?must set TMPDIR to NVME scratch (never /tmp)}"
 HERE=$(cd "$(dirname "$0")" && pwd)
 ROOT=$(cd "$HERE/.." && pwd)
-WORK=${1:-$(mktemp -d "${TMPDIR:-/tmp}/rgram.XXXXXX")}
+WORK=${1:-$(mktemp -d "$TMPDIR/rgram.XXXXXX")}
 PINS=$ROOT/vectors/rgram-PINS.csv
 FAIL=0
 GEN=test_rgram.sh
@@ -19,7 +20,9 @@ _RG=${RGRAM_BIN:-python3 "$RG"}
 command -v python3 >/dev/null || { echo "need python3" >&2; exit 2; }
 mkdir -p "$WORK" "$ROOT/vectors"
 pin_get() { grep "^$1," "$PINS" | head -1 | cut -d, -f3; }
+CELLS=0
 chk() { # name check val [bytes]
+  CELLS=$((CELLS+1))
   if [ -n "${RECORD:-}" ]; then
     echo "$1,$2,$3,${4:-0},$GEN,$OS,ct-lzraven" >> "$PINS.new"
     echo "REC $1=$3"
@@ -40,7 +43,8 @@ if [ -n "${RECORD:-}" ]; then
 fi
 GCELL() { # nbytes : closed + sha pins
   n=$1
-  head -c "$n" /dev/zero > "$WORK/g$n.bin" 2>/dev/null || : > "$WORK/g$n.bin"
+  if [ "$n" -eq 0 ]; then : > "$WORK/g$n.bin"; else head -c "$n" /dev/zero > "$WORK/g$n.bin" 2>/dev/null || { echo "FAIL g$n input"; FAIL=1; return; }; fi
+  [ "$(sz "$WORK/g$n.bin")" -eq "$n" ] || { echo "FAIL g$n input-size"; FAIL=1; return; }
   "$CT" -encode -a lzraven -i "$WORK/g$n.bin" -o "$WORK/g$n.rav" 2>/dev/null || { echo "FAIL g$n ct rc"; FAIL=1; return; }
   if v=$($_RG "$WORK/g$n.rav" "$n" 2>"$WORK/g$n.rgram"); then
     case "$v" in
@@ -56,5 +60,6 @@ for s in 0 1 63 64 65 124 125 126 127 128 129 189 253 255 256 257 380 381 382 38
 done
 [ -n "${RECORD:-}" ] && mv "$PINS.new" "$PINS" && echo "RECORDED $PINS"
 echo "== $WORK =="
+echo "cells=$CELLS"
 [ "$FAIL" -eq 0 ] && echo RGRAM-GREEN || echo RGRAM-RED
 exit "$FAIL"

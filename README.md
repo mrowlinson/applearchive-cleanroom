@@ -23,21 +23,29 @@ from observing what the tools do.
 ## Install
 
 Prereqs: macOS with Xcode command-line tools (`cc`), Homebrew `xz`
-(pinned liblzma for lzma encode), and `python3` (batteries only).
+(pinned liblzma 5.8.4 for lzma encode), and `python3` (batteries only).
+Python-battery deps live in a venv (e.g.
+`/Volumes/NVME/applearchive-cleanroom-ws/writer2/.venv` with
+`cryptography` + `lz4`); system `python3` alone is not enough for the
+AEA proto legs. Set `AEAD_PY` to that venv's python.
 Apple's `/usr/bin/aa` and `/usr/bin/aea` are only needed to run the
 verification batteries, not to use the tools.
 
 ```sh
 git clone https://github.com/mrowlinson/applearchive-cleanroom.git
 cd applearchive-cleanroom
-make                        # builds ./build/aae-cli: one static binary
+make                        # builds ./build/aae-cli: one binary
 make OUTDIR=$HOME/aa-build  # or pick your own dir
 ```
 
 One file, no install layout: everything (all 7 codecs both
-directions, all 6 AEA profiles) is linked in. No runtime dependencies
-beyond macOS system libraries: no Python, no pip packages, no
-environment variables.
+directions, all 6 AEA profiles) is linked in. It is NOT static and NOT
+dependency-free: at runtime it dynamically links macOS system libraries
+(`Compression`/`libz` for decode) plus a Homebrew `liblzma` pin (lzma
+encode), and `dlopen`s the OSS `liblzfse` dylib at lzfse-encode time
+(`$LZFSE_DYLIB`). Off-box the binary breaks without them — install the
+prereqs above (see `docs/THIRD-PARTY-NOTICES.md`). No Python, no pip
+packages required to run the binary itself.
 
 ## Usage
 
@@ -108,6 +116,9 @@ spec/ notes/ docs/   derived behavior clauses, experiment records, research
 
 ## Verification
 
+Headline numbers, exact rerun commands, and the 27.2 re-gate record:
+[`docs/VERIFICATION.md`](docs/VERIFICATION.md).
+
 Every claim above is gated by a battery that diffs our bytes against
 Apple's tools on this machine (macOS 27.2). Current master HEAD:
 
@@ -115,11 +126,11 @@ Apple's tools on this machine (macOS 27.2). Current master HEAD:
 |---|---|
 | every input length 0..390836, oracle + impl | 390837/390837 CLOSED, 0 bad |
 | behavior pins (`test_rgram_fast.py`) | 110544/110544 |
-| decode (`c-battery.sh`) | 1069/1069 |
+| decode (`c-battery.sh`) | 1073/1073 |
 | AEA (`aea-battery.sh`) | 187/187 |
 | AEA encrypt + units | 49/49, 14/14 |
-| CLI, C (`test_cli.sh` + `CLI_BIN`) | 105/105 |
-| CLI, Python reference (`test_cli.sh`) | 78/78 |
+| CLI, C (`test_cli.sh` + `CLI_BIN`) | 117/117 |
+| CLI, Python reference (`test_cli.sh`) | 96/96 |
 | AEA C (`test_aead_c.sh`) | 102/102 |
 | lzraven / lzbitmap C (`test_lzraven_c.sh`, `test_lzbitmap_c.sh`) | 64/64, 32/32 |
 | lzraven / lzbitmap / lz4 (+full, +C parity) | 64/64, 32/32, 8/8 + 60x3 + 11/11 |

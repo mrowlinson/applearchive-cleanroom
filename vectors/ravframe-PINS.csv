@@ -181,3 +181,5 @@ f-st4096-closed,str,CLOSED,4112,test_ravframe.sh,27.0.1,ct-lzraven
 f-st4096-f2,str,00000000,4112,test_ravframe.sh,27.0.1,ct-lzraven
 f-st4096,sha,ac4b41b2ffd517a5866a945af9ba43d264ccc12468f884da08e451a0a8e75fdc,4112,test_ravframe.sh,27.0.1,ct-lzraven
 f-st4096-rawmatch,str,MATCH,4112,test_ravframe.sh,27.0.1,ct-lzraven
+e12-closed,str,CLOSED,12,test_ravframe.sh,27.2,ct-lzraven
+e12bad,rc,1,12,test_ravframe.sh,27.2,ct-lzraven
