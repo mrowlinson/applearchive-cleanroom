@@ -1726,6 +1726,7 @@ CHEAD = """/* rgramc -- lzraven zeros-N payload grammar verifier.
  * Usage: rgramc FILE.rav N. Exit 0 + CLOSED / 1 + GRAMMAR-BREAK / 2.
  */
 #include "rgramc.h"
+#include <errno.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -1755,24 +1756,47 @@ int main(int argc, char **argv) {
         return 2;
     }
     const char *path = argv[1];
-    long n = atol(argv[2]);
+    /* strict N: strtol, full-string digits, no negatives, no overflow */
+    char *e = NULL;
+    long n;
+    errno = 0;
+    n = strtol(argv[2], &e, 10);
+    if (errno != 0 || e == argv[2] || *e != '\\0' || n < 0) {
+        fprintf(stderr, "rgramc: bad N %s\\n", argv[2]);
+        return 2;
+    }
     FILE *f = fopen(path, "rb");
     if (!f) {
         fprintf(stderr, "rgramc: cannot open %s\\n", path);
         return 1;
     }
-    fseek(f, 0, SEEK_END);
+    if (fseek(f, 0, SEEK_END) != 0) {
+        fclose(f);
+        fprintf(stderr, "rgramc: cannot seek %s\\n", path);
+        return 1;
+    }
     long rawlen = ftell(f);
-    fseek(f, 0, SEEK_SET);
+    if (rawlen < 0) {
+        fclose(f);
+        fprintf(stderr, "rgramc: cannot size %s\\n", path);
+        return 1;
+    }
+    if (fseek(f, 0, SEEK_SET) != 0) {
+        fclose(f);
+        fprintf(stderr, "rgramc: cannot rewind %s\\n", path);
+        return 1;
+    }
     uint8_t *raw = malloc(rawlen > 0 ? (size_t)rawlen : 1);
     if (!raw) {
         fclose(f);
+        fprintf(stderr, "rgramc: out of memory\\n");
         return 1;
     }
     if (rawlen > 0 && fread(raw, 1, (size_t)rawlen, f) !=
         (size_t)rawlen) {
         fclose(f);
         free(raw);
+        fprintf(stderr, "rgramc: cannot read %s\\n", path);
         return 1;
     }
     fclose(f);
