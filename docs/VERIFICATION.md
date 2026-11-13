@@ -27,7 +27,7 @@ legs refuse `/tmp` and repo `tmp/`.
 | test_units | GREEN | `python3 tests/test_units.py` |
 | test_aead_units | 14/14 OK | `$AEAD_PY tests/test_aead_units.py` |
 | test_rgramc_fast | 55272/55272 GREEN skipped=0 floor=55272 | `RGRAMC=$NVME/aae-build/rgramc python3 tests/test_rgramc_fast.py` |
-| test_rgram (RGRAM_BIN=C) | full sweep re-running on merged tree (was RGRAM-GREEN pre-merge) | `RGRAM_BIN=$NVME/aae-build/rgramc sh tests/test_rgram.sh` |
+| test_rgram (RGRAM_BIN=C) | RGRAM-GREEN cells=110544 (full sweep on merged master) | `RGRAM_BIN=$NVME/aae-build/rgramc sh tests/test_rgram.sh` |
 | gate-tip | see legs below | `sh tests/gate-tip.sh <rev> <nvme-outdir>` |
 
 Build the C binary first (all C legs):
