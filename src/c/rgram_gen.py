@@ -643,6 +643,13 @@ class Emit:
             return "paylen" if ag[0].id == "pay" else "rawlen"
         if nm == "int":
             if len(ag) == 1:
+                # bool/cmp strip: C comparison already yields 0/1;
+                # bare cmp matches committed precedent, e.g.
+                # int(off >= 67) -> (off) >= (67) (callers parenthesize)
+                if isinstance(ag[0], ast.Compare):
+                    return self.E(ag[0])
+                if isinstance(ag[0], ast.BoolOp):
+                    return "(%s)" % self.E(ag[0])
                 abort(e, "int() decimal outside prologue")
             if len(ag) != 2 or not isinstance(ag[1], ast.Constant) or \
                     ag[1].value != 16:
@@ -1196,7 +1203,7 @@ class Emit:
             return
         if isinstance(b, ast.Call) and isinstance(b.func, ast.Name) \
                 and b.func.id == "bytes" and len(b.args) == 1 and \
-                isinstance(b.args[0], ast.Tuple):
+                isinstance(b.args[0], (ast.Tuple, ast.List)):
             es = b.args[0].elts
             self.loopn += 1
             k = self.loopn
