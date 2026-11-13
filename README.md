@@ -129,9 +129,9 @@ Apple's tools on this machine (macOS 27.2). Current master HEAD:
 | decode (`c-battery.sh`) | 1073/1073 |
 | AEA (`aea-battery.sh`) | 187/187 |
 | AEA encrypt + units | 49/49, 14/14 |
-| CLI, C (`test_cli.sh` + `CLI_BIN`) | 117/117 |
-| CLI, Python reference (`test_cli.sh`) | 96/96 |
-| AEA C (`test_aead_c.sh`) | 102/102 |
+| CLI, C (`test_cli.sh` + `CLI_BIN`) | 118/118 |
+| CLI, Python reference (`test_cli.sh`) | 118/118 |
+| AEA C (`test_aead_c.sh`) | 106/106 |
 | lzraven / lzbitmap C (`test_lzraven_c.sh`, `test_lzbitmap_c.sh`) | 64/64, 32/32 |
 | lzraven / lzbitmap / lz4 (+full, +C parity) | 64/64, 32/32, 8/8 + 60x3 + 11/11 |
 | smoke / units / pbze / rawenc / rb2 / ravframe / outer2 / lzma | all green |

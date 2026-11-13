@@ -5,14 +5,14 @@ Every battery requires `TMPDIR` set to NVME scratch
 (`export TMPDIR=/Volumes/NVME/<proj>-ws/tmp/<lane>`); `: "${TMPDIR:?...}"`
 legs refuse `/tmp` and repo `tmp/`.
 
-## Headline numbers (fix-sweep-PTD gate, 2026-11-12)
+## Headline numbers (master gate d79ee9d0, 2026-11-12)
 
 | suite | result | rerun |
 |---|---|---|
 | c-battery | 1073/1073 GREEN | `sh tests/c-battery.sh` |
 | smoke | 6/6 GREEN | `sh tests/smoke.sh` |
-| test_cli py | 96/96 GREEN | `sh tests/test_cli.sh` |
-| test_cli C | 117/117 GREEN (+5 SKIP absent-C-surface, +1 KNOWN-DIFF cli.c:1130) | `CLI_BIN=$NVME/aae-build/aae-cli sh tests/test_cli.sh` |
+| test_cli py | 118/118 GREEN | `sh tests/test_cli.sh` |
+| test_cli C | 118/118 GREEN | `CLI_BIN=$NVME/aae-build/aae-cli sh tests/test_cli.sh` |
 | test_aea_enc proto | 54/54 GREEN | `sh tests/test_aea_enc.sh` |
 | test_aea_enc via C shim | 49/49 GREEN (5 det cells SKIP: no --fixed-* in C aeadc) | `CLI=... AEAD_PY=tests/aeadc-shim.sh sh tests/test_aea_enc.sh` |
 | aea-battery | 187/187 GREEN | `sh tests/aea-battery.sh` |
@@ -26,8 +26,8 @@ legs refuse `/tmp` and repo `tmp/`.
 | aea-sweep | 320/320 GREEN, hang=0 | `sh tests/aea-sweep.sh` |
 | test_units | GREEN | `python3 tests/test_units.py` |
 | test_aead_units | 14/14 OK | `$AEAD_PY tests/test_aead_units.py` |
-| test_rgramc_fast | RED (pre-existing py/C divergence, 35249 cells; floor 46745/55272 recorded) | `python3 tests/test_rgramc_fast.py` |
-| test_rgram | partial, 0 fail at handoff (full sweep is hours-long) | `sh tests/test_rgram.sh` |
+| test_rgramc_fast | 55272/55272 GREEN skipped=0 floor=55272 | `RGRAMC=$NVME/aae-build/rgramc python3 tests/test_rgramc_fast.py` |
+| test_rgram (RGRAM_BIN=C) | full sweep re-running on merged tree (was RGRAM-GREEN pre-merge) | `RGRAM_BIN=$NVME/aae-build/rgramc sh tests/test_rgram.sh` |
 | gate-tip | see legs below | `sh tests/gate-tip.sh <rev> <nvme-outdir>` |
 
 Build the C binary first (all C legs):
