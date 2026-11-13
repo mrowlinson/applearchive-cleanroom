@@ -1,2 +1,0 @@
-# NOTE-viewer-hb0030
-00:30: Q-206..Q-208 ANSWERED (A-212..A-214, all CONFIRM). VERIFY-18f083f pending PYBAT (5190+/0 FAIL; PYID 3571/3571, CBAT 7142/0, OWN 92/0 pins 26/26 GREEN). Quiz drained through Q-208.

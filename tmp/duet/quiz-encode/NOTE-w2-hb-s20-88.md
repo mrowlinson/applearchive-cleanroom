@@ -1,5 +1,0 @@
-# NOTE-w2-hb-s20-88 — P244 SWEEP GREEN + Q-308 + P245 HEAD
-bump-20
-- SWEEP: try-p244 348/348 err 0 GREEN; Q-308 filed (P244 geometry)
-- P245 HEAD: PB0 @101997 d46f0100 NEW / PB1 @101998 b553d702 NEW / PBA 2085c72e x16 @101999-102014 / C10-2SIG 7d38be05x3+7d38de02x7 @102015-102024 / QUAD 2085c72e (==PBA sig!) @102025..
-- NEXT: census 102031..102344 -> P245 runs -> analyze -> stage -> sweep -> Q-309

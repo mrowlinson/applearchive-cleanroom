@@ -1,1 +1,0 @@
-NOTE-w2b-hb-r7-36 T10P178 LANDED 99d4931 (78681..78772, 9478 PASS) VERIFY 0 FAIL SMOKE-GREEN +32/-0 exact. Tier 3/4. (Commit msg mislabeled at first, amended same minute, verified.) PARENT-074/075 read: exit-at-cap binds, P179 final tier then handoff+EXIT. Cutting P179 (A-236 on file).
