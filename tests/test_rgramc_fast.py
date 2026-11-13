@@ -23,6 +23,10 @@ CACHE = os.environ.get(
     "CT_CACHE_DIR", "/Volumes/NVME/applearchive-cleanroom-ws/ct-cache")
 REAL = os.environ.get("CT_REAL", "/usr/bin/compression_tool")
 PINS = os.path.join(ROOT, "vectors", "rgram-PINS.csv")
+# FLOOR: proven covered-cell count from full regen (rgramc-regen2:
+# 903 n-bands + 4571 range tiers + 2172 single-N tiers, max N 390836).
+# Was 11496 at T10P387R/N<=151760 before regen.
+FLOOR = 55272
 
 if not (os.path.isfile(RGRAMC) and os.access(RGRAMC, os.X_OK)):
     sys.stderr.write("need C binary: %s (make -C src/c)\n" % RGRAMC)
@@ -100,7 +104,7 @@ for n in NS:
         fail = 1
 
 print("RGRAMC-PYID %d/%d covered=%d/%d" % (lid, cov, cov, se))
-if lid == cov and cov > 0 and fail == 0:
+if lid == cov and cov >= FLOOR and fail == 0:
     print("RGRAMC-GREEN")
     sys.exit(0)
 print("RGRAMC-RED")
